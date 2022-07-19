@@ -82,7 +82,7 @@ if __name__ == '__main__':
         children_nodes = sub_species_tree.children
         for node_species_tree_child in children_nodes:
             if not node_species_tree_child.is_leaf():
-                infer_hogs_for_a_rhog(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
+                (dic_sub_hogs) = infer_hogs_for_a_rhog(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
                                                            rhogid_num, gene_trees_folder)
 
                 (dic_sub_hogs) = utils.infer_HOG_thisLevel(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
@@ -91,7 +91,7 @@ if __name__ == '__main__':
             (dic_sub_hogs) = utils.infer_HOG_thisLevel(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
                                                        rhogid_num, gene_trees_folder)
 
-        return 1
+        return (dic_sub_hogs)
 
     # HOG_thisLevel_list = []
     # len_HOG_thisLevel_list = []
@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
 
 
-        infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
+        (dic_sub_hogs) = infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
                                                            rhogid_num, gene_trees_folder)
 
 
