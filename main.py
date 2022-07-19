@@ -74,13 +74,15 @@ if __name__ == '__main__':
     #         infer_hog_a_level(sub_species_tree)
     #     return 1
 
-    def infer_hog_rhog(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
+    def infer_hogs_for_a_rhog(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
                                                            rhogid_num, gene_trees_folder):
+
+        # finding hogs at each level of species tree (from leaves to root, bottom up)
 
         children_nodes = sub_species_tree.children
         for node_species_tree_child in children_nodes:
             if not node_species_tree_child.is_leaf():
-                traverse_tree_recursively(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
+                infer_hogs_for_a_rhog(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
                                                            rhogid_num, gene_trees_folder)
 
                 (dic_sub_hogs) = utils.infer_HOG_thisLevel(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
@@ -107,12 +109,12 @@ if __name__ == '__main__':
         # species_tree.write();  print(species_tree.write())
 
         dic_sub_hogs = {}
-        # finding hogs at each level of species tree (from leaves to root, bottom up)
+
         # for node_species_tree in species_tree.traverse(strategy="postorder"):
         #     if node_species_tree.is_leaf():
         #         # each leaf itself is a subhog
         #         continue
-        #     logger_hog.info("\n"+"*"*15+"\n"+"Finding hogs for the taxonomic level:" + str(node_species_tree.name) + "\n" + str(node_species_tree.write())+"\n")
+        #
         #     dic_sub_msas = []
         #     print(node_species_tree.name)
         #     (dic_sub_hogs) = utils.infer_HOG_thisLevel(node_species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num, gene_trees_folder)
@@ -120,8 +122,7 @@ if __name__ == '__main__':
 
 
 
-
-        infer_hog_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
+        infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
                                                            rhogid_num, gene_trees_folder)
 
 

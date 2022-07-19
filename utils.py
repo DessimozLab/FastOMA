@@ -145,6 +145,10 @@ def infer_HOG_thisLevel(node_species_tree, rhog_i, species_names_rhog, dic_sub_h
     # os.mkdir(gene_trees_folder)
     # FileExistsError: [Errno 17] File exists: '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2//gene_trees_test_7d_3/'
 
+    logger_hog.info(
+        "\n" + "*" * 15 + "\n" + "Finding hogs for the taxonomic level:" + str(node_species_tree.name) + "\n" + str(
+            node_species_tree.write()) + "\n")
+
     if len(rhog_i) == 0:
         logger_hog.warning('There is no protein in the rHOG: ' + str(rhogid_num))
         dic_sub_hogs[node_species_tree.name] = []
