@@ -56,27 +56,46 @@ if __name__ == '__main__':
     # rhogid_num_list_temp = [836500]  # rhogid_num_list[23]  # [833732]
 
     from Bio import SeqIO
-    def traverse_tree_recursively(sub_species_tree):
+    # def traverse_tree_recursively(sub_species_tree):
+    #     """
+    #     test function:
+    #     from ete3 import Tree
+    #     mytree = Tree('(((H,K)HK,(F,I)FI)FIHK,E)FIHKE;', format=1)
+    #     print(mytree)
+    #     traverse_tree_recursively(mytree)
+    #     """
+    #     children_nodes = sub_species_tree.children
+    #     for node in children_nodes:
+    #         if not node.is_leaf():
+    #             traverse_tree_recursively(node)
+    #             infer_hog_a_level(node)
+    #
+    #     if sub_species_tree.is_root():
+    #         infer_hog_a_level(sub_species_tree)
+    #     return 1
+
+    def infer_hog_rhog(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
+                                                           rhogid_num, gene_trees_folder):
+
         children_nodes = sub_species_tree.children
-        for node in children_nodes:
-            if not node.is_leaf():
-                traverse_tree_recursively(node)
-                infer_hog_a_level(node)
+        for node_species_tree_child in children_nodes:
+            if not node_species_tree_child.is_leaf():
+                traverse_tree_recursively(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
+                                                           rhogid_num, gene_trees_folder)
 
+                (dic_sub_hogs) = utils.infer_HOG_thisLevel(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
+                                                           rhogid_num, gene_trees_folder)
         if sub_species_tree.is_root():
-            infer_hog_a_level(sub_species_tree)
-        return 1
+            (dic_sub_hogs) = utils.infer_HOG_thisLevel(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
+                                                       rhogid_num, gene_trees_folder)
 
-    def infer_hog_a_level(node):
-        print(node.name)
         return 1
-
 
     # HOG_thisLevel_list = []
     # len_HOG_thisLevel_list = []
     # HOG_thisLevel_xml_all = []
-    rhogid_num = rhogid_num_list[5]
-    for rhogid_num in rhogid_num_list[:10]:
+
+    for rhogid_num in rhogid_num_list[4:6]:
 
         logger_hog.info("\n"+"="*50+"\n"+"Working on root hog: "+str(rhogid_num)+". \n")  # +", ",rhogid_num_i,"-th. \n"
         prot_address = address_rhogs_folder+"HOG_B"+str(rhogid_num).zfill(7)+".fa"
@@ -100,11 +119,10 @@ if __name__ == '__main__':
         #     exit()
 
 
-        #
-    from ete3 import Tree
-    mytree = Tree('(((H,K)HK,(F,I)FI)FIHK,E)FIHKE;', format=1)
-    print(mytree)
-    traverse_tree_recursively(mytree)
+
+
+        infer_hog_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
+                                                           rhogid_num, gene_trees_folder)
 
 
 
