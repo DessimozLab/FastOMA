@@ -127,5 +127,24 @@ if __name__ == '__main__':
 
 
 
+"""
+    to do :
+    
+        check whether delay work on infer_hogs_for_a_rhog
+        
+        create a function  for running   ( for rhogid_num in rhogid_num_list[4:6]: )
+            input list of rhg num
+            write xml
+             
+            think how pickle per level ?
+            
+            think how to distribute rhog into list
+         
+
+"""
+
+
+
+
 
     print("**")
