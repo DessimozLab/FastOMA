@@ -168,5 +168,9 @@ if __name__ == '__main__':
 
     future_1 = client.submit(infer_hogs_for_a_rhog, species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num, gene_trees_folder)
 
+    (dic_sub_hogs)= future_1.result()
+
+    print(dic_sub_hogs)
+
     print("**")
-    aa=32
+
