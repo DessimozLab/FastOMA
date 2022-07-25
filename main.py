@@ -136,33 +136,9 @@ if __name__ == '__main__':
 
     rhogid_num= rhogid_num_list_input[0]
 
-    logger_hog.info("\n"+"="*50+"\n"+"Working on root hog: "+str(rhogid_num)+". \n")  # +", ",rhogid_num_i,"-th. \n"
-    prot_address = address_rhogs_folder+"HOG_B"+str(rhogid_num).zfill(7)+".fa"
-    rhog_i = list(SeqIO.parse(prot_address, "fasta"))
-    logger_hog.info("number of proteins in the rHOG is "+str(len(rhog_i))+".")
-
-    (species_tree) = _utils.read_species_tree(species_tree_address)
-    (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree)
-    # species_tree.write();  print(species_tree.write())
 
 
-    dic_sub_hogs = {}
-
-    (dic_sub_hogs) =  _inferhog.infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num, gene_trees_folder)
-
-    HOGs_a_rhog = dic_sub_hogs[species_tree.name]
-    logger_hog.info("subHOGs in thisLevel are " + ' '.join(["[" + str(i) + "]" for i in HOGs_a_rhog]) + " .")
-
-    HOGs_a_rhog_xml_all = []
-    for hog_i in HOGs_a_rhog:
-        print(hog_i)
-        if len(hog_i._members) > 1:
-            # could be improved
-            HOGs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
-            HOGs_a_rhog_xml_all.append(HOGs_a_rhog_xml)
-    print(HOGs_a_rhog_xml_all)
-
-
+    HOGs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder)
     print("here")
 
 
@@ -180,7 +156,7 @@ if __name__ == '__main__':
     #(dic_sub_hogs)= future_1.result()
 
 
-    print(dic_sub_hogs)
+    #print(dic_sub_hogs)
 
     print("**")
 
