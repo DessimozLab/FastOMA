@@ -10,6 +10,7 @@ from dask_jobqueue import SLURMCluster
 import gc
 """
 
+import dask
 from dask.distributed import Client
 
 import _utils
@@ -55,104 +56,54 @@ if __name__ == '__main__':
     print(rhogid_num_list[:2])
     # rhogid_num_list_temp = [836500]  # rhogid_num_list[23]  # [833732]
 
-    from Bio import SeqIO
-    # def traverse_tree_recursively(sub_species_tree):
-    #     """
-    #     test function:
-    #     from ete3 import Tree
-    #     mytree = Tree('(((H,K)HK,(F,I)FI)FIHK,E)FIHKE;', format=1)
-    #     print(mytree)
-    #     traverse_tree_recursively(mytree)
-    #     """
-    #     children_nodes = sub_species_tree.children
-    #     for node in children_nodes:
-    #         if not node.is_leaf():
-    #             traverse_tree_recursively(node)
-    #             infer_hog_a_level(node)
-    #
-    #     if sub_species_tree.is_root():
-    #         infer_hog_a_level(sub_species_tree)
-    #     return 1
-
-
-    # HOG_thisLevel_list = []
-    # len_HOG_thisLevel_list = []
-    # HOG_thisLevel_xml_all = []
-    #
-    # for rhogid_num in rhogid_num_list[4:6]:
-    #
-    #     logger_hog.info("\n"+"="*50+"\n"+"Working on root hog: "+str(rhogid_num)+". \n")  # +", ",rhogid_num_i,"-th. \n"
-    #     prot_address = address_rhogs_folder+"HOG_B"+str(rhogid_num).zfill(7)+".fa"
-    #     rhog_i = list(SeqIO.parse(prot_address, "fasta"))
-    #     logger_hog.info("number of proteins in the rHOG is "+str(len(rhog_i))+".")
-    #
-    #     (species_tree) = utils.read_species_tree(species_tree_address)
-    #     (species_tree, species_names_rhog, prot_names_rhog) = utils.prepare_species_tree(rhog_i, species_tree)
-    #     # species_tree.write();  print(species_tree.write())
-    #
-    #     dic_sub_hogs = {}
-    #
-    #     # for node_species_tree in species_tree.traverse(strategy="postorder"):
-    #     #     if node_species_tree.is_leaf():
-    #     #         # each leaf itself is a subhog
-    #     #         continue
-    #     #
-    #     #     dic_sub_msas = []
-    #     #     print(node_species_tree.name)
-    #     #     (dic_sub_hogs) = utils.infer_HOG_thisLevel(node_species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num, gene_trees_folder)
-    #     #     exit()
-    #
-    #
-    #
     #     (dic_sub_hogs) = infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
     #                                                        rhogid_num, gene_trees_folder)
-    #
-
-
-
 
 
     """
         to do :
-
-            check whether delay work on infer_hogs_for_a_rhog
-
-            create a function  for running   ( for rhogid_num in rhogid_num_list[4:6]: )
                 input list of rhg num
-                write xml
-
                 think how pickle per level ?
-
                 think how to distribute rhog into list
-
-
+                
+                # Your functions should not change the inputs directly.
+                https://docs.dask.org/en/stable/delayed-best-practices.html#
+                dic hog ??
     """
-    client = Client()
-
-    result._inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
-                                  gene_trees_folder).compute()
-    print(result)  # prints "55"
 
 
-
-    # rhogid_num_list_input =  rhogid_num_list[6:9]
-    # (groups_xml, gene_id_name, orthoxml_file) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
+    rhogid_num_list_input =  rhogid_num_list[6:7]
+    (groups_xml, gene_id_name, orthoxml_file) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
     # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
     # # len(gene_id_name)
-    #
+
+
+    rhogid_num = rhogid_num_list_input[0]
+    print("*** clinet **** ")
+    client = Client()
+
+
+    #dask_working.visualize(filename='/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/out_4.svg')
+    #print("visualized.")
+    #dask_result = dask_working.compute()
+    #print(dask_result)  # prints "55"
+
+    dask_a = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,gene_trees_folder)
+    print("this is dask_a: \n ",dask_a)
+    dask_a.visualize(filename='/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/out_4.svg')
+
+
+    #dask.compute()
+
+
     # HOGs_rhogs_xml_all = []
     # for rhogid_num in  rhogid_num_list_input:
     #     HOGs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder)
-    #
     #     HOGs_rhogs_xml_all.append(HOGs_a_rhog_xml_all)
-    #
     # print("here")
-    #
-    #
     # for HOGs_a_rhog_xml in HOGs_a_rhog_xml_all:
     #     groups_xml.append(HOGs_a_rhog_xml)
-    #
     # from xml.dom import minidom
     # import xml.etree.ElementTree as ET
     # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
