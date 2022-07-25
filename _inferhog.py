@@ -8,7 +8,7 @@ import _utils
 from _hog_class import HOG
 from _utils import logger_hog
 
-
+@delayed
 def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder):
     logger_hog.info(
         "\n" + "=" * 50 + "\n" + "Working on root hog: " + str(rhogid_num) + ". \n")  # +", ",rhogid_num_i,"-th. \n"
