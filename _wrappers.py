@@ -1,10 +1,9 @@
 
-
 from datetime import datetime
 import zoo.wrappers.aligners.mafft as mafft
 import zoo.wrappers.treebuilders.fasttree as fasttree
 
-from utils import logger_hog
+from _utils import logger_hog
 
 
 def merge_msa(list_msas):
@@ -21,12 +20,12 @@ def merge_msa(list_msas):
     wrapper_mafft_merge.options['--merge'].active = True
     merged = wrapper_mafft_merge()
     logger_hog.info \
-        (str(len(list_msas) ) +" msas are merged into one with the length of  " +str(len(merged) ) +"  " +str
-            (len(merged[0])) )
+        (str(len(list_msas)) + " msas are merged into one with the length of  " + str(len(merged)) + "  " + str
+        (len(merged[0])))
     return merged
 
-def infer_gene_tree(msa, gene_tree_file_addr):
 
+def infer_gene_tree(msa, gene_tree_file_addr):
     """
     infere gene tree using fastTree for the input msa
     and write it as a file
@@ -34,13 +33,13 @@ def infer_gene_tree(msa, gene_tree_file_addr):
 
     output: gene tree in nwk format
     """
-    wrapper_tree =fasttree.Fasttree(msa, datatype="PROTEIN")
+    wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
     wrapper_tree.options.options['-fastest']
     result_tree1 = wrapper_tree()
 
     time_taken_tree = wrapper_tree.elapsed_time
     result_tree2 = wrapper_tree.result
-    tree_nwk =str(result_tree2["tree"])
+    tree_nwk = str(result_tree2["tree"])
     current_time = datetime.now().strftime("%H:%M:%S")
     # for development we write the gene tree, the name of file should be limit in size in linux.
     # danger of overwriting
@@ -48,8 +47,8 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     # ??? hashlib.md5(original_name).hexdig..it()
 
     # as the debug==True
-    if len(gene_tree_file_addr ) >255: gene_tree_file_addr = gene_tree_file_addr[:250 ] +".nwk"
-    file_gene_tree = open(gene_tree_file_addr ,"w")
+    if len(gene_tree_file_addr) > 255: gene_tree_file_addr = gene_tree_file_addr[:250] + ".nwk"
+    file_gene_tree = open(gene_tree_file_addr, "w")
     file_gene_tree.write(tree_nwk)
     file_gene_tree.write(";\n")
     file_gene_tree.close()

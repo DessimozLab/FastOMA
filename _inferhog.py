@@ -1,139 +1,31 @@
 
 
-from os import listdir
-
 from ete3 import Tree
 
 
-import logging
-
-logging.basicConfig()
-logger_hog = logging.getLogger("hog")
-logger_hog.setLevel(logging.INFO)  # WARN
-
-
-from  hog_class import HOG
-import wrappers
+import _wrappers
+import _utils
+from _hog_class import HOG
+from _utils import logger_hog
 
 
-def list_rhog_fastas(address_rhogs_folder):
-    """
-     create a list of rootHOG IDs  stored in the folder of rHOG .
-     input: folder address
-     output: list of rhog Id (integer)
-    """
-    rhog_files = listdir(address_rhogs_folder)
-    rhogid_num_list= []
-    for rhog_file in rhog_files:
-        if rhog_file.split(".")[-1] == "fa":
-            rhogid_num = int(rhog_file.split(".")[0].split("_")[1][1:])
-            rhogid_num_list.append(rhogid_num)
+def infer_hogs_for_a_rhog(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
+                          rhogid_num, gene_trees_folder):
 
-    return rhogid_num_list
+    # finding hogs at each level of species tree (from leaves to root, bottom up)
 
+    children_nodes = sub_species_tree.children
+    for node_species_tree_child in children_nodes:
+        if not node_species_tree_child.is_leaf():
+            (dic_sub_hogs) = infer_hogs_for_a_rhog(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
+                                                   rhogid_num, gene_trees_folder)
 
-
-import logging
-from ete3 import Phyloxml
-
-
-def read_species_tree(species_tree_address):
-    """
-    reading a species tree in Phyloxml format using ete3 package .
-
-    output (species_tree)
-    """
-    logger_hog.info(species_tree_address)
-    # print(round(os.path.getsize(species_tree_address)/1000),"kb")
-    project = Phyloxml()
-    project.build_from_file(species_tree_address)
-    # Each tree contains the same methods as a PhyloTree object
-    for species_tree in project.get_phylogeny():
-        species_tree = species_tree
-
-    for node_species_tree in species_tree.traverse(strategy="postorder"):
-        if node_species_tree.is_leaf():
-            temp1 = node_species_tree.phyloxml_clade.get_taxonomy()[0]
-            # print(temp1.get_code())
-            node_species_tree.name = temp1.get_code()
-    # print(len(species_tree)); print(species_tree)
-
-
-    return (species_tree)
-
-
-def prepare_species_tree(rhog_i, species_tree):
-    """
-    a function for extracting a subtree from the input species tree  a.k.a pruning,
-    based on the names of species in the rootHOG.
-
-    output: species_tree (pruned), species_names_rhog, prot_names_rhog
-    """
-    species_names_rhog = []
-    prot_names_rhog = []
-    for rec in rhog_i:
-        prot_name = rec.name  # 'tr|E3JPS4|E3JPS4_PUCGT
-        # prot_name = prot_name_full.split("|")[1].strip() # # 'tr|E3JPS4|E3JPS4_PUCGT
-        species_name = prot_name.split("|")[-1].split("_")[-1]
-        if species_name == 'RAT': species_name = "RATNO"
-        species_names_rhog.append(species_name)
-        prot_names_rhog.append(prot_name)
-
-    species_names_uniqe = set(species_names_rhog)
-    logger_hog.info("The number of unique species in the rHOG is " + str(len(species_names_uniqe)) + ".")
-    species_tree.prune(species_names_uniqe, preserve_branch_length=True)
-    # species_tree.write()
-    for node in species_tree.traverse(strategy="postorder"):
-        node_name = node.name
-        num_leaves_no_name=0
-        if len(node_name) < 1:
-            if node.is_leaf():
-                node.name = "leaf_" + str(num_leaves_no_name)
-            else:
-                node_children = node.children
-                list_children_names = [node_child.name for node_child in node_children]
-                node.name = '_'.join(list_children_names)
-    print("Working on the following species tree.")
-    print(species_tree)
-
-    return (species_tree, species_names_rhog, prot_names_rhog)
-
-
-def lable_SD_internal_nodes(tree_out):
-    """
-    for the input gene tree, run the species overlap method
-    and label internal nodes of the gene tree
-
-    output: labeled gene tree
-    """
-    species_name_dic = {}
-    counter_S = 0
-    counter_D = 0
-
-    for node in tree_out.traverse(strategy="postorder"):
-        # print("** now working on node ",node.name) # node_children
-        if node.is_leaf():
-            prot_i = node.name
-            species_name_dic[node] = {str(prot_i).split("|")[-1].split("_")[-1]}
-        else:
-            node.name = "S/D"
-            leaves_list = node.get_leaves()  # print("leaves_list", leaves_list)
-            species_name_set = set([str(prot_i).split("|")[-1].split("_")[-1] for prot_i in leaves_list])
-            # print("species_name_set", species_name_set)
-            species_name_dic[node] = species_name_set
-
-            node_children = node.children  # print(node_children)
-            node_children_species_list = [species_name_dic[node_child] for node_child in node_children]  # list of sets
-            # print("node_children_species_list", node_children_species_list)
-            node_children_species_intersection = set.intersection(*node_children_species_list)
-
-            if node_children_species_intersection:  # print("node_children_species_list",node_children_species_list)
-                counter_D += 1
-                node.name = "D" + str(counter_D)
-            else:
-                counter_S += 1
-                node.name = "S" + str(counter_S)
-    return tree_out
+            (dic_sub_hogs) = infer_HOG_thisLevel(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
+                                                       rhogid_num, gene_trees_folder)
+    if sub_species_tree.is_root():
+        (dic_sub_hogs) = infer_HOG_thisLevel(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
+                                                   rhogid_num, gene_trees_folder)
+    return (dic_sub_hogs)
 
 
 def infer_HOG_thisLevel(node_species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num, gene_trees_folder):
@@ -193,7 +85,7 @@ def infer_HOG_thisLevel(node_species_tree, rhog_i, species_names_rhog, dic_sub_h
     temp11 = []
     for temp in [i._members for i in subHOGs_children]:
         temp11.append([prot.split('|')[2] for prot in temp])
-    # print("there are ",len(subHOGs_children),"subHOGs lower of this level:",[i._hogid for i in subHOGs_children],temp11)
+    # print("there are ",len(subHOGs_children), "subHOGs lower of this level:",[i._hogid for i in subHOGs_children],temp11)
     # print("We want to infer subHOGs at this level,i.e. merge few of them.")
     subHOG_to_be_merged_set_other_Snodes = []
 
@@ -206,19 +98,19 @@ def infer_HOG_thisLevel(node_species_tree, rhog_i, species_names_rhog, dic_sub_h
 
     else:
         sub_msa_list_lowerLevel_ready = [hog._msa for hog in subHOGs_children]
-        merged_msa = wrappers.merge_msa(sub_msa_list_lowerLevel_ready)
+        merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready)
         logger_hog.info("All subHOGs are merged, merged msa is with length of" + str(len(merged_msa)) + " " + str(
             len(merged_msa[0])) + ".")
 
         gene_tree_file_addr = gene_trees_folder + "/tree_" + str(rhogid_num) + "_" + str(
             node_species_tree.name) + ".nwk"
-        gene_tree_raw = wrappers.infer_gene_tree(merged_msa, gene_tree_file_addr)
+        gene_tree_raw = _wrappers.infer_gene_tree(merged_msa, gene_tree_file_addr)
         gene_tree = Tree(gene_tree_raw + ";", format=0)
         logger_hog.info("Gene tree is infered with length of " + str(len(gene_tree)) + ".")
         # gene_tree_i +=1
         R = gene_tree.get_midpoint_outgroup()
         gene_tree.set_outgroup(R)  # print("Midpoint rooting is done for gene tree.")
-        gene_tree = lable_SD_internal_nodes(gene_tree)
+        gene_tree = _utils.lable_SD_internal_nodes(gene_tree)
         # print("Overlap speciation is done for internal nodes of gene tree, as following:")
         print(str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;")
 

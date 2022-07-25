@@ -1,11 +1,10 @@
 
 
-from utils import logger_hog
+from _utils import logger_hog
 import xml.etree.ElementTree as ET
 from Bio.Align import MultipleSeqAlignment
 import itertools
 from Bio.SeqRecord import SeqRecord
-
 
 from random import sample
 

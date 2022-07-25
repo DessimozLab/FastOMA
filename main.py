@@ -11,8 +11,10 @@ import gc
 """
 
 from dask.distributed import Client
-import utils
-from utils import logger_hog
+
+import _utils
+import _inferhog
+from _utils import logger_hog
 
 
 if __name__ == '__main__':
@@ -48,7 +50,7 @@ if __name__ == '__main__':
         # print(len(query_prot_records_species_filtered),len(query_prot_records_species_filtered[0]))
         # (rhogid_num_list, rhogids_prot_records_query) = group_prots_rootHOGs(prots_hogmap_hogid_allspecies, address_rhogs_folder)
 
-    rhogid_num_list = utils.list_rhog_fastas(address_rhogs_folder)
+    rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
     logger_hog.info("Number of root hog is "+str(len(rhogid_num_list))+".")
     print(rhogid_num_list[:2])
     # rhogid_num_list_temp = [836500]  # rhogid_num_list[23]  # [833732]
@@ -72,24 +74,6 @@ if __name__ == '__main__':
     #         infer_hog_a_level(sub_species_tree)
     #     return 1
 
-    def infer_hogs_for_a_rhog(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
-                                                           rhogid_num, gene_trees_folder):
-
-        # finding hogs at each level of species tree (from leaves to root, bottom up)
-
-        children_nodes = sub_species_tree.children
-        for node_species_tree_child in children_nodes:
-            if not node_species_tree_child.is_leaf():
-                (dic_sub_hogs) = infer_hogs_for_a_rhog(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
-                                                           rhogid_num, gene_trees_folder)
-
-                (dic_sub_hogs) = utils.infer_HOG_thisLevel(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
-                                                           rhogid_num, gene_trees_folder)
-        if sub_species_tree.is_root():
-            (dic_sub_hogs) = utils.infer_HOG_thisLevel(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
-                                                       rhogid_num, gene_trees_folder)
-
-        return (dic_sub_hogs)
 
     # HOG_thisLevel_list = []
     # len_HOG_thisLevel_list = []
@@ -151,24 +135,17 @@ if __name__ == '__main__':
     rhog_i = list(SeqIO.parse(prot_address, "fasta"))
     logger_hog.info("number of proteins in the rHOG is "+str(len(rhog_i))+".")
 
-    (species_tree) = utils.read_species_tree(species_tree_address)
-    (species_tree, species_names_rhog, prot_names_rhog) = utils.prepare_species_tree(rhog_i, species_tree)
+    (species_tree) = _utils.read_species_tree(species_tree_address)
+    (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree)
     # species_tree.write();  print(species_tree.write())
 
 
     dic_sub_hogs = {}
+    (dic_sub_hogs) =  _inferhog.infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num, gene_trees_folder)
 
-
-    client = Client(processes=False)  # start local workers as processes
-
-
-    #(dic_sub_hogs) =
-
-    #future_1 = client.submit(inc, 10)  # calls inc(10) in background thread or process
-
-    future_1 = client.submit(infer_hogs_for_a_rhog, species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num, gene_trees_folder)
-
-    (dic_sub_hogs)= future_1.result()
+    #client = Client(processes=False)  # start local workers as processes
+    #future_1 = client.submit(infer_hogs_for_a_rhog, species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num, gene_trees_folder)
+    #(dic_sub_hogs)= future_1.result()
 
     print(dic_sub_hogs)
 
