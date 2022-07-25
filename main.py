@@ -128,17 +128,18 @@ if __name__ == '__main__':
 
     """
 
-    rhogid_num_list_input =  rhogid_num_list[6:7]
+    rhogid_num_list_input =  rhogid_num_list[6:9]
     (groups_xml, gene_id_name, orthoxml_file) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
     # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
     #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
     # len(gene_id_name)
 
-    rhogid_num= rhogid_num_list_input[0]
+    HOGs_rhogs_xml_all = []
+    for rhogid_num in  rhogid_num_list_input:
+        HOGs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder)
 
+        HOGs_rhogs_xml_all.append(HOGs_a_rhog_xml_all)
 
-
-    HOGs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder)
     print("here")
 
 
@@ -154,6 +155,9 @@ if __name__ == '__main__':
     #client = Client(processes=False)  # start local workers as processes
     #future_1 = client.submit(infer_hogs_for_a_rhog, species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num, gene_trees_folder)
     #(dic_sub_hogs)= future_1.result()
+
+    # futures = client.map(inc, range(1000))
+    # as completed
 
 
     #print(dic_sub_hogs)

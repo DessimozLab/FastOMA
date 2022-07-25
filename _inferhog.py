@@ -43,7 +43,6 @@ def infer_hogs_for_a_rhog(sub_species_tree, rhog_i, species_names_rhog, dic_sub_
                           rhogid_num, gene_trees_folder):
 
     # finding hogs at each level of species tree (from leaves to root, bottom up)
-
     children_nodes = sub_species_tree.children
     for node_species_tree_child in children_nodes:
         if not node_species_tree_child.is_leaf():
