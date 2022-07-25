@@ -1,12 +1,11 @@
 
 
 from os import listdir
-
-
+from Bio import SeqIO
+import xml.etree.ElementTree as ET
 
 
 import logging
-
 logging.basicConfig()
 logger_hog = logging.getLogger("hog")
 logger_hog.setLevel(logging.INFO)  # WARN
@@ -31,7 +30,7 @@ def list_rhog_fastas(address_rhogs_folder):
 
 
 
-import logging
+
 from ete3 import Phyloxml
 
 
@@ -133,3 +132,41 @@ def lable_SD_internal_nodes(tree_out):
                 node.name = "S" + str(counter_S)
     return tree_out
 
+
+def prepare_xml(rhogid_num_list_input, address_rhogs_folder):
+    species_prot_dic = {}
+    # all_prot_temp_list= []
+    for rhogid_num in rhogid_num_list_input:
+        prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
+        rhog_i = list(SeqIO.parse(prot_address, "fasta"))
+        for prot_i in rhog_i:
+            species_i = prot_i.id.split("|")[-1].split("_")[-1]
+            if species_i in species_prot_dic:
+                species_prot_dic[species_i].append(prot_i.id)
+            else:
+                species_prot_dic[species_i] = [prot_i.id]
+            # all_prot_temp_list.append(prot_i.id)
+
+    print("there are species ", len(species_prot_dic))
+    orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
+                                                   "originVersion": "Nov 2021", "version": "0.3"})  #
+    gene_counter = 100000
+    gene_id_name = {}
+    query_species_names_rHOGs = list(species_prot_dic.keys())
+    for species_name in query_species_names_rHOGs:
+        no_gene_species = True  # for code develop ment
+        species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": species_name, "NCBITaxId": "1"})
+        database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})
+        genes_xml = ET.SubElement(database_xml, "genes")
+
+        prot_list = species_prot_dic[species_name]
+        for prot_itr in range(len(prot_list)):  # [12:15]
+            prot_i_name = prot_list[prot_itr]
+            gene_id_name[prot_i_name] = gene_counter
+            prot_i_name_short = prot_i_name.split("|")[1].strip()  # tr|E3JPS4|E3JPS4_PUCGT
+            gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_counter), "protId": prot_i_name_short})
+            gene_counter += 1
+
+    groups_xml = ET.SubElement(orthoxml_file, "groups")
+
+    return (groups_xml, gene_id_name, orthoxml_file)

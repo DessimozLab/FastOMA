@@ -25,6 +25,9 @@ def infer_hogs_for_a_rhog(sub_species_tree, rhog_i, species_names_rhog, dic_sub_
     if sub_species_tree.is_root():
         (dic_sub_hogs) = infer_HOG_thisLevel(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
                                                    rhogid_num, gene_trees_folder)
+
+
+
     return (dic_sub_hogs)
 
 

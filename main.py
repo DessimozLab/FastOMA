@@ -128,8 +128,14 @@ if __name__ == '__main__':
 
     """
 
+    rhogid_num_list_input =  rhogid_num_list[6:7]
+    (groups_xml, gene_id_name, orthoxml_file) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
+    # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
+    #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
+    # len(gene_id_name)
 
-    rhogid_num= rhogid_num_list[6]
+    rhogid_num= rhogid_num_list_input[0]
+
     logger_hog.info("\n"+"="*50+"\n"+"Working on root hog: "+str(rhogid_num)+". \n")  # +", ",rhogid_num_i,"-th. \n"
     prot_address = address_rhogs_folder+"HOG_B"+str(rhogid_num).zfill(7)+".fa"
     rhog_i = list(SeqIO.parse(prot_address, "fasta"))
@@ -141,11 +147,38 @@ if __name__ == '__main__':
 
 
     dic_sub_hogs = {}
+
     (dic_sub_hogs) =  _inferhog.infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num, gene_trees_folder)
+
+    HOGs_a_rhog = dic_sub_hogs[species_tree.name]
+    logger_hog.info("subHOGs in thisLevel are " + ' '.join(["[" + str(i) + "]" for i in HOGs_a_rhog]) + " .")
+
+    HOGs_a_rhog_xml_all = []
+    for hog_i in HOGs_a_rhog:
+        print(hog_i)
+        if len(hog_i._members) > 1:
+            # could be improved
+            HOGs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
+            HOGs_a_rhog_xml_all.append(HOGs_a_rhog_xml)
+    print(HOGs_a_rhog_xml_all)
+
+
+    print("here")
+
+
+    for HOGs_a_rhog_xml in HOGs_a_rhog_xml_all:
+        groups_xml.append(HOGs_a_rhog_xml)
+
+    from xml.dom import minidom
+    import xml.etree.ElementTree as ET
+    xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
+    print(xml_str)
+
 
     #client = Client(processes=False)  # start local workers as processes
     #future_1 = client.submit(infer_hogs_for_a_rhog, species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num, gene_trees_folder)
     #(dic_sub_hogs)= future_1.result()
+
 
     print(dic_sub_hogs)
 

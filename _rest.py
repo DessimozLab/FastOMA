@@ -103,70 +103,29 @@ return (num_hog)
 #     return (num_hog)
 
 
-def prepare_xml(rhogid_num_list_temp):
-    species_prot_dic = {}
-    # all_prot_temp_list= []
-    for rhogid_num in rhogid_num_list_temp:
-        prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
-        rhog_i = list(SeqIO.parse(prot_address, "fasta"))
-        for prot_i in rhog_i:
-            species_i = prot_i.id.split("|")[-1].split("_")[-1]
-            if species_i in species_prot_dic:
-                species_prot_dic[species_i].append(prot_i.id)
-            else:
-                species_prot_dic[species_i] = [prot_i.id]
-            # all_prot_temp_list.append(prot_i.id)
+Ncore = 1  # Total number of cores per job
+njobs = 20  # Cut the job up into this many processes.
+# By default, process ~= sqrt(cores) so that the number of processes and the number of threads per process is roughly the same.
+Nproc = Ncore;
 
-    print("there are species ", len(species_prot_dic))
-    orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
-                                                   "originVersion": "Nov 2021", "version": "0.3"})  #
-    gene_counter = 100000
-    gene_id_name = {}
-    query_species_names_rHOGs = list(species_prot_dic.keys())
-    for species_name in query_species_names_rHOGs:
-        no_gene_species = True  # for code develop ment
-        species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": species_name, "NCBITaxId": "1"})
-        database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})
-        genes_xml = ET.SubElement(database_xml, "genes")
+cluster = SLURMCluster(cores=Ncore, processes=Nproc, memory="50GB",
+                       walltime="00:45:00")
+# project="project1",, queue="normal"
+# cluster = SLURMCluster(walltime='00:20:00', n_workers = NCORE, cores=NCORE,processes = NCORE,interface='ib0', memory="20GB",scheduler_options={'interface': 'ens2f0' })
+#  env_extra=['source /work/FAC/FBM/DBC/cdessim2/default/dmoi/miniconda/etc/profile.d/conda.sh','conda activate ML2'],
+print(cluster.job_script())
+print(cluster.dashboard_link)
 
-        prot_list = species_prot_dic[species_name]
-        for prot_itr in range(len(prot_list)):  # [12:15]
-            prot_i_name = prot_list[prot_itr]
-            gene_id_name[prot_i_name] = gene_counter
-            prot_i_name_short = prot_i_name.split("|")[1].strip()  # tr|E3JPS4|E3JPS4_PUCGT
-            gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_counter), "protId": prot_i_name_short})
-            gene_counter += 1
+cluster.scale(jobs=njobs)  # # ask for one jobs
 
-    groups_xml = ET.SubElement(orthoxml_file, "groups")
+import time
+time.sleep(5)
+print(cluster)
+# cluster.adapt(minimum=10, maximum=30)
 
-    return (groups_xml, gene_id_name, orthoxml_file)
-
-    Ncore = 1  # Total number of cores per job
-    njobs = 20  # Cut the job up into this many processes.
-    # By default, process ~= sqrt(cores) so that the number of processes and the number of threads per process is roughly the same.
-    Nproc = Ncore;
-
-    cluster = SLURMCluster(cores=Ncore, processes=Nproc, memory="50GB",
-                           walltime="00:45:00")
-    # project="project1",, queue="normal"
-    # cluster = SLURMCluster(walltime='00:20:00', n_workers = NCORE, cores=NCORE,processes = NCORE,interface='ib0', memory="20GB",scheduler_options={'interface': 'ens2f0' })
-    #  env_extra=['source /work/FAC/FBM/DBC/cdessim2/default/dmoi/miniconda/etc/profile.d/conda.sh','conda activate ML2'],
-    print(cluster.job_script())
-    print(cluster.dashboard_link)
-
-    cluster.scale(jobs=njobs)  # # ask for one jobs
-
-    import time
-    time.sleep(5)
-    print(cluster)
-    # cluster.adapt(minimum=10, maximum=30)
-
-    client = Client(cluster, timeout='1000s', set_as_default=True)
+client = Client(cluster, timeout='1000s', set_as_default=True)
 
 
-with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
-    (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
-len(gene_id_name)
 
 len_HOG_thisLevel_all = []
 
@@ -177,13 +136,13 @@ parralel_num = int(number_roothog / num_per_parralel)
 
 for list_idx in range(parralel_num + 1):
 
-    if list_idx == parralel_num:
-        rhogid_num_list = rhogid_num_list_temp[list_idx * num_per_parralel:]
-    else:
-        rhogid_num_list = rhogid_num_list_temp[list_idx * num_per_parralel:(list_idx + 1) * num_per_parralel]
+if list_idx == parralel_num:
+    rhogid_num_list = rhogid_num_list_temp[list_idx * num_per_parralel:]
+else:
+    rhogid_num_list = rhogid_num_list_temp[list_idx * num_per_parralel:(list_idx + 1) * num_per_parralel]
 
-    (out_len) = dask.delayed(infer_HOG_rhog3)(rhogid_num_list, gene_id_name)
-    len_HOG_thisLevel_all.append(out_len)
+(out_len) = dask.delayed(infer_HOG_rhog3)(rhogid_num_list, gene_id_name)
+len_HOG_thisLevel_all.append(out_len)
 
 print("before computation", len(len_HOG_thisLevel_all), len_HOG_thisLevel_all[:2])
 
@@ -201,7 +160,6 @@ print(" computation done ")
 # import os
 
 # address_working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-
 
 # address_rhogs_folder  =address_working_folder + "/rhog_size_g2_s1k/"
 
