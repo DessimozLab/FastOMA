@@ -4,14 +4,14 @@ import os
 from xml.dom import minidom
 #import concurrent.futures
 
-import dask
+
 from dask.distributed import LocalCluster
 from dask_jobqueue import SLURMCluster
 import gc
 """
 
-import dask
-from dask.distributed import Client
+#import dask
+#from dask.distributed import Client
 
 import _utils
 import _inferhog
@@ -59,13 +59,11 @@ if __name__ == '__main__':
     #     (dic_sub_hogs) = infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
     #                                                        rhogid_num, gene_trees_folder)
 
-
     """
         to do :
                 input list of rhg num
                 think how pickle per level ?
-                think how to distribute rhog into list
-                
+                think how to distribute rhog into list        
                 # Your functions should not change the inputs directly.
                 https://docs.dask.org/en/stable/delayed-best-practices.html#
                 dic hog ??
@@ -78,10 +76,17 @@ if __name__ == '__main__':
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
     # # len(gene_id_name)
 
-
     rhogid_num = rhogid_num_list_input[0]
-    print("*** clinet **** ")
-    client = Client()
+
+    out= _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
+                                  gene_trees_folder)
+    print("done", out)
+
+
+
+
+    #print("*** clinet **** ")
+    #client = Client()
 
 
     #dask_working.visualize(filename='/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/out_4.svg')
@@ -89,9 +94,9 @@ if __name__ == '__main__':
     #dask_result = dask_working.compute()
     #print(dask_result)  # prints "55"
 
-    dask_a = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,gene_trees_folder)
-    print("this is dask_a: \n ",dask_a)
-    dask_a.visualize(filename='/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/out_4.svg')
+    #dask_a = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,gene_trees_folder)
+    #print("this is dask_a: \n ",dask_a)
+    #dask_a.visualize(filename='/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/out_4.svg')
 
 
     #dask.compute()
@@ -117,8 +122,5 @@ if __name__ == '__main__':
     # futures = client.map(inc, range(1000))
     # as completed
 
-
     #print(dic_sub_hogs)
-
     print("**")
-

@@ -10,7 +10,7 @@ import _utils
 from _hog_class import HOG
 from _utils import logger_hog
 
-@dask.delayed
+#@dask.delayed
 def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder):
     logger_hog.info(
         "\n" + "=" * 50 + "\n" + "Working on root hog: " + str(rhogid_num) + ". \n")  # +", ",rhogid_num_i,"-th. \n"
@@ -26,7 +26,7 @@ def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_
     (dic_sub_hogs) = infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num,
                                                      gene_trees_folder)
 
-    dic_sub_hogs = dask.compute(dic_sub_hogs)
+    #dic_sub_hogs = dask.compute(dic_sub_hogs)
     HOGs_a_rhog = dic_sub_hogs[species_tree.name]
     logger_hog.info("subHOGs in thisLevel are " + ' '.join(["[" + str(i) + "]" for i in HOGs_a_rhog]) + " .")
 
@@ -41,7 +41,7 @@ def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_
 
     return HOGs_a_rhog_xml_all
 
-@dask.delayed
+#@dask.delayed
 def infer_hogs_for_a_rhog(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
                           rhogid_num, gene_trees_folder):
 
@@ -51,14 +51,14 @@ def infer_hogs_for_a_rhog(sub_species_tree, rhog_i, species_names_rhog, dic_sub_
         if not node_species_tree_child.is_leaf():
             (dic_sub_hogs) = infer_hogs_for_a_rhog(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
                                                    rhogid_num, gene_trees_folder)
-            dic_sub_hogs = dask.compute(dic_sub_hogs)
+            #dic_sub_hogs = dask.compute(dic_sub_hogs)
             (dic_sub_hogs) = infer_HOG_thisLevel(node_species_tree_child, rhog_i, species_names_rhog, dic_sub_hogs,
                                                        rhogid_num, gene_trees_folder)
 
     if sub_species_tree.is_root():
         (dic_sub_hogs) = infer_HOG_thisLevel(sub_species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
                                                    rhogid_num, gene_trees_folder)
-        dic_sub_hogs = dask.compute(dic_sub_hogs)
+        #dic_sub_hogs = dask.compute(dic_sub_hogs)
 
 
 
