@@ -15,7 +15,7 @@ def merge_msa(list_msas):
     output: merged (msa)
     """
     logger_hog.debug(list_msas)
-    logger_hog.debug(str(list_msas[0][0].id ) +"\n")
+    logger_hog.debug(str(list_msas[0][0].id ) + "\n")
     wrapper_mafft_merge = mafft.Mafft(list_msas, datatype="PROTEIN")
     wrapper_mafft_merge.options['--merge'].active = True
     merged = wrapper_mafft_merge()

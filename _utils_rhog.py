@@ -1,24 +1,21 @@
 
 
-
-
-
 def parse_oma_db(oma_database_address):
     """
     a function for loading an oma database in hdf5 format using pyoma.browser.db.
 
-    output: oma_db, list_oma_speices
+    output: oma_db, list_oma_species
     """
     oma_db = db.Database(oma_database_address)
     current_time = datetime.now().strftime("%H:%M:%S")
     print(current_time, "- OMA data is parsed and its release name is:", oma_db.get_release_name())
-    list_oma_speices = [z.uniprot_species_code for z in oma_db.tax.genomes.values()]
+    list_oma_species = [z.uniprot_species_code for z in oma_db.tax.genomes.values()]
     current_time = datetime.now().strftime("%H:%M:%S")
-    print(current_time, "- There are", len(list_oma_speices), "species in the OMA database.")
-    return (oma_db, list_oma_speices)
+    print(current_time, "- There are", len(list_oma_species), "species in the OMA database.")
+    return oma_db, list_oma_species
 
 
-def parse_proteome(list_oma_speices):
+def parse_proteome(list_oma_species):
     """
     a function for parsing fasta files of proteins located in /omamer_search/proteome/
     using Bio.SeqIO.parse
@@ -48,10 +45,10 @@ def parse_proteome(list_oma_speices):
     print(current_time, "- The are", str(query_species_num), "species in the proteome folder.")
     # for development
     for species_i in range(query_species_num):
-        len_prot_record_i = len(prots_record_allspecies[species_i])
+        # len_prot_record_i = len(prots_record_allspecies[species_i])
         species_name_i = query_species_names[species_i]
         # print(species_name_i,len_prot_record_i)
-        if species_name_i in list_oma_speices:
+        if species_name_i in list_oma_species:
             current_time = datetime.now().strftime("%H:%M:%S")
             print(current_time, "- the species", species_name_i,
                   " already exists in the oma database, remove them first")
@@ -61,7 +58,7 @@ def parse_proteome(list_oma_speices):
     # >tr|A0A2I3FYY2|A0A2I3FYY2_NOMLE Uncharacterized protein OS=Nomascus leucogenys OX=61853 GN=CLPTM1L PE=3 SV=1
     # will be ">tr|A0A2I3FYY2|A0A2I3FYY2_NOMLE"
     # [i.id for i in prots_record_allspecies[0] if len(i.id)!=30 and len(i.id)!=22 ] #'sp|O47892|CYB_NOMLE',
-    return (query_species_names, prots_record_allspecies)
+    return query_species_names, prots_record_allspecies
 
 
 def parse_hogmap_omamer(query_species_names):
@@ -88,7 +85,7 @@ def parse_hogmap_omamer(query_species_names):
     prots_hogmap_subfmedseqlen_allspecies = []
     for query_species_name in query_species_names:
         omamer_output_address = address_working_folder + "omamer_search/hogmap/" + query_species_name + ".hogmap"
-        omamer_output_file = open(omamer_output_address, 'r');
+        omamer_output_file = open(omamer_output_address, 'r')
         prots_hogmap_name = []
         prots_hogmap_hogid = []
         prots_hogmap_subfscore = []
@@ -206,7 +203,7 @@ def group_prots_rootHOGs(prots_hogmap_hogid_allspecies, address_rhogs_folder):
     # gathering name of prots from all species,  group them based on rHOG that they mapped on
     rhogid_prot_idx_dic = {}
     for species_idx in range(len(query_species_names)):
-        species_name = query_species_names[species_idx]
+        # species_name = query_species_names[species_idx]
         prots_hogmap_rhogid = prots_hogmap_rhogid_allspecies[species_idx]
         for prots_hogmap_idx in range(len(prots_hogmap_rhogid)):
             prot_hogmap_rhogid = prots_hogmap_rhogid[prots_hogmap_idx]
@@ -231,7 +228,7 @@ def group_prots_rootHOGs(prots_hogmap_hogid_allspecies, address_rhogs_folder):
                 species_idx_rhogid.append(species_idx)
 
             if print_hog_more_than_one_species:
-                if set(species_idx_rhogid) > 1:
+                if len(set(species_idx_rhogid)) > 1:
                     rhogids_prot_records_query.append(rhogid_prot_records)
             else:  # print roothog even with one species
                 rhogids_prot_records_query.append(rhogid_prot_records)
@@ -247,7 +244,7 @@ def group_prots_rootHOGs(prots_hogmap_hogid_allspecies, address_rhogs_folder):
         rhogid_num = int(rhogid_B[1:])  # # B0613860
         rhogid_num_list.append(rhogid_num)
 
-        if len(rhogid_prot_records_query) > 2 and len(rhogid_prot_records_query) < 500:
+        if 2 < len(rhogid_prot_records_query) < 500:
             SeqIO.write(rhogid_prot_records_query, address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa",
                         "fasta")
             # rhogids_prot_records_oma = []
@@ -258,13 +255,10 @@ def group_prots_rootHOGs(prots_hogmap_hogid_allspecies, address_rhogs_folder):
             # rhogids_prot_records_both= rhogids_prot_records_oma +  rhogid_prot_records_query
             # rhogids_prot_records.append(rhogids_prot_records_both)
 
-    # print("all HOGs   (>2 <100) has written.",len(rhogids_prot_records_query),len(rhogids_list), len(rhogid_prot_records_query), len(rhogid_prot_records_query[0]))
+    # print("all HOGs   (>2 <100) has written.",len(rhogids_prot_records_query),len(rhogids_list),
+    # len(rhogid_prot_records_query), len(rhogid_prot_records_query[0]))
 
     current_time = datetime.now().strftime("%H:%M:%S")
     print(current_time, "- Sequences of rootHOGs are writtend as fasta file in " + address_rhogs_folder)
 
-    return (rhogid_num_list, rhogids_prot_records_query)
-
-
-
-
+    return rhogid_num_list, rhogids_prot_records_query

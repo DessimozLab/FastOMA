@@ -82,7 +82,7 @@ def prepare_species_tree(rhog_i, species_tree):
     # species_tree.write()
     for node in species_tree.traverse(strategy="postorder"):
         node_name = node.name
-        num_leaves_no_name=0
+        num_leaves_no_name = 0
         if len(node_name) < 1:
             if node.is_leaf():
                 node.name = "leaf_" + str(num_leaves_no_name)
@@ -153,7 +153,7 @@ def prepare_xml(rhogid_num_list_input, address_rhogs_folder):
     gene_counter = 100000
     gene_id_name = {}
     query_species_names_rHOGs = list(species_prot_dic.keys())
-    for species_name in query_species_names_rHOGs:
+    for species_name in querfy_species_names_rHOGs:
         no_gene_species = True  # for code develop ment
         species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": species_name, "NCBITaxId": "1"})
         database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})

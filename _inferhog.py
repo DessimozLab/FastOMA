@@ -144,7 +144,7 @@ def infer_HOG_thisLevel(node_species_tree, rhog_i, species_names_rhog, dic_sub_h
             node_species_tree.name) + ".nwk"
         gene_tree_raw = _wrappers.infer_gene_tree(merged_msa, gene_tree_file_addr)
         gene_tree = Tree(gene_tree_raw + ";", format=0)
-        logger_hog.info("Gene tree is infered with length of " + str(len(gene_tree)) + ".")
+        logger_hog.info("Gene tree is inferred with length of " + str(len(gene_tree)) + ".")
         # gene_tree_i +=1
         R = gene_tree.get_midpoint_outgroup()
         gene_tree.set_outgroup(R)  # print("Midpoint rooting is done for gene tree.")
@@ -215,4 +215,5 @@ def infer_HOG_thisLevel(node_species_tree, rhog_i, species_names_rhog, dic_sub_h
     #         for i in range(subHOG_to_be_merged_set_other_Snodes):
     # print("*&*& ",node_species_tree.name)
     dic_sub_hogs[node_species_tree.name] = HOG_this_level
+
     return (dic_sub_hogs)
