@@ -4,14 +4,13 @@ import os
 from xml.dom import minidom
 #import concurrent.futures
 
-
-from dask.distributed import LocalCluster
 from dask_jobqueue import SLURMCluster
 import gc
 """
 
-# import dask
-# from dask.distributed import Client
+import dask
+from dask.distributed import Client
+from dask.distributed import LocalCluster
 
 import _utils
 import _inferhog
@@ -29,7 +28,6 @@ if __name__ == '__main__':
     print("we are here ")
     if step == "roothog":
         """
-        
         Structure of folders:
         Put proteomes of species as fasta files in /omamer_search/proteome/
         Run omamer and put the output of omamer in /omamer_search/hogmap/
@@ -56,34 +54,46 @@ if __name__ == '__main__':
     rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
     logger_hog.info("Number of root hog is "+str(len(rhogid_num_list))+".")
     print(rhogid_num_list[:2])
-    # rhogid_num_list_temp = [836500]  # rhogid_num_list[23]  # [833732]
-
-    #     (dic_sub_hogs) = infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
-    #                                                        rhogid_num, gene_trees_folder)
-
-    """
-        to do :
-                input list of rhg num
-                think how pickle per level ?
-                think how to distribute rhog into list        
-                # Your functions should not change the inputs directly.
-                https://docs.dask.org/en/stable/delayed-best-practices.html#
-                dic hog ??
-    """
 
     rhogid_num_list_input = rhogid_num_list[6:9]
-    (groups_xml, gene_id_name, orthoxml_file) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
+    (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
     # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
     # # len(gene_id_name)
-    # rhogid_num = rhogid_num_list_input[0]
-    for rhogid_num in rhogid_num_list_input:
-        out = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
-                                      gene_trees_folder)
-        print("done", out)
 
-    # print("*** clinet **** ")
-    # client = Client()
+
+    ###  Running dask
+
+    print("*** client **** ")
+    cluster = LocalCluster()
+    client = Client(cluster)
+    print(cluster.dashboard_link)
+    print(cluster.get_logs())
+
+    len_tresh = 100
+
+    rhogid_num = rhogid_num_list_input[0]
+    for rhogid_num_i in range(len(rhogid_num_list_input)):
+        rhogid_num = rhogid_num_list_input[rhogid_num_i]
+        rhogid_len = rhogid_len_list[rhogid_num_i]
+
+        if rhogid_len  < len_tresh:
+
+            dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
+                                     address_rhogs_folder, species_tree_address, gene_trees_folder)
+        else:
+
+
+
+
+
+
+
+
+    #     out = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
+    #                                   gene_trees_folder)
+    #     print("done", out)
+
 
     # dask_working.visualize(filename='/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/out_4.svg')
     # print("visualized.")
@@ -110,13 +120,38 @@ if __name__ == '__main__':
     # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
     # print(xml_str)
 
-    # client = Client(processes=False)  # start local workers as processes
+    #client = Client(processes=False)  # start local workers as processes
     # future_1 = client.submit(infer_hogs_for_a_rhog, species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
     # rhogid_num, gene_trees_folder)
+    # future = client.scatter(parameters)
+
+    dask.visualize(gene_id_name)
+
+
+
+    #out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder)
+
     # (dic_sub_hogs)= future_1.result()
 
     # futures = client.map(inc, range(1000))
     # as completed
+    # future.cancel()
 
-    # print(dic_sub_hogs)
+    # rhogid_num_list_temp = [836500]  # rhogid_num_list[23]  # [833732]
+
+    #     (dic_sub_hogs) = infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
+    #                                                        rhogid_num, gene_trees_folder)
+
+
+
+
+    """
+        to do :
+                input list of rhg num
+                think how pickle per level ?
+                think how to distribute rhog into list        
+                # Your functions should not change the inputs directly.
+                https://docs.dask.org/en/stable/delayed-best-practices.html#
+                dic hog ??
+    """
     print("**")

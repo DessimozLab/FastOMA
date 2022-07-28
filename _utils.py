@@ -136,9 +136,12 @@ def lable_SD_internal_nodes(tree_out):
 def prepare_xml(rhogid_num_list_input, address_rhogs_folder):
     species_prot_dic = {}
     # all_prot_temp_list= []
+    rhogid_len_list = [ ]
     for rhogid_num in rhogid_num_list_input:
         prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
         rhog_i = list(SeqIO.parse(prot_address, "fasta"))
+        rhogid_len_list.append(len(rhog_i))
+
         for prot_i in rhog_i:
             species_i = prot_i.id.split("|")[-1].split("_")[-1]
             if species_i in species_prot_dic:
@@ -153,7 +156,7 @@ def prepare_xml(rhogid_num_list_input, address_rhogs_folder):
     gene_counter = 100000
     gene_id_name = {}
     query_species_names_rHOGs = list(species_prot_dic.keys())
-    for species_name in querfy_species_names_rHOGs:
+    for species_name in query_species_names_rHOGs:
         no_gene_species = True  # for code develop ment
         species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": species_name, "NCBITaxId": "1"})
         database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})
@@ -169,4 +172,5 @@ def prepare_xml(rhogid_num_list_input, address_rhogs_folder):
 
     groups_xml = ET.SubElement(orthoxml_file, "groups")
 
-    return (groups_xml, gene_id_name, orthoxml_file)
+
+    return (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list)
