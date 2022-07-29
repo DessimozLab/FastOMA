@@ -59,7 +59,7 @@ if __name__ == '__main__':
     logger_hog.info("Number of root hog is "+str(len(rhogid_num_list))+".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list_input = rhogid_num_list[9:30]
+    rhogid_num_list_input = rhogid_num_list[9:13]
     (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
     # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
@@ -78,7 +78,7 @@ if __name__ == '__main__':
         nproc = ncore
 
         cluster = LocalCluster()
-        # cluster = SLURMCluster(cores=ncore, processes=nproc, memory="10GB", walltime="00:10:00")
+        # cluster = SLURMCluster(cores=ncore, processes=nproc, memory="20GB", walltime="01:00:00")
         cluster.scale(njobs)  # # ask for one jobs
         client = Client(cluster)
 

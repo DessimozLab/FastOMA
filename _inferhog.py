@@ -48,6 +48,11 @@ def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_
     print(HOGs_a_rhog_xml_all)
     logger_hog.info("we are not reporting single tone hogs in the output xml.")
 
+    with open(pickle_address + '/file_' + str(rhogid_num) + '.pickle', 'wb') as handle:
+        dill_pickle.dump(HOGs_a_rhog_xml_all, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
+
+    del HOGs_a_rhog
+    gc.collect()
 
 
     return HOGs_a_rhog_xml_all
