@@ -126,7 +126,7 @@ def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_ch
 
     sub_msa_list_lowerLevel_ready = [hog._msa for hog in hogs_children_level_list]
     merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready)
-    logger_hog.info("All subHOGs are merged, merged msa is with length of" + str(len(merged_msa)) + " " + str(
+    logger_hog.info("All subHOGs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
         len(merged_msa[0])) + ".")
 
     gene_tree_file_addr = gene_trees_folder + "/tree_" + str(rhogid_num) + "_" + str(
@@ -137,61 +137,20 @@ def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_ch
     R = gene_tree.get_midpoint_outgroup()
     gene_tree.set_outgroup(R)  # print("Midpoint rooting is done for gene tree.")
     gene_tree = _utils.lable_SD_internal_nodes(gene_tree)
-    # print("Overlap speciation is done for internal nodes of gene tree, as following:")
+    print("Overlap speciation is done for internal nodes of gene tree, as following:")
     print(str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;")
+
+    hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa)
 
     # tree_leaves = [i.name for i in gene_tree.get_leaves()]
     # assigned_leaves_to_hog = []        #sub_msas_list_this_level = []
-    subHOGs_id_children_assigned = []  # the same as  subHOG_to_be_merged_all_id
-    hogs_this_level_list = []
-    subHOG_to_be_merged_set_other_Snodes = []
-    subHOG_to_be_merged_set_other_Snodes_flattned_temp = []
-    for node in gene_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "processed") and n.processed == True):  # start from root
-        # print("Leaves assigned to hog are ", assigned_leaves_to_hog)   #print("Traversing gene tree. Now at node", node.name)
-        if not node.is_leaf():
-            node_leaves_name = [i.name for i in node.get_leaves()]
-            # print(node_leaves_name)
-            if node.name[0] == "S":  # this is a sub-hog.
-                subHOG_to_be_merged = []
-                for node_leave_name in node_leaves_name:  # print(node_leave_name)
-                    for subHOG in hogs_children_level_list:
-                        subHOG_members = subHOG._members
-                        if node_leave_name in subHOG_members:  # could be improved
-                            if subHOG._hogid not in subHOG_to_be_merged_set_other_Snodes_flattned_temp:
-                                subHOG_to_be_merged.append(subHOG)
-                                subHOGs_id_children_assigned.append(subHOG._hogid)
-                            else:
-                                print("issue 184", node.name, subHOG._hogid, node_leave_name)
-                                if "processed" in node:
-                                    print(node.name)
-                                else:
-                                    print("processed not in ",
-                                          node.name)  # print(node_leave_name,"is in ",subHOG._hogid)
-                if subHOG_to_be_merged:
-                    subHOG_to_be_merged_set = set(subHOG_to_be_merged)
-                    taxnomic_range = node_species_tree.name
-                    HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid_num, msa=merged_msa)
-                    hogs_this_level_list.append(HOG_this_node)
-                    subHOG_to_be_merged_set_other_Snodes.append([i._hogid for i in subHOG_to_be_merged_set])
-                    subHOG_to_be_merged_set_other_Snodes_flattned_temp = [item for items in
-                                                                          subHOG_to_be_merged_set_other_Snodes for
-                                                                          item in items]
-                    #  I don't need to traverse deeper in this clade
-                node.processed = True  # print("?*?*  ", node.name)
 
-        subHOG_to_be_merged_set_other_Snodes_flattned = [item for items in subHOG_to_be_merged_set_other_Snodes for
-                                                         item in items]
-        if [i._hogid for i in hogs_children_level_list] == subHOG_to_be_merged_set_other_Snodes_flattned:
-            break
-    for subHOG in hogs_children_level_list:  # for the single branch  ( D include a  subhog and a S node. )
-        if subHOG._hogid not in subHOGs_id_children_assigned:  # print("here", subHOG)
-            hogs_this_level_list.append(subHOG)
     prot_list_sbuhog = [i._members for i in hogs_this_level_list]
     prot_list_sbuhog_short = []
     for prot_sub_list_sbuhog in prot_list_sbuhog:
         prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
     logger_hog.info("- " + str(
-        len(prot_list_sbuhog_short)) + "HOGs are inferred at the level " + node_species_tree.name + ": " + " ".join(
+        len(prot_list_sbuhog_short)) + " HOGs are inferred at the level " + node_species_tree.name + ": " + " ".join(
         [str(i) for i in prot_list_sbuhog_short]))
     # print("By merging ",subHOG_to_be_merged_set_other_Snodes)
     # check for conflicts in merging
@@ -201,3 +160,60 @@ def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_ch
     # print("*&*& ",node_species_tree.name)
 
     return hogs_this_level_list
+
+
+
+
+def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa):
+
+    """
+    this function could be improved
+    """
+    subHOGs_id_children_assigned = []  # the same as  subHOG_to_be_merged_all_id
+    hogs_this_level_list = []
+    subHOG_to_be_merged_set_other_Snodes = []
+    subHOG_to_be_merged_set_other_Snodes_flattned_temp = []
+    for node in gene_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n,
+                                                                                     "processed") and n.processed == True):  # start from root
+        # print("Leaves assigned to hog are ", assigned_leaves_to_hog)   #print("Traversing gene tree. Now at node", node.name)
+        if node.is_leaf():
+            continue
+        node_leaves_name = [i.name for i in node.get_leaves()]
+        if node.name[0] == "S":  # this is a sub-hog.
+            subHOG_to_be_merged = []
+            for node_leave_name in node_leaves_name:  # print(node_leave_name)
+                for subHOG in hogs_children_level_list:
+                    subHOG_members = subHOG._members
+                    if node_leave_name in subHOG_members:  # could be improved
+                        if subHOG._hogid not in subHOG_to_be_merged_set_other_Snodes_flattned_temp:
+                            subHOG_to_be_merged.append(subHOG)
+                            subHOGs_id_children_assigned.append(subHOG._hogid)
+                        else:
+                            print("issue 184", node.name, subHOG._hogid, node_leave_name)
+                            if "processed" in node:
+                                print(node.name)
+                            else:
+                                print("processed not in ", node.name)  # print(node_leave_name,"is in ",subHOG._hogid)
+
+            if subHOG_to_be_merged:
+                subHOG_to_be_merged_set = set(subHOG_to_be_merged)
+                taxnomic_range = node_species_tree.name
+                HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid_num, msa=merged_msa)
+                hogs_this_level_list.append(HOG_this_node)
+                subHOG_to_be_merged_set_other_Snodes.append([i._hogid for i in subHOG_to_be_merged_set])
+                subHOG_to_be_merged_set_other_Snodes_flattned_temp = [item for items in
+                                                                      subHOG_to_be_merged_set_other_Snodes for
+                                                                      item in items]
+                #  I don't need to traverse deeper in this clade
+            node.processed = True  # print("?*?*  ", node.name)
+
+        subHOG_to_be_merged_set_other_Snodes_flattned = [item for items in subHOG_to_be_merged_set_other_Snodes for
+                                                         item in items]
+        if [i._hogid for i in hogs_children_level_list] == subHOG_to_be_merged_set_other_Snodes_flattned:
+            break
+    for subHOG in hogs_children_level_list:  # for the single branch  ( D include a  subhog and a S node. )
+        if subHOG._hogid not in subHOGs_id_children_assigned:  # print("here", subHOG)
+            hogs_this_level_list.append(subHOG)
+
+    return hogs_this_level_list
+

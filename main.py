@@ -58,7 +58,7 @@ if __name__ == '__main__':
     logger_hog.info("Number of root hog is "+str(len(rhogid_num_list))+".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list_input = rhogid_num_list[6:9]
+    rhogid_num_list_input = rhogid_num_list[9:10]
     (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
     # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
@@ -83,8 +83,8 @@ if __name__ == '__main__':
 
     else:
 
-        rhogid_num = rhogid_num_list_input[1]
-        HOGs_a_rhog_xml_all  = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
+        rhogid_num = rhogid_num_list_input[0]
+        HOGs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
                                       gene_trees_folder)
 
     for HOGs_a_rhog_xml in HOGs_a_rhog_xml_all:
@@ -139,14 +139,18 @@ if __name__ == '__main__':
 
 
 
-
-    """
-        to do :
-                input list of rhg num
-                think how pickle per level ?
-                think how to distribute rhog into list        
-                # Your functions should not change the inputs directly.
-                https://docs.dask.org/en/stable/delayed-best-practices.html#
-                dic hog ??
-    """
     print("**")
+
+"""
+to do :
+    input list of rhg num
+    think how pickle per level ?
+    think how to distribute rhog into list        
+    # Your functions should not change the inputs directly.
+    https://docs.dask.org/en/stable/delayed-best-practices.html#
+    dic hog ??
+    
+    dobule check function merge_subhogs 
+            
+"""
+
