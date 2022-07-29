@@ -59,18 +59,18 @@ if __name__ == '__main__':
     (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
     # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
-    # # len(gene_id_name)
+    len(gene_id_name)
 
-
-    ###  Running dask
-
-    print("*** client **** ")
-    cluster = LocalCluster()
-    client = Client(cluster)
-    print(cluster.dashboard_link)
-    print(cluster.get_logs())
-
-    len_tresh = 100
+    #
+    # ###  Running dask
+    #
+    # print("*** client **** ")
+    # cluster = LocalCluster()
+    # client = Client(cluster)
+    # print(cluster.dashboard_link)
+    # print(cluster.get_logs())
+    #
+    # len_tresh = 100
 
     rhogid_num = rhogid_num_list_input[0]
     for rhogid_num_i in range(len(rhogid_num_list_input)):
@@ -81,11 +81,16 @@ if __name__ == '__main__':
 
             dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
                                      address_rhogs_folder, species_tree_address, gene_trees_folder)
+
+            print(dask_out.result())
+
         else:
 
-
-
-
+    #
+    #
+    #
+    #
+    #
 
 
 
