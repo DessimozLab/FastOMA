@@ -46,11 +46,10 @@
 # infer_hogs_for_a_rhog(sub_species_tree, [], [], [ ], [])
 #
 
-
-for i in range(6):
-
-    if i > 3:
-        continue
-    print(i)
-
+#
+# for i in range(6):
+#
+#     if i > 3:
+#         continue
+#     print(i)
 
