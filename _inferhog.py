@@ -25,24 +25,24 @@ def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_
         dic_sub_hogs = {}
         future_out = Client.submit(infer_hogs_for_rhog_dask_future, species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
                                        rhogid_num, gene_trees_folder)
-        future_out.result()
+        HOGs_a_rhog = future_out.result()
     else:
-        dic_sub_hogs = {}
-        (dic_sub_hogs) = infer_hogs_for_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs, rhogid_num,
-                                                     gene_trees_folder)
 
-    #dic_sub_hogs = dask.compute(dic_sub_hogs)
-    HOGs_a_rhog = dic_sub_hogs[species_tree.name]
+        HOGs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
+
+
     logger_hog.info("subHOGs in thisLevel are " + ' '.join(["[" + str(i) + "]" for i in HOGs_a_rhog]) + " .")
 
     HOGs_a_rhog_xml_all = []
     for hog_i in HOGs_a_rhog:
         print(hog_i)
         if len(hog_i._members) > 1:
+
             # could be improved
             HOGs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
             HOGs_a_rhog_xml_all.append(HOGs_a_rhog_xml)
     print(HOGs_a_rhog_xml_all)
+    logger_hog.info("we are not reporting single tone hogs in the output xml.")
 
     return HOGs_a_rhog_xml_all
 
@@ -88,7 +88,7 @@ def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhog_i, species_nam
     hogs_children_level_list = []
     for node_species_tree_child in children_nodes:
         hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
-       hogs_children_level_list.extend(hogs_children_level_list_i)
+        hogs_children_level_list.extend(hogs_children_level_list_i)
 
     hogs_this_level_list = infer_hogs_this_level(sub_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder)
 
@@ -102,9 +102,10 @@ def singletone_hog(node_species_tree, rhog_i, species_names_rhog, rhogid_num):
                                  species_names_rhog[idx] == node_species_name]
     rhog_part = [rhog_i[i] for i in prot_idx_interest_in_rhog]
 
+    hogs_this_level_list = []
     for prot in rhog_part:
         hog_leaf = HOG(prot, node_species_name, rhogid_num)  # node_species_tree.name
-        hogs_this_level_list = [hog_leaf]
+        hogs_this_level_list.append(hog_leaf)
     return hogs_this_level_list
 
 def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder):
@@ -115,8 +116,9 @@ def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_ch
 
     if node_species_tree.is_leaf():
         assert hogs_children_level_list == []
-        hogs_this_level_list =  singletone_hog(node_species_tree, rhog_i, species_names_rhog, rhogid_num)
-        return  hogs_this_level_list
+        hogs_this_level_list = singletone_hog(node_species_tree, rhog_i, species_names_rhog, rhogid_num)
+
+        return hogs_this_level_list
 
     if len(hogs_children_level_list) == 1:
         hogs_this_level_list = hogs_children_level_list
@@ -199,57 +201,3 @@ def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_ch
     # print("*&*& ",node_species_tree.name)
 
     return hogs_this_level_list
-
-
-# during parralleization, there will be a problem, few times it wants to creat the folder
-    # if not os.path.exists(gene_trees_folder) :
-    #    os.mkdir(gene_trees_folder)
-    #  File "code7d_4.py", line 470, in infer_HOG_thisLevel
-    # os.mkdir(gene_trees_folder)
-    # FileExistsError: [Errno 17] File exists: '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2//gene_trees_test_7d_3/'
-    #subHOGs_children = HOG_children_level_list
-    # if len(rhog_i) == 0:
-    #     logger_hog.warning('There is no protein in the rHOG: ' + str(rhogid_num))
-    #     hogs_this_level_list = []
-    #     return hogs_this_level_list
-    #
-    # elif len(rhog_i) == 1:
-    #     logger_hog.warning('There is only one protein in the rHOG: ' + str(rhogid_num))
-    #     node_species_name = node_species_tree.children[0].name  # there is only one species (for the one protein)
-    #     prot = rhog_i[0]
-    #     sub_hog_leaf = HOG(prot, node_species_name, rhogid_num)
-    #     hogs_this_level_list = [sub_hog_leaf]
-    #     return hogs_this_level_list
-    #
-    # #sub_msa_list_lowerLevel = []  # including subHOGS of lower level
-    # # subHOGs_children = []
-    #
-    # # hogs_this_level_list = []
-    # # # print("working on node", node_species_tree.name,"with",len(node_species_tree.children),"children.")
-    # for node_child in node_species_tree.children:
-    #     if node_child.is_leaf():
-    #         node_species_name = node_child.name
-    #         # extracting those proteins of the rHOG that belongs to this species (child node of species tree)
-    #         interest_list = [idx for idx in range(len(species_names_rhog)) if
-    #                          species_names_rhog[idx] == node_species_name]
-    #         rhog_part = [rhog_i[i] for i in interest_list]
-    #         # sub_msa = [MultipleSeqAlignment([i]) for i in rhog_part]             #print("len",len(rhog_part))
-    #
-    #         for prot in rhog_part:
-    #             sub_hog_leaf = HOG(prot, node_species_name, rhogid_num)  # node_species_tree.name
-    #             # list_all_hogs_ever.append(sub_hog_leaf)
-    #             subHOGs_children.append(sub_hog_leaf)
-    #     else:  # the child node is an internal node, subHOGs are inferred till now during traversing.
-    #         # print("sub msa for internal node", node_child.name,"is read from dic.")
-    #         if node_child.name in dic_sub_hogs:
-    #             sub_hogs_child = res_l ??? #dic_sub_hogs[node_child.name]
-    #             subHOGs_children += sub_hogs_child
-    #         else:
-    #             logger_hog.error("Error 131, no sub msa for the internal node ", node_child.name, node_child, "\n",
-    #                              dic_sub_hogs)
-    #             assert 2 == 1
-    # temp11 = []
-    # # for temp in [i._members for i in subHOGs_children]:
-    # #     temp11.append([prot.split('|')[2] for prot in temp])
-    # # print("there are ",len(subHOGs_children), "subHOGs lower of this level:",[i._hogid for i in subHOGs_children],temp11)
-    # # print("We want to infer subHOGs at this level,i.e. merge few of them.")

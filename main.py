@@ -12,6 +12,9 @@ import dask
 from dask.distributed import Client
 from dask.distributed import LocalCluster
 
+from xml.dom import minidom
+import xml.etree.ElementTree as ET
+
 import _utils
 import _inferhog
 from _utils import logger_hog
@@ -61,44 +64,37 @@ if __name__ == '__main__':
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
     len(gene_id_name)
 
-    #
-    # ###  Running dask
-    #
-    # print("*** client **** ")
-    # cluster = LocalCluster()
-    # client = Client(cluster)
-    # print(cluster.dashboard_link)
-    # print(cluster.get_logs())
-    #
-    # len_tresh = 100
+    dask_future = False
 
-    rhogid_num = rhogid_num_list_input[0]
-    for rhogid_num_i in range(len(rhogid_num_list_input)):
-        rhogid_num = rhogid_num_list_input[rhogid_num_i]
-        rhogid_len = rhogid_len_list[rhogid_num_i]
+    if dask_future:
+        # print("*** client **** ")
+        # cluster = LocalCluster()
+        # client = Client(cluster)
+        # print(cluster.dashboard_link)
+        # print(cluster.get_logs())
+        rhogid_num = rhogid_num_list_input[0]
+        for rhogid_num_i in range(len(rhogid_num_list_input)):
+            rhogid_num = rhogid_num_list_input[rhogid_num_i]
+            rhogid_len = rhogid_len_list[rhogid_num_i]
+            if rhogid_len < len_tresh:
+                dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
+                                         address_rhogs_folder, species_tree_address, gene_trees_folder)
+                print(dask_out.result())
 
-        if rhogid_len  < len_tresh:
+    else:
 
-            dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
-                                     address_rhogs_folder, species_tree_address, gene_trees_folder)
+        rhogid_num = rhogid_num_list_input[1]
+        HOGs_a_rhog_xml_all  = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
+                                      gene_trees_folder)
 
-            print(dask_out.result())
-
-        else:
-
-    #
-    #
-    #
-    #
-    #
+    for HOGs_a_rhog_xml in HOGs_a_rhog_xml_all:
+        groups_xml.append(HOGs_a_rhog_xml)
+    xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
+    print(xml_str)
 
 
 
-
-    #     out = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
-    #                                   gene_trees_folder)
-    #     print("done", out)
-
+    print("test")
 
     # dask_working.visualize(filename='/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/out_4.svg')
     # print("visualized.")
@@ -118,19 +114,13 @@ if __name__ == '__main__':
     #     species_tree_address, gene_trees_folder)
     #     HOGs_rhogs_xml_all.append(HOGs_a_rhog_xml_all)
     # print("here")
-    # for HOGs_a_rhog_xml in HOGs_a_rhog_xml_all:
-    #     groups_xml.append(HOGs_a_rhog_xml)
-    # from xml.dom import minidom
-    # import xml.etree.ElementTree as ET
-    # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
-    # print(xml_str)
 
     #client = Client(processes=False)  # start local workers as processes
     # future_1 = client.submit(infer_hogs_for_a_rhog, species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
     # rhogid_num, gene_trees_folder)
     # future = client.scatter(parameters)
 
-    dask.visualize(gene_id_name)
+    #dask.visualize(gene_id_name)
 
 
 
