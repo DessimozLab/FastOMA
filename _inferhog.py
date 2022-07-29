@@ -1,16 +1,20 @@
-
+import gc
 
 from ete3 import Tree
 from Bio import SeqIO
-import dask
-# from dask import delayed, compute
+
+import dill as dill_pickle
+from dask.distributed import Client
 
 import _wrappers
 import _utils
 from _hog_class import HOG
 from _utils import logger_hog
 
-def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, dask_future=False):
+
+
+
+def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address,  dask_future=False):
     logger_hog.info(
         "\n" + "=" * 50 + "\n" + "Working on root hog: " + str(rhogid_num) + ". \n")  # +", ",rhogid_num_i,"-th. \n"
     prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
@@ -20,8 +24,8 @@ def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_
     (species_tree) = _utils.read_species_tree(species_tree_address)
     (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree)
     # species_tree.write();  print(species_tree.write())
-
-    if dask_future:
+    dask_future_taxon =False
+    if dask_future_taxon:
         dic_sub_hogs = {}
         future_out = Client.submit(infer_hogs_for_rhog_dask_future, species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
                                        rhogid_num, gene_trees_folder)
@@ -43,6 +47,8 @@ def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_
             HOGs_a_rhog_xml_all.append(HOGs_a_rhog_xml)
     print(HOGs_a_rhog_xml_all)
     logger_hog.info("we are not reporting single tone hogs in the output xml.")
+
+
 
     return HOGs_a_rhog_xml_all
 

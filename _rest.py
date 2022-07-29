@@ -33,7 +33,7 @@ gc.collect()
 
 with open('/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/pickle_7ka/file_' + str(rhogid_num) + '.pickle',
           'wb') as handle:
-    pickle.dump(HOG_thisLevel_xml_all, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    dill_pickle.dump(HOG_thisLevel_xml_all, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 num_hog = len(HOG_thisLevel_xml_all)
 

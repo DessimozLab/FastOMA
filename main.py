@@ -1,16 +1,17 @@
 
 """
 import os
-from xml.dom import minidom
 #import concurrent.futures
 
-from dask_jobqueue import SLURMCluster
+
 import gc
 """
 
 import dask
+
 from dask.distributed import Client
 from dask.distributed import LocalCluster
+from dask_jobqueue import SLURMCluster
 
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
@@ -19,13 +20,13 @@ import _utils
 import _inferhog
 from _utils import logger_hog
 
-
 if __name__ == '__main__':
 
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
     gene_trees_folder = working_folder + "/gene_trees_test/"
     address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # "/rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
+    pickle_address = working_folder + "/pickle_folder/"
 
     step = "hog"
     print("we are here ")
@@ -58,40 +59,48 @@ if __name__ == '__main__':
     logger_hog.info("Number of root hog is "+str(len(rhogid_num_list))+".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list_input = rhogid_num_list[9:10]
+    rhogid_num_list_input = rhogid_num_list[9:30]
     (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
     # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
     len(gene_id_name)
 
-    dask_future = False
+    dask_future = True
 
     if dask_future:
         # print("*** client **** ")
-        # cluster = LocalCluster()
-        # client = Client(cluster)
+
         # print(cluster.dashboard_link)
         # print(cluster.get_logs())
-        rhogid_num = rhogid_num_list_input[0]
+        ncore = 1 # Total number of cores per job
+        njobs = 2  # Cut the job up into this many processes.
+        # # By default, process ~= sqrt(cores) so that the number of processes = the number of threads per process
+        nproc = ncore
+
+        cluster = LocalCluster()
+        # cluster = SLURMCluster(cores=ncore, processes=nproc, memory="10GB", walltime="00:10:00")
+        cluster.scale(njobs)  # # ask for one jobs
+        client = Client(cluster)
+
         for rhogid_num_i in range(len(rhogid_num_list_input)):
             rhogid_num = rhogid_num_list_input[rhogid_num_i]
             rhogid_len = rhogid_len_list[rhogid_num_i]
-            if rhogid_len < len_tresh:
-                dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
-                                         address_rhogs_folder, species_tree_address, gene_trees_folder)
-                print(dask_out.result())
+            # if rhogid_len < len_tresh:
+            dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
+                                         address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address)
+            HOGs_a_rhog_xml_all = dask_out.result()
+            print(HOGs_a_rhog_xml_all)
 
     else:
-
         rhogid_num = rhogid_num_list_input[0]
         HOGs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
-                                      gene_trees_folder)
+                                      gene_trees_folder, pickle_address)
+
 
     for HOGs_a_rhog_xml in HOGs_a_rhog_xml_all:
         groups_xml.append(HOGs_a_rhog_xml)
     xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
     print(xml_str)
-
 
 
     print("test")
