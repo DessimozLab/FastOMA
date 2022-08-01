@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
         for rhogid_num_i in range(len(rhogid_num_list_input)):
             rhogid_num = rhogid_num_list_input[rhogid_num_i]
-            rhogid_len = rhogid_len_list[rhogid_num_i]
+            # rhogid_len = rhogid_len_list[rhogid_num_i]
             # if rhogid_len < len_tresh:
             dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
                                          address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address)
