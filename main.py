@@ -56,10 +56,11 @@ if __name__ == '__main__':
         # address_rhogs_folder)
 
     rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
-    logger_hog.info("Number of root hog is "+str(len(rhogid_num_list))+".")
+    logger_hog.info("Number of root hogs is "+str(len(rhogid_num_list))+".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list_input = rhogid_num_list[9:200]
+    rhogid_num_list_input = rhogid_num_list[9:12]
+    logger_hog.info("Number of working root hog is " + str(len(rhogid_num_list_input)) + ".")
     (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
     # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
@@ -86,7 +87,7 @@ if __name__ == '__main__':
         # results = client.gather(futures)
         # hogs_a_rhog_xml_all = results
 
-        len_tresh = 100
+        len_tresh = 1000
         dask_out_list =[ ]
         for rhogid_num_i in range(len(rhogid_num_list_input)):
             rhogid_num = rhogid_num_list_input[rhogid_num_i]
@@ -94,13 +95,14 @@ if __name__ == '__main__':
             if rhogid_len < len_tresh:
                 pass
                 dask_future_taxon = False
-                # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
-                #                          address_rhogs_folder, species_tree_address, gene_trees_folder,
-                #                          pickle_address, dask_future, dask_future_taxon)
-                # dask_out_list.append(dask_out)
-            else:
+                dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
+                                         address_rhogs_folder, species_tree_address, gene_trees_folder,
+                                         pickle_address, dask_future, dask_future_taxon)
+                dask_out_list.append(dask_out)
 
-                dask_future_taxon = True  # second level of parralelizion 
+            else:
+                dask_future_taxon = True  # second level of parralelizion
+                print(rhogid_num_i, rhogid_num, rhogid_len)
                 # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
                 #                          address_rhogs_folder, species_tree_address, gene_trees_folder,
                 #                          pickle_address, dask_future, dask_future_taxon)
