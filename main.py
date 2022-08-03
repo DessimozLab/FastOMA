@@ -52,14 +52,14 @@ if __name__ == '__main__':
         # query_prot_records_species_filtered =  filter_prot_mapped(query_species_names, query_prot_records_species,
         # query_prot_names_species_mapped)
         # print(len(query_prot_records_species_filtered),len(query_prot_records_species_filtered[0]))
-        # (rhogid_num_list, rhogids_prot_records_query) = group_prots_rootHOGs(prots_hogmap_hogid_allspecies,
+        # (rhogid_num_list, rhogids_prot_records_query) = group_prots_roothogs(prots_hogmap_hogid_allspecies,
         # address_rhogs_folder)
 
     rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
     logger_hog.info("Number of root hog is "+str(len(rhogid_num_list))+".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list_input = rhogid_num_list[9:11]
+    rhogid_num_list_input = rhogid_num_list[9:200]
     (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
     # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
@@ -84,32 +84,46 @@ if __name__ == '__main__':
 
         # futures = client.map(score, x_values)
         # results = client.gather(futures)
-        # HOGs_a_rhog_xml_all = results
+        # hogs_a_rhog_xml_all = results
 
+        len_tresh = 100
         dask_out_list =[ ]
         for rhogid_num_i in range(len(rhogid_num_list_input)):
             rhogid_num = rhogid_num_list_input[rhogid_num_i]
-            # rhogid_len = rhogid_len_list[rhogid_num_i]
-            # if rhogid_len < len_tresh:
-            dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
-                                         address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address)
+            rhogid_len = rhogid_len_list[rhogid_num_i]
+            if rhogid_len < len_tresh:
+                pass
+                dask_future_taxon = False
+                # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
+                #                          address_rhogs_folder, species_tree_address, gene_trees_folder,
+                #                          pickle_address, dask_future, dask_future_taxon)
+                # dask_out_list.append(dask_out)
+            else:
 
-            dask_out_list.append(dask_out)
+                dask_future_taxon = True  # second level of parralelizion 
+                # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
+                #                          address_rhogs_folder, species_tree_address, gene_trees_folder,
+                #                          pickle_address, dask_future, dask_future_taxon)
+                # dask_out_list.append(dask_out)
+                print("here")
 
-        for dask_out in dask_out_list :
-            HOGs_a_rhog_xml_all = dask_out.result()
-            print(HOGs_a_rhog_xml_all)
+        # for dask_out in dask_out_list :
+        #     hogs_a_rhog_xml_all = dask_out.result()
+        #     print(hogs_a_rhog_xml_all)
 
     else:
-        rhogid_num = rhogid_num_list_input[0]
-        HOGs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
-                                      gene_trees_folder, pickle_address)
+        dask_future_taxon = False
+        for rhogid_num_i in range(len(rhogid_num_list_input)):
+            rhogid_num = rhogid_num_list_input[rhogid_num_i]
+            hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, 
+                                                                species_tree_address, gene_trees_folder, dask_future, 
+                                                                dask_future_taxon)
 
 
-    for HOGs_a_rhog_xml in HOGs_a_rhog_xml_all:
-        groups_xml.append(HOGs_a_rhog_xml)
-    xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
-    print(xml_str)
+    # for hogs_a_rhog_xml in hogs_a_rhog_xml_all:
+    #     groups_xml.append(hogs_a_rhog_xml)
+    # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
+    # print(xml_str)
 
 
     print("test")
@@ -126,11 +140,11 @@ if __name__ == '__main__':
 
     # dask.compute()
 
-    # HOGs_rhogs_xml_all = []
+    # hogs_rhogs_xml_all = []
     # for rhogid_num in  rhogid_num_list_input:
-    #     HOGs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder,
+    #     hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder,
     #     species_tree_address, gene_trees_folder)
-    #     HOGs_rhogs_xml_all.append(HOGs_a_rhog_xml_all)
+    #     hogs_rhogs_xml_all.append(hogs_a_rhog_xml_all)
     # print("here")
 
     #client = Client(processes=False)  # start local workers as processes

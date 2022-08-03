@@ -31,7 +31,7 @@ class HOG:
             # <<class 'Bio.Align.MultipleSeqAlignment'> instance (1 records of length 314) at 7f0e86c713d0>
 
         elif msa and all(isinstance(x, HOG) for x in input_instantiate):
-            # here we want to merge few subHOGs and creat a new HOG.   #the n
+            # here we want to merge few subhogs and creat a new HOG.   #the n
             sub_hogs = input_instantiate
             hog_members = set()
             for sub_hog in sub_hogs:

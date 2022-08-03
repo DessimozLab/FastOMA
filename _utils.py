@@ -155,8 +155,8 @@ def prepare_xml(rhogid_num_list_input, address_rhogs_folder):
                                                    "originVersion": "Nov 2021", "version": "0.3"})  #
     gene_counter = 100000
     gene_id_name = {}
-    query_species_names_rHOGs = list(species_prot_dic.keys())
-    for species_name in query_species_names_rHOGs:
+    query_species_names_rhogs = list(species_prot_dic.keys())
+    for species_name in query_species_names_rhogs:
         no_gene_species = True  # for code develop ment
         species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": species_name, "NCBITaxId": "1"})
         database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})

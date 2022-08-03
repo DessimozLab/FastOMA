@@ -178,7 +178,7 @@ def add_species_name(query_prot_records_species, query_species_names):
     return query_prot_records_species
 
 
-def group_prots_rootHOGs(prots_hogmap_hogid_allspecies, address_rhogs_folder):
+def group_prots_roothogs(prots_hogmap_hogid_allspecies, address_rhogs_folder):
     """
     a function for finding those proteins that are mapped to the same rootHOG.
     Then, we write each rootHOG as a seprate fasta file in the address_rhogs_folder folder
@@ -255,10 +255,10 @@ def group_prots_rootHOGs(prots_hogmap_hogid_allspecies, address_rhogs_folder):
             # rhogids_prot_records_both= rhogids_prot_records_oma +  rhogid_prot_records_query
             # rhogids_prot_records.append(rhogids_prot_records_both)
 
-    # print("all HOGs   (>2 <100) has written.",len(rhogids_prot_records_query),len(rhogids_list),
+    # print("all hogs   (>2 <100) has written.",len(rhogids_prot_records_query),len(rhogids_list),
     # len(rhogid_prot_records_query), len(rhogid_prot_records_query[0]))
 
     current_time = datetime.now().strftime("%H:%M:%S")
-    print(current_time, "- Sequences of rootHOGs are writtend as fasta file in " + address_rhogs_folder)
+    print(current_time, "- Sequences of roothogs are writtend as fasta file in " + address_rhogs_folder)
 
     return rhogid_num_list, rhogids_prot_records_query

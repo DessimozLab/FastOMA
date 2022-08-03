@@ -8,13 +8,13 @@ import dill as pickle
 def infer_HOG_rhog3(rhogid_num_list, gene_id_name):  # , address_rhogs_folder, species_tree_address):
     """
     The prot sequences of a rootHOG are located in the fasta file address_rhogs_folder+"HOG_rhogid_num.fa,
-    we want to infer all subHOGs of this rootHOG for different taxanomic levels.
+    we want to infer all subhogs of this rootHOG for different taxanomic levels.
 
-    output: a python dict (HOG_thisLevel):  key=taxanomic level, value= a list of subHOGs.
+    output: a python dict (HOG_thisLevel):  key=taxanomic level, value= a list of subhogs.
     """
 
     HOG_thisLevel = dic_sub_hogs[node_species_tree.name]
-    logger_hog.info("subHOGs in thisLevel are " + ' '.join(["[" + str(i) + "]" for i in HOG_thisLevel]) + " .")
+    logger_hog.info("subhogs in thisLevel are " + ' '.join(["[" + str(i) + "]" for i in HOG_thisLevel]) + " .")
 
     for hog_i in HOG_thisLevel:
         print(hog_i)

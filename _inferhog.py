@@ -14,7 +14,8 @@ from _utils import logger_hog
 
 
 
-def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address,  dask_future=False):
+def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder,
+                        pickle_address,  dask_future, dask_future_taxon ):
     logger_hog.info(
         "\n" + "=" * 50 + "\n" + "Working on root hog: " + str(rhogid_num) + ". \n")  # +", ",rhogid_num_i,"-th. \n"
     prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
@@ -24,38 +25,46 @@ def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_
     (species_tree) = _utils.read_species_tree(species_tree_address)
     (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree)
     # species_tree.write();  print(species_tree.write())
-    dask_future_taxon =False
-    if dask_future_taxon:
-        dic_sub_hogs = {}
-        future_out = Client.submit(infer_hogs_for_rhog_dask_future, species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
-                                       rhogid_num, gene_trees_folder)
-        HOGs_a_rhog = future_out.result()
+    if dask_future:
+        if dask_future_taxon:
+            dic_sub_hogs = {}
+            future_out = Client.submit(infer_hogs_for_rhog_dask_future, species_tree, rhog_i, species_names_rhog,
+                                       dic_sub_hogs, rhogid_num, gene_trees_folder)
+            hogs_a_rhog = future_out.result()
+            
+            
+        else:
+            hogs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, rhog_i, species_names_rhog, rhogid_num,
+                                                                 gene_trees_folder)
+
+        logger_hog.info("subhogs in thisLevel are " + ' '.join(["[" + str(i) + "]" for i in hogs_a_rhog]) + " .")
+
     else:
 
-        HOGs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
+        hogs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, rhog_i, species_names_rhog, rhogid_num,
+                                                             gene_trees_folder)
 
-
-    logger_hog.info("subHOGs in thisLevel are " + ' '.join(["[" + str(i) + "]" for i in HOGs_a_rhog]) + " .")
-
-    HOGs_a_rhog_xml_all = []
-    for hog_i in HOGs_a_rhog:
+    hogs_a_rhog_xml_all = []
+    for hog_i in hogs_a_rhog:
         print(hog_i)
         if len(hog_i._members) > 1:
 
             # could be improved
-            HOGs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
-            HOGs_a_rhog_xml_all.append(HOGs_a_rhog_xml)
-    print(HOGs_a_rhog_xml_all)
+            hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
+            hogs_a_rhog_xml_all.append(hogs_a_rhog_xml)
+    print(hogs_a_rhog_xml_all)
     logger_hog.info("we are not reporting single tone hogs in the output xml.")
 
-    with open(pickle_address + '/file_' + str(rhogid_num) + '.pickle', 'wb') as handle:
-        dill_pickle.dump(HOGs_a_rhog_xml_all, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
+    # how to handle empty hogs !? why happening and if not save pickle, file not exist error from rhog id list
 
-    del HOGs_a_rhog
+    with open(pickle_address + '/file_' + str(rhogid_num) + '.pickle', 'wb') as handle:
+        dill_pickle.dump(hogs_a_rhog_xml_all, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
+
+    del hogs_a_rhog
     gc.collect()
 
 
-    return HOGs_a_rhog_xml_all
+    return hogs_a_rhog_xml_all
 
 
 
@@ -88,7 +97,7 @@ def infer_hogs_for_rhog_dask_future(sub_species_tree, rhog_i, species_names_rhog
 
 
 
-
+# only one level parralelization
 def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder):
 
     if sub_species_tree.is_leaf():
@@ -137,7 +146,7 @@ def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_ch
 
     sub_msa_list_lowerLevel_ready = [hog._msa for hog in hogs_children_level_list]
     merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready)
-    logger_hog.info("All subHOGs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
+    logger_hog.info("All subhogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
         len(merged_msa[0])) + ".")
 
     gene_tree_file_addr = gene_trees_folder + "/tree_" + str(rhogid_num) + "_" + str(
@@ -161,7 +170,7 @@ def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_ch
     for prot_sub_list_sbuhog in prot_list_sbuhog:
         prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
     logger_hog.info("- " + str(
-        len(prot_list_sbuhog_short)) + " HOGs are inferred at the level " + node_species_tree.name + ": " + " ".join(
+        len(prot_list_sbuhog_short)) + " hogs are inferred at the level " + node_species_tree.name + ": " + " ".join(
         [str(i) for i in prot_list_sbuhog_short]))
     # print("By merging ",subHOG_to_be_merged_set_other_Snodes)
     # check for conflicts in merging
@@ -180,7 +189,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     """
     this function could be improved
     """
-    subHOGs_id_children_assigned = []  # the same as  subHOG_to_be_merged_all_id
+    subhogs_id_children_assigned = []  # the same as  subHOG_to_be_merged_all_id
     hogs_this_level_list = []
     subHOG_to_be_merged_set_other_Snodes = []
     subHOG_to_be_merged_set_other_Snodes_flattned_temp = []
@@ -198,7 +207,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                     if node_leave_name in subHOG_members:  # could be improved
                         if subHOG._hogid not in subHOG_to_be_merged_set_other_Snodes_flattned_temp:
                             subHOG_to_be_merged.append(subHOG)
-                            subHOGs_id_children_assigned.append(subHOG._hogid)
+                            subhogs_id_children_assigned.append(subHOG._hogid)
                         else:
                             print("issue 184", node.name, subHOG._hogid, node_leave_name)
                             if "processed" in node:
@@ -223,7 +232,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
         if [i._hogid for i in hogs_children_level_list] == subHOG_to_be_merged_set_other_Snodes_flattned:
             break
     for subHOG in hogs_children_level_list:  # for the single branch  ( D include a  subhog and a S node. )
-        if subHOG._hogid not in subHOGs_id_children_assigned:  # print("here", subHOG)
+        if subHOG._hogid not in subhogs_id_children_assigned:  # print("here", subHOG)
             hogs_this_level_list.append(subHOG)
 
     return hogs_this_level_list
