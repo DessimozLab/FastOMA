@@ -88,19 +88,23 @@ if __name__ == '__main__':
         # hogs_a_rhog_xml_all = results
 
         len_tresh = 1000
-        dask_out_list =[ ]
+        dask_out_list =[]
         for rhogid_num_i in range(len(rhogid_num_list_input)):
             rhogid_num = rhogid_num_list_input[rhogid_num_i]
             rhogid_len = rhogid_len_list[rhogid_num_i]
             if rhogid_len < len_tresh:
-                pass
+
                 dask_future_taxon = False
-                dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
-                                         address_rhogs_folder, species_tree_address, gene_trees_folder,
-                                         pickle_address, dask_future, dask_future_taxon)
+                vars_input = (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon)
+                vars_input_future = client.scatter(vars_input)
+                dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, vars_input_future)
                 dask_out_list.append(dask_out)
 
+                # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, vars_input)
+                # dask_out_list.append(dask_out)
+                print("*a*" * 100)
             else:
+                print("*b*" * 100)
                 dask_future_taxon = True  # second level of parralelizion
                 print(rhogid_num_i, rhogid_num, rhogid_len)
                 # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
@@ -114,12 +118,14 @@ if __name__ == '__main__':
         #     print(hogs_a_rhog_xml_all)
 
     else:
+        print("*d*" * 100)
         dask_future_taxon = False
         for rhogid_num_i in range(len(rhogid_num_list_input)):
             rhogid_num = rhogid_num_list_input[rhogid_num_i]
-            hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, 
-                                                                species_tree_address, gene_trees_folder, dask_future, 
-                                                                dask_future_taxon)
+            vars_input = (
+            gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future,
+            dask_future_taxon)
+            hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, vars_input)
 
 
     # for hogs_a_rhog_xml in hogs_a_rhog_xml_all:

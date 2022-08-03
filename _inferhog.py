@@ -14,8 +14,8 @@ from _utils import logger_hog
 
 
 
-def read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder,
-                        pickle_address,  dask_future, dask_future_taxon ):
+def read_infer_xml_rhog(rhogid_num, vars_input):
+    (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon) = vars_input
     logger_hog.info(
         "\n" + "=" * 50 + "\n" + "Working on root hog: " + str(rhogid_num) + ". \n")  # +", ",rhogid_num_i,"-th. \n"
     prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
