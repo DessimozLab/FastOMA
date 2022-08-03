@@ -64,6 +64,7 @@ if __name__ == '__main__':
     logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
     print(rhogid_num_list[:2])
 
+    rhogid_num_list = rhogid_num_list[12:15]
     number_roothog = len(rhogid_num_list)
     num_per_parralel = 4
     parralel_num = int(number_roothog / num_per_parralel)
@@ -89,7 +90,7 @@ if __name__ == '__main__':
         cluster.scale(njobs)  # # ask for one jobs
         client = Client(cluster)
 
-    for rhogid_batch in rhogid_batch_list[:2]:
+    for rhogid_batch in rhogid_batch_list:
 
         #rhogid_num_list_input = rhogid_batch
         logger_hog.info("Number of working root hog is " + str(len(rhogid_batch)) + ".")

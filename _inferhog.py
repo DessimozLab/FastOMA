@@ -188,8 +188,18 @@ def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_ch
         elif format_prot_name == 1: # format_prot_name = 1  # qfo dataset   # 'tr|E3JPS4|E3JPS4_PUCGT
             prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
     logger_hog.info("- " + str(
-        len(prot_list_sbuhog_short)) + " hogs are inferred at the level " + node_species_tree.name + ": " + " ".join(
+        len(hogs_this_level_list)) + " hogs are inferred at the level " + node_species_tree.name + ": " + " ".join(
         [str(i) for i in prot_list_sbuhog_short]))
+
+    print("*666*"*20)
+    string_all = "["
+    for hog in hogs_this_level_list:
+        str_each = " ".join( [str(i) for i in hog._members])
+        string_all += str_each+"] ["
+    logger_hog.info("- " + string_all)
+
+
+
     # print("By merging ",subHOG_to_be_merged_set_other_Snodes)
     # check for conflicts in merging
     #     for i in range(subHOG_to_be_merged_set_other_Snodes):
