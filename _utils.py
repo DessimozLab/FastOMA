@@ -32,7 +32,7 @@ def list_rhog_fastas(address_rhogs_folder):
 
 
 from ete3 import Phyloxml
-
+from ete3 import Tree
 
 def read_species_tree(species_tree_address):
     """
@@ -42,24 +42,34 @@ def read_species_tree(species_tree_address):
     """
     logger_hog.info(species_tree_address)
     # print(round(os.path.getsize(species_tree_address)/1000),"kb")
-    project = Phyloxml()
-    project.build_from_file(species_tree_address)
-    # Each tree contains the same methods as a PhyloTree object
-    for species_tree in project.get_phylogeny():
-        species_tree = species_tree
+    format_tree = species_tree_address.split(".")[-1]
 
-    for node_species_tree in species_tree.traverse(strategy="postorder"):
-        if node_species_tree.is_leaf():
-            temp1 = node_species_tree.phyloxml_clade.get_taxonomy()[0]
-            # print(temp1.get_code())
-            node_species_tree.name = temp1.get_code()
-    # print(len(species_tree)); print(species_tree)
+    if format_tree == "phyloxml":
+        project = Phyloxml()
+        project.build_from_file(species_tree_address)
+        # Each tree contains the same methods as a PhyloTree object
+        for species_tree in project.get_phylogeny():
+            species_tree = species_tree
+
+        for node_species_tree in species_tree.traverse(strategy="postorder"):
+            if node_species_tree.is_leaf():
+                temp1 = node_species_tree.phyloxml_clade.get_taxonomy()[0]
+                # print(temp1.get_code())
+                node_species_tree.name = temp1.get_code()
+        # print(len(species_tree)); print(species_tree)
+    elif format_tree == "nwk":
+
+        species_tree = Tree(species_tree_address)
+    else:
+        print("for now we accept phyloxml or nwk format for input species tree.")
+
 
 
     return (species_tree)
 
 
-def prepare_species_tree(rhog_i, species_tree):
+def prepare_species_tree(rhog_i, species_tree, format_prot_name=1):
+
     """
     a function for extracting a subtree from the input species tree  a.k.a pruning,
     based on the names of species in the rootHOG.
@@ -69,10 +79,19 @@ def prepare_species_tree(rhog_i, species_tree):
     species_names_rhog = []
     prot_names_rhog = []
     for rec in rhog_i:
-        prot_name = rec.name  # 'tr|E3JPS4|E3JPS4_PUCGT
-        # prot_name = prot_name_full.split("|")[1].strip() # # 'tr|E3JPS4|E3JPS4_PUCGT
-        species_name = prot_name.split("|")[-1].split("_")[-1]
-        if species_name == 'RAT': species_name = "RATNO"
+
+        if format_prot_name == 1:   # qfo dataset
+            prot_name = rec.name  # 'tr|E3JPS4|E3JPS4_PUCGT
+            species_name = prot_name.split("|")[-1].split("_")[-1].strip()
+            if species_name == 'RAT': species_name = "RATNO"
+
+        elif format_prot_name == 0:  # bird dataset
+            # rec.name  CLIRXF_R07389
+            prot_name = rec.name
+            prot_descrip  = rec.description  # >CLIRXF_R07389 CLIRXF_R07389|species|CLIRUF
+            species_name = prot_descrip.split(" ")[1].split("|")[-1]
+            # species_name = prot_name.split("_")[0].strip()
+
         species_names_rhog.append(species_name)
         prot_names_rhog.append(prot_name)
 
@@ -166,7 +185,11 @@ def prepare_xml(rhogid_num_list_input, address_rhogs_folder):
         for prot_itr in range(len(prot_list)):  # [12:15]
             prot_i_name = prot_list[prot_itr]
             gene_id_name[prot_i_name] = gene_counter
-            prot_i_name_short = prot_i_name.split("|")[1].strip()  # tr|E3JPS4|E3JPS4_PUCGT
+            if "|" in prot_i_name:
+                prot_i_name_short = prot_i_name.split("|")[1].strip()  # tr|E3JPS4|E3JPS4_PUCGT
+            else:
+                prot_i_name_short = prot_i_name
+
             gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_counter), "protId": prot_i_name_short})
             gene_counter += 1
 

@@ -13,15 +13,15 @@ from _utils import logger_hog
 
 
 def read_infer_xml_rhogs(rhogid_batch_list, vars_input):
-    # (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon) = vars_input
+    # (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon, format_prot_name) = vars_input
     hogs_a_rhog_xml_all_list = []
     for rhogid_num in rhogid_batch_list:
         hogs_a_rhog_xml_all = read_infer_xml_rhog(rhogid_num, vars_input)
         hogs_a_rhog_xml_all_list += hogs_a_rhog_xml_all
     return hogs_a_rhog_xml_all
 
-def read_infer_xml_rhog(rhogid_num, vars_input):
-    (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon) = vars_input
+def read_infer_xml_rhog(rhogid_num, vars_input) :
+    (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon, format_prot_name) = vars_input
     logger_hog.info(
         "\n" + "=" * 50 + "\n" + "Working on root hog: " + str(rhogid_num) + ". \n")  # +", ",rhogid_num_i,"-th. \n"
     prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
@@ -29,19 +29,21 @@ def read_infer_xml_rhog(rhogid_num, vars_input):
     logger_hog.info("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
 
     (species_tree) = _utils.read_species_tree(species_tree_address)
-    (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree)
+
+    (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree, format_prot_name)
     # species_tree.write();  print(species_tree.write())
+
     if dask_future:
         if dask_future_taxon:
             hogs_a_rhog = infer_hogs_for_rhog_levels_recursively_future(species_tree, rhog_i, species_names_rhog,
-                                                                        rhogid_num, gene_trees_folder)
+                                                                        rhogid_num, gene_trees_folder, format_prot_name)
 
         else:
             hogs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, rhog_i, species_names_rhog,
-                                                                 rhogid_num, gene_trees_folder)
+                                                                 rhogid_num, gene_trees_folder, format_prot_name)
     else:
         hogs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, rhog_i, species_names_rhog,
-                                                             rhogid_num, gene_trees_folder)
+                                                             rhogid_num, gene_trees_folder, format_prot_name)
 
     logger_hog.info("subhogs in thisLevel are " + ' '.join(["[" + str(i) + "]" for i in hogs_a_rhog]) + " .")
     hogs_a_rhog_xml_all = []
@@ -68,7 +70,7 @@ def read_infer_xml_rhog(rhogid_num, vars_input):
 
 
 # only one level parralelization
-def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder):
+def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name):
 
     if sub_species_tree.is_leaf():
         children_nodes = []
@@ -77,9 +79,9 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, rhog_i, spec
 
     hogs_children_level_list = []
     for node_species_tree_child in children_nodes:
-        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively_future(node_species_tree_child, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
+        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively_future(node_species_tree_child, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name)
         hogs_children_level_list.extend(hogs_children_level_list_i)
-    hogs_this_level_list = infer_hogs_this_level(sub_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder)
+    hogs_this_level_list = infer_hogs_this_level(sub_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder, format_prot_name)
 
     return hogs_this_level_list
 
@@ -112,7 +114,7 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, rhog_i, spec
 
 
 # only one level parralelization
-def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder):
+def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name):
 
     if sub_species_tree.is_leaf():
         children_nodes = []
@@ -121,9 +123,9 @@ def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhog_i, species_nam
 
     hogs_children_level_list = []
     for node_species_tree_child in children_nodes:
-        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
+        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name)
         hogs_children_level_list.extend(hogs_children_level_list_i)
-    hogs_this_level_list = infer_hogs_this_level(sub_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder)
+    hogs_this_level_list = infer_hogs_this_level(sub_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder, format_prot_name)
 
     return hogs_this_level_list
 
@@ -141,7 +143,7 @@ def singletone_hog(node_species_tree, rhog_i, species_names_rhog, rhogid_num):
         hogs_this_level_list.append(hog_leaf)
     return hogs_this_level_list
 
-def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder):
+def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder, format_prot_name):
 
     logger_hog.info(
         "\n" + "*" * 15 + "\n" + "Finding hogs for rhogid_num: "+str(rhogid_num)+", for the taxonomic level:" + str(node_species_tree.name) + "\n" + str(
@@ -181,7 +183,10 @@ def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_ch
     prot_list_sbuhog = [i._members for i in hogs_this_level_list]
     prot_list_sbuhog_short = []
     for prot_sub_list_sbuhog in prot_list_sbuhog:
-        prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
+        if format_prot_name == 0:  #  format_prot_name = 0 # bird dataset   TYTALB_R04643
+            prot_list_sbuhog_short = prot_sub_list_sbuhog
+        elif format_prot_name == 1: # format_prot_name = 1  # qfo dataset   # 'tr|E3JPS4|E3JPS4_PUCGT
+            prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
     logger_hog.info("- " + str(
         len(prot_list_sbuhog_short)) + " hogs are inferred at the level " + node_species_tree.name + ": " + " ".join(
         [str(i) for i in prot_list_sbuhog_short]))
