@@ -46,3 +46,8 @@ x = client.submit(inc, 1)
 y = client.submit(double, 2)
 z = client.submit(add, x, y)
 z
+
+
+# futures = client.map(score, x_values)
+            # results = client.gather(futures)
+            # hogs_a_rhog_xml_all = results

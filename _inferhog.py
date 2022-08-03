@@ -12,7 +12,13 @@ from _hog_class import HOG
 from _utils import logger_hog
 
 
-
+def read_infer_xml_rhogs(rhogid_batch_list, vars_input):
+    # (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon) = vars_input
+    hogs_a_rhog_xml_all_list = []
+    for rhogid_num in rhogid_batch_list:
+        hogs_a_rhog_xml_all = read_infer_xml_rhog(rhogid_num, vars_input)
+        hogs_a_rhog_xml_all_list += hogs_a_rhog_xml_all
+    return hogs_a_rhog_xml_all
 
 def read_infer_xml_rhog(rhogid_num, vars_input):
     (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon) = vars_input

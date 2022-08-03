@@ -18,10 +18,10 @@ if __name__ == '__main__':
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/"
     gene_trees_folder = working_folder + "/gene_trees/"
     address_rhogs_folder = working_folder + "/rhogs/"  # "/rhog_size_g2_s500/" sample_rootHOG
-    species_tree_address = working_folder + " tree.nwk" # tree.nwk .phyloxml
+    species_tree_address = working_folder + "tree.nwk" # tree.nwk .phyloxml
     pickle_address = working_folder + "/pickle_folder/"
 
-    step = "roothog"
+    step = "hog"
     print("we are here ")
     if step == "roothog":
         """
@@ -56,57 +56,68 @@ if __name__ == '__main__':
                                                                                          query_prot_records_species_filtered)
 
 
-#     rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
-#     logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
-#     print(rhogid_num_list[:2])
-#
-#     rhogid_num_list_input = rhogid_num_list[9:12]
-#     logger_hog.info("Number of working root hog is " + str(len(rhogid_num_list_input)) + ".")
-#     (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input,
-#                                                                                     address_rhogs_folder)
-#     # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
-#     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
-#     len(gene_id_name)
-#
-#     dask_future = True
-#
-#     if dask_future:
-#         # print("*** client **** ")
-#
-#         # print(cluster.dashboard_link)
-#         # print(cluster.get_logs())
-#         ncore = 1  # Total number of cores per job
-#         njobs = 2  # Cut the job up into this many processes.
-#         # # By default, process ~= sqrt(cores) so that the number of processes = the number of threads per process
-#         nproc = ncore
-#
-#         cluster = LocalCluster()
-#         # cluster = SLURMCluster(cores=ncore, processes=nproc, memory="20GB", walltime="01:00:00")
-#         cluster.scale(njobs)  # # ask for one jobs
-#         client = Client(cluster)
-#
-#         # futures = client.map(score, x_values)
-#         # results = client.gather(futures)
-#         # hogs_a_rhog_xml_all = results
-#
-#         len_tresh = 1000
-#         dask_out_list = []
-#         for rhogid_num_i in range(len(rhogid_num_list_input)):
-#             rhogid_num = rhogid_num_list_input[rhogid_num_i]
-#             rhogid_len = rhogid_len_list[rhogid_num_i]
-#             if rhogid_len < len_tresh:
-#
-#                 dask_future_taxon = False
-#                 vars_input = (
-#                 gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address,
-#                 dask_future, dask_future_taxon)
-#                 vars_input_future = client.scatter(vars_input)
-#                 dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, vars_input_future)
-#                 dask_out_list.append(dask_out)
-#
-#                 # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, vars_input)
-#                 # dask_out_list.append(dask_out)
-#                 print("*a*" * 100)
+    rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
+    logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
+    print(rhogid_num_list[:2])
+
+    number_roothog = len(rhogid_num_list)
+    num_per_parralel = 50
+    parralel_num = int(number_roothog / num_per_parralel)
+    rhogid_batch_list = []
+    for list_idx in range(parralel_num + 1):
+        if list_idx == parralel_num:
+            rhogid_num_list = rhogid_num_list[list_idx * num_per_parralel:]
+        else:
+            rhogid_num_list = rhogid_num_list[list_idx * num_per_parralel:(list_idx + 1) * num_per_parralel]
+
+        rhogid_batch_list.append(rhogid_num_list)
+
+    if dask_future:
+        # print("*** client **** ", cluster.dashboard_link, cluster.get_logs())
+        ncore = 1  # Total number of cores per job
+        njobs = 2  # Cut the job up into this many processes.
+        # # By default, process ~= sqrt(cores) so that the number of processes = the number of threads per process
+        nproc = ncore
+        cluster = LocalCluster()
+        # cluster = SLURMCluster(cores=ncore, processes=nproc, memory="20GB", walltime="01:00:00")
+        cluster.scale(njobs)  # # ask for one jobs
+        client = Client(cluster)
+
+    for rhogid_batch_list in rhogid_batch_list[:2]:
+
+        rhogid_num_list_input = rhogid_batch_list[0][:4]
+        logger_hog.info("Number of working root hog is " + str(len(rhogid_num_list_input)) + ".")
+        (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input,
+                                                                                    address_rhogs_folder)
+
+        # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
+        # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
+        print("lenght of gene_id_name ", len(gene_id_name))
+
+        dask_future = True
+
+        if dask_future:
+
+
+            len_tresh = 1000
+            dask_out_list = []
+            # for rhogid_num_i in range(len(rhogid_num_list_input)):
+            #    rhogid_num = rhogid_num_list_input[rhogid_num_i]
+            #    rhogid_len = rhogid_len_list[rhogid_num_i]
+            #    if rhogid_len < len_tresh:
+
+            dask_future_taxon = False
+            vars_input = (
+            gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address,
+            dask_future, dask_future_taxon)
+            vars_input_future = client.scatter(vars_input)
+            # read_infer_xml_rhogs(rhogid_batch_list, vars_input)
+            dask_out = client.submit(_inferhog.read_infer_xml_rhogs, rhogid_batch_list, vars_input_future)
+            dask_out_list.append(dask_out)
+
+            # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, vars_input)
+            # dask_out_list.append(dask_out)
+            print("*a*" * 100)
 #             else:
 #                 print("*b*" * 100)
 #                 dask_future_taxon = True  # second level of parralelizion
