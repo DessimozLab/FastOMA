@@ -82,12 +82,23 @@ if __name__ == '__main__':
         cluster.scale(njobs)  # # ask for one jobs
         client = Client(cluster)
 
+
+
+        futures = client.map(score, x_values)
+        results = client.gather(futures)
+        HOGs_a_rhog_xml_all = results
+
+        dask_out_list =[ ]
         for rhogid_num_i in range(len(rhogid_num_list_input)):
             rhogid_num = rhogid_num_list_input[rhogid_num_i]
             # rhogid_len = rhogid_len_list[rhogid_num_i]
             # if rhogid_len < len_tresh:
             dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
                                          address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address)
+
+            dask_out_list.append(dask_out)
+
+        for dask_out in dask_out_list :
             HOGs_a_rhog_xml_all = dask_out.result()
             print(HOGs_a_rhog_xml_all)
 
