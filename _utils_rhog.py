@@ -1,5 +1,17 @@
 
 
+import pyoma.browser.db as db
+from datetime import datetime
+from Bio import SeqIO
+
+from os import listdir
+import os
+
+
+from _utils import logger_hog
+
+
+
 def parse_oma_db(oma_database_address):
     """
     a function for loading an oma database in hdf5 format using pyoma.browser.db.
@@ -15,7 +27,7 @@ def parse_oma_db(oma_database_address):
     return oma_db, list_oma_species
 
 
-def parse_proteome(list_oma_species):
+def parse_proteome(list_oma_species, working_folder):
     """
     a function for parsing fasta files of proteins located in /omamer_search/proteome/
     using Bio.SeqIO.parse
@@ -23,7 +35,7 @@ def parse_proteome(list_oma_species):
 
     output: query_species_names: list of species name, prots_record_allspecies: list of Biopython record of species
     """
-    project_files = listdir(address_working_folder + "/omamer_search/proteome/")
+    project_files = listdir(working_folder + "/omamer_search/proteome/")
     query_species_names = []
     for file in project_files:
         if file.split(".")[-1] == "fa":
@@ -36,7 +48,7 @@ def parse_proteome(list_oma_species):
     # we may assert existence of query_species_name+".fa/hogmap"
     prots_record_allspecies = []
     for query_species_name in query_species_names:
-        prot_address = address_working_folder + "omamer_search/proteome/" + query_species_name + ".fa"
+        prot_address = working_folder + "omamer_search/proteome/" + query_species_name + ".fa"
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
         prots_record_allspecies.append(prots_record)
 
@@ -61,7 +73,7 @@ def parse_proteome(list_oma_species):
     return query_species_names, prots_record_allspecies
 
 
-def parse_hogmap_omamer(query_species_names):
+def parse_hogmap_omamer(query_species_names, working_folder):
     """
     a function for parsing output of omamer (hogmap files) located in /omamer_search/hogmap/
     Each hogmap file correspond to one fasta file of species, with the same name.
@@ -84,7 +96,7 @@ def parse_hogmap_omamer(query_species_names):
     prots_hogmap_seqlen_allspecies = []
     prots_hogmap_subfmedseqlen_allspecies = []
     for query_species_name in query_species_names:
-        omamer_output_address = address_working_folder + "omamer_search/hogmap/" + query_species_name + ".hogmap"
+        omamer_output_address = working_folder + "omamer_search/hogmap/" + query_species_name + ".hogmap"
         omamer_output_file = open(omamer_output_address, 'r')
         prots_hogmap_name = []
         prots_hogmap_hogid = []
@@ -178,7 +190,7 @@ def add_species_name(query_prot_records_species, query_species_names):
     return query_prot_records_species
 
 
-def group_prots_roothogs(prots_hogmap_hogid_allspecies, address_rhogs_folder):
+def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, query_species_names, query_prot_records_species_filtered):
     """
     a function for finding those proteins that are mapped to the same rootHOG.
     Then, we write each rootHOG as a seprate fasta file in the address_rhogs_folder folder
