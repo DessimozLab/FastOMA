@@ -59,7 +59,7 @@ if __name__ == '__main__':
     logger_hog.info("Number of root hog is "+str(len(rhogid_num_list))+".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list_input = rhogid_num_list[9:13]
+    rhogid_num_list_input = rhogid_num_list[9:11]
     (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
     # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
@@ -82,11 +82,9 @@ if __name__ == '__main__':
         cluster.scale(njobs)  # # ask for one jobs
         client = Client(cluster)
 
-
-
-        futures = client.map(score, x_values)
-        results = client.gather(futures)
-        HOGs_a_rhog_xml_all = results
+        # futures = client.map(score, x_values)
+        # results = client.gather(futures)
+        # HOGs_a_rhog_xml_all = results
 
         dask_out_list =[ ]
         for rhogid_num_i in range(len(rhogid_num_list_input)):
