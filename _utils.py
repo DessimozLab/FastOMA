@@ -152,7 +152,7 @@ def lable_SD_internal_nodes(tree_out):
     return tree_out
 
 
-def prepare_xml(rhogid_num_list_input, address_rhogs_folder, format_prot_name):
+def prepare_xml(rhogid_num_list_input, address_rhogs_folder, format_prot_name, rhogid_batch = 1):
     species_prot_dic = {}
     # all_prot_temp_list= []
     rhogid_len_list = [ ]
@@ -185,7 +185,7 @@ def prepare_xml(rhogid_num_list_input, address_rhogs_folder, format_prot_name):
     print("there are species ", len(species_prot_dic))
     orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
                                                    "originVersion": "Nov 2021", "version": "0.3"})  #
-    gene_counter = 100000
+    gene_counter = 1000000 + rhogid_batch * 10000
     gene_id_name = {}
     query_species_names_rhogs = list(species_prot_dic.keys())
     for species_name in query_species_names_rhogs:
