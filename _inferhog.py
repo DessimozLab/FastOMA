@@ -4,7 +4,7 @@ from ete3 import Tree
 from Bio import SeqIO
 
 import dill as dill_pickle
-from dask.distributed import Client
+# from dask.distributed import Client
 
 import _wrappers
 import _utils
@@ -15,6 +15,7 @@ from _utils import logger_hog
 def read_infer_xml_rhogs(rhogid_batch_list, vars_input):
     # (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon, format_prot_name) = vars_input
     hogs_a_rhog_xml_all_list = []
+    print("there are "+str(len(rhogid_batch_list))+" rhogs in the batch.")
     for rhogid_num in rhogid_batch_list:
         hogs_a_rhog_xml_all = read_infer_xml_rhog(rhogid_num, vars_input)
         hogs_a_rhog_xml_all_list += hogs_a_rhog_xml_all
@@ -23,7 +24,7 @@ def read_infer_xml_rhogs(rhogid_batch_list, vars_input):
 def read_infer_xml_rhog(rhogid_num, vars_input) :
     (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon, format_prot_name) = vars_input
     logger_hog.info(
-        "\n" + "=" * 50 + "\n" + "Working on root hog: " + str(rhogid_num) + ". \n")  # +", ",rhogid_num_i,"-th. \n"
+        "\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")  # +", ",rhogid_num_i,"-th. \n"
     prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
     rhog_i = list(SeqIO.parse(prot_address, "fasta"))
     logger_hog.info("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
@@ -61,6 +62,7 @@ def read_infer_xml_rhog(rhogid_num, vars_input) :
 
     with open(pickle_address + '/file_' + str(rhogid_num) + '.pickle', 'wb') as handle:
         dill_pickle.dump(hogs_a_rhog_xml_all, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
+    logger_hog.info("***** hogs are written as a pickle " + pickle_address + '/file_' + str(rhogid_num) + '.pickle')
 
     del hogs_a_rhog
     gc.collect()
@@ -146,7 +148,7 @@ def singletone_hog(node_species_tree, rhog_i, species_names_rhog, rhogid_num):
 def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder, format_prot_name):
 
     logger_hog.info(
-        "\n" + "*" * 15 + "\n" + "Finding hogs for rhogid_num: "+str(rhogid_num)+", for the taxonomic level:" + str(node_species_tree.name) + "\n" + str(
+        "\n" + "**" + "Finding hogs for rhogid_num: "+str(rhogid_num)+", for the taxonomic level:" + str(node_species_tree.name) + "\n" + str(
             node_species_tree.write()) + "\n")
 
     if node_species_tree.is_leaf():
@@ -183,15 +185,15 @@ def infer_hogs_this_level(node_species_tree, rhog_i, species_names_rhog, hogs_ch
     prot_list_sbuhog = [i._members for i in hogs_this_level_list]
     prot_list_sbuhog_short = []
     for prot_sub_list_sbuhog in prot_list_sbuhog:
-        if format_prot_name == 0:  #  format_prot_name = 0 # bird dataset   TYTALB_R04643
+        if format_prot_name == 0:  # bird dataset TYTALB_R04643
             prot_list_sbuhog_short = prot_sub_list_sbuhog
-        elif format_prot_name == 1: # format_prot_name = 1  # qfo dataset   # 'tr|E3JPS4|E3JPS4_PUCGT
+        elif format_prot_name == 1:  # qfo dataset  'tr|E3JPS4|E3JPS4_PUCGT
             prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
     logger_hog.info("- " + str(
         len(hogs_this_level_list)) + " hogs are inferred at the level " + node_species_tree.name + ": " + " ".join(
         [str(i) for i in prot_list_sbuhog_short]))
 
-    print("*666*"*20)
+    # print("*666*"*20)
     string_all = "["
     for hog in hogs_this_level_list:
         str_each = " ".join( [str(i) for i in hog._members])

@@ -152,7 +152,7 @@ def lable_SD_internal_nodes(tree_out):
     return tree_out
 
 
-def prepare_xml(rhogid_num_list_input, address_rhogs_folder):
+def prepare_xml(rhogid_num_list_input, address_rhogs_folder, format_prot_name):
     species_prot_dic = {}
     # all_prot_temp_list= []
     rhogid_len_list = [ ]
@@ -162,7 +162,20 @@ def prepare_xml(rhogid_num_list_input, address_rhogs_folder):
         rhogid_len_list.append(len(rhog_i))
 
         for prot_i in rhog_i:
-            species_i = prot_i.id.split("|")[-1].split("_")[-1]
+
+            if format_prot_name == 1:  # qfo dataset
+                prot_name = prot_i.name  # 'tr|E3JPS4|E3JPS4_PUCGT
+                species_i = prot_name.split("|")[-1].split("_")[-1].strip()
+                if species_i == 'RAT': species_i = "RATNO"
+
+            elif format_prot_name == 0:  # bird dataset
+                # rec.name  CLIRXF_R07389
+                # prot_name = prot_i.name
+                prot_descrip = prot_i.description  # >CLIRXF_R07389 CLIRXF_R07389|species|CLIRUF
+                species_i = prot_descrip.split(" ")[1].split("|")[-1]
+                # species_name = prot_name.split("_")[0].strip()
+
+            # species_i = prot_i.id.split("|")[-1].split("_")[-1]
             if species_i in species_prot_dic:
                 species_prot_dic[species_i].append(prot_i.id)
             else:

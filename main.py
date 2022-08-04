@@ -24,9 +24,14 @@ if __name__ == '__main__':
 
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
     gene_trees_folder = working_folder + "/gene_trees_test/"
-    address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # "/rhog_size_g2_s500/" sample_rootHOG
+    address_rhogs_folder = working_folder + "/old3/rhog_all//"  # "/rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
     pickle_address = working_folder + "/pickle_folder/"
+
+
+
+    # format_prot_name = 0 # bird dataset   TYTALB_R04643
+    format_prot_name = 1  # qfo dataset   # 'tr|E3JPS4|E3JPS4_PUCGT
 
     step = "hog"
     print("we are here ")
@@ -59,14 +64,14 @@ if __name__ == '__main__':
     logger_hog.info("Number of root hogs is "+str(len(rhogid_num_list))+".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list_input = rhogid_num_list[9:12]
+    rhogid_num_list_input = rhogid_num_list[:100]
     logger_hog.info("Number of working root hog is " + str(len(rhogid_num_list_input)) + ".")
-    (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder)
+    (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_num_list_input, address_rhogs_folder, format_prot_name )
     # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
     # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
     len(gene_id_name)
 
-    dask_future = True
+    dask_future = False
 
     if dask_future:
         # print("*** client **** ")
@@ -95,7 +100,7 @@ if __name__ == '__main__':
             if rhogid_len < len_tresh:
 
                 dask_future_taxon = False
-                vars_input = (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon)
+                vars_input = (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon, format_prot_name)
                 vars_input_future = client.scatter(vars_input)
                 dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, vars_input_future)
                 dask_out_list.append(dask_out)
@@ -122,10 +127,13 @@ if __name__ == '__main__':
         dask_future_taxon = False
         for rhogid_num_i in range(len(rhogid_num_list_input)):
             rhogid_num = rhogid_num_list_input[rhogid_num_i]
-            vars_input = (
-            gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future,
-            dask_future_taxon)
-            hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, vars_input)
+            rhogid_len = rhogid_len_list[rhogid_num_i]
+            if rhogid_len > 50:
+                vars_input = (
+                gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future,
+                dask_future_taxon, format_prot_name)
+                hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, vars_input)
+                exit
 
 
     # for hogs_a_rhog_xml in hogs_a_rhog_xml_all:

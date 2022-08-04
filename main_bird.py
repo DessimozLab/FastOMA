@@ -64,7 +64,7 @@ if __name__ == '__main__':
     logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list = rhogid_num_list[12:15]
+    rhogid_num_list = rhogid_num_list[:15]
     number_roothog = len(rhogid_num_list)
     num_per_parralel = 4
     parralel_num = int(number_roothog / num_per_parralel)
@@ -77,36 +77,35 @@ if __name__ == '__main__':
 
         rhogid_batch_list.append(rhogid_num_list_portion)
 
-    dask_future = False
+    dask_future = True
 
     if dask_future:
         # print("*** client **** ", cluster.dashboard_link, cluster.get_logs())
         ncore = 1  # Total number of cores per job
-        njobs = 2  # Cut the job up into this many processes.
+        njobs = 1  # Cut the job up into this many processes.
         # # By default, process ~= sqrt(cores) so that the number of processes = the number of threads per process
         nproc = ncore
         cluster = LocalCluster()
         # cluster = SLURMCluster(cores=ncore, processes=nproc, memory="20GB", walltime="01:00:00")
         cluster.scale(njobs)  # # ask for one jobs
         client = Client(cluster)
-
+    dask_out_list = []
     for rhogid_batch in rhogid_batch_list:
 
         #rhogid_num_list_input = rhogid_batch
         logger_hog.info("Number of working root hog is " + str(len(rhogid_batch)) + ".")
         (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_batch,
-                                                                                    address_rhogs_folder)
+                                                                                    address_rhogs_folder, format_prot_name)
 
         # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
         # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
-        print("lenght of gene_id_name ", len(gene_id_name))
+        print("length of gene_id_name ", len(gene_id_name))
 
 
         if dask_future:
 
-
             len_tresh = 1000
-            dask_out_list = []
+
             # for rhogid_num_i in range(len(rhogid_num_list_input)):
             #    rhogid_num = rhogid_num_list_input[rhogid_num_i]
             #    rhogid_len = rhogid_len_list[rhogid_num_i]
@@ -140,7 +139,7 @@ if __name__ == '__main__':
 #         #     print(hogs_a_rhog_xml_all)
 #
         else:
-            dask_future_taxon =False
+            dask_future_taxon = False
 
             vars_input = (
                 gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address,
