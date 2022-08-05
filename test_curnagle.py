@@ -1,28 +1,28 @@
 # # #
-# # # import dill as dill_pickle
-# # # import os
-# # # import _utils
-# # # from os import listdir
-# # # import xml.etree.ElementTree as ET
-# # #
-# # # from xml.dom import minidom
-# # #
-# # #
-# # # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # # gene_trees_folder = working_folder + "/gene_trees_test/"
-# # # address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # "/rhog_size_g2_s500/" sample_rootHOG
-# # # species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
-# # # pickle_address = working_folder + "/pickle_folder/"
-# # #
-# # # pickle_files_adress = listdir(pickle_address)
-# # #
-# # # hogs_a_rhog_xml_all = []
-# # # for pickle_file_adress in pickle_files_adress:
-# # #     with open(pickle_address+ pickle_file_adress, 'rb') as handle:
-# # #
-# # #         hogs_a_rhog_xml_all += dill_pickle.load(handle)
-# # #
-# # # print(hogs_a_rhog_xml_all)
+import dill as dill_pickle
+import os
+import _utils
+from os import listdir
+import xml.etree.ElementTree as ET
+
+from xml.dom import minidom
+
+
+working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+gene_trees_folder = working_folder + "/gene_trees_test/"
+address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # "/rhog_size_g2_s500/" sample_rootHOG
+species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
+pickle_address = working_folder + "/pickle_folder/"
+
+pickle_files_adress = listdir(pickle_address)
+
+hogs_a_rhog_xml_all = []
+for pickle_file_adress in pickle_files_adress:
+    with open(pickle_address+ pickle_file_adress, 'rb') as handle:
+
+        hogs_a_rhog_xml_all += dill_pickle.load(handle)
+
+print(hogs_a_rhog_xml_all)
 # # #
 # # # rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
 # # # rhogid_num_list_input = rhogid_num_list[9:13]
@@ -296,22 +296,22 @@
 # # Driver Program
 # print(Fibonacci(19))
 
-
-
-from distributed import Client, get_client
-
-def fib(n):
-    if n < 2:
-        return n
-    client = get_client()
-    a_future = client.submit(fib, n - 1)
-    b_future = client.submit(fib, n - 2)
-    a, b = client.gather([a_future, b_future])
-    return a + b
-
-if __name__ == "__main__":
-    client = Client()
-    future = client.submit(fib, 10)
-    result = future.result()
-    print(result)  # prints "55"
-
+#
+#
+# from distributed import Client, get_client
+#
+# def fib(n):
+#     if n < 2:
+#         return n
+#     client = get_client()
+#     a_future = client.submit(fib, n - 1)
+#     b_future = client.submit(fib, n - 2)
+#     a, b = client.gather([a_future, b_future])
+#     return a + b
+#
+# if __name__ == "__main__":
+#     client = Client()
+#     future = client.submit(fib, 10)
+#     result = future.result()
+#     print(result)  # prints "55"
+#

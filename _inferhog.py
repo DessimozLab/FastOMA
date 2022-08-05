@@ -17,7 +17,6 @@ from distributed import get_client
 
 def read_infer_xml_rhogs(rhogid_batch_list, vars_input):
 
-
     # (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon, format_prot_name) = vars_input
     hogs_rhogs_xml_all = []
     print("there are "+str(len(rhogid_batch_list))+" rhogs in the batch.")
@@ -41,7 +40,7 @@ def read_infer_xml_rhog(rhogid_num, vars_input):
     # species_tree.write();  print(species_tree.write())
 
     input_vars2 = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name)
-    if len(rhog_i) > 30:
+    if len(rhog_i) > 30000:
         # dask_future_taxon = True
         print(" dask future taxon is on * "+str(rhogid_num)+" with length "+str(len(rhog_i)))
 
