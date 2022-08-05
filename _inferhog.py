@@ -11,8 +11,8 @@ import _utils
 from _hog_class import HOG
 from _utils import logger_hog
 
-from _dask_env import client_dask
-
+# from _dask_env import client_dask
+from distributed import get_client
 
 
 def read_infer_xml_rhogs(rhogid_batch_list, vars_input):
@@ -93,9 +93,12 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, input_vars2)
     #     hogs_children_level_list_future += hogs_this_level_list_future_i
     # hogs_this_level_list = infer_hogs_this_level(sub_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder, format_prot_name)
     # client.submit(0
-    hogs_children_level_list_futures = client_dask.map(infer_hogs_for_rhog_levels_recursively_future, children_nodes, [input_vars2]* len(children_nodes) )
 
-    hogs_children_level_list = client_dask.gather(hogs_children_level_list_futures)
+    client_dask_working = get_client()
+
+    hogs_children_level_list_futures = client_dask_working.map(infer_hogs_for_rhog_levels_recursively_future, children_nodes, [input_vars2]* len(children_nodes) )
+
+    hogs_children_level_list = client_dask_working.gather(hogs_children_level_list_futures)
 
     print(sub_species_tree.name)
     hogs_this_level_list = infer_hogs_this_level(sub_species_tree, input_vars2, hogs_children_level_list)

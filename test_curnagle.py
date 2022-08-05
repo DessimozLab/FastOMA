@@ -196,65 +196,122 @@
 #
 # print("here")
 
-
-from datetime import datetime
-import time
-
-current_time = datetime.now().strftime("%H:%M:%S")
-#print(current_time)
-# current_time += "sina"
-#print(current_time)
-
-def aa(a):
-    print("here2")
-    time.sleep(5)
-    return a*100
-
-from _dask_env import client_dask
-
-futures= []
-print("here1")
-future = client_dask.submit(aa, 200)
-futures.append(future)
-print("here3")
-print(future)
-print("here4")
-#print(future.result())
-print("here5")
-
-
-
-
-
-print("here10")
-future = client_dask.submit(aa, 123)
-futures.append(future)
-print("here3")
-print(future)
-print("here4")
-# print(future.result())
-print("here5")
-
-
-print("here10")
-future = client_dask.submit(aa, 123)
-print("here3")
-print(future)
-print("here4")
-futures.append(future)
-# futures.append(future)print(future.result())
-print("here5")
-
-print([i.result() for i in futures])
-
-print(future)
 #
-# print("here2")
+# from datetime import datetime
+# import time
+#
+# current_time = datetime.now().strftime("%H:%M:%S")
+# #print(current_time)
+# # current_time += "sina"
+# #print(current_time)
+#
+# def aa(a):
+#     print("here2")
+#     time.sleep(5)
+#     return a*100
+#
+# from _dask_env import client_dask
+#
+#
+# futures = client_dask.map(aa, [200,100,23,42])
+# print([i.result() for i in futures])
+#
+#
+# futures = client_dask.map(aa, [222,22,11,432])
+# print([i.result() for i in futures])
+#
+#
+# futures = client_dask.map(aa, [2400,1400,323,423])
+# print([i.result() for i in futures])
+#
+#
+#
+
+# futures= []
+# print("here1")
 # future = client_dask.submit(aa, 200)
-# print(future.result())
-#
-#
+# futures.append(future)
 # print("here3")
-# future = client_dask.submit(aa, 200)
-# print(future.result())
+# print(future)
+# print("here4")
+# #print(future.result())
+# print("here5")
+#
+#
+#
+#
+#
+# print("here10")
+# future = client_dask.submit(aa, 123)
+# futures.append(future)
+# print("here3")
+# print(future)
+# print("here4")
+# # print(future.result())
+# print("here5")
+#
+#
+# print("here10")
+# future = client_dask.submit(, 123)
+# print("here3")
+# print(future)
+# print("here4")
+# futures.append(future)
+# # futures.append(future)print(future.result())
+# print("here5")
+#
+# print([i.result() for i in futures])
+#
+# print(future)
+# #
+# # print("here2")
+# # future = client_dask.submit(aa, 200)
+# # print(future.result())
+# #
+# #
+# # print("here3")
+# # future = client_dask.submit(aa, 200)
+# # print(future.result())
+# #
+# def Fibonacci(n):
+#     # Check if input is 0 then it will
+#     # print incorrect input
+#     if n < 0:
+#         print("Incorrect input")
+#
+#     # Check if n is 0
+#     # then it will return 0
+#     elif n == 0:
+#         return 0
+#
+#     # Check if n is 1,2
+#     # it will return 1
+#     elif n == 1 or n == 2:
+#         return 1
+#
+#     else:
+#         return Fibonacci(n - 1) + Fibonacci(n - 2)
+#
+#
+# # Driver Program
+# print(Fibonacci(19))
+
+
+
+from distributed import Client, get_client
+
+def fib(n):
+    if n < 2:
+        return n
+    client = get_client()
+    a_future = client.submit(fib, n - 1)
+    b_future = client.submit(fib, n - 2)
+    a, b = client.gather([a_future, b_future])
+    return a + b
+
+if __name__ == "__main__":
+    client = Client()
+    future = client.submit(fib, 10)
+    result = future.result()
+    print(result)  # prints "55"
 

@@ -62,9 +62,9 @@ if __name__ == '__main__':
     logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list = rhogid_num_list[:15]
+    rhogid_num_list = rhogid_num_list[:10]
     number_roothog = len(rhogid_num_list)
-    num_per_parralel = 4
+    num_per_parralel = 2
     parralel_num = int(number_roothog / num_per_parralel)
     rhogid_batch_list = []
     for list_idx in range(parralel_num + 1):
