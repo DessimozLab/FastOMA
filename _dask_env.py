@@ -10,8 +10,8 @@ from dask_jobqueue import SLURMCluster
 
 machine = "slurm"
 ncore = 1
-njobs = 4
-memory_slurm = "10GB"
+njobs = 30
+memory_slurm = "4GB"
 time_slurm = "00:20:00"
 # print("*** client **** ", cluster.dashboard_link, cluster.get_logs())
 # ncore = 1  # Total number of cores per job
