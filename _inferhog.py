@@ -11,18 +11,20 @@ import _utils
 from _hog_class import HOG
 from _utils import logger_hog
 
+from _dask_env import client
+
 
 def read_infer_xml_rhogs(rhogid_batch_list, vars_input):
     # (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon, format_prot_name) = vars_input
-    hogs_a_rhog_xml_all_list = []
+    hogs_rhogs_xml_all = []
     print("there are "+str(len(rhogid_batch_list))+" rhogs in the batch.")
     for rhogid_num in rhogid_batch_list:
-        hogs_a_rhog_xml_all = read_infer_xml_rhog(rhogid_num, vars_input)
-        hogs_a_rhog_xml_all_list += hogs_a_rhog_xml_all
+        hogs_rhogs_xml = read_infer_xml_rhog(rhogid_num, vars_input)
+        hogs_rhogs_xml_all += hogs_rhogs_xml
 
-    return hogs_a_rhog_xml_all_list
+    return hogs_rhogs_xml_all
 
-def read_infer_xml_rhog(rhogid_num, vars_input) :
+def read_infer_xml_rhog(rhogid_num, vars_input):
     (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon, format_prot_name) = vars_input
     logger_hog.info(
         "\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")  # +", ",rhogid_num_i,"-th. \n"
@@ -35,41 +37,41 @@ def read_infer_xml_rhog(rhogid_num, vars_input) :
     (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree, format_prot_name)
     # species_tree.write();  print(species_tree.write())
 
-    if dask_future:
-        if dask_future_taxon:
-            hogs_a_rhog = infer_hogs_for_rhog_levels_recursively_future(species_tree, rhog_i, species_names_rhog,
-                                                                        rhogid_num, gene_trees_folder, format_prot_name)
-
-        else:
-            hogs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, rhog_i, species_names_rhog,
-                                                                 rhogid_num, gene_trees_folder, format_prot_name)
+    if len(rhog_i) > 100:
+        # dask_future_taxon = True
+        print(" dask future taxon is on ")
+        hogs_a_rhog = infer_hogs_for_rhog_levels_recursively_future(species_tree, rhog_i, species_names_rhog,
+                                                                    rhogid_num, gene_trees_folder, format_prot_name)
     else:
-        hogs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, rhog_i, species_names_rhog,
-                                                             rhogid_num, gene_trees_folder, format_prot_name)
+        # dask_future_taxon = False
+
+        # hogs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, rhog_i, species_names_rhog,
+        #                                                          rhogid_num, gene_trees_folder, format_prot_name)
+        a=2
+        hogs_a_rhog = []
 
     logger_hog.info("subhogs in thisLevel are " + ' '.join(["[" + str(i) + "]" for i in hogs_a_rhog]) + " .")
-    hogs_a_rhog_xml_all = []
+    hogs_rhogs_xml = []
     for hog_i in hogs_a_rhog:
         print(hog_i)
         if len(hog_i._members) > 1:
-
             # could be improved
             hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
-            hogs_a_rhog_xml_all.append(hogs_a_rhog_xml)
-    print(hogs_a_rhog_xml_all)
+            hogs_rhogs_xml.append(hogs_a_rhog_xml)
+    print(hogs_rhogs_xml)
     logger_hog.info("we are not reporting single tone hogs in the output xml.")
 
     # how to handle empty hogs !? why happening and if not save pickle, file not exist error from rhog id list
 
     with open(pickle_address + '/file_' + str(rhogid_num) + '.pickle', 'wb') as handle:
-        dill_pickle.dump(hogs_a_rhog_xml_all, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
+        dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
     logger_hog.info("***** hogs are written as a pickle " + pickle_address + '/file_' + str(rhogid_num) + '.pickle')
 
     del hogs_a_rhog
     gc.collect()
 
 
-    return hogs_a_rhog_xml_all
+    return hogs_rhogs_xml
 
 
 # only one level parralelization
@@ -78,15 +80,25 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, rhog_i, spec
     if sub_species_tree.is_leaf():
         children_nodes = []
     else:
-        children_nodes =  sub_species_tree.children
+        children_nodes = sub_species_tree.children
 
-    hogs_children_level_list = []
+    hogs_children_level_list_future = []
+    # for node_species_tree_child in children_nodes:
+    #     hogs_this_level_list_future_i = infer_hogs_for_rhog_levels_recursively_future(node_species_tree_child, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name)
+    #     hogs_children_level_list_future += hogs_this_level_list_future_i
     for node_species_tree_child in children_nodes:
-        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively_future(node_species_tree_child, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name)
-        hogs_children_level_list.extend(hogs_children_level_list_i)
-    hogs_this_level_list = infer_hogs_this_level(sub_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder, format_prot_name)
+        hogs_this_level_list_future_i = infer_hogs_for_rhog_levels_recursively_future(node_species_tree_child, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name)
+        hogs_children_level_list_future += hogs_this_level_list_future_i
 
-    return hogs_this_level_list
+    # hogs_this_level_list = infer_hogs_this_level(sub_species_tree, rhog_i, species_names_rhog, hogs_children_level_list, rhogid_num, gene_trees_folder, format_prot_name)
+
+    print(sub_species_tree.name)
+    hogs_children_level_list = client.gather(hogs_children_level_list_future)
+    hogs_this_level_list_future = client.submit(infer_hogs_this_level, sub_species_tree, rhog_i, species_names_rhog, hogs_children_level_list,
+                                                 rhogid_num, gene_trees_folder, format_prot_name)
+
+
+    return hogs_this_level_list_future
 
 
 # def infer_hogs_for_rhog_dask_future(sub_species_tree, rhog_i, species_names_rhog, rhogid_num, gene_trees_folder):

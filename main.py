@@ -7,11 +7,7 @@ import os
 import gc
 """
 
-import dask
-
-from dask.distributed import Client
-from dask.distributed import LocalCluster
-from dask_jobqueue import SLURMCluster
+from _dask_env import client
 
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
@@ -70,9 +66,9 @@ if __name__ == '__main__':
     logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list = rhogid_num_list[:50]
+    rhogid_num_list = rhogid_num_list[:120]
     number_roothog = len(rhogid_num_list)
-    num_per_parralel = 5
+    num_per_parralel = 3
     parralel_num = int(number_roothog / num_per_parralel)
     rhogid_batch_list = []
     for list_idx in range(parralel_num + 1):
@@ -82,18 +78,11 @@ if __name__ == '__main__':
             rhogid_num_list_portion = rhogid_num_list[list_idx * num_per_parralel:(list_idx + 1) * num_per_parralel]
         rhogid_batch_list.append(rhogid_num_list_portion)
 
-    dask_future = True
+    dask_future = False
 
-    if dask_future:
-        # print("*** client **** ", cluster.dashboard_link, cluster.get_logs())
-        ncore = 1  # Total number of cores per job
-        njobs = 5  # Cut the job up into this many processes.
-        # # By default, process ~= sqrt(cores) so that the number of processes = the number of threads per process
-        nproc = ncore
-        # cluster = LocalCluster()
-        cluster = SLURMCluster(cores=ncore, processes=nproc, memory="2GB", walltime="00:10:00")
-        cluster.scale(njobs)  # # ask for one jobs
-        client = Client(cluster)
+    # if dask_future:
+
+
     dask_out_list = []
     for rhogid_batch_idx in range(len(rhogid_batch_list)):
         rhogid_batch = rhogid_batch_list[rhogid_batch_idx]
@@ -115,7 +104,7 @@ if __name__ == '__main__':
             #    rhogid_len = rhogid_len_list[rhogid_num_i]
             #    if rhogid_len < len_tresh:
 
-            dask_future_taxon = False
+            dask_future_taxon = True
             vars_input = (
                 gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address,
                 dask_future, dask_future_taxon, format_prot_name)
@@ -142,7 +131,8 @@ if __name__ == '__main__':
 
         #
         else:
-            dask_future_taxon = False
+
+            dask_future_taxon = True
 
             vars_input = (
                 gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address,
