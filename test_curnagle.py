@@ -133,11 +133,65 @@
 
 
 
-def cal(a,b,c,d):
+# def cal(a,b,c,d):
+#
+#     print(a+b+c+d)
+#     return 1
+# list1=(2,3,4)
+# print(cal(1,list1))
+#
+# from _utils import logger_hog
+# import _utils
+# from os import listdir
+# from Bio import SeqIO
 
-    print(a+b+c+d)
-    return 1
-list1=(2,3,4)
-print(cal(1,list1))
+working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
 
 
+# rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
+
+# print("num", len(rhogid_num_list))
+#
+# rhogid_len_list = []
+# for rhogid_num in rhogid_num_list:
+#     prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
+#     rhog_i = list(SeqIO.parse(prot_address, "fasta"))
+#     rhogid_len_list.append(len(rhog_i))
+#
+# print(len(rhogid_len_list), rhogid_len_list[:2])
+#
+
+
+working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+address_rhogs_folder = working_folder + "/old3/rhog_all/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
+file = open(address_rhogs_folder+"size.txt")
+rhogid_len_list =[]
+for f in file:
+    rhogid_len_list.append(int(f.strip()))
+# print(rhogid_len_list)
+import matplotlib.pyplot as plt
+
+plt.hist(rhogid_len_list, bins=100)  # , density=True
+plt.yscale('log', nonposy='clip')
+plt.savefig("/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/size_qfo_all2.png")
+
+print("here2")
+
+
+
+working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/"
+address_rhogs_folder = working_folder + "/rhogs_all/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
+file = open(address_rhogs_folder+"size.txt")
+rhogid_len_list =[]
+for f in file:
+    rhogid_len_list.append(int(f.strip()))
+# print(rhogid_len_list)
+
+
+plt.figure()
+plt.hist(rhogid_len_list, bins=100)  # , density=True
+plt.yscale('log', nonposy='clip')
+plt.savefig("/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/size_bird_all2.png")
+
+print("here")

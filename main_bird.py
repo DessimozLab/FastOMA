@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/"
     gene_trees_folder = working_folder + "/gene_trees/"
-    address_rhogs_folder = working_folder + "/rhogs/"  # "/rhog_size_g2_s500/" sample_rootHOG
+    address_rhogs_folder = working_folder + "/rhogs_all/"  # "/rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "tree_4a_iqt.nwk" # tree.nwk .phyloxml
     pickle_address = working_folder + "/pickle_folder/"
 
@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
         oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastoma/archive/OmaServer.h5"
         # working_folder+"omamer_database/oma_path/OmaServer.h5"
-        print("program has started. The oma database address is in ", oma_database_address)
+        print("rHOG inferece has started. The oma database address is in ", oma_database_address)
         (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
         (query_species_names, query_prot_records_species) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
         query_prot_records_species = _utils_rhog.add_species_name(query_prot_records_species, query_species_names)
@@ -55,7 +55,7 @@ if __name__ == '__main__':
                                                                                          query_species_names,
                                                                                          query_prot_records_species_filtered)
 
-    format_prot_name = 0 # bird dataset   TYTALB_R04643
+    format_prot_name = 0  # bird dataset   TYTALB_R04643
     # format_prot_name = 1  # qfo dataset   # 'tr|E3JPS4|E3JPS4_PUCGT
 
     rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
@@ -148,75 +148,75 @@ if __name__ == '__main__':
             hogs_a_rhog_xml_all = dask_out.result()
             print(hogs_a_rhog_xml_all)
 
-
-#         print("*d*" * 100)
-#         dask_future_taxon = False
-#         for rhogid_num_i in range(len(rhogid_num_list_input)):
-#             rhogid_num = rhogid_num_list_input[rhogid_num_i]
-#             vars_input = (
-#                 gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address,
-#                 dask_future,
-#                 dask_future_taxon)
-#             hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, vars_input)
 #
-#     # for hogs_a_rhog_xml in hogs_a_rhog_xml_all:
-#     #     groups_xml.append(hogs_a_rhog_xml)
-#     # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
-#     # print(xml_str)
+# #         print("*d*" * 100)
+# #         dask_future_taxon = False
+# #         for rhogid_num_i in range(len(rhogid_num_list_input)):
+# #             rhogid_num = rhogid_num_list_input[rhogid_num_i]
+# #             vars_input = (
+# #                 gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address,
+# #                 dask_future,
+# #                 dask_future_taxon)
+# #             hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, vars_input)
+# #
+# #     # for hogs_a_rhog_xml in hogs_a_rhog_xml_all:
+# #     #     groups_xml.append(hogs_a_rhog_xml)
+# #     # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
+# #     # print(xml_str)
+# #
+# #     print("test")
+# #
+# #     # dask_working.visualize(filename='/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/out_4.svg')
+# #     # print("visualized.")
+# #     # dask_result = dask_working.compute()
+# #     # print(dask_result)  # prints "55"
+# #
+# #     # dask_a = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
+# #     #  gene_trees_folder)
+# #     # print("this is dask_a: \n ",dask_a)
+# #     # dask_a.visualize(filename='/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/out_4.svg')
+# #
+# #     # dask.compute()
+# #
+# #     # hogs_rhogs_xml_all = []
+# #     # for rhogid_num in  rhogid_num_list_input:
+# #     #     hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder,
+# #     #     species_tree_address, gene_trees_folder)
+# #     #     hogs_rhogs_xml_all.append(hogs_a_rhog_xml_all)
+# #     # print("here")
+# #
+# #     # client = Client(processes=False)  # start local workers as processes
+# #     # future_1 = client.submit(infer_hogs_for_a_rhog, species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
+# #     # rhogid_num, gene_trees_folder)
+# #     # future = client.scatter(parameters)
+# #
+# #     # dask.visualize(gene_id_name)
+# #
+# #     # out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder)
+# #
+# #     # (dic_sub_hogs)= future_1.result()
+# #
+# #     # futures = client.map(inc, range(1000))
+# #     # as completed
+# #     # future.cancel()
+# #
+# #     # rhogid_num_list_temp = [836500]  # rhogid_num_list[23]  # [833732]
+# #
+# #     #     (dic_sub_hogs) = infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
+# #     #                                                        rhogid_num, gene_trees_folder)
+# #
+# #     print("**")
+# #
+# # """
+# # to do :
+# #     input list of rhg num
+# #     think how pickle per level ?
+# #     think how to distribute rhog into list
+# #     # Your functions should not change the inputs directly.
+# #     https://docs.dask.org/en/stable/delayed-best-practices.html#
+# #     dic hog ??
+# #
+# #     dobule check function merge_subhogs
+# #
+# # """
 #
-#     print("test")
-#
-#     # dask_working.visualize(filename='/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/out_4.svg')
-#     # print("visualized.")
-#     # dask_result = dask_working.compute()
-#     # print(dask_result)  # prints "55"
-#
-#     # dask_a = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address,
-#     #  gene_trees_folder)
-#     # print("this is dask_a: \n ",dask_a)
-#     # dask_a.visualize(filename='/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/out_4.svg')
-#
-#     # dask.compute()
-#
-#     # hogs_rhogs_xml_all = []
-#     # for rhogid_num in  rhogid_num_list_input:
-#     #     hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhog(rhogid_num, gene_id_name, address_rhogs_folder,
-#     #     species_tree_address, gene_trees_folder)
-#     #     hogs_rhogs_xml_all.append(hogs_a_rhog_xml_all)
-#     # print("here")
-#
-#     # client = Client(processes=False)  # start local workers as processes
-#     # future_1 = client.submit(infer_hogs_for_a_rhog, species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
-#     # rhogid_num, gene_trees_folder)
-#     # future = client.scatter(parameters)
-#
-#     # dask.visualize(gene_id_name)
-#
-#     # out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder)
-#
-#     # (dic_sub_hogs)= future_1.result()
-#
-#     # futures = client.map(inc, range(1000))
-#     # as completed
-#     # future.cancel()
-#
-#     # rhogid_num_list_temp = [836500]  # rhogid_num_list[23]  # [833732]
-#
-#     #     (dic_sub_hogs) = infer_hogs_for_a_rhog(species_tree, rhog_i, species_names_rhog, dic_sub_hogs,
-#     #                                                        rhogid_num, gene_trees_folder)
-#
-#     print("**")
-#
-# """
-# to do :
-#     input list of rhg num
-#     think how pickle per level ?
-#     think how to distribute rhog into list
-#     # Your functions should not change the inputs directly.
-#     https://docs.dask.org/en/stable/delayed-best-practices.html#
-#     dic hog ??
-#
-#     dobule check function merge_subhogs
-#
-# """
-
