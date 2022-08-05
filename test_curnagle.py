@@ -206,22 +206,55 @@ current_time = datetime.now().strftime("%H:%M:%S")
 #print(current_time)
 
 def aa(a):
+    print("here2")
     time.sleep(5)
     return a*100
 
 from _dask_env import client_dask
 
-
+futures= []
+print("here1")
 future = client_dask.submit(aa, 200)
-print(future.result())
-
-future = client_dask.submit(aa, 200)
-print(future.result())
-
-future = client_dask.submit(aa, 200)
-print(future.result())
-
+futures.append(future)
+print("here3")
+print(future)
+print("here4")
+#print(future.result())
+print("here5")
 
 
-future = client_dask.submit(aa, 200)
-print(future.result())
+
+
+
+print("here10")
+future = client_dask.submit(aa, 123)
+futures.append(future)
+print("here3")
+print(future)
+print("here4")
+# print(future.result())
+print("here5")
+
+
+print("here10")
+future = client_dask.submit(aa, 123)
+print("here3")
+print(future)
+print("here4")
+futures.append(future)
+# futures.append(future)print(future.result())
+print("here5")
+
+print([i.result() for i in futures])
+
+print(future)
+#
+# print("here2")
+# future = client_dask.submit(aa, 200)
+# print(future.result())
+#
+#
+# print("here3")
+# future = client_dask.submit(aa, 200)
+# print(future.result())
+
