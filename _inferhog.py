@@ -19,7 +19,8 @@ def read_infer_xml_rhogs(rhogid_batch_list, vars_input):
     for rhogid_num in rhogid_batch_list:
         hogs_a_rhog_xml_all = read_infer_xml_rhog(rhogid_num, vars_input)
         hogs_a_rhog_xml_all_list += hogs_a_rhog_xml_all
-    return hogs_a_rhog_xml_all
+
+    return hogs_a_rhog_xml_all_list
 
 def read_infer_xml_rhog(rhogid_num, vars_input) :
     (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address, dask_future, dask_future_taxon, format_prot_name) = vars_input

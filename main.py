@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
     gene_trees_folder = working_folder + "/gene_trees_test/"
-    address_rhogs_folder = working_folder + "/old3/rhog_all//"  # "/rhog_size_g2_s500/" sample_rootHOG
+    address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # "  old3/rhog_all/  /rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
     pickle_address = working_folder + "/pickle_folder/"
 
@@ -63,16 +63,16 @@ if __name__ == '__main__':
 
 
 
-    format_prot_name = 0  # bird dataset   TYTALB_R04643
-    # format_prot_name = 1  # qfo dataset   # 'tr|E3JPS4|E3JPS4_PUCGT
+    # format_prot_name = 0  # bird dataset   TYTALB_R04643
+    format_prot_name = 1  # qfo dataset   # 'tr|E3JPS4|E3JPS4_PUCGT
 
     rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
     logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list = rhogid_num_list[:15]
+    rhogid_num_list = rhogid_num_list[:50]
     number_roothog = len(rhogid_num_list)
-    num_per_parralel = 4
+    num_per_parralel = 5
     parralel_num = int(number_roothog / num_per_parralel)
     rhogid_batch_list = []
     for list_idx in range(parralel_num + 1):
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     if dask_future:
         # print("*** client **** ", cluster.dashboard_link, cluster.get_logs())
         ncore = 1  # Total number of cores per job
-        njobs = 2  # Cut the job up into this many processes.
+        njobs = 5  # Cut the job up into this many processes.
         # # By default, process ~= sqrt(cores) so that the number of processes = the number of threads per process
         nproc = ncore
         # cluster = LocalCluster()
