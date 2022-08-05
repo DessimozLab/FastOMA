@@ -40,19 +40,19 @@ def read_infer_xml_rhog(rhogid_num, vars_input):
     (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree, format_prot_name)
     # species_tree.write();  print(species_tree.write())
 
-    if len(rhog_i) > 2:
+    if len(rhog_i) > 10:
         # dask_future_taxon = True
-        print(" dask future taxon is on * ")
+        print(" dask future taxon is on * ", rhogid_num)
         input_vars2 = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name)
         hogs_a_rhog = infer_hogs_for_rhog_levels_recursively_future(species_tree, input_vars2)
 
     else:
         # dask_future_taxon = False
+        print(" dask future taxon is off * ", rhogid_num)
+        hogs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, rhog_i, species_names_rhog,
+                                                                 rhogid_num, gene_trees_folder, format_prot_name)
 
-        # hogs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, rhog_i, species_names_rhog,
-        #                                                          rhogid_num, gene_trees_folder, format_prot_name)
-        a=2
-        hogs_a_rhog = []
+        # hogs_a_rhog = []
 
     logger_hog.info("subhogs in thisLevel are " + ' '.join(["[" + str(i) + "]" for i in hogs_a_rhog]) + " .")
     hogs_rhogs_xml = []
