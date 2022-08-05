@@ -7,7 +7,7 @@ import os
 import gc
 """
 
-from _dask_env import client
+from _dask_env import client_dask
 
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
     print(rhogid_num_list[:2])
 
-    rhogid_num_list = rhogid_num_list[:120]
+    rhogid_num_list = rhogid_num_list[:20]
     number_roothog = len(rhogid_num_list)
     num_per_parralel = 3
     parralel_num = int(number_roothog / num_per_parralel)
@@ -109,20 +109,20 @@ if __name__ == '__main__':
                 gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address,
                 dask_future, dask_future_taxon, format_prot_name)
 
-            # vars_input_future = client.scatter(vars_input)
+            # vars_input_future = client_dask.scatter(vars_input)
             vars_input_future = vars_input
             # read_infer_xml_rhogs(rhogid_batch_list, vars_input)
-            dask_out = client.submit(_inferhog.read_infer_xml_rhogs, rhogid_batch, vars_input_future)
+            dask_out = client_dask.submit(_inferhog.read_infer_xml_rhogs, rhogid_batch, vars_input_future)
             dask_out_list.append(dask_out)
 
-            # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, vars_input)
+            # dask_out = client_dask.submit(_inferhog.read_infer_xml_rhog, rhogid_num, vars_input)
             # dask_out_list.append(dask_out)
             print("*a*" * 5)
         #             else:
         #                 print("*b*" * 100)
         #                 dask_future_taxon = True  # second level of parralelizion
         #                 print(rhogid_num_i, rhogid_num, rhogid_len)
-        #                 # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
+        #                 # dask_out = client_dask.submit(_inferhog.read_infer_xml_rhog, rhogid_num, gene_id_name,
         #                 #                          address_rhogs_folder, species_tree_address, gene_trees_folder,
         #                 #                          pickle_address, dask_future, dask_future_taxon)
         #                 # dask_out_list.append(dask_out)
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     #     cluster = LocalCluster()
     #     # cluster = SLURMCluster(cores=ncore, processes=nproc, memory="20GB", walltime="01:00:00")
     #     cluster.scale(njobs)  # # ask for one jobs
-    #     client = Client(cluster)
+    #     client_dask = Client(cluster)
     #
     #     # futures = client.map(score, x_values)
     #     # results = client.gather(futures)

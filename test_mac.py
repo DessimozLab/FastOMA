@@ -53,3 +53,16 @@
 #         continue
 #     print(i)
 
+from datetime import datetime
+import time
+from test_curnagle import current_time
+
+
+# current_time = datetime.now().strftime("%H:%M:%S")
+print(current_time)
+time.sleep(5)
+print(current_time)
+
+time.sleep(5)
+
+print(current_time)
