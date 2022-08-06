@@ -44,13 +44,13 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list = rhogid_num_list[:10]
+        rhogid_num_list = rhogid_num_list[:98]
         dask_future = True
         dask_future_taxon = False
 
         print(rhogid_num_list)
         number_roothog = len(rhogid_num_list)
-        num_per_parralel = 4
+        num_per_parralel = 10
         parralel_num = int(number_roothog/num_per_parralel)
         if number_roothog != parralel_num*num_per_parralel: parralel_num += 1
         rhogid_batch_list = []

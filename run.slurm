@@ -11,9 +11,9 @@ export PYTHONUNBUFFERED=1
 
 echo "started"
 
-folder="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/"
+folder="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget"
 
-python ${folder}/gethog3_3Aug4/main_bird.py
+python ${folder}/qfo2/gethog3_3Aug4/main.py
 
 
 echo "finished"
