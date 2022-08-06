@@ -44,8 +44,8 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list = rhogid_num_list[1000:1020]
-        dask_future = False
+        rhogid_num_list = rhogid_num_list[:10]
+        dask_future = True
         dask_future_taxon = False
 
         print(rhogid_num_list)
@@ -83,9 +83,8 @@ if __name__ == '__main__':
                 dask_out = client_dask.submit(_inferhog.read_infer_xml_rhogs, rhogid_batch, vars_input)
                 dask_out_list.append(dask_out)
             else:
-                out = _inferhog.read_infer_xml_rhogs(rhogid_batch, vars_input)
-                print(out)
-
+                hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhogs(rhogid_batch, vars_input)
+                print(hogs_a_rhog_xml_all)
 
         if dask_future:
             for dask_out in dask_out_list:
@@ -95,7 +94,7 @@ if __name__ == '__main__':
 
     orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA", "originVersion": "Nov 2021", "version": "0.3"})  #
     groups_xml = ET.SubElement(orthoxml_file, "groups")
-    for hog_xml in out:
+    for hog_xml in hogs_a_rhog_xml_all:
         groups_xml.append(hog_xml)
     xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
     print(xml_str)
