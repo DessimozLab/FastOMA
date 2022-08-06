@@ -13,7 +13,7 @@ if __name__ == '__main__':
     format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
 
     step = "hog"
-    print("we are here ")
+    print("we are here line16")
     if step == "roothog":
         """
         Structure of folders:
@@ -40,20 +40,21 @@ if __name__ == '__main__':
         # step == "hog"
 
     if step == "hog":
-        print("we are here 7 ")
+        print("we are here line43")
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list = rhogid_num_list[:5]
+        rhogid_num_list = rhogid_num_list[1000:1020]
         dask_future = False
         dask_future_taxon = False
 
         print(rhogid_num_list)
         number_roothog = len(rhogid_num_list)
-        num_per_parralel = 1
+        num_per_parralel = 4
         parralel_num = int(number_roothog/num_per_parralel)
+        if number_roothog != parralel_num*num_per_parralel: parralel_num += 1
         rhogid_batch_list = []
-        for list_idx in range(parralel_num + 1):
+        for list_idx in range(parralel_num):
             if list_idx == parralel_num:
                 rhogid_num_list_portion = rhogid_num_list[list_idx * num_per_parralel:]
             else:
@@ -66,12 +67,9 @@ if __name__ == '__main__':
         dask_out_list = []
         for rhogid_batch_idx in range(len(rhogid_batch_list)):
             rhogid_batch = rhogid_batch_list[rhogid_batch_idx]
-            logger_hog.info("Number of working root hog in the batch id,"+str(rhogid_batch_idx)+", is " + str(len(rhogid_batch)) + ".")
-            (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_batch,
-                                                                                            address_rhogs_folder,
-                                                                                            format_prot_name,
-                                                                                            rhogid_batch_idx)
-            print("length of gene_id_name ", len(gene_id_name))
+            logger_hog.info("\n *==* \nNumber of working root hog in the batchid:"+str(rhogid_batch_idx)+" is " + str(len(rhogid_batch)) + ".")
+            gene_id_name = _utils.gene_num_convertor(rhogid_batch, address_rhogs_folder, format_prot_name, rhogid_batch_idx)
+            print("Number of genes in the batch is ", len(gene_id_name))
             vars_input = (gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder,
                           pickle_address, dask_future, dask_future_taxon, format_prot_name)
 
@@ -86,6 +84,8 @@ if __name__ == '__main__':
                 dask_out_list.append(dask_out)
             else:
                 out = _inferhog.read_infer_xml_rhogs(rhogid_batch, vars_input)
+                print(out)
+
 
         if dask_future:
             for dask_out in dask_out_list:
@@ -93,13 +93,18 @@ if __name__ == '__main__':
                 print(hogs_a_rhog_xml_all)
             print("dask out gathered")
 
-print("main.py is finished.")
+    orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA", "originVersion": "Nov 2021", "version": "0.3"})  #
+    groups_xml = ET.SubElement(orthoxml_file, "groups")
+    for hog_xml in out:
+        groups_xml.append(hog_xml)
+    xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
+    print(xml_str)
+    print("main.py is finished.")
+
 
 
 """
 to do :
     - dobule check function merge_subhogs
     
-            
 """
-

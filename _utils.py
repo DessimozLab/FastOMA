@@ -152,7 +152,44 @@ def lable_SD_internal_nodes(tree_out):
     return tree_out
 
 
-def prepare_xml(rhogid_num_list_input, address_rhogs_folder, format_prot_name, rhogid_batch = 1):
+def gene_num_convertor(rhogid_num_list_input, address_rhogs_folder, format_prot_name, rhogid_batch=1):
+    species_prot_dic = {}
+    rhogid_len_list = []
+    for rhogid_num in rhogid_num_list_input:
+        prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
+        rhog_i = list(SeqIO.parse(prot_address, "fasta"))
+        rhogid_len_list.append(len(rhog_i))
+        for prot_i in rhog_i:
+            if format_prot_name == 1:  # qfo dataset
+                prot_name = prot_i.name  # 'tr|E3JPS4|E3JPS4_PUCGT
+                species_i = prot_name.split("|")[-1].split("_")[-1].strip()
+                if species_i == 'RAT': species_i = "RATNO"
+            elif format_prot_name == 0:  # bird dataset      # rec.name  CLIRXF_R07389
+                prot_descrip = prot_i.description  # >CLIRXF_R07389 CLIRXF_R07389|species|CLIRUF
+                species_i = prot_descrip.split(" ")[1].split("|")[-1]
+
+            if species_i in species_prot_dic:
+                species_prot_dic[species_i].append(prot_i.id)
+            else:
+                species_prot_dic[species_i] = [prot_i.id]
+            # all_prot_temp_list.append(prot_i.id)
+
+    print("Number of species in the batch is ", len(species_prot_dic))
+    gene_counter = 1000000 + rhogid_batch * 10000
+    gene_id_name = {}
+    query_species_names_rhogs = list(species_prot_dic.keys())
+    for species_name in query_species_names_rhogs:
+        prot_list = species_prot_dic[species_name]
+        for prot_itr in range(len(prot_list)):
+            prot_i_name = prot_list[prot_itr]
+            gene_id_name[prot_i_name] = gene_counter
+            gene_counter += 1
+
+    return gene_id_name
+
+
+
+def prepare_xml_old(rhogid_num_list_input, address_rhogs_folder, format_prot_name, rhogid_batch = 1):
     species_prot_dic = {}
     # all_prot_temp_list= []
     rhogid_len_list = [ ]
@@ -162,12 +199,10 @@ def prepare_xml(rhogid_num_list_input, address_rhogs_folder, format_prot_name, r
         rhogid_len_list.append(len(rhog_i))
 
         for prot_i in rhog_i:
-
             if format_prot_name == 1:  # qfo dataset
                 prot_name = prot_i.name  # 'tr|E3JPS4|E3JPS4_PUCGT
                 species_i = prot_name.split("|")[-1].split("_")[-1].strip()
                 if species_i == 'RAT': species_i = "RATNO"
-
             elif format_prot_name == 0:  # bird dataset
                 # rec.name  CLIRXF_R07389
                 # prot_name = prot_i.name
@@ -210,7 +245,6 @@ def prepare_xml(rhogid_num_list_input, address_rhogs_folder, format_prot_name, r
 
 
     return (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list)
-
 
 
 
