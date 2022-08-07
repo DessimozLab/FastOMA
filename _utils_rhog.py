@@ -38,10 +38,7 @@ def parse_proteome(list_oma_species, working_folder):
     project_files = listdir(working_folder + "/omamer_search/proteome/")
     query_species_names = []
     for file in project_files:
-        if file.split(".")[-1] == "fa":
-            file_name_split = file.split(".")[:-1]
-            query_species_names.append('.'.join(file_name_split))
-        if file.split(".")[-1] == "fasta":
+        if file.split(".")[-1] == "fa" or file.split(".")[-1] == "fasta":
             file_name_split = file.split(".")[:-1]
             query_species_names.append('.'.join(file_name_split))
 
@@ -90,7 +87,7 @@ def add_species_name_gene_id(query_prot_records_species, query_species_names):
         gene_counter = max_num_prot + query_species_idx * max_num_prot_per_sp
         for query_prot_idx, query_prot_record in enumerate(query_prot_records):
             gene_idx_integer = gene_counter + query_prot_idx
-            query_prot_record.id += "=#"+query_species_name+"=#"+str(gene_idx_integer)
+            query_prot_record.id += "||"+query_species_name+"||"+str(gene_idx_integer)
 
     return query_prot_records_species
 

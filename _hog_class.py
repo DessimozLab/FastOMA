@@ -63,11 +63,12 @@ class HOG:
         return set(self._members)
         # merge, gene tree, midpoint, lable_SD_internal_nodes, traverse_geneTree_assign_hog
 
-    def to_orthoxml(self, **gene_id_name):  # , indent=0):
-        indent = 0
+    #def to_orthoxml(self, **gene_id_name):  # , indent=0):
+    def to_orthoxml(self):
+        # indent = 0
         hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
-        property_element = ET.SubElement(hog_elemnt, "property",
-                                         attrib={"name": "TaxRange", "value": str(self._taxnomic_range)})
+        # property_element = ET.SubElement(hog_elemnt, "property",
+        #                                 attrib={"name": "TaxRange", "value": str(self._taxnomic_range)})
         # the following could be improved ???   without this if it will be like, one property is enough
         # <orthologGroup>
         #    <property name="TaxRange" value="GORGO_HUMAN_PANTR"/>
@@ -80,11 +81,10 @@ class HOG:
 
         if len(self._subhogs) == 0:
             # print(self._members)
-
             # print("we are here   ********???--??? ",self._hogid)
             list_member_first = list(self._members)[0]
-            geneRef_elemnt = ET.Element('geneRef', attrib={
-                'id': str(gene_id_name[list_member_first])})  # # gene_id_name[query_prot_record.id]
+            geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(list_member_first)})
+                #'id': str(gene_id_name[list_member_first])})  # # gene_id_name[query_prot_record.id]
             # hog_elemnt.append(geneRef_elemnt)
             # could be improved when the rhog contains only one protein
             return geneRef_elemnt  # hog_elemnt
@@ -99,8 +99,9 @@ class HOG:
             if len(list_of_subhogs_of_same_clade) > 1:
                 paralog_element = ET.Element('paralogGroup')
                 for sh in list_of_subhogs_of_same_clade:
-                    paralog_element.append(sh.to_orthoxml(**gene_id_name))  # ,**gene_id_name  indent+2
+                    # paralog_element.append(sh.to_orthoxml(**gene_id_name))
+                    paralog_element.append(sh.to_orthoxml())  # ,**gene_id_name  indent+2
                 hog_elemnt.append(paralog_element)
             else:
-                hog_elemnt.append(list_of_subhogs_of_same_clade[0].to_orthoxml(**gene_id_name))  # indent+2
+                hog_elemnt.append(list_of_subhogs_of_same_clade[0].to_orthoxml())  # indent+2
         return hog_elemnt
