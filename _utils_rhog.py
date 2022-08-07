@@ -52,11 +52,7 @@ def parse_proteome(list_oma_species, working_folder):
     for query_species_names_idx, query_species_name in enumerate(query_species_names):
         prot_address = working_folder + "omamer_search/proteome/" + query_species_name + ".fa"
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
-        prots_record_edited = edit_prot_names(prots_record, query_species_names_idx, )
-
-
-
-        query_prot_records_species.append(prots_record_edited)
+        query_prot_records_species.append(prots_record)
 
     query_species_num = len(query_species_names)
     current_time = datetime.now().strftime("%H:%M:%S")
@@ -79,25 +75,24 @@ def parse_proteome(list_oma_species, working_folder):
     return query_species_names, query_prot_records_species
 
 
+def add_species_name_gene_id(query_prot_records_species, query_species_names):
+    """
+    adding the name of species to each protein record
+        - based on file name
+    adding gene id number, integer imposed by xml format
+    output: updated version of input
+    """
+    max_num_prot = int(1e9)
+    max_num_prot_per_sp = int(1e6)
 
-def edit_prot_names(prots_record, , format_prot_name  ):
+    for query_species_idx, query_species_name in enumerate(query_species_names):
+        query_prot_records = query_prot_records_species[query_species_idx]
+        gene_counter = max_num_prot + query_species_idx * max_num_prot_per_sp
+        for query_prot_idx, query_prot_record in enumerate(query_prot_records):
+            gene_idx_integer = gene_counter + query_prot_idx
+            query_prot_record.id += "=#"+query_species_name+"=#"+str(gene_idx_integer)
 
-    prots_record_edited = prots_record
-    #
-    # if format_prot_name == 1:  # qfo dataset
-    #     prot_name = rec.name  # 'tr|E3JPS4|E3JPS4_PUCGT
-    #     # rec.description  'tr|E3JPS1|E3JPS1_PUCGT Uncharacterized protein OS=Puccinia graminis f. sp. tritici (strain CRL 75-36-700-3 / race SCCL) (Black stem rust fungus) OX=418459 GN=PGTG_00174 PE=4 SV=2'
-    #     species_name = prot_name.split("|")[-1].split("_")[-1].strip()
-    #     if species_name == 'RAT': species_name = "RATNO"
-    #
-    # elif format_prot_name == 0:  # bird dataset
-    #     # rec.name  CLIRXF_R07389
-    #     prot_name = rec.name
-    #     prot_descrip = rec.description  # >CLIRXF_R07389 CLIRXF_R07389|species|CLIRUF
-    #     species_name = prot_descrip.split(" ")[1].split("|")[-1]
-    #     # species_name = prot_name.split("_")[0].strip()
-
-    return prots_record_edited
+    return query_prot_records_species
 
 
 def parse_hogmap_omamer(query_species_names, working_folder):
@@ -201,26 +196,6 @@ def filter_prot_mapped(query_species_names, query_prot_records_species, query_pr
     print(current_time, "- For the rest of species, all proteins were mapped using OMAmer.")
     return query_prot_records_species_filtered
 
-
-def add_species_name(query_prot_records_species, query_species_names):
-    """
-    adding the name of species to each protein record
-
-    output: updated version of input
-    """
-
-    # for ix in range(len(query_species_names)):
-    #     query_species_name = query_species_names[ix]
-    for ix, query_species_name in enumerate(query_species_names):
-        query_prot_records = query_prot_records_species[ix]
-        # for i_prot in range(len(query_prot_records)):
-        #     query_prot_record = query_prot_records[i_prot]
-        for i_prot, query_prot_record  in enumerate(query_prot_records):
-            query_prot_record.description += "|species|" + query_species_name
-
-    return query_prot_records_species
-
-
 def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, query_species_names, query_prot_records_species_filtered):
     """
     a function for finding those proteins that are mapped to the same rootHOG.
@@ -284,14 +259,13 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, q
     # for rhogid_idx in range(len(rhogids_list)):
     #     rhogid = rhogids_list[rhogid_idx]
     for rhogid_idx, rhogid in enumerate(rhogids_list):
-        rhogid_prot_records_query = rhogids_prot_records_query[rhogid_idx]
+        rhogid_prot_rec_query = rhogids_prot_records_query[rhogid_idx]
         rhogid_B = rhogid.split(":")[1]
         rhogid_num = int(rhogid_B[1:])  # # B0613860
         rhogid_num_list.append(rhogid_num)
 
-        if 1: # 2 < len(rhogid_prot_records_query) < 500:
-            SeqIO.write(rhogid_prot_records_query, address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa",
-                        "fasta")
+        if 1 < len(rhogid_prot_rec_query) < 100:
+            SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder +"HOG_B"+ str(rhogid_num).zfill(7)+".fa", "fasta")
             # rhogids_prot_records_oma = []
             # for hog_elements in oma_db.member_of_fam(rhogid_num):   # this gets the member of roothog 2 (HOG:000002)
             #    prot_hog_element = ProteinEntry(oma_db, hog_elements)

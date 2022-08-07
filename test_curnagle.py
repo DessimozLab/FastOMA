@@ -1,105 +1,211 @@
-# # #
-import dill as dill_pickle
-import os
-import _utils
+
+
+
+# Proteins in each file belong to the same species.
+
+# change the name of each file based on the species name inside each prot id
+
+
 from os import listdir
-import xml.etree.ElementTree as ET
-
 from Bio import SeqIO
-from xml.dom import minidom
-
+import os
 
 working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# gene_trees_folder = working_folder + "/gene_trees_test/"
-address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # "/rhog_size_g2_s500/" sample_rootHOG
-# species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
-pickle_address = working_folder + "/pickle_folder_6aug/"
-format_prot_name = 1
+prot_folder = working_folder + "/omamer_search_old/proteome/"
+project_files = listdir(prot_folder)
+query_species_names_old = []
+query_species_names_new = []
+for file in project_files:
+    if file.split(".")[-1] == "fa":
+        file_name_split = file.split(".")[:-1]
+        query_species_name_old = '.'.join(file_name_split)
+        prot_address = prot_folder + query_species_name_old + ".fa"
+        prots_record = list(SeqIO.parse(prot_address, "fasta"))
+        prot_record = prots_record[0]
+        prot_name = prot_record.name  # 'tr|E3JPS4|E3JPS4_PUCGT
+        query_species_name_new = prot_name.split("|")[-1].split("_")[-1].strip()
+        # if query_species_name_new == 'RAT': query_species_name_new = "RATNO"
+        query_species_names_old.append(query_species_name_old)
+        query_species_names_new.append(query_species_name_new)
+
+os.mkdir(working_folder+"/omamer_search")
+os.mkdir(working_folder+"/omamer_search/proteome/")
+os.mkdir(working_folder+"/omamer_search/hogmap")
+
+
+for idx, query_species_name_old in enumerate(query_species_names_old):
+    query_species_name_new = query_species_names_new[idx]
+
+    prot_address_old = working_folder + "omamer_search_old/proteome/" + query_species_name_old + ".fa"
+    prot_address_new = working_folder + "omamer_search/proteome/" + query_species_name_new + "_.fa"
+    os.system('cp ' + prot_address_old + ' ' + prot_address_new)
+
+    hogmap_address_old = working_folder + "omamer_search_old/hogmap/" + query_species_name_old + ".hogmap"
+    hogmap_address_new = working_folder + "omamer_search/hogmap/" + query_species_name_new + "_.hogmap"
+    os.system('cp ' + hogmap_address_old + ' ' + hogmap_address_new)
+
+
+# 13:54:16 - the species DANRE  already exists in the oma database, remove them first
 
 
 
-pickle_files_adress = listdir(pickle_address)[:10]
-
-hogs_a_rhog_xml_all = []
-for pickle_file_adress in pickle_files_adress:
-    with open(pickle_address+ pickle_file_adress, 'rb') as handle:
-
-        hogs_a_rhog_xml_all += dill_pickle.load(handle)
-
-print(len(hogs_a_rhog_xml_all))
-
-
-print(2)
-rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
-
-
-species_prot_dic = {}
-for rhogid_num in rhogid_num_list:
-    prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
-    rhog_i = list(SeqIO.parse(prot_address, "fasta"))
-
-    for prot_i in rhog_i:
-        if format_prot_name == 1:  # qfo dataset
-            prot_name = prot_i.name  # 'tr|E3JPS4|E3JPS4_PUCGT
-            species_i = prot_name.split("|")[-1].split("_")[-1].strip()
-            if species_i == 'RAT': species_i = "RATNO"
-        elif format_prot_name == 0:  # bird dataset
-            # rec.name  CLIRXF_R07389
-            # prot_name = prot_i.name
-            prot_descrip = prot_i.description  # >CLIRXF_R07389 CLIRXF_R07389|species|CLIRUF
-            species_i = prot_descrip.split(" ")[1].split("|")[-1]
-            # species_name = prot_name.split("_")[0].strip()
-
-        # species_i = prot_i.id.split("|")[-1].split("_")[-1]
-        if species_i in species_prot_dic:
-            species_prot_dic[species_i].append(prot_i.id)
-        else:
-            species_prot_dic[species_i] = [prot_i.id]
-        # all_prot_temp_list.append(prot_i.id)
-
-print("there are species ", len(species_prot_dic))
-orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
-                                               "originVersion": "Nov 2021", "version": "0.3"})  #
-
-number_roothog = len(rhogid_num_list)
-num_per_parralel = 10
-parralel_num = int(number_roothog / num_per_parralel)
-if number_roothog != parralel_num * num_per_parralel: parralel_num += 1
-rhogid_batch_list = []
-for list_idx in range(parralel_num):
-    if list_idx == parralel_num:
-        rhogid_num_list_portion = rhogid_num_list[list_idx * num_per_parralel:]
-    else:
-        rhogid_num_list_portion = rhogid_num_list[list_idx * num_per_parralel:(list_idx + 1) * num_per_parralel]
-    rhogid_batch_list.append(rhogid_num_list_portion)
+print("done")
 
 
 
-for rhogid_batch_idx in range(len(rhogid_batch_list)):
-    rhogid_batch = rhogid_batch_list[rhogid_batch_idx]
 
-    gene_counter = 1000000 + rhogid_batch * 10000
-    gene_id_name = {}
-    query_species_names_rhogs = list(species_prot_dic.keys())
-    for species_name in query_species_names_rhogs:
 
-        species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": species_name, "NCBITaxId": "1"})
-        database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})
-        genes_xml = ET.SubElement(database_xml, "genes")
 
-    prot_list = species_prot_dic[species_name]
-    for prot_itr in range(len(prot_list)):  # [12:15]
-        prot_i_name = prot_list[prot_itr]
-        gene_id_name[prot_i_name] = gene_counter
-        if "|" in prot_i_name:
-            prot_i_name_short = prot_i_name.split("|")[1].strip()  # tr|E3JPS4|E3JPS4_PUCGT
-        else:
-            prot_i_name_short = prot_i_name
 
-        gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_counter), "protId": prot_i_name_short})
-        gene_counter += 1
+#
+# # Proteins in each file belong to the same species.
+#
+# from os import listdir
+# from Bio import SeqIO
+# import os
+#
+# working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# prot_folder = working_folder + "/omamer_search_old/proteome/"
+# project_files = listdir(prot_folder)
+# query_species_names_old = []
+# query_species_names_new = []
+# for file in project_files:
+#     if file.split(".")[-1] == "fa":
+#         file_name_split = file.split(".")[:-1]
+#         query_species_name_old = '.'.join(file_name_split)
+#         prot_address = prot_folder + query_species_name_old + ".fa"
+#         prots_record = list(SeqIO.parse(prot_address, "fasta"))
+#         prot_record = prots_record[0]
+#         prot_name = prot_record.name  # 'tr|E3JPS4|E3JPS4_PUCGT
+#         query_species_name_new = prot_name.split("|")[-1].split("_")[-1].strip()
+#         if query_species_name_new == 'RAT': query_species_name_new = "RATNO"
+#         query_species_names_old.append(query_species_name_old)
+#         query_species_names_new.append(query_species_name_new)
+#
+# os.mkdir(working_folder+"/omamer_search")
+# os.mkdir(working_folder+"/omamer_search/proteome/")
+# os.mkdir(working_folder+"/omamer_search/hogmap")
+#
+#
+# for idx, query_species_name_old in enumerate(query_species_names_old):
+#     query_species_name_new = query_species_names_new[idx]
+#
+#     prot_address_old = working_folder + "omamer_search_old/proteome/" + query_species_name_old + ".fa"
+#     prot_address_new = working_folder + "omamer_search/proteome/" + query_species_name_new + ".fa"
+#     os.system('cp ' + prot_address_old + ' ' + prot_address_new)
+#
+#     hogmap_address_old = working_folder + "omamer_search_old/hogmap/" + query_species_name_old + ".hogmap"
+#     hogmap_address_new = working_folder + "omamer_search/hogmap/" + query_species_name_new + ".hogmap"
+#     os.system('cp ' + hogmap_address_old + ' ' + hogmap_address_new)
+#
+#
+# print("done")
 
-groups_xml = ET.SubElement(orthoxml_file, "groups")
+###### collect xml files
+
+#
+# import dill as dill_pickle
+# import os
+# import _utils
+# from os import listdir
+# import xml.etree.ElementTree as ET
+#
+# from Bio import SeqIO
+# from xml.dom import minidom
+#
+#
+# working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # gene_trees_folder = working_folder + "/gene_trees_test/"
+# address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # "/rhog_size_g2_s500/" sample_rootHOG
+# # species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
+# pickle_address = working_folder + "/pickle_folder_6aug/"
+# format_prot_name = 1
+#
+#
+#
+# pickle_files_adress = listdir(pickle_address)[:10]
+#
+# hogs_a_rhog_xml_all = []
+# for pickle_file_adress in pickle_files_adress:
+#     with open(pickle_address+ pickle_file_adress, 'rb') as handle:
+#
+#         hogs_a_rhog_xml_all += dill_pickle.load(handle)
+#
+# print(len(hogs_a_rhog_xml_all))
+#
+#
+# print(2)
+# rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
+#
+#
+# species_prot_dic = {}
+# for rhogid_num in rhogid_num_list:
+#     prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
+#     rhog_i = list(SeqIO.parse(prot_address, "fasta"))
+#
+#     for prot_i in rhog_i:
+#         if format_prot_name == 1:  # qfo dataset
+#             prot_name = prot_i.name  # 'tr|E3JPS4|E3JPS4_PUCGT
+#             species_i = prot_name.split("|")[-1].split("_")[-1].strip()
+#             if species_i == 'RAT': species_i = "RATNO"
+#         elif format_prot_name == 0:  # bird dataset
+#             # rec.name  CLIRXF_R07389
+#             # prot_name = prot_i.name
+#             prot_descrip = prot_i.description  # >CLIRXF_R07389 CLIRXF_R07389|species|CLIRUF
+#             species_i = prot_descrip.split(" ")[1].split("|")[-1]
+#             # species_name = prot_name.split("_")[0].strip()
+#
+#         # species_i = prot_i.id.split("|")[-1].split("_")[-1]
+#         if species_i in species_prot_dic:
+#             species_prot_dic[species_i].append(prot_i.id)
+#         else:
+#             species_prot_dic[species_i] = [prot_i.id]
+#         # all_prot_temp_list.append(prot_i.id)
+#
+# print("there are species ", len(species_prot_dic))
+# orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
+#                                                "originVersion": "Nov 2021", "version": "0.3"})  #
+#
+# number_roothog = len(rhogid_num_list)
+# num_per_parralel = 10
+# parralel_num = int(number_roothog / num_per_parralel)
+# if number_roothog != parralel_num * num_per_parralel: parralel_num += 1
+# rhogid_batch_list = []
+# for list_idx in range(parralel_num):
+#     if list_idx == parralel_num:
+#         rhogid_num_list_portion = rhogid_num_list[list_idx * num_per_parralel:]
+#     else:
+#         rhogid_num_list_portion = rhogid_num_list[list_idx * num_per_parralel:(list_idx + 1) * num_per_parralel]
+#     rhogid_batch_list.append(rhogid_num_list_portion)
+#
+#
+#
+# for rhogid_batch_idx in range(len(rhogid_batch_list)):
+#     rhogid_batch = rhogid_batch_list[rhogid_batch_idx]
+#
+#     gene_counter = 1000000 + rhogid_batch * 10000
+#     gene_id_name = {}
+#     query_species_names_rhogs = list(species_prot_dic.keys())
+#     for species_name in query_species_names_rhogs:
+#
+#         species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": species_name, "NCBITaxId": "1"})
+#         database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})
+#         genes_xml = ET.SubElement(database_xml, "genes")
+#
+#     prot_list = species_prot_dic[species_name]
+#     for prot_itr in range(len(prot_list)):  # [12:15]
+#         prot_i_name = prot_list[prot_itr]
+#         gene_id_name[prot_i_name] = gene_counter
+#         if "|" in prot_i_name:
+#             prot_i_name_short = prot_i_name.split("|")[1].strip()  # tr|E3JPS4|E3JPS4_PUCGT
+#         else:
+#             prot_i_name_short = prot_i_name
+#
+#         gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_counter), "protId": prot_i_name_short})
+#         gene_counter += 1
+#
+# groups_xml = ET.SubElement(orthoxml_file, "groups")
+#
 
 
 

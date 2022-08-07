@@ -8,7 +8,7 @@ import _utils_rhog
 if __name__ == '__main__':
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
     gene_trees_folder = working_folder + "/gene_trees_test/"
-    address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # "  old3/rhog_all/  /rhog_size_g2_s500/" sample_rootHOG
+    address_rhogs_folder = working_folder + "/rhog_v2/"  # "  old3/rhog_all/  /rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
     pickle_address = working_folder + "/pickle_folder/"
     format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
@@ -30,6 +30,7 @@ if __name__ == '__main__':
         print("rHOG inferece has started. The oma database address is in ", oma_database_address)
         (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
         (query_species_names, query_prot_records_species) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
+        query_species_names = query_species_names[:3]
         query_prot_records_species = _utils_rhog.add_species_name_gene_id(query_prot_records_species, query_species_names)
         hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
 
@@ -47,6 +48,7 @@ if __name__ == '__main__':
                                                                                          query_prot_records_species_filtered)
 
         step == "hog"
+
     #
     # if step == "hog":
     #     print("we are here line43")

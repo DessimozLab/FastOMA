@@ -153,7 +153,7 @@ def lable_SD_internal_nodes(tree_out):
     return tree_out
 
 
-def gene_num_convertor(rhogid_num_list_input, address_rhogs_folder, format_prot_name, rhogid_batch=1):
+def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_prot_name, rhogid_batch=1):
     species_prot_dic = {}
     rhogid_len_list = []
     for rhogid_num in rhogid_num_list_input:

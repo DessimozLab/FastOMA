@@ -186,16 +186,16 @@ def infer_hogs_this_level(sub_species_tree, input_vars2, hogs_children_level_lis
     #     for i in range(subHOG_to_be_merged_set_other_Snodes):  if
     #         for i in range(subHOG_to_be_merged_set_other_Snodes):  print("*&*& ",node_species_tree.name)
 
-    # logger info
-    prot_list_sbuhog = [i._members for i in hogs_this_level_list]
-    prot_list_sbuhog_short = []
-    for prot_sub_list_sbuhog in prot_list_sbuhog:
-        if format_prot_name == 0:  # bird dataset TYTALB_R04643
-            prot_list_sbuhog_short = prot_sub_list_sbuhog
-        elif format_prot_name == 1:  # qfo dataset  'tr|E3JPS4|E3JPS4_PUCGT
-            prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
-    logger_hog.info(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
-        [str(i) for i in prot_list_sbuhog_short]))
+    # # dvelopmnet mode  logger info
+    # prot_list_sbuhog = [i._members for i in hogs_this_level_list]
+    # prot_list_sbuhog_short = []
+    # for prot_sub_list_sbuhog in prot_list_sbuhog:
+    #     if format_prot_name == 0:  # bird dataset TYTALB_R04643
+    #         prot_list_sbuhog_short = prot_sub_list_sbuhog
+    #     elif format_prot_name == 1:  # qfo dataset  'tr|E3JPS4|E3JPS4_PUCGT
+    #         prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
+    # logger_hog.info(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
+    #     [str(i) for i in prot_list_sbuhog_short]))
 
     return hogs_this_level_list
 
