@@ -82,6 +82,7 @@ def prepare_species_tree(rhog_i, species_tree, format_prot_name=1):
 
         if format_prot_name == 1:   # qfo dataset
             prot_name = rec.name  # 'tr|E3JPS4|E3JPS4_PUCGT
+            # rec.description  'tr|E3JPS1|E3JPS1_PUCGT Uncharacterized protein OS=Puccinia graminis f. sp. tritici (strain CRL 75-36-700-3 / race SCCL) (Black stem rust fungus) OX=418459 GN=PGTG_00174 PE=4 SV=2'
             species_name = prot_name.split("|")[-1].split("_")[-1].strip()
             if species_name == 'RAT': species_name = "RATNO"
 
@@ -180,8 +181,9 @@ def gene_num_convertor(rhogid_num_list_input, address_rhogs_folder, format_prot_
     query_species_names_rhogs = list(species_prot_dic.keys())
     for species_name in query_species_names_rhogs:
         prot_list = species_prot_dic[species_name]
-        for prot_itr in range(len(prot_list)):
-            prot_i_name = prot_list[prot_itr]
+        # for prot_itr in range(len(prot_list)):
+        #     prot_i_name = prot_list[prot_itr]
+        for prot_itr, prot_i_name in enumerate(prot_list):
             gene_id_name[prot_i_name] = gene_counter
             gene_counter += 1
 
@@ -230,8 +232,9 @@ def prepare_xml_old(rhogid_num_list_input, address_rhogs_folder, format_prot_nam
         genes_xml = ET.SubElement(database_xml, "genes")
 
         prot_list = species_prot_dic[species_name]
-        for prot_itr in range(len(prot_list)):  # [12:15]
-            prot_i_name = prot_list[prot_itr]
+        # for prot_itr in range(len(prot_list)):  # [12:15]
+        #     prot_i_name = prot_list[prot_itr]
+        for prot_itr, prot_i_name in enumerate(prot_list):
             gene_id_name[prot_i_name] = gene_counter
             if "|" in prot_i_name:
                 prot_i_name_short = prot_i_name.split("|")[1].strip()  # tr|E3JPS4|E3JPS4_PUCGT

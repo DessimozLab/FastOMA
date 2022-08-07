@@ -66,3 +66,6 @@ print(current_time)
 time.sleep(5)
 
 print(current_time)
+
+for idx, x in enumerate(xs):
+    print(idx, x)

@@ -87,8 +87,9 @@ if __name__ == '__main__':
         cluster.scale(njobs)  # # ask for one jobs
         client = Client(cluster)
     dask_out_list = []
-    for rhogid_batch_idx in range(len(rhogid_batch_list)):
-        rhogid_batch = rhogid_batch_list[rhogid_batch_idx]
+    # for rhogid_batch_idx in range(len(rhogid_batch_list)):
+    #     rhogid_batch = rhogid_batch_list[rhogid_batch_idx]
+    for rhogid_batch_idx, rhogid_batch in enumerate(rhogid_batch_list):
         # rhogid_num_list_input = rhogid_batch
         logger_hog.info("Number of working root hog is " + str(len(rhogid_batch)) + ".")
         (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_batch,

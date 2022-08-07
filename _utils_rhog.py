@@ -33,7 +33,7 @@ def parse_proteome(list_oma_species, working_folder):
     using Bio.SeqIO.parse
     Each fasta file is for one species.  The file name is the species name.
 
-    output: query_species_names: list of species name, prots_record_allspecies: list of Biopython record of species
+    output: query_species_names: list of species name, query_prot_records_species: list of Biopython record of species
     """
     project_files = listdir(working_folder + "/omamer_search/proteome/")
     query_species_names = []
@@ -46,18 +46,24 @@ def parse_proteome(list_oma_species, working_folder):
             query_species_names.append('.'.join(file_name_split))
 
     # we may assert existence of query_species_name+".fa/hogmap"
-    prots_record_allspecies = []
-    for query_species_name in query_species_names:
+    query_prot_records_species = []
+    # for query_species_names_idx in range(len(query_species_names)):
+    #     query_species_name = query_species_names[query_species_names_idx]
+    for query_species_names_idx, query_species_name in enumerate(query_species_names):
         prot_address = working_folder + "omamer_search/proteome/" + query_species_name + ".fa"
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
-        prots_record_allspecies.append(prots_record)
+        prots_record_edited = edit_prot_names(prots_record, query_species_names_idx, )
+
+
+
+        query_prot_records_species.append(prots_record_edited)
 
     query_species_num = len(query_species_names)
     current_time = datetime.now().strftime("%H:%M:%S")
     print(current_time, "- The are", str(query_species_num), "species in the proteome folder.")
     # for development
     for species_i in range(query_species_num):
-        # len_prot_record_i = len(prots_record_allspecies[species_i])
+        # len_prot_record_i = len(query_prot_records_species[species_i])
         species_name_i = query_species_names[species_i]
         # print(species_name_i,len_prot_record_i)
         if species_name_i in list_oma_species:
@@ -69,8 +75,29 @@ def parse_proteome(list_oma_species, working_folder):
     # the first part of the header line before space
     # >tr|A0A2I3FYY2|A0A2I3FYY2_NOMLE Uncharacterized protein OS=Nomascus leucogenys OX=61853 GN=CLPTM1L PE=3 SV=1
     # will be ">tr|A0A2I3FYY2|A0A2I3FYY2_NOMLE"
-    # [i.id for i in prots_record_allspecies[0] if len(i.id)!=30 and len(i.id)!=22 ] #'sp|O47892|CYB_NOMLE',
-    return query_species_names, prots_record_allspecies
+    # [i.id for i in query_prot_records_species[0] if len(i.id)!=30 and len(i.id)!=22 ] #'sp|O47892|CYB_NOMLE',
+    return query_species_names, query_prot_records_species
+
+
+
+def edit_prot_names(prots_record, , format_prot_name  ):
+
+    prots_record_edited = prots_record
+    #
+    # if format_prot_name == 1:  # qfo dataset
+    #     prot_name = rec.name  # 'tr|E3JPS4|E3JPS4_PUCGT
+    #     # rec.description  'tr|E3JPS1|E3JPS1_PUCGT Uncharacterized protein OS=Puccinia graminis f. sp. tritici (strain CRL 75-36-700-3 / race SCCL) (Black stem rust fungus) OX=418459 GN=PGTG_00174 PE=4 SV=2'
+    #     species_name = prot_name.split("|")[-1].split("_")[-1].strip()
+    #     if species_name == 'RAT': species_name = "RATNO"
+    #
+    # elif format_prot_name == 0:  # bird dataset
+    #     # rec.name  CLIRXF_R07389
+    #     prot_name = rec.name
+    #     prot_descrip = rec.description  # >CLIRXF_R07389 CLIRXF_R07389|species|CLIRUF
+    #     species_name = prot_descrip.split(" ")[1].split("|")[-1]
+    #     # species_name = prot_name.split("_")[0].strip()
+
+    return prots_record_edited
 
 
 def parse_hogmap_omamer(query_species_names, working_folder):
@@ -141,9 +168,10 @@ def filter_prot_mapped(query_species_names, query_prot_records_species, query_pr
     current_time = datetime.now().strftime("%H:%M:%S")
     print(current_time, "- Filtering proteins started.")
     query_prot_records_species_filtered = []
-    for species_idx in range(len(query_species_names)):
+    # for species_idx in range(len(query_species_names)):
+    #     query_species_name = query_species_names[species_idx]
+    for species_idx, query_species_name in enumerate(query_species_names):
         # from fasta file
-        query_species_name = query_species_names[species_idx]
         # print(query_species_name)
         query_prot_records_species_i = query_prot_records_species[species_idx]
         query_prot_ids_records = [record.id for record in query_prot_records_species_i]
@@ -181,12 +209,15 @@ def add_species_name(query_prot_records_species, query_species_names):
     output: updated version of input
     """
 
-    for ix in range(len(query_species_names)):
-        query_species_name = query_species_names[ix]
+    # for ix in range(len(query_species_names)):
+    #     query_species_name = query_species_names[ix]
+    for ix, query_species_name in enumerate(query_species_names):
         query_prot_records = query_prot_records_species[ix]
-        for i_prot in range(len(query_prot_records)):
-            query_prot_record = query_prot_records[i_prot]
+        # for i_prot in range(len(query_prot_records)):
+        #     query_prot_record = query_prot_records[i_prot]
+        for i_prot, query_prot_record  in enumerate(query_prot_records):
             query_prot_record.description += "|species|" + query_species_name
+
     return query_prot_records_species
 
 
@@ -217,8 +248,9 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, q
     for species_idx in range(len(query_species_names)):
         # species_name = query_species_names[species_idx]
         prots_hogmap_rhogid = prots_hogmap_rhogid_allspecies[species_idx]
-        for prots_hogmap_idx in range(len(prots_hogmap_rhogid)):
-            prot_hogmap_rhogid = prots_hogmap_rhogid[prots_hogmap_idx]
+        # for prots_hogmap_idx in range(len(prots_hogmap_rhogid)):
+        #     prot_hogmap_rhogid = prots_hogmap_rhogid[prots_hogmap_idx]
+        for prots_hogmap_idx, prot_hogmap_rhogid in enumerate(prots_hogmap_rhogid):
             if prot_hogmap_rhogid in rhogid_prot_idx_dic:
                 rhogid_prot_idx_dic[prot_hogmap_rhogid].append((species_idx, prots_hogmap_idx))
             else:
@@ -249,9 +281,10 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, q
 
     # print(len(rhogids_prot_records_query),len(rhogids_prot_records_query[0]))
     rhogid_num_list = []
-    for rhogid_idx in range(len(rhogids_list)):
+    # for rhogid_idx in range(len(rhogids_list)):
+    #     rhogid = rhogids_list[rhogid_idx]
+    for rhogid_idx, rhogid in enumerate(rhogids_list):
         rhogid_prot_records_query = rhogids_prot_records_query[rhogid_idx]
-        rhogid = rhogids_list[rhogid_idx]
         rhogid_B = rhogid.split(":")[1]
         rhogid_num = int(rhogid_B[1:])  # # B0613860
         rhogid_num_list.append(rhogid_num)
