@@ -3,7 +3,7 @@
 import pyoma.browser.db as db
 from datetime import datetime
 from Bio import SeqIO
-
+import dill as dill_pickle
 from os import listdir
 import os
 
@@ -72,7 +72,7 @@ def parse_proteome(list_oma_species, working_folder):
     return query_species_names, query_prot_records_species
 
 
-def add_species_name_gene_id(query_prot_records_species, query_species_names):
+def add_species_name_gene_id(query_prot_records_species, query_species_names, working_folder):
     """
     adding the name of species to each protein record
         - based on file name
@@ -82,14 +82,22 @@ def add_species_name_gene_id(query_prot_records_species, query_species_names):
     max_num_prot = int(1e9)
     max_num_prot_per_sp = int(1e6)
 
+    gene_id_name = {}
     for query_species_idx, query_species_name in enumerate(query_species_names):
         query_prot_records = query_prot_records_species[query_species_idx]
         gene_counter = max_num_prot + query_species_idx * max_num_prot_per_sp
+        gene_id_name[query_species_name] = []
         for query_prot_idx, query_prot_record in enumerate(query_prot_records):
             gene_idx_integer = gene_counter + query_prot_idx
+            query_prot_name = query_prot_record.id
             query_prot_record.id += "||"+query_species_name+"||"+str(gene_idx_integer)
+            gene_id_name[query_species_name].append((gene_idx_integer, query_prot_name))
+    # this is used to creat the first part of xml file, gene name and
+    with open(working_folder + '/file_gene_id_name.pickle', 'wb') as handle:
+        dill_pickle.dump(gene_id_name, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
 
     return query_prot_records_species
+
 
 
 def parse_hogmap_omamer(query_species_names, working_folder):

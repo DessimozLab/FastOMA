@@ -31,7 +31,7 @@ if __name__ == '__main__':
         print("rHOG inferece has started. The oma database address is in ", oma_database_address)
         (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
         (query_species_names, query_prot_records_species) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
-        query_prot_records_species = _utils_rhog.add_species_name_gene_id(query_prot_records_species, query_species_names)
+        query_prot_records_species = _utils_rhog.add_species_name_gene_id(query_prot_records_species, query_species_names, working_folder)
         hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
 
         (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_subfscore_allspecies,
@@ -46,14 +46,14 @@ if __name__ == '__main__':
                                                                                          address_rhogs_folder,
                                                                                          query_species_names,
                                                                                          query_prot_records_species_filtered)
-        step = "hog"
+        # step = "hog"
 
     if step == "hog":
         print("we are here line43")
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list = rhogid_num_list[:3]
+        rhogid_num_list = rhogid_num_list[:15]
         dask_level = 0  # 1:one level (rhog), 3:both levels (rhog+taxonomic)
 
         print(rhogid_num_list)
@@ -100,12 +100,10 @@ if __name__ == '__main__':
             print("dask out gathered")
 
 
-    # orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA", "originVersion": "Nov 2021", "version": "0.3"})  #
-    # groups_xml = ET.SubElement(orthoxml_file, "groups")
-    # for hog_xml in hogs_a_rhog_xml_all:
-    #     groups_xml.append(hog_xml)
-    # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
-    # print(xml_str)
+
+    output_xml_name = "out12b.xml"
+    _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name)
+
     print("main py is finished.")
 
 

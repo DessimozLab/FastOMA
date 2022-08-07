@@ -342,3 +342,9 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 
 # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
 # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)
+    # orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA", "originVersion": "Nov 2021", "version": "0.3"})  #
+    # groups_xml = ET.SubElement(orthoxml_file, "groups")
+    # for hog_xml in hogs_a_rhog_xml_all:
+    #     groups_xml.append(hog_xml)
+    # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
+    # print(xml_str)
