@@ -12,7 +12,7 @@ if __name__ == '__main__':
     species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
     pickle_folder = working_folder + "/pickle_folder/"
     # add warning when pickle folder is not empty
-    output_xml_name = "out_7aug_1.xml"
+    output_xml_name = "out_7aug_3.xml"
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
@@ -57,9 +57,12 @@ if __name__ == '__main__':
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
         rhogid_num_list = rhogid_num_list[:5]
-        dask_level = 1  # 1:one level (rhog), 3:both levels (rhog+taxonomic)
+        dask_level = 4  # 1:one level (rhog), 3:both levels (rhog+taxonomic)  4:only second level
+        if dask_level == 4:
+            from _dask_env import client_dask
 
-        print(rhogid_num_list[:10])
+
+        print(rhogid_num_list[28:135])
         number_roothog = len(rhogid_num_list)
         num_per_parralel = 1
         parralel_num = int(number_roothog/num_per_parralel)
