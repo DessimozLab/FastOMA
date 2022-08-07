@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 
-    step = "rhog"
+    step = "hog"
     print("we are here line16")
     if step == "rhog":
         """

@@ -165,7 +165,10 @@ def filter_prot_mapped(query_species_names, query_prot_records_species, query_pr
     for species_idx, query_species_name in enumerate(query_species_names): # from fasta file
         # print(query_species_name)
         query_prot_records_species_i = query_prot_records_species[species_idx]
-        query_prot_ids_records = [record.id for record in query_prot_records_species_i]
+        # we added the species name and the as the fasta record usign ||
+        # but this is not done in the hog map
+        # I beleive .split("||")[0] solve this.
+        query_prot_ids_records = [record.id.split("||")[0] for record in query_prot_records_species_i]
         # from hogmap file without proteins that are not mapped on any hogs
         query_prot_names_species_i = query_prot_names_species_mapped[species_idx]
         if len(query_prot_names_species_i) != len(query_prot_records_species_i):
@@ -177,7 +180,7 @@ def filter_prot_mapped(query_species_names, query_prot_records_species, query_pr
                     query_prot_records_filterd.append(prot_record)
                 else:
                     current_time = datetime.now().strftime("%H:%M:%S")
-                    logger_hog.error(str(current_time) + "- Error 149 " + query_species_name + " " + query_prot_name)
+                    logger_hog.error(str(current_time) + "- Error 149 " + query_species_name + " " + query_prot_name+". This shouldn't happen many times.")
 
             current_time = datetime.now().strftime("%H:%M:%S")
             print(current_time, "- For the species", query_species_name, ", few proteins were ignored by omamer.")
