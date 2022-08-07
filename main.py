@@ -8,9 +8,12 @@ import _utils_rhog
 if __name__ == '__main__':
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
     gene_trees_folder = working_folder + "/gene_trees_/"
-    address_rhogs_folder = working_folder + "/rhogs_g10_s100/"  # "  old3/rhog_all/  /rhog_size_g2_s500/" sample_rootHOG
+    address_rhogs_folder = working_folder + "/rhog_g2_s500_v2/"  # "  old3/rhog_all/  /rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
     pickle_folder = working_folder + "/pickle_folder/"
+    # add warning when pickle folder is not empty
+    output_xml_name = "out_7aug_1.xml"
+
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 
@@ -46,19 +49,19 @@ if __name__ == '__main__':
                                                                                          address_rhogs_folder,
                                                                                          query_species_names,
                                                                                          query_prot_records_species_filtered)
-        # step = "hog"
+        step = "hog"
 
     if step == "hog":
         print("we are here line43")
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list = rhogid_num_list[:15]
-        dask_level = 0  # 1:one level (rhog), 3:both levels (rhog+taxonomic)
+        rhogid_num_list = rhogid_num_list[:5]
+        dask_level = 1  # 1:one level (rhog), 3:both levels (rhog+taxonomic)
 
-        print(rhogid_num_list)
+        print(rhogid_num_list[:10])
         number_roothog = len(rhogid_num_list)
-        num_per_parralel = 4
+        num_per_parralel = 1
         parralel_num = int(number_roothog/num_per_parralel)
         if number_roothog != parralel_num*num_per_parralel: parralel_num += 1
         rhogid_batch_list = []
@@ -77,7 +80,7 @@ if __name__ == '__main__':
 
         for rhogid_batch_idx in range(len(rhogid_batch_list)):
             rhogid_batch = rhogid_batch_list[rhogid_batch_idx]
-            logger_hog.info("\n *==* \nNumber of working root hog in the batchid:"+str(rhogid_batch_idx)+" is " + str(len(rhogid_batch)) + ".")
+            # logger_hog.info("\n *==* \nNumber of working root hog in the batchid:"+str(rhogid_batch_idx)+" is " + str(len(rhogid_batch)) + ".")
 
             if dask_level % 2 == 1:
                 # len_tresh = 1000
@@ -100,17 +103,11 @@ if __name__ == '__main__':
             print("dask out gathered")
 
 
-
-    output_xml_name = "out12b.xml"
     _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name)
 
     print("main py is finished.")
 
-
-
 """
-to do :
-    - get rid of gene_id_name, write in the rhog file 
-    - dobule check function merge_subhogs
-    
+to do : 
+    - dobule check function merge_subhogs 
 """

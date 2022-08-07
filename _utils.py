@@ -10,7 +10,7 @@ from ete3 import Tree
 import logging
 logging.basicConfig()
 logger_hog = logging.getLogger("hog")
-logger_hog.setLevel(logging.INFO)  # WARN
+logger_hog.setLevel(logging.INFO)  # WARN  INFO
 
 
 def list_rhog_fastas(address_rhogs_folder):

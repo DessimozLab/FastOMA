@@ -39,7 +39,7 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     # species_tree.write();  print(species_tree.write())
 
     recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
-    if len(rhog_i) > 30000:
+    if len(rhog_i) > 1:
         # dask_future_taxon = True
         print("Dask future taxon is on for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
         hogs_a_rhog = infer_hogs_for_rhog_levels_recursively_future(species_tree, recursive_input)
@@ -87,7 +87,7 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_in
     hogs_this_level_list = infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level_list)
 
     hogs_children_level_list_flatten = []
-    for hogs_list in hogs_children_level_list:
+    for hogs_list in hogs_this_level_list:
         hogs_children_level_list_flatten += hogs_list
 
     return hogs_children_level_list_flatten
@@ -276,7 +276,7 @@ def collect_write_xml(working_folder, pickle_folder, output_xml_name):
         groups_xml.append(hogs_a_rhog_xml)
 
     xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
-    print(xml_str)
+    # print(xml_str[:-1000])
 
     with open(working_folder+output_xml_name, "w") as file_xml:
         file_xml.write(xml_str)
