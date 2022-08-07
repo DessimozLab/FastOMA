@@ -5,16 +5,20 @@ import _utils
 from os import listdir
 import xml.etree.ElementTree as ET
 
+from Bio import SeqIO
 from xml.dom import minidom
 
 
 working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-gene_trees_folder = working_folder + "/gene_trees_test/"
+# gene_trees_folder = working_folder + "/gene_trees_test/"
 address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # "/rhog_size_g2_s500/" sample_rootHOG
-species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
-pickle_address = working_folder + "/pickle_folder/"
+# species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
+pickle_address = working_folder + "/pickle_folder_6aug/"
+format_prot_name = 1
 
-pickle_files_adress = listdir(pickle_address)
+
+
+pickle_files_adress = listdir(pickle_address)[:10]
 
 hogs_a_rhog_xml_all = []
 for pickle_file_adress in pickle_files_adress:
@@ -22,7 +26,84 @@ for pickle_file_adress in pickle_files_adress:
 
         hogs_a_rhog_xml_all += dill_pickle.load(handle)
 
-print(hogs_a_rhog_xml_all)
+print(len(hogs_a_rhog_xml_all))
+
+
+print(2)
+rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
+
+
+species_prot_dic = {}
+for rhogid_num in rhogid_num_list:
+    prot_address = address_rhogs_folder + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
+    rhog_i = list(SeqIO.parse(prot_address, "fasta"))
+
+    for prot_i in rhog_i:
+        if format_prot_name == 1:  # qfo dataset
+            prot_name = prot_i.name  # 'tr|E3JPS4|E3JPS4_PUCGT
+            species_i = prot_name.split("|")[-1].split("_")[-1].strip()
+            if species_i == 'RAT': species_i = "RATNO"
+        elif format_prot_name == 0:  # bird dataset
+            # rec.name  CLIRXF_R07389
+            # prot_name = prot_i.name
+            prot_descrip = prot_i.description  # >CLIRXF_R07389 CLIRXF_R07389|species|CLIRUF
+            species_i = prot_descrip.split(" ")[1].split("|")[-1]
+            # species_name = prot_name.split("_")[0].strip()
+
+        # species_i = prot_i.id.split("|")[-1].split("_")[-1]
+        if species_i in species_prot_dic:
+            species_prot_dic[species_i].append(prot_i.id)
+        else:
+            species_prot_dic[species_i] = [prot_i.id]
+        # all_prot_temp_list.append(prot_i.id)
+
+print("there are species ", len(species_prot_dic))
+orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
+                                               "originVersion": "Nov 2021", "version": "0.3"})  #
+
+number_roothog = len(rhogid_num_list)
+num_per_parralel = 10
+parralel_num = int(number_roothog / num_per_parralel)
+if number_roothog != parralel_num * num_per_parralel: parralel_num += 1
+rhogid_batch_list = []
+for list_idx in range(parralel_num):
+    if list_idx == parralel_num:
+        rhogid_num_list_portion = rhogid_num_list[list_idx * num_per_parralel:]
+    else:
+        rhogid_num_list_portion = rhogid_num_list[list_idx * num_per_parralel:(list_idx + 1) * num_per_parralel]
+    rhogid_batch_list.append(rhogid_num_list_portion)
+
+
+
+for rhogid_batch_idx in range(len(rhogid_batch_list)):
+    rhogid_batch = rhogid_batch_list[rhogid_batch_idx]
+
+    gene_counter = 1000000 + rhogid_batch * 10000
+    gene_id_name = {}
+    query_species_names_rhogs = list(species_prot_dic.keys())
+    for species_name in query_species_names_rhogs:
+
+        species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": species_name, "NCBITaxId": "1"})
+        database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})
+        genes_xml = ET.SubElement(database_xml, "genes")
+
+    prot_list = species_prot_dic[species_name]
+    for prot_itr in range(len(prot_list)):  # [12:15]
+        prot_i_name = prot_list[prot_itr]
+        gene_id_name[prot_i_name] = gene_counter
+        if "|" in prot_i_name:
+            prot_i_name_short = prot_i_name.split("|")[1].strip()  # tr|E3JPS4|E3JPS4_PUCGT
+        else:
+            prot_i_name_short = prot_i_name
+
+        gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_counter), "protId": prot_i_name_short})
+        gene_counter += 1
+
+groups_xml = ET.SubElement(orthoxml_file, "groups")
+
+
+
+
 # # #
 # # # rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
 # # # rhogid_num_list_input = rhogid_num_list[9:13]
@@ -142,8 +223,7 @@ print(hogs_a_rhog_xml_all)
 # #
 # # from _utils import logger_hog
 # # import _utils
-# # from os import listdir
-# # from Bio import SeqIO
+
 #
 # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
 # address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG

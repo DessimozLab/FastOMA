@@ -98,12 +98,13 @@ if __name__ == '__main__':
         groups_xml.append(hog_xml)
     xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
     print(xml_str)
-    print("main.py is finished.")
+    print("main py is finished.")
 
 
 
 """
 to do :
+    - get rid of gene_id_name, write in the rhog file 
     - dobule check function merge_subhogs
     
 """
