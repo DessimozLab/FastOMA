@@ -83,7 +83,9 @@ class HOG:
             # print(self._members)
             # print("we are here   ********???--??? ",self._hogid)
             list_member_first = list(self._members)[0]
-            geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(list_member_first)})
+            # 'tr|A0A3Q2UIK0|A0A3Q2UIK0_CHICK||CHICK_||1053007703'
+            prot_name_integer = list_member_first.split("||")[2].strip()
+            geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(prot_name_integer)})
                 #'id': str(gene_id_name[list_member_first])})  # # gene_id_name[query_prot_record.id]
             # hog_elemnt.append(geneRef_elemnt)
             # could be improved when the rhog contains only one protein
@@ -94,8 +96,8 @@ class HOG:
 
         self._subhogs.sort(key=_sorter_key)  # print(f'{" "*indent}subhog: {self._taxnomic_range}:')
         for sub_clade, sub_hogs in itertools.groupby(self._subhogs, key=_sorter_key):
-            list_of_subhogs_of_same_clade = list(
-                sub_hogs)  # print(f'{" "*(indent+1)} clade: {sub_clade} with {str(len(list_of_subhogs_of_same_clade))}')
+            list_of_subhogs_of_same_clade = list(sub_hogs)
+            # print(f'{" "*(indent+1)} clade: {sub_clade} with {str(len(list_of_subhogs_of_same_clade))}')
             if len(list_of_subhogs_of_same_clade) > 1:
                 paralog_element = ET.Element('paralogGroup')
                 for sh in list_of_subhogs_of_same_clade:

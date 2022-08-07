@@ -53,7 +53,7 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list = rhogid_num_list[:10]
+        rhogid_num_list = rhogid_num_list[:3]
         dask_level = 0  # 1:one level (rhog), 3:both levels (rhog+taxonomic)
 
         print(rhogid_num_list)

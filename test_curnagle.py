@@ -18,7 +18,6 @@ working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
 # address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # "/rhog_size_g2_s500/" sample_rootHOG
 # species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
 pickle_address = working_folder + "/pickle_folder/"
-format_prot_name = 1
 
 pickle_files_adress = listdir(pickle_address)
 
@@ -26,10 +25,22 @@ hogs_a_rhog_xml_all = []
 for pickle_file_adress in pickle_files_adress:
     with open(pickle_address+ pickle_file_adress, 'rb') as handle:
 
-        hogs_a_rhog_xml_all += dill_pickle.load(handle)
+        hogs_a_rhog_xml = dill_pickle.load(handle)
+        #hogs_a_rhog_xml remvoe the first parrt
+        hogs_a_rhog_xml_all += hogs_a_rhog_xml
+
 
 print(len(hogs_a_rhog_xml_all))
+orthoxml_file = ET.Element("orthxml_stroXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",  "originVersion": "Nov 2021", "version": "0.3"})  #
 
+
+groups_xml = ET.SubElement(orthoxml_file, "groups")
+
+
+for hogs_a_rhog_xml in hogs_a_rhog_xml_all:
+    groups_xml.append(hogs_a_rhog_xml)
+xml_str = minidom.parseString(ET.tostring(groups_xml)).toprettyxml(indent="   ")
+print(xml_str)
 
 # rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
 #
