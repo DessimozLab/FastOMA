@@ -7,17 +7,16 @@ import _utils_rhog
 
 if __name__ == '__main__':
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-    gene_trees_folder = working_folder + "/gene_trees_test/"
-    address_rhogs_folder = working_folder + "/rhog_v2/"  # "  old3/rhog_all/  /rhog_size_g2_s500/" sample_rootHOG
-    species_tree_address = working_folder + "lineage_tree_qfo.phyloxml"
+    gene_trees_folder = working_folder + "/gene_trees_/"
+    address_rhogs_folder = working_folder + "/rhogs_g10_s100/"  # "  old3/rhog_all/  /rhog_size_g2_s500/" sample_rootHOG
+    species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
     pickle_folder = working_folder + "/pickle_folder/"
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 
-
-    step = "hog"
+    step = "rhog"
     print("we are here line16")
-    if step == "roothog":
+    if step == "rhog":
         """
         Structure of folders:
         Put proteomes of species as fasta files in /omamer_search/proteome/
@@ -32,7 +31,6 @@ if __name__ == '__main__':
         print("rHOG inferece has started. The oma database address is in ", oma_database_address)
         (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
         (query_species_names, query_prot_records_species) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
-        query_species_names = query_species_names[:3]
         query_prot_records_species = _utils_rhog.add_species_name_gene_id(query_prot_records_species, query_species_names)
         hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
 
@@ -55,12 +53,12 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list = rhogid_num_list[:3]
+        rhogid_num_list = rhogid_num_list[:10]
         dask_level = 0  # 1:one level (rhog), 3:both levels (rhog+taxonomic)
 
         print(rhogid_num_list)
         number_roothog = len(rhogid_num_list)
-        num_per_parralel = 10
+        num_per_parralel = 4
         parralel_num = int(number_roothog/num_per_parralel)
         if number_roothog != parralel_num*num_per_parralel: parralel_num += 1
         rhogid_batch_list = []
@@ -74,6 +72,8 @@ if __name__ == '__main__':
         if dask_level % 2 == 1:
             from _dask_env import client_dask
             dask_out_list = []
+        else:
+            hogs_a_rhog_xml_all_list =[]
 
         for rhogid_batch_idx in range(len(rhogid_batch_list)):
             rhogid_batch = rhogid_batch_list[rhogid_batch_idx]
@@ -90,6 +90,7 @@ if __name__ == '__main__':
                 dask_out_list.append(dask_out)
             else:
                 hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhogs(rhogid_batch, file_folders, dask_level)
+                hogs_a_rhog_xml_all_list.append(hogs_a_rhog_xml_all)
                 print(hogs_a_rhog_xml_all)
 
         if dask_level % 2 == 1:

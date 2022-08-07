@@ -35,7 +35,7 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
 
     recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
     if len(rhog_i) > 30000:
-        # if dask_level % 2 == 1: dask_future_taxon = True
+        # dask_future_taxon = True
         print("Dask future taxon is on for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
         hogs_a_rhog = infer_hogs_for_rhog_levels_recursively_future(species_tree, recursive_input)
     else:

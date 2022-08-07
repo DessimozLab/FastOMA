@@ -152,7 +152,7 @@ def filter_prot_mapped(query_species_names, query_prot_records_species, query_pr
     """
     a function for filtering biopython records in query_prot_records_species based on hogmaps
     The reason is that some very short records of fasta are removed in hogmap.
-    So, we may lose track of order comparing hogmap and fasta file.
+    So, we may loose track of order comparing hogmap and fasta file.
     The goal here is to remove those from seq record (of the fasta file).
 
     output: query_prot_records_species_filtered
@@ -162,8 +162,7 @@ def filter_prot_mapped(query_species_names, query_prot_records_species, query_pr
     query_prot_records_species_filtered = []
     # for species_idx in range(len(query_species_names)):
     #     query_species_name = query_species_names[species_idx]
-    for species_idx, query_species_name in enumerate(query_species_names):
-        # from fasta file
+    for species_idx, query_species_name in enumerate(query_species_names): # from fasta file
         # print(query_species_name)
         query_prot_records_species_i = query_prot_records_species[species_idx]
         query_prot_ids_records = [record.id for record in query_prot_records_species_i]
@@ -261,7 +260,7 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, q
         rhogid_num = int(rhogid_B[1:])  # # B0613860
         rhogid_num_list.append(rhogid_num)
 
-        if 1 < len(rhogid_prot_rec_query) < 100:
+        if 10 < len(rhogid_prot_rec_query) < 100:
             SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder +"HOG_B"+ str(rhogid_num).zfill(7)+".fa", "fasta")
             # rhogids_prot_records_oma = []
             # for hog_elements in oma_db.member_of_fam(rhogid_num):   # this gets the member of roothog 2 (HOG:000002)
