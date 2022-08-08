@@ -15,7 +15,7 @@ if __name__ == '__main__':
     species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
     pickle_folder = working_folder + "/pickle_folder/"
     # add warning when pickle folder is not empty
-    output_xml_name = "out_7aug_3.xml"
+    output_xml_name = "out_7aug_4.xml"
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
@@ -59,14 +59,14 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list = rhogid_num_list[:10]
+        rhogid_num_list = rhogid_num_list[:200]
         dask_level = 4  # 1:one level (rhog), 3:both levels (rhog+taxonomic)  4:only taxonomic level
         if dask_level == 4:
             from _dask_env import client_dask
 
         print(rhogid_num_list[:4])
         number_roothog = len(rhogid_num_list)
-        num_per_parralel = 3
+        num_per_parralel = 5
         parralel_num = int(number_roothog/num_per_parralel)
         if number_roothog != parralel_num*num_per_parralel: parralel_num += 1
         rhogid_batch_list = []
@@ -97,9 +97,7 @@ if __name__ == '__main__':
                 dask_out = client_dask.submit(_inferhog.read_infer_xml_rhogs, rhogid_batch, file_folders, dask_level)
                 dask_out_list.append(dask_out)
             else:
-
-                hogs_a_rhog_xml_all_fure = _inferhog.read_infer_xml_rhogs(rhogid_batch, file_folders, dask_level)
-                hogs_a_rhog_xml_all = hogs_a_rhog_xml_all_fure.result()
+                hogs_a_rhog_xml_all = _inferhog.read_infer_xml_rhogs(rhogid_batch, file_folders, dask_level)
                 hogs_a_rhog_xml_all_list.append(hogs_a_rhog_xml_all)
 
                 print(hogs_a_rhog_xml_all)
