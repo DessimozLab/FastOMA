@@ -12,7 +12,7 @@ machine = "slurm"
 ncore = 1
 njobs = 2
 memory_slurm = "1GB"
-time_slurm = "00:4:00"
+time_slurm = "00:10:00"
 # print("*** client **** ", cluster.dashboard_link, cluster.get_logs())
 # ncore = 1  # Total number of cores per job
 # njobs = 1  # Cut the job up into this many processes.
