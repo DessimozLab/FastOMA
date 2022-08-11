@@ -8,11 +8,11 @@ from dask.distributed import LocalCluster
 from dask_jobqueue import SLURMCluster
 
 
-machine = "local"
+machine = "slurm"  # slurm local
 ncore = 1
-njobs = 3
+njobs = 5
 memory_slurm = "1GB"
-time_slurm = "00:15:00"
+time_slurm = "00:25:00"
 # print("*** client **** ", cluster.dashboard_link, cluster.get_logs())
 # ncore = 1  # Total number of cores per job
 # njobs = 1  # Cut the job up into this many processes.

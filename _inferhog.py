@@ -41,7 +41,7 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     # species_tree.write();  print(species_tree.write())
 
     recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
-    if len(rhog_i) > 1 and (dask_level == 2 or dask_level == 3):
+    if len(rhog_i) > 20 and (dask_level == 2 or dask_level == 3):
         # dask_future_taxon = True
         print("Dask future taxon is on for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
         client_dask_working = get_client()

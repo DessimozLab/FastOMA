@@ -15,7 +15,7 @@ if __name__ == '__main__':
     species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
     pickle_folder = working_folder + "/pickle_folder/"
     # add warning when pickle folder is not empty
-    output_xml_name = "out_7aug_4.xml"
+    output_xml_name = "out_7aug_5.xml"
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
@@ -61,15 +61,15 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list = rhogid_num_list[:7]
-        dask_level = 3  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:taxonomic level  0: no dask
+        rhogid_num_list = rhogid_num_list[:40]
+        dask_level = 2  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:taxonomic level  0: no dask
 
         if dask_level != 0:
             from _dask_env import client_dask
 
-        print(rhogid_num_list[:4])
+        print(rhogid_num_list[:7])
         number_roothog = len(rhogid_num_list)
-        num_per_parralel = 2
+        num_per_parralel = 3
         parralel_num = int(number_roothog/num_per_parralel)
         if number_roothog != parralel_num*num_per_parralel:
             parralel_num += 1
@@ -82,7 +82,7 @@ if __name__ == '__main__':
                 rhogid_num_list_portion = rhogid_num_list[list_idx * num_per_parralel:(list_idx + 1) * num_per_parralel]
             rhogid_batch_list.append(rhogid_num_list_portion)
 
-        if dask_level == 1:
+        if dask_level == 1 or dask_level == 2:
             dask_out_list = []
 
         hogs_rhogs_xml_all =[]
@@ -91,7 +91,7 @@ if __name__ == '__main__':
             # logger_hog.info("\n *==* \nNumber of working root hog in the batchid:"+str(rhogid_batch_idx)+" is " +
             # str(len(rhogid_batch)) + ".")
 
-            if dask_level == 1:
+            if dask_level == 1 or dask_level == 2:
                 # len_tresh = 1000
                 # for rhogid_num_i in range(len(rhogid_num_list_input)):
                 #    rhogid_num = rhogid_num_list_input[rhogid_num_i]
@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
                 print(hogs_rhogs_xml_all)
 
-        if dask_level == 1:
+        if dask_level == 1 or dask_level == 2:
             for dask_out in dask_out_list:
                 hogs_rhog_xml_batch = dask_out.result()
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
