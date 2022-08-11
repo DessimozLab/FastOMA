@@ -62,7 +62,7 @@ if __name__ == '__main__':
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
         rhogid_num_list = rhogid_num_list[:7]
-        dask_level = 3  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+        dask_level = 3  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:taxonomic level  0: no dask
 
         if dask_level != 0:
             from _dask_env import client_dask
