@@ -8,7 +8,7 @@ from dask.distributed import LocalCluster
 from dask_jobqueue import SLURMCluster
 
 
-machine = "slurm"  # slurm local
+machine = "local"  # slurm local
 ncore = 1
 njobs = 5
 memory_slurm = "1GB"
