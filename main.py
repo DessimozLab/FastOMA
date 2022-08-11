@@ -62,7 +62,7 @@ if __name__ == '__main__':
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
         rhogid_num_list = rhogid_num_list[:7]
-        dask_level = 0  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+        dask_level = 3  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
         if dask_level != 0:
             from _dask_env import client_dask
@@ -98,18 +98,20 @@ if __name__ == '__main__':
                 #    rhogid_len = rhogid_len_list[rhogid_num_i]
                 #    if rhogid_len < len_tresh:
                 # vars_input_future = client_dask.scatter(vars_input)
-                dask_out = client_dask.submit(_inferhog.read_infer_xml_rhogs, rhogid_batch, file_folders, dask_level)
+                dask_out = client_dask.submit(_inferhog.read_infer_xml_rhogs_batch, rhogid_batch, file_folders, dask_level)
                 dask_out_list.append(dask_out)
             else:
                 hogs_rhog_xml_batch = _inferhog.read_infer_xml_rhogs_batch(rhogid_batch, file_folders, dask_level)
+                # hogs_rhog_xml_batch is a list of hog object.
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
+                # hogs_rhogs_xml_all is a list of hog object.
 
                 print(hogs_rhogs_xml_all)
 
         if dask_level == 1:
             for dask_out in dask_out_list:
                 hogs_rhog_xml_batch = dask_out.result()
-            hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
+                hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
             print(hogs_rhogs_xml_all)
             print("dask out gathered")
 

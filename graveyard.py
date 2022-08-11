@@ -348,3 +348,127 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
     #     groups_xml.append(hog_xml)
     # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
     # print(xml_str)
+
+
+
+
+
+# def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_input):
+#     # (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder) = recursive_input
+#     if sub_species_tree.is_leaf():
+#         children_nodes = []
+#         hogs_children_level_list = []
+#         print("*n788m0* ", sub_species_tree.name)
+#
+#     else:
+#         children_nodes = sub_species_tree.children
+#         print("*n788m1* ", sub_species_tree.name)
+#         print("*n788m2* ", sub_species_tree.children)
+#
+#         client_dask_working = get_client()
+#         hogs_children_level_list_futures = client_dask_working.map(infer_hogs_for_rhog_levels_recursively_future, children_nodes, [recursive_input]* len(children_nodes) )
+#         print("*n788m3* ", hogs_children_level_list_futures)
+#         hogs_children_level_list = client_dask_working.gather(hogs_children_level_list_futures)
+#
+#
+#     print("*n788m4* ", hogs_children_level_list)
+#     print("*n788m5* ", sub_species_tree.name)
+#     hogs_this_level_list = infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level_list)
+#     print("*n788m6* ")
+#     # hogs_this_level_list_flatten = hogs_this_level_list
+#     # hogs_this_level_list_flatten = []
+#     # if len(hogs_this_level_list) > 1:
+#     #     for hogs_list in hogs_this_level_list:
+#     #         hogs_this_level_list_flatten += hogs_list
+#     # else:
+#     #     hogs_this_level_list_flatten = hogs_this_level_list[0]
+#
+#     return hogs_this_level_list
+
+
+# def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_input):
+#     # (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder) = recursive_input
+#     if sub_species_tree.is_leaf():
+#         children_nodes = []
+#     else:
+#         children_nodes = sub_species_tree.children
+#     print("*n788m* ", sub_species_tree.name)
+#     print("*n788m* ", sub_species_tree.children)
+#
+#     client_dask_working = get_client()
+#     hogs_children_level_list_futures = client_dask_working.map(infer_hogs_for_rhog_levels_recursively_future, children_nodes, recursive_input) # [recursive_input]* len(children_nodes) )
+#     print("*n788m* ", hogs_children_level_list_futures)
+#     hogs_children_level_list = client_dask_working.gather(hogs_children_level_list_futures)
+#
+#     print("*n788m* ", hogs_children_level_list)
+#     print("*n788m* ", sub_species_tree.name)
+#     hogs_this_level_list = infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level_list)
+#     hogs_this_level_list_flatten = hogs_this_level_list
+#     hogs_this_level_list_flatten = []
+#     if len(hogs_this_level_list) > 1:
+#         for hogs_list in hogs_this_level_list:
+#             hogs_this_level_list_flatten += hogs_list
+#     else:
+#         hogs_this_level_list_flatten = hogs_this_level_list[0]
+#
+#     return hogs_this_level_list_flatten
+#
+# def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, input_vars2):
+#     # (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name) = input_vars2
+#     # print("mm1", input_vars2)
+#     client_dask_working = get_client()
+#     if sub_species_tree.is_leaf():
+#         print("mm2", sub_species_tree.name)
+#         children_nodes = []
+#         hogs_children_level_list = []
+#     else:
+#         children_nodes = sub_species_tree.children
+#         child = children_nodes[0]
+#         hogs_children_level_list_futures = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, child, input_vars2)
+#
+#         hogs_children_level_list = hogs_children_level_list_futures.result()  # [i.result() for i in hogs_children_level_list_futures]
+#         # hogs_children_level_list = client_dask_working.gather(hogs_children_level_list_futures)
+#         print("mm6", hogs_children_level_list)
+#         print(sub_species_tree.name)
+#         #hogs_this_level_list = []
+#
+#     #print("mm5", hogs_children_level_list_futures)
+#     hogs_this_level_list = infer_hogs_this_level(sub_species_tree, input_vars2, hogs_children_level_list)
+#     #print("mm7", hogs_this_level_list)
+#     return hogs_this_level_list
+
+# only one level parralelization
+
+# def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, input_vars2):
+#     # (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name) = input_vars2
+#     if sub_species_tree.is_leaf():
+#         children_nodes = []
+#     else:
+#         children_nodes = sub_species_tree.children
+#     client_dask_working = get_client()
+#     hogs_children_level_list_futures = client_dask_working.map(infer_hogs_for_rhog_levels_recursively_future, children_nodes, [input_vars2]* len(children_nodes) )
+#
+#     hogs_children_level_list = client_dask_working.gather(hogs_children_level_list_futures)
+#
+#     print(sub_species_tree.name)
+#     hogs_this_level_list = infer_hogs_this_level(sub_species_tree, input_vars2, hogs_children_level_list)
+#
+#     return hogs_this_level_list
+
+
+
+# def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, input_vars2):
+#     # (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder, format_prot_name) = input_vars2
+#     if sub_species_tree.is_leaf():
+#         children_nodes = []
+#     else:
+#         children_nodes = sub_species_tree.children
+#     client_dask_working = get_client()
+#     hogs_children_level_list_futures = client_dask_working.map(infer_hogs_for_rhog_levels_recursively_future, children_nodes, [input_vars2]* len(children_nodes) )
+#
+#     hogs_children_level_list = client_dask_working.gather(hogs_children_level_list_futures)
+#
+#     print(sub_species_tree.name)
+#     hogs_this_level_list = infer_hogs_this_level(sub_species_tree, input_vars2, hogs_children_level_list)
+#
+#     return hogs_this_level_list
