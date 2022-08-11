@@ -8,9 +8,9 @@ from dask.distributed import LocalCluster
 from dask_jobqueue import SLURMCluster
 
 
-machine = "slurm"
+machine = "local"
 ncore = 1
-njobs = 20
+njobs = 3
 memory_slurm = "1GB"
 time_slurm = "00:15:00"
 # print("*** client **** ", cluster.dashboard_link, cluster.get_logs())

@@ -14,19 +14,20 @@ import _utils
 from _hog_class import HOG
 from _utils import logger_hog
 # from _dask_env import client_dask
-from dask.distributed import as_completed
+# from dask.distributed import as_completed
 
 
-def read_infer_xml_rhogs(rhogid_batch_list, file_folders, dask_level):
+def read_infer_xml_rhogs_batch(rhogid_batch_list, file_folders, dask_level):
     # file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 
-    hogs_rhogs_xml_all = []
+    hogs_rhog_xml_batch = []
     print("There are "+str(len(rhogid_batch_list))+" rhogs in the batch.")
     for rhogid_num in rhogid_batch_list:
-        hogs_rhogs_xml = read_infer_xml_rhog(rhogid_num, file_folders, dask_level)
-        hogs_rhogs_xml_all += hogs_rhogs_xml
+        hogs_rhogs_xml = read_infer_xml_rhog(rhogid_num, file_folders, dask_level)  # a list of hog object
+        hogs_rhog_xml_batch.extend(hogs_rhogs_xml)
 
-    return hogs_rhogs_xml_all
+    return hogs_rhog_xml_batch  # a list of hog object
+
 
 def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address) = file_folders
@@ -40,7 +41,7 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     # species_tree.write();  print(species_tree.write())
 
     recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
-    if len(rhog_i) > 1:
+    if len(rhog_i) > 1000 and (dask_level == 2 or dask_level == 3):
         # dask_future_taxon = True
         print("Dask future taxon is on for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
         client_dask_working = get_client()
@@ -124,9 +125,10 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_in
 
 
 def infer_hogs_for_rhog_levels_recursively(sub_species_tree, recursive_input):
-    (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder) = recursive_input
+
 
     if sub_species_tree.is_leaf():
+        (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder) = recursive_input
         hogs_this_level_list = singletone_hog(sub_species_tree, rhog_i, species_names_rhog, rhogid_num)
         return hogs_this_level_list
         # children_nodes = []
@@ -167,6 +169,8 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
     if node_species_tree.is_leaf():
         assert hogs_children_level_list == []
         hogs_this_level_list = singletone_hog(node_species_tree, rhog_i, species_names_rhog, rhogid_num)
+        # we shouldnt be here
+
         return hogs_this_level_list
 
     if len(hogs_children_level_list) == 1:

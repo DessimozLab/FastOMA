@@ -33,7 +33,7 @@ def parse_proteome(list_oma_species, working_folder):
     using Bio.SeqIO.parse
     Each fasta file is for one species.  The file name is the species name.
 
-    output: query_species_names: list of species name, query_prot_records_species: list of Biopython record of species
+    output: query_species_names: list of species name, query_prot_recs: list of Biopython record of species
     """
     project_files = listdir(working_folder + "/omamer_search/proteome/")
     query_species_names = []
@@ -43,20 +43,20 @@ def parse_proteome(list_oma_species, working_folder):
             query_species_names.append('.'.join(file_name_split))
 
     # we may assert existence of query_species_name+".fa/hogmap"
-    query_prot_records_species = []
+    query_prot_recs = []
     # for query_species_names_idx in range(len(query_species_names)):
     #     query_species_name = query_species_names[query_species_names_idx]
     for query_species_names_idx, query_species_name in enumerate(query_species_names):
         prot_address = working_folder + "omamer_search/proteome/" + query_species_name + ".fa"
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
-        query_prot_records_species.append(prots_record)
+        query_prot_recs.append(prots_record)
 
     query_species_num = len(query_species_names)
     current_time = datetime.now().strftime("%H:%M:%S")
     print(current_time, "- The are", str(query_species_num), "species in the proteome folder.")
     # for development
     for species_i in range(query_species_num):
-        # len_prot_record_i = len(query_prot_records_species[species_i])
+        # len_prot_record_i = len(query_prot_recs[species_i])
         species_name_i = query_species_names[species_i]
         # print(species_name_i,len_prot_record_i)
         if species_name_i in list_oma_species:
@@ -68,11 +68,11 @@ def parse_proteome(list_oma_species, working_folder):
     # the first part of the header line before space
     # >tr|A0A2I3FYY2|A0A2I3FYY2_NOMLE Uncharacterized protein OS=Nomascus leucogenys OX=61853 GN=CLPTM1L PE=3 SV=1
     # will be ">tr|A0A2I3FYY2|A0A2I3FYY2_NOMLE"
-    # [i.id for i in query_prot_records_species[0] if len(i.id)!=30 and len(i.id)!=22 ] #'sp|O47892|CYB_NOMLE',
-    return query_species_names, query_prot_records_species
+    # [i.id for i in query_prot_recs[0] if len(i.id)!=30 and len(i.id)!=22 ] #'sp|O47892|CYB_NOMLE',
+    return query_species_names, query_prot_recs
 
 
-def add_species_name_gene_id(query_prot_records_species, query_species_names, working_folder):
+def add_species_name_gene_id(query_prot_recs, query_species_names, working_folder):
     """
     adding the name of species to each protein record
         - based on file name
@@ -84,7 +84,7 @@ def add_species_name_gene_id(query_prot_records_species, query_species_names, wo
 
     gene_id_name = {}
     for query_species_idx, query_species_name in enumerate(query_species_names):
-        query_prot_records = query_prot_records_species[query_species_idx]
+        query_prot_records = query_prot_recs[query_species_idx]
         gene_counter = max_num_prot + query_species_idx * max_num_prot_per_sp
         gene_id_name[query_species_name] = []
         for query_prot_idx, query_prot_record in enumerate(query_prot_records):
@@ -96,7 +96,7 @@ def add_species_name_gene_id(query_prot_records_species, query_species_names, wo
     with open(working_folder + '/file_gene_id_name.pickle', 'wb') as handle:
         dill_pickle.dump(gene_id_name, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
 
-    return query_prot_records_species
+    return query_prot_recs
 
 
 
@@ -156,36 +156,36 @@ def parse_hogmap_omamer(query_species_names, working_folder):
     return hogmap_allspecies
 
 
-def filter_prot_mapped(query_species_names, query_prot_records_species, query_prot_names_species_mapped):
+def filter_prot_mapped(query_species_names, query_prot_recs, query_prot_names_species_mapped):
     """
-    a function for filtering biopython records in query_prot_records_species based on hogmaps
+    a function for filtering biopython records in query_prot_recs based on hogmaps
     The reason is that some very short records of fasta are removed in hogmap.
     So, we may loose track of order comparing hogmap and fasta file.
     The goal here is to remove those from seq record (of the fasta file).
 
-    output: query_prot_records_species_filtered
+    output: query_prot_recs_filt
     """
     current_time = datetime.now().strftime("%H:%M:%S")
     print(current_time, "- Filtering proteins started.")
-    query_prot_records_species_filtered = []
+    query_prot_recs_filt = []
     # for species_idx in range(len(query_species_names)):
     #     query_species_name = query_species_names[species_idx]
     for species_idx, query_species_name in enumerate(query_species_names): # from fasta file
         # print(query_species_name)
-        query_prot_records_species_i = query_prot_records_species[species_idx]
+        query_prot_recs_i = query_prot_recs[species_idx]
         # we added the species name and the as the fasta record usign ||
         # but this is not done in the hog map
         # I beleive .split("||")[0] solve this.
-        query_prot_ids_records = [record.id.split("||")[0] for record in query_prot_records_species_i]
+        query_prot_ids_records = [record.id.split("||")[0] for record in query_prot_recs_i]
         # from hogmap file without proteins that are not mapped on any hogs
         query_prot_names_species_i = query_prot_names_species_mapped[species_idx]
-        if len(query_prot_names_species_i) != len(query_prot_records_species_i):
-            query_prot_records_filterd = []
+        if len(query_prot_names_species_i) != len(query_prot_recs_i):
+            query_prot_records_filterd_sp = []
             for query_prot_name in query_prot_names_species_i:
                 if query_prot_name in query_prot_ids_records:
                     prot_record_idx = query_prot_ids_records.index(query_prot_name)
-                    prot_record = query_prot_records_species_i[prot_record_idx]
-                    query_prot_records_filterd.append(prot_record)
+                    prot_record = query_prot_recs_i[prot_record_idx]
+                    query_prot_records_filterd_sp.append(prot_record)
                 else:
                     current_time = datetime.now().strftime("%H:%M:%S")
                     logger_hog.error(str(current_time) + "- Error 149 " + query_species_name + " " + query_prot_name+". This shouldn't happen many times.")
@@ -193,17 +193,17 @@ def filter_prot_mapped(query_species_names, query_prot_records_species, query_pr
             current_time = datetime.now().strftime("%H:%M:%S")
             print(current_time, "- For the species", query_species_name, ", few proteins were ignored by omamer.")
             print(current_time, "- before filtering: in hogmap", len(query_prot_names_species_i), "in proteome",
-                  len(query_prot_records_species_i))
+                  len(query_prot_recs_i))
             print(current_time, "- After filtering:  in hogmap", len(query_prot_names_species_i), "in proteome",
-                  len(query_prot_records_filterd))
+                  len(query_prot_records_filterd_sp))
         else:
-            query_prot_records_filterd = query_prot_records_species_i
-        query_prot_records_species_filtered.append(query_prot_records_filterd)
+            query_prot_records_filterd_sp = query_prot_recs_i
+        query_prot_recs_filt.append(query_prot_records_filterd_sp)
     current_time = datetime.now().strftime("%H:%M:%S")
     print(current_time, "- For the rest of species, all proteins were mapped using OMAmer.")
-    return query_prot_records_species_filtered
+    return query_prot_recs_filt
 
-def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, query_species_names, query_prot_records_species_filtered):
+def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, query_species_names, query_prot_recs_filt):
     """
     a function for finding those proteins that are mapped to the same rootHOG.
     Then, we write each rootHOG as a seprate fasta file in the address_rhogs_folder folder
@@ -249,7 +249,7 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, q
             rhogids_list.append(rhogid)
             rhogid_prot_idx = rhogid_prot_idx_dic[rhogid]
             for (species_idx, prots_hogmap_idx) in rhogid_prot_idx:
-                prot_record = query_prot_records_species_filtered[species_idx][prots_hogmap_idx]
+                prot_record = query_prot_recs_filt[species_idx][prots_hogmap_idx]
                 rhogid_prot_records.append(prot_record)
                 species_idx_rhogid.append(species_idx)
 
