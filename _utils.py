@@ -1,8 +1,8 @@
 
 
 from os import listdir
-from Bio import SeqIO
-import xml.etree.ElementTree as ET
+# from Bio import SeqIO
+# import xml.etree.ElementTree as ET
 from ete3 import Phyloxml
 from ete3 import Tree
 

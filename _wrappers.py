@@ -40,17 +40,17 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     time_taken_tree = wrapper_tree.elapsed_time
     result_tree2 = wrapper_tree.result
     tree_nwk = str(result_tree2["tree"])
-    current_time = datetime.now().strftime("%H:%M:%S")
+    # current_time = datetime.now().strftime("%H:%M:%S")
     # for development we write the gene tree, the name of file should be limit in size in linux.
     # danger of overwriting
     # instead -> hash thing
     # ??? hashlib.md5(original_name).hexdig..it()
 
     # as the debug==True
-    if len(gene_tree_file_addr) > 255: gene_tree_file_addr = gene_tree_file_addr[:250] + ".nwk"
-    file_gene_tree = open(gene_tree_file_addr, "w")
-    file_gene_tree.write(tree_nwk)
-    file_gene_tree.write(";\n")
-    file_gene_tree.close()
+    # if len(gene_tree_file_addr) > 255: gene_tree_file_addr = gene_tree_file_addr[:250] + ".nwk"
+    # file_gene_tree = open(gene_tree_file_addr, "w")
+    # file_gene_tree.write(tree_nwk)
+    # file_gene_tree.write(";\n")
+    # file_gene_tree.close()
 
     return tree_nwk

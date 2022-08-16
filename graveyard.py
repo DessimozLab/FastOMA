@@ -472,3 +472,10 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 #     hogs_this_level_list = infer_hogs_this_level(sub_species_tree, input_vars2, hogs_children_level_list)
 #
 #     return hogs_this_level_list
+
+
+# len_tresh = 1000
+# for rhogid_num_i in range(len(rhogid_num_list_input)):
+#    rhogid_num = rhogid_num_list_input[rhogid_num_i]
+#    rhogid_len = rhogid_len_list[rhogid_num_i]
+#    if rhogid_len < len_tresh:

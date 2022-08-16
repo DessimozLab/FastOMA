@@ -8,7 +8,7 @@ import _utils_rhog
 
 if __name__ == '__main__':
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-    gene_trees_folder = working_folder + "/gene_trees_/"
+    gene_trees_folder = "" # working_folder + "/gene_trees_/"
     # check gene_trees_folder exist otherwise mkdir this
 
     address_rhogs_folder = working_folder + "/rhog_g2_s500_v2/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
@@ -61,15 +61,24 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list = rhogid_num_list[:40]
-        dask_level = 2  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:taxonomic level  0: no dask
+        # rhogid_num_list = rhogid_num_list[:40]
+        # rhogid_num_list = rhogid_num_list[25:30]
+        # ok rhogid_num_list = rhogid_num_list[:10]
+
+        # issue is here
+        # rhogid_num_list = rhogid_num_list[26:28]
+        # rhogid_num_list = rhogid_num_list[25:30]
+        # rhogid_num_list = rhogid_num_list[27:28]
+        rhogid_num_list = rhogid_num_list[:5]
+
+        dask_level = 3  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
         if dask_level != 0:
             from _dask_env import client_dask
 
         print(rhogid_num_list[:7])
         number_roothog = len(rhogid_num_list)
-        num_per_parralel = 3
+        num_per_parralel = 1
         parralel_num = int(number_roothog/num_per_parralel)
         if number_roothog != parralel_num*num_per_parralel:
             parralel_num += 1
@@ -84,7 +93,7 @@ if __name__ == '__main__':
 
         if dask_level == 1 or dask_level == 2:
             dask_out_list = []
-
+        dask_out_list = []
         hogs_rhogs_xml_all =[]
         for rhogid_batch_idx in range(len(rhogid_batch_list)):
             rhogid_batch = rhogid_batch_list[rhogid_batch_idx]
@@ -92,11 +101,6 @@ if __name__ == '__main__':
             # str(len(rhogid_batch)) + ".")
 
             if dask_level == 1 or dask_level == 2:
-                # len_tresh = 1000
-                # for rhogid_num_i in range(len(rhogid_num_list_input)):
-                #    rhogid_num = rhogid_num_list_input[rhogid_num_i]
-                #    rhogid_len = rhogid_len_list[rhogid_num_i]
-                #    if rhogid_len < len_tresh:
                 # vars_input_future = client_dask.scatter(vars_input)
                 dask_out = client_dask.submit(_inferhog.read_infer_xml_rhogs_batch, rhogid_batch, file_folders, dask_level)
                 dask_out_list.append(dask_out)
@@ -115,7 +119,7 @@ if __name__ == '__main__':
             print(hogs_rhogs_xml_all)
             print("dask out gathered")
 
-    _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name)
+    # _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name)
 
     print("main py is finished.")
 
