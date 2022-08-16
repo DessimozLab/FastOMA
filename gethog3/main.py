@@ -70,7 +70,7 @@ if __name__ == '__main__':
         # rhogid_num_list = rhogid_num_list[27:28]
         rhogid_num_list = rhogid_num_list[:10]
 
-        dask_level = 3  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+        dask_level = 1  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
         print(dask_level)
         if dask_level != 0:

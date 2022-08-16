@@ -1,37 +1,48 @@
 
 
+"""
 
+dask ntoes
+
+- IO issue open same file with slurm
+-  threads_per_worker=1 causes error with LocalCluster
+-  N_WORKERS = 3 njobs = 2 is not working, but njobs=10 is
+
+
+"""
 # import dask
 
 from dask.distributed import Client
 from dask.distributed import LocalCluster
-
+import math
 from dask_jobqueue import SLURMCluster
 
 
 machine = "slurm"  # slurm local
-N_WORKERS = 2
-njobs = 50
+N_WORKERS = 3
+njobs = 21
 print("njobs",njobs)
 memory_slurm = "1GB"
 time_slurm = "00:05:00"
 
 if machine == "local":
-    cluster = LocalCluster(n_workers=N_WORKERS)  # threads_per_worker=1 causes error
+    cluster = LocalCluster(n_workers=N_WORKERS)
 elif machine == "slurm":
-    ncore = N_WORKERS
-    nproc = ncore
+    nproc = N_WORKERS
+    ncore = nproc ^ 2
     cluster = SLURMCluster(cores=ncore, processes=nproc, memory=str(memory_slurm), walltime=time_slurm)
 
-cluster.scale(njobs)
+
+cluster.scale(njobs)  #  num_sbatch_job = njobs / ncore
 client_dask = Client(cluster)
 
 print(client_dask)
 print(client_dask.dashboard_link)
 
+if machine == "slurm":
+    print(cluster.job_script())
 
-
-
+a=24
 # cluster.adapt(maximum_jobs=20)  #  This automatically launches and kill workers based on load.
 
 
