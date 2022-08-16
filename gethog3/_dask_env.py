@@ -10,7 +10,7 @@ from dask_jobqueue import SLURMCluster
 
 machine = "local"  # slurm local
 ncore = 1
-njobs = 2
+njobs = 3
 memory_slurm = "1GB"
 time_slurm = "00:05:00"
 # print("*** client **** ", cluster.dashboard_link, cluster.get_logs())

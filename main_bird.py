@@ -1,17 +1,8 @@
-
-
-import dask
 from dask.distributed import Client
-from dask.distributed import LocalCluster
 from dask_jobqueue import SLURMCluster
 
-from xml.dom import minidom
-import xml.etree.ElementTree as ET
-
-import _utils
-import _inferhog
-from _utils import logger_hog
-import _utils_rhog
+from gethog3 import _utils, _inferhog, _utils_rhog
+from gethog3._utils import logger_hog
 
 if __name__ == '__main__':
 
@@ -46,8 +37,8 @@ if __name__ == '__main__':
         prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
 
         query_prot_records_species_filtered = _utils_rhog.filter_prot_mapped(query_species_names,
-                                                                              query_prot_records_species,
-                                                                              query_prot_names_species_mapped)
+                                                                             query_prot_records_species,
+                                                                             query_prot_names_species_mapped)
 
         print(len(query_prot_records_species_filtered), len(query_prot_records_species_filtered[0]))
         (rhogid_num_list, rhogids_prot_records_query) = _utils_rhog.group_prots_roothogs(prots_hogmap_hogid_allspecies,
@@ -93,9 +84,9 @@ if __name__ == '__main__':
         # rhogid_num_list_input = rhogid_batch
         logger_hog.info("Number of working root hog is " + str(len(rhogid_batch)) + ".")
         (groups_xml, gene_id_name, orthoxml_file, rhogid_len_list) = _utils.prepare_xml(rhogid_batch,
-                                                                                       address_rhogs_folder,
-                                                                                       format_prot_name,
-                                                                                       rhogid_batch_idx)
+                                                                                        address_rhogs_folder,
+                                                                                        format_prot_name,
+                                                                                        rhogid_batch_idx)
 
         # # with open(address_working_folder + "/group_xml_ortho.pickle", 'rb') as handle:
         # #     (groups_xml, gene_id_name, orthoxml_file) = pickle.load(handle)

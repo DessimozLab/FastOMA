@@ -15,7 +15,7 @@ if __name__ == '__main__':
     species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
     pickle_folder = working_folder + "/pickle_folder/"
     # add warning when pickle folder is not empty
-    output_xml_name = "out_7aug_5.xml"
+    output_xml_name = "out_7aug_6.xml"
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
@@ -39,15 +39,15 @@ if __name__ == '__main__':
         (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
         (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
         query_prot_recs = _utils_rhog.add_species_name_gene_id(query_prot_recs,
-                                                                          query_species_names, working_folder)
+                                                               query_species_names, working_folder)
         hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
 
         (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_subfscore_allspecies,
         prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
 
         query_prot_recs_filt = _utils_rhog.filter_prot_mapped(query_species_names,
-                                                                              query_prot_recs,
-                                                                              query_prot_names_species_mapped)
+                                                              query_prot_recs,
+                                                              query_prot_names_species_mapped)
 
         print(len(query_prot_recs_filt), len(query_prot_recs_filt[0]))
         (rhogid_num_list, rhogids_prot_records_query) = _utils_rhog.group_prots_roothogs(prots_hogmap_hogid_allspecies,
@@ -64,15 +64,15 @@ if __name__ == '__main__':
         # rhogid_num_list = rhogid_num_list[:40]
         # rhogid_num_list = rhogid_num_list[25:30]
         # ok rhogid_num_list = rhogid_num_list[:10]
-
         # issue is here
         # rhogid_num_list = rhogid_num_list[26:28]
         # rhogid_num_list = rhogid_num_list[25:30]
         # rhogid_num_list = rhogid_num_list[27:28]
-        rhogid_num_list = rhogid_num_list[:5]
+        rhogid_num_list = rhogid_num_list[:10]
 
         dask_level = 3  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
+        print(dask_level)
         if dask_level != 0:
             from _dask_env import client_dask
 
@@ -109,7 +109,6 @@ if __name__ == '__main__':
                 # hogs_rhog_xml_batch is a list of hog object.
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
                 # hogs_rhogs_xml_all is a list of hog object.
-
                 print(hogs_rhogs_xml_all)
 
         if dask_level == 1 or dask_level == 2:

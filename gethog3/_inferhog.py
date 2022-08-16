@@ -87,9 +87,21 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_in
 
     client_dask_working = get_client()
     hogs_children_level_list_futures = [client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, child, recursive_input) for child in children_nodes ]
-    hogs_children_level_list = []
-    for future in hogs_children_level_list_futures:
-        hogs_children_level_list.extend(future.result())
+
+    hogs_children_level_list_futures = client_dask_working.gather(hogs_children_level_list_futures)
+    # hogs_children_level_list = hogs_children_level_list_futures
+    # hogs_children_level_list = []
+    # for future in hogs_children_level_list_futures:
+    #    hogs_children_level_list.extend(future.result())
+
+    if isinstance(hogs_children_level_list_futures[0], list):
+        hogs_children_level_list_flatten = []
+        for hog_ in hogs_children_level_list_futures:
+            # for hog in hogs_list:
+            hogs_children_level_list_flatten.extend(hog_)
+
+    hogs_children_level_list = hogs_children_level_list_flatten
+
 
     hogs_this_level_list = infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level_list)
 
@@ -158,9 +170,17 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
     # if len(hogs_children_level_list)>0:
     #    print("**",hogs_children_level_list[0], len(hogs_children_level_list))
 
-    # hogs_children_level_list_flatten = []
-    # for hogs_list in hogs_children_level_list:
-    #     hogs_children_level_list_flatten += hogs_list
+
+
+    # hogs_children_level_list
+    # if isinstance(hogs_children_level_list[0], list):
+    #     hogs_children_level_list_flatten = []
+    #     for hogs_list in hogs_children_level_list:
+    #         for hog in hogs_list:
+    #         hogs_children_level_list_flatten.extend(hog)
+    #
+    # hogs_children_level_list = hogs_children_level_list_flatten
+
 
     sub_msa_list_lowerLevel_ready = [hog._msa for hog in hogs_children_level_list]
     merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready)
