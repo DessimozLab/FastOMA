@@ -5,25 +5,25 @@
 
 from dask.distributed import Client
 from dask.distributed import LocalCluster
+
 from dask_jobqueue import SLURMCluster
 
 
-machine = "local"  # slurm local
-ncore = 1
-njobs = 3
+machine = "slurm"  # slurm local
+N_WORKERS = 2
+njobs = 50
+print("njobs",njobs)
 memory_slurm = "1GB"
 time_slurm = "00:05:00"
-# print("*** client **** ", cluster.dashboard_link, cluster.get_logs())
-# ncore = 1  # Total number of cores per job
-# njobs = 1  # Cut the job up into this many processes.
-# # By default, process ~= sqrt(cores) so that the number of processes = the number of threads per process
-nproc = ncore
+
 if machine == "local":
-    cluster = LocalCluster()
+    cluster = LocalCluster(n_workers=N_WORKERS)  # threads_per_worker=1 causes error
 elif machine == "slurm":
+    ncore = N_WORKERS
+    nproc = ncore
     cluster = SLURMCluster(cores=ncore, processes=nproc, memory=str(memory_slurm), walltime=time_slurm)
 
-cluster.scale(njobs)  # # ask for one jobs
+cluster.scale(njobs)
 client_dask = Client(cluster)
 
 print(client_dask)
@@ -32,6 +32,7 @@ print(client_dask.dashboard_link)
 
 
 
+# cluster.adapt(maximum_jobs=20)  #  This automatically launches and kill workers based on load.
 
 
 
@@ -84,3 +85,26 @@ print(client_dask.dashboard_link)
 #
 # machine = "slurm"
 # client = init_dask(machine, ncore=1, njobs=1, memory_slurm="2GB", time_slurm="00:10:00")
+
+
+
+
+
+#
+# machine = "local"  # slurm local
+# ncore = 3
+# njobs = 1
+# memory_slurm = "1GB"
+# time_slurm = "00:05:00"
+# # print("*** client **** ", cluster.dashboard_link, cluster.get_logs())
+# # ncore = 1  # Total number of cores per job
+# # njobs = 1  # Cut the job up into this many processes.
+# # # By default, process ~= sqrt(cores) so that the number of processes = the number of threads per process
+# nproc = ncore
+# if machine == "local":
+#     cluster = LocalCluster(cores=ncore, memory=str(memory_slurm))
+# elif machine == "slurm":
+#     cluster = SLURMCluster(cores=ncore, processes=nproc, memory=str(memory_slurm), walltime=time_slurm)
+#
+# cluster.scale(njobs)  # # ask for one jobs
+# client_dask = Client(cluster)
