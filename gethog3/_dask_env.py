@@ -18,25 +18,29 @@ import math
 from dask_jobqueue import SLURMCluster
 
 
-machine = "slurm"  # slurm local
+machine = "local"  # slurm local
 
 memory_slurm = "1GB"
 time_slurm = "00:04:00"
 
 if machine == "local":
     n_workers = 3
-    n_jobs = 3
-    cluster = LocalCluster(n_workers=n_workers)
+    cluster = LocalCluster(n_workers=n_workers, threads_per_worker=1)
+
 elif machine == "slurm":
     n_core = 1
     n_proc = n_core
     n_jobs = 60
+    n_jobs = 3
     cluster = SLURMCluster(cores=n_core, processes=n_proc, memory=str(memory_slurm), walltime=time_slurm)
+
+n_jobs = 3
+cluster.scale(n_jobs)  # num_sbatch_job = njobs / ncore
 
  # n_core = n_proc avoid using multiple threads
 
 
-cluster.scale(n_jobs)  # num_sbatch_job = njobs / ncore
+
 client_dask = Client(cluster)
 
 print(client_dask)

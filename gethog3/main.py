@@ -68,7 +68,7 @@ if __name__ == '__main__':
         # rhogid_num_list = rhogid_num_list[26:28]
         # rhogid_num_list = rhogid_num_list[25:30]
         # rhogid_num_list = rhogid_num_list[27:28]
-        rhogid_num_list = rhogid_num_list[:200]
+        rhogid_num_list = rhogid_num_list[:10]
 
         dask_level = 2  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
@@ -118,9 +118,11 @@ if __name__ == '__main__':
             print(hogs_rhogs_xml_all)
             print("dask out gathered")
 
+
+
     # _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name)
 
-    print("main py is finished.")
+    print("main py is finished s !.")
 
 """
 to do : 

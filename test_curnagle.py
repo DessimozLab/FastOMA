@@ -1,5 +1,33 @@
 
 
+from distributed import Client
+from dask.distributed import worker_client
+from dask.distributed import LocalCluster
+# from dask_jobqueue import SLURMCluster
+import time
+
+def fib(n):
+    if n < 2:
+        return n
+    with worker_client() as client:
+        a_future = client.submit(fib, n - 1)
+        b_future = client.submit(fib, n - 2)
+        a, b = client.gather([a_future, b_future])
+    return a + b
+
+if __name__ == "__main__":
+    # cluster = SLURMCluster(cores=1, processes=1, memory="1G", walltime="00:05:00")
+    cluster = LocalCluster(n_workers=3, threads_per_worker=1)
+    # n_jobs = 2
+    # cluster.scale(n_jobs)
+    client_dask = Client(cluster)
+    time.sleep(5)
+    lst = [20, 30, 22, 55]
+    for i in range(5):
+        future = client_dask.submit(fib, lst[i])
+        result = future.result()
+        print(result)
+
 
 # ###### collect xml files
 #
