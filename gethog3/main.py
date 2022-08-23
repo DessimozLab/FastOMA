@@ -71,7 +71,7 @@ if __name__ == '__main__':
         # rhogid_num_list = rhogid_num_list[26:28]
         # rhogid_num_list = rhogid_num_list[25:30]
         # rhogid_num_list = rhogid_num_list[27:28]
-        rhogid_num_list = rhogid_num_list[:4]
+        rhogid_num_list = rhogid_num_list[:200]
 
         dask_level = 2  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
