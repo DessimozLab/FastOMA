@@ -6,6 +6,9 @@ import _inferhog
 from _utils import logger_hog
 import _utils_rhog
 
+# from distributed import get_client
+# from dask.distributed import rejoin, secede
+
 if __name__ == '__main__':
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
     gene_trees_folder = "" # working_folder + "/gene_trees_/"
@@ -68,7 +71,7 @@ if __name__ == '__main__':
         # rhogid_num_list = rhogid_num_list[26:28]
         # rhogid_num_list = rhogid_num_list[25:30]
         # rhogid_num_list = rhogid_num_list[27:28]
-        rhogid_num_list = rhogid_num_list[:10]
+        rhogid_num_list = rhogid_num_list[:4]
 
         dask_level = 2  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
@@ -102,8 +105,11 @@ if __name__ == '__main__':
 
             if dask_level == 1 or dask_level == 2:
                 # vars_input_future = client_dask.scatter(vars_input)
+                # client_dask = get_client()
+
                 dask_out = client_dask.submit(_inferhog.read_infer_xml_rhogs_batch, rhogid_batch, file_folders, dask_level)
                 dask_out_list.append(dask_out)
+
             else:
                 hogs_rhog_xml_batch = _inferhog.read_infer_xml_rhogs_batch(rhogid_batch, file_folders, dask_level)
                 # hogs_rhog_xml_batch is a list of hog object.
