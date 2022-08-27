@@ -14,17 +14,18 @@ if __name__ == '__main__':
     gene_trees_folder = "" # working_folder + "/gene_trees_/"
     # check gene_trees_folder exist otherwise mkdir this
 
-    address_rhogs_folder = working_folder + "/rhog_g2_s500_v2/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
+    address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-    pickle_folder = working_folder + "/pickle_folder/"
+    pickle_folder = working_folder + "/gethog3_23aug2/pickle_folder_gethog3_23aug2/"
     # add warning when pickle folder is not empty
-    output_xml_name = "out_7aug_6.xml"
+    output_xml_name = "out_23aug2.xml"
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 
     # step = "rhog"  # to infer roothogs when you have the proteome & hogmap.
-    step = "hog"     # to infersubhogs when roothogs are ready.
+    # step = "rhog"     # to infersubhogs when roothogs are ready.
+    step = "collect"  # collect pickle file and write xml file
 
     print("we are here line25")
     if step == "rhog":
@@ -57,7 +58,7 @@ if __name__ == '__main__':
                                                                                          address_rhogs_folder,
                                                                                          query_species_names,
                                                                                          query_prot_recs_filt)
-        step = "hog"
+        #step = "hog"
 
     if step == "hog":
         print("we are here line 60")
@@ -73,7 +74,7 @@ if __name__ == '__main__':
         # rhogid_num_list = rhogid_num_list[27:28]
         rhogid_num_list = rhogid_num_list[:200]
 
-        dask_level = 2  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+        dask_level = 0  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
         print(dask_level)
         if dask_level != 0:
@@ -124,9 +125,10 @@ if __name__ == '__main__':
             print(hogs_rhogs_xml_all)
             print("dask out gathered")
 
+        step = "collect"
 
-
-    # _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name)
+    if step == "collect":
+        _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name)
 
     print("main py is finished s !.")
 

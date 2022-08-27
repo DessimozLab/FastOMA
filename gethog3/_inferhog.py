@@ -366,11 +366,11 @@ def collect_write_xml(working_folder, pickle_folder, output_xml_name):
     hogs_a_rhog_xml_all = []
     for pickle_file_adress in pickle_files_adress:
         with open(pickle_folder + pickle_file_adress, 'rb') as handle:
-            hogs_a_rhog_xml_batch = dill_pickle.load(handle) # hogs_a_rhog_xml_batch is a list of hog object.
+            hogs_a_rhog_xml_batch = dill_pickle.load(handle)  # hogs_a_rhog_xml_batch is a list of hog object.
             hogs_a_rhog_xml_all.extend(hogs_a_rhog_xml_batch)
             # hogs_rhogs_xml_all is a list of hog object.
 
-    print("number of hogs in all batches is ",len(hogs_a_rhog_xml_all))
+    print("number of hogs in all batches is ", len(hogs_a_rhog_xml_all))
 
     groups_xml = ET.SubElement(orthoxml_file, "groups")
 
