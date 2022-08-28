@@ -5,7 +5,7 @@ import _inferhog
 
 from _utils import logger_hog
 import _utils_rhog
-
+from os import listdir
 # from distributed import get_client
 # from dask.distributed import rejoin, secede
 
@@ -14,18 +14,19 @@ if __name__ == '__main__':
     gene_trees_folder = "" # working_folder + "/gene_trees_/"
     # check gene_trees_folder exist otherwise mkdir this
 
-    address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
+    address_rhogs_folder = working_folder + "/rhog_all_tst/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-    pickle_folder = working_folder + "/gethog3_23aug2/pickle_folder_gethog3_23aug2/"
+    pickle_folder = "" # working_folder + "/pickle/"
+    gene_id_pickle_file = working_folder + "gene_id_28aug.pickle"
     # add warning when pickle folder is not empty
-    output_xml_name = "out_23aug2.xml"
+    # output_xml_name = "out_t_aug2_property.xml"
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 
     # step = "rhog"  # to infer roothogs when you have the proteome & hogmap.
     # step = "rhog"     # to infersubhogs when roothogs are ready.
-    step = "collect"  # collect pickle file and write xml file
+    step = "rhog"  # collect pickle file and write xml file
 
     print("we are here line25")
     if step == "rhog":
@@ -43,7 +44,7 @@ if __name__ == '__main__':
         (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
         (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
         query_prot_recs = _utils_rhog.add_species_name_gene_id(query_prot_recs,
-                                                               query_species_names, working_folder)
+                                                               query_species_names, gene_id_pickle_file)
         hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
 
         (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_subfscore_allspecies,
@@ -73,6 +74,18 @@ if __name__ == '__main__':
         # rhogid_num_list = rhogid_num_list[25:30]
         # rhogid_num_list = rhogid_num_list[27:28]
         rhogid_num_list = rhogid_num_list[:200]
+
+        # rhogid_num_list_raw = rhogid_num_list
+        #
+        # list_done_raw = listdir(pickle_folder)
+        # list_done = []
+        # for file in list_done_raw:
+        #     numr = int(file.split(".")[0].split("_")[1])
+        #     list_done.append(numr)
+        #
+        # rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
+        # print("number of remained is ", len(rhogid_num_list))
+
 
         dask_level = 0  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 

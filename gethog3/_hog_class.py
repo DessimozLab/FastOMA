@@ -68,8 +68,8 @@ class HOG:
     def to_orthoxml(self):
         # indent = 0
         hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
-        # property_element = ET.SubElement(hog_elemnt, "property",
-        #                                 attrib={"name": "TaxRange", "value": str(self._taxnomic_range)})
+        property_element = ET.SubElement(hog_elemnt, "property",
+                                        attrib={"name": "TaxRange", "value": str(self._taxnomic_range)})
         # the following could be improved ???   without this if it will be like, one property is enough
         # <orthologGroup>
         #    <property name="TaxRange" value="GORGO_HUMAN_PANTR"/>

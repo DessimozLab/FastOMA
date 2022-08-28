@@ -11,15 +11,17 @@ working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
 
 #address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
 #species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-pickle_folder = working_folder + "/pickle_folder_all_collect/"
+pickle_folder = working_folder + "/pickle_folder_all_27aug/"
 # add warning when pickle folder is not empty
-output_xml_name = "out_27aug_6pm.xml"
+output_xml_name = "out_28aug_3pm.xml"
+gene_id_pickle_file = working_folder + "gene_id_28aug.pickle"
+
 
 
 orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
                                                "originVersion": "Nov 2021", "version": "0.3"})  #
 
-with open(working_folder + '/file_gene_id_name.pickle', 'rb') as handle:
+with open(gene_id_pickle_file, 'rb') as handle:
     gene_id_name = dill_pickle.load(handle)
     # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
 
