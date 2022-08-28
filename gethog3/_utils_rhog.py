@@ -262,7 +262,7 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, q
         rhogid_num = int(rhogid_B[1:])  # # B0613860
         rhogid_num_list.append(rhogid_num)
 
-        if 1: # 2 < len(rhogid_prot_rec_query) < 500:
+        if 1:  # 2 < len(rhogid_prot_rec_query) < 500:
             SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder +"HOG_B"+ str(rhogid_num).zfill(7)+".fa", "fasta")
             # rhogids_prot_records_oma = []
             # for hog_elements in oma_db.member_of_fam(rhogid_num):   # this gets the member of roothog 2 (HOG:000002)
