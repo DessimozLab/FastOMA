@@ -1,7 +1,8 @@
 import pyoma.browser.db as db
 from datetime import datetime
 from Bio import SeqIO
-import dill as dill_pickle
+# import dill as dill_pickle
+import pickle
 from os import listdir
 import os
 
@@ -90,7 +91,8 @@ def add_species_name_gene_id(query_prot_recs, query_species_names, gene_id_pickl
             gene_id_name[query_species_name].append((gene_idx_integer, query_prot_name))
     # this is used to creat the first part of xml file, gene name and
     with open(gene_id_pickle_file, 'wb') as handle:
-        dill_pickle.dump(gene_id_name, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
+        # dill_pickle.dump(gene_id_name, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
+        pickle.dump(gene_id_name, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return query_prot_recs
 
@@ -262,7 +264,7 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, q
         rhogid_num = int(rhogid_B[1:])  # # B0613860
         rhogid_num_list.append(rhogid_num)
 
-        if 1:  # 2 < len(rhogid_prot_rec_query) < 500:
+        if 1 < len(rhogid_prot_rec_query) < 500:
             SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder +"HOG_B"+ str(rhogid_num).zfill(7)+".fa", "fasta")
             # rhogids_prot_records_oma = []
             # for hog_elements in oma_db.member_of_fam(rhogid_num):   # this gets the member of roothog 2 (HOG:000002)

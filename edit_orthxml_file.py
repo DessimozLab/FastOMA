@@ -1,7 +1,14 @@
 
 """
+I accidanetly comment <property na in hog class
+
+so with this code I can edit the file
+
+
 add       <orthologGroup id="HOG:B0811125_sub1201">
          <property name="TaxRange" value="CHLTR_MYCGE"/>
+
+
 """
 
 

@@ -11,15 +11,15 @@ from os import listdir
 
 if __name__ == '__main__':
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-    gene_trees_folder = "" # working_folder + "/gene_trees_/"
+    gene_trees_folder = "" # working_folder + "gene_trees_/"
     # check gene_trees_folder exist otherwise mkdir this
 
-    address_rhogs_folder = working_folder + "/rhog_all_tst/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
-    species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-    pickle_folder = "" # working_folder + "/pickle/"
-    gene_id_pickle_file = working_folder + "gene_id_28aug.pickle"
+    address_rhogs_folder = working_folder + "rhog_all_v3_s500/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
+    species_tree_address = working_folder + "archive/lineage_tree_qfo.phyloxml"
+    pickle_folder = ""  # working_folder + "/pickle/"
+    gene_id_pickle_file = working_folder + "gene_id_30aug_s500.pickle"
     # add warning when pickle folder is not empty
-    # output_xml_name = "out_t_aug2_property.xml"
+    output_xml_name = "out_t_aug2a_property.xml"
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
@@ -40,6 +40,7 @@ if __name__ == '__main__':
         """
         oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastoma/archive/OmaServer.h5"
         # working_folder+"omamer_database/oma_path/OmaServer.h5"
+
         print("rHOG inferece has started. The oma database address is in ", oma_database_address)
         (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
         (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
@@ -66,13 +67,6 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        # rhogid_num_list = rhogid_num_list[:40]
-        # rhogid_num_list = rhogid_num_list[25:30]
-        # ok rhogid_num_list = rhogid_num_list[:10]
-        # issue is here
-        # rhogid_num_list = rhogid_num_list[26:28]
-        # rhogid_num_list = rhogid_num_list[25:30]
-        # rhogid_num_list = rhogid_num_list[27:28]
         rhogid_num_list = rhogid_num_list[:200]
 
         # rhogid_num_list_raw = rhogid_num_list
@@ -141,7 +135,7 @@ if __name__ == '__main__':
         step = "collect"
 
     if step == "collect":
-        _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name)
+        _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pickle_file)
 
     print("main py is finished s !.")
 

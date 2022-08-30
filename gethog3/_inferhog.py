@@ -1,7 +1,8 @@
 
 from ete3 import Tree
 from Bio import SeqIO
-import dill as dill_pickle
+# import dill as dill_pickle
+import pickle
 import gc
 from distributed import get_client
 
@@ -44,7 +45,7 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     # species_tree.write();  print(species_tree.write())
 
     recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
-    if len(rhog_i) > 40 and (dask_level == 2 or dask_level == 3):
+    if len(rhog_i) > 300 and (dask_level == 2 or dask_level == 3):
         # dask_future_taxon = True
         print("Dask future taxon is on for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
         client_dask_working = get_client()
@@ -71,7 +72,8 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     # how to handle empty hogs !? why happening and if not save pickle, file not exist error from rhog id list
 
     with open(pickle_folder + '/file_' + str(rhogid_num) + '.pickle', 'wb') as handle:
-        dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
+        #dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
+        pickle.dump(hogs_rhogs_xml, handle, protocol=pickle.HIGHEST_PROTOCOL)
     logger_hog.info("***** hogs are written as a pickle " + pickle_folder + '/file_' + str(rhogid_num) + '.pickle')
 
     del hogs_a_rhog
@@ -342,13 +344,14 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     return hogs_this_level_list
 
 
-def collect_write_xml(working_folder, pickle_folder, output_xml_name):
+def collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pickle_file):
 
     orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
                                                    "originVersion": "Nov 2021", "version": "0.3"})  #
 
-    with open(working_folder + '/test_file_gene_id_name.pickle', 'rb') as handle:
-        gene_id_name = dill_pickle.load(handle)
+    with open(gene_id_pickle_file, 'rb') as handle:
+        #gene_id_name = dill_pickle.load(handle)
+        gene_id_name = pickle.load(handle)
         # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
 
     for query_species_name, list_prots in gene_id_name.items():
@@ -366,7 +369,8 @@ def collect_write_xml(working_folder, pickle_folder, output_xml_name):
     hogs_a_rhog_xml_all = []
     for pickle_file_adress in pickle_files_adress:
         with open(pickle_folder + pickle_file_adress, 'rb') as handle:
-            hogs_a_rhog_xml_batch = dill_pickle.load(handle)  # hogs_a_rhog_xml_batch is a list of hog object.
+            # hogs_a_rhog_xml_batch = dill_pickle.load(handle)
+            hogs_a_rhog_xml_batch = pickle.load(handle)  # hogs_a_rhog_xml_batch is a list of hog object.
             hogs_a_rhog_xml_all.extend(hogs_a_rhog_xml_batch)
             # hogs_rhogs_xml_all is a list of hog object.
 
