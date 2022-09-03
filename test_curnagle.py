@@ -10,6 +10,7 @@ print("started ")
 working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
 pickle_folder = working_folder + "/pickle_folder_g2_s500/"
 
+
 output_xml_name = "out_30aug_g2_s500_2.xml   "
 gene_id_pickle_file = working_folder + "gene_id_30aug_g2_s500.pickle"
 
