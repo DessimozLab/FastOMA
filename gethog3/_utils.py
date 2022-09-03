@@ -113,11 +113,13 @@ def lable_sd_internal_nodes(tree_out):
         # print("** now working on node ",node.name) # node_children
         if node.is_leaf():
             prot_i = node.name
-            species_name_dic[node] = {str(prot_i).split("|")[-1].split("_")[-1]}
+            # species_name_dic[node] = {str(prot_i).split("|")[-1].split("_")[-1]}
+            species_name_dic[node] = {str(prot_i).split("||")[1][:-1]}
         else:
             node.name = "S/D"
             leaves_list = node.get_leaves()  # print("leaves_list", leaves_list)
-            species_name_set = set([str(prot_i).split("|")[-1].split("_")[-1] for prot_i in leaves_list])
+            # species_name_set = set([str(prot_i).split("|")[-1].split("_")[-1] for prot_i in leaves_list])
+            species_name_set = set([str(prot_i).split("||")[1][:-1] for prot_i in leaves_list])
             # print("species_name_set", species_name_set)
             species_name_dic[node] = species_name_set
 

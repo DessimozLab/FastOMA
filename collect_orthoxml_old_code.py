@@ -14,7 +14,7 @@ working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/ali_c
 #species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
 pickle_folder = working_folder + "/pickle_2sep5pm/"
 # add warning when pickle folder is not empty
-output_xml_name = "out_ali_2sep5pm_d.xml"
+output_xml_name = "out_ali_2sep5pm_test.xml"
 gene_id_pickle_file = working_folder + "group_xml_ortho_adjusted_family_40_2sep5pm.pickle"
 
 #

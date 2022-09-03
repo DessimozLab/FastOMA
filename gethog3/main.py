@@ -16,17 +16,17 @@ if __name__ == '__main__':
 
     address_rhogs_folder = working_folder + "test/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "archive/lineage_tree_qfo.phyloxml"
-    pickle_folder =  working_folder + "pickle/"
+    pickle_folder =  working_folder + "pickle_te/"
     gene_id_pickle_file = working_folder + "gene_id_30aug_s500.pickle"
     # add warning when pickle folder is not empty
-    output_xml_name = "out_t_aug2a_property.xml"
+    output_xml_name = "out_t_aug2a_property_te.xml"
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 
     # step = "rhog"  # to infer roothogs when you have the proteome & hogmap.
     # step = "rhog"     # to infersubhogs when roothogs are ready.
-    step = "rhog"  # collect pickle file and write xml file
+    step = "hog"  # collect pickle file and write xml file
 
     print("we are here line25")
     if step == "rhog":
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list = rhogid_num_list[:200]
+        rhogid_num_list =  [3339] #rhogid_num_list[:200]
 
         # rhogid_num_list_raw = rhogid_num_list
         #
