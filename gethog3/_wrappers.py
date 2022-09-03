@@ -8,9 +8,9 @@ from _utils import logger_hog
 
 def merge_msa(list_msas):
     """
-    merge a list of MSAs (multiple sequnce aligmnet)
+    merge orthoxml_to_newick.py list of MSAs (multiple sequnce aligmnet)
     by run mafft on them.
-    Each element of msa should be a MultipleSeqAlignment object.
+    Each element of msa should be orthoxml_to_newick.py MultipleSeqAlignment object.
 
     output: merged (msa)
     """
@@ -28,7 +28,7 @@ def merge_msa(list_msas):
 def infer_gene_tree(msa, gene_tree_file_addr):
     """
     infere gene tree using fastTree for the input msa
-    and write it as a file
+    and write it as orthoxml_to_newick.py file
 
 
     output: gene tree in nwk format

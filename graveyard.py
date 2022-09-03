@@ -42,14 +42,14 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
     return gene_id_name
 
     # for hogs in hogs_a_rhog:
-    #     if isinstance(hogs, list): # bwecause of dask future, sometimes it is  a list of list, sometimes list of hogs. need to be imporved
+    #     if isinstance(hogs, list): # bwecause of dask future, sometimes it is  orthoxml_to_newick.py list of list, sometimes list of hogs. need to be imporved
     #         for hog_i in hogs:
     #             print(hog_i)
     #             if len(hog_i._members) > 1:
     #                 # could be improved
     #                 hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
     #                 hogs_rhogs_xml.append(hogs_a_rhog_xml)
-    #     # else:  # bwecause of dask future, sometimes it is  a list of list, sometimes list of hogs. need to be imporved
+    #     # else:  # bwecause of dask future, sometimes it is  orthoxml_to_newick.py list of list, sometimes list of hogs. need to be imporved
     #     #     if len(hogs._members) > 1:
     #     #         hogs_a_rhog_xml = hogs.to_orthoxml(**gene_id_name)
     #     #         hogs_rhogs_xml.append(hogs_a_rhog_xml)
@@ -115,7 +115,7 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 #
 
 
-# ## the following are needed when we start from a rootHOG fasta file.
+# ## the following are needed when we start from orthoxml_to_newick.py rootHOG fasta file.
 #
 #
 # # import pickle
@@ -124,10 +124,10 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 #
 # def infer_HOG_rhog3(rhogid_num_list, gene_id_name):  # , address_rhogs_folder, species_tree_address):
 #     """
-#     The prot sequences of a rootHOG are located in the fasta file address_rhogs_folder+"HOG_rhogid_num.fa,
+#     The prot sequences of orthoxml_to_newick.py rootHOG are located in the fasta file address_rhogs_folder+"HOG_rhogid_num.fa,
 #     we want to infer all subhogs of this rootHOG for different taxanomic levels.
 #
-#     output: a python dict (HOG_thisLevel):  key=taxanomic level, value= a list of subhogs.
+#     output: orthoxml_to_newick.py python dict (HOG_thisLevel):  key=taxanomic level, value= orthoxml_to_newick.py list of subhogs.
 #     """
 #
 #     HOG_thisLevel = dic_sub_hogs[node_species_tree.name]
@@ -200,7 +200,7 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # address_rhogs_folder  =address_working_folder + "/rhog_size_g2_s1k/"
 #
 #
-# # ## create a list of rootHOG IDs  stored in the folder of rHOG .
+# # ## create orthoxml_to_newick.py list of rootHOG IDs  stored in the folder of rHOG .
 # # rhog_files = listdir(address_rhogs_folder)
 # # rhogid_num_list= []
 # # for rhog_file in rhog_files:
@@ -261,7 +261,7 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
     #
     #             # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, vars_input)
     #             # dask_out_list.append(dask_out)
-    #             print("*a*" * 100)
+    #             print("*orthoxml_to_newick.py*" * 100)
     #         else:
     #             print("*b*" * 100)
     #             dask_future_taxon = True  # second level of parralelizion
@@ -521,9 +521,9 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # hogs_a_rhog_xml_all = []
 # for pickle_file_adress in pickle_files_adress:
 #     with open(pickle_folder + pickle_file_adress, 'rb') as handle:
-#         hogs_a_rhog_xml_batch = dill_pickle.load(handle)  # hogs_a_rhog_xml_batch is a list of hog object.
+#         hogs_a_rhog_xml_batch = dill_pickle.load(handle)  # hogs_a_rhog_xml_batch is orthoxml_to_newick.py list of hog object.
 #         hogs_a_rhog_xml_all.extend(hogs_a_rhog_xml_batch)
-#         # hogs_rhogs_xml_all is a list of hog object.
+#         # hogs_rhogs_xml_all is orthoxml_to_newick.py list of hog object.
 #
 # print("number of hogs in all batches is ", len(hogs_a_rhog_xml_all))
 #
@@ -576,7 +576,7 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 #
 #     for prot_i, prot in enumerate(query_prot_names_species_mapped):
 #
-#         a=1
+#         orthoxml_to_newick.py=1
 #
 #
 #
@@ -600,8 +600,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 #     with worker_client() as client:
 #         a_future = client.submit(fib, n - 1)
 #         b_future = client.submit(fib, n - 2)
-#         a, b = client.gather([a_future, b_future])
-#     return a + b
+#         orthoxml_to_newick.py, b = client.gather([a_future, b_future])
+#     return orthoxml_to_newick.py + b
 #
 # if __name__ == "__main__":
 #     # cluster = SLURMCluster(cores=1, processes=1, memory="1G", walltime="00:05:00")
@@ -882,7 +882,7 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # # #
 # # # # futures = client.map(incc, range(4))
 # # #
-# # # # a=2
+# # # # orthoxml_to_newick.py=2
 # # # #
 # # # # results = client.gather(futures)
 # # # #
@@ -969,9 +969,9 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #
 # #
 # #
-# # # def cal(a,b,c,d):
+# # # def cal(orthoxml_to_newick.py,b,c,d):
 # # #
-# # #     print(a+b+c+d)
+# # #     print(orthoxml_to_newick.py+b+c+d)
 # # #     return 1
 # # # list1=(2,3,4)
 # # # print(cal(1,list1))
@@ -1040,10 +1040,10 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # # current_time += "sina"
 # # #print(current_time)
 # #
-# # def aa(a):
+# # def aa(orthoxml_to_newick.py):
 # #     print("here2")
 # #     time.sleep(5)
-# #     return a*100
+# #     return orthoxml_to_newick.py*100
 # #
 # # from _dask_env import client_dask
 # #
@@ -1141,8 +1141,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #     client = get_client()
 # #     a_future = client.submit(fib, n - 1)
 # #     b_future = client.submit(fib, n - 2)
-# #     a, b = client.gather([a_future, b_future])
-# #     return a + b
+# #     orthoxml_to_newick.py, b = client.gather([a_future, b_future])
+# #     return orthoxml_to_newick.py + b
 # #
 # # if __name__ == "__main__":
 # #     client = Client()
@@ -1187,7 +1187,7 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 #
 #     for prot_i, prot in enumerate(query_prot_names_species_mapped):
 #
-#         a=1
+#         orthoxml_to_newick.py=1
 #
 #
 #
@@ -1211,8 +1211,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 #     with worker_client() as client:
 #         a_future = client.submit(fib, n - 1)
 #         b_future = client.submit(fib, n - 2)
-#         a, b = client.gather([a_future, b_future])
-#     return a + b
+#         orthoxml_to_newick.py, b = client.gather([a_future, b_future])
+#     return orthoxml_to_newick.py + b
 #
 # if __name__ == "__main__":
 #     # cluster = SLURMCluster(cores=1, processes=1, memory="1G", walltime="00:05:00")
@@ -1493,7 +1493,7 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # # #
 # # # # futures = client.map(incc, range(4))
 # # #
-# # # # a=2
+# # # # orthoxml_to_newick.py=2
 # # # #
 # # # # results = client.gather(futures)
 # # # #
@@ -1580,9 +1580,9 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #
 # #
 # #
-# # # def cal(a,b,c,d):
+# # # def cal(orthoxml_to_newick.py,b,c,d):
 # # #
-# # #     print(a+b+c+d)
+# # #     print(orthoxml_to_newick.py+b+c+d)
 # # #     return 1
 # # # list1=(2,3,4)
 # # # print(cal(1,list1))
@@ -1651,10 +1651,10 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # # current_time += "sina"
 # # #print(current_time)
 # #
-# # def aa(a):
+# # def aa(orthoxml_to_newick.py):
 # #     print("here2")
 # #     time.sleep(5)
-# #     return a*100
+# #     return orthoxml_to_newick.py*100
 # #
 # # from _dask_env import client_dask
 # #
@@ -1752,8 +1752,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #     client = get_client()
 # #     a_future = client.submit(fib, n - 1)
 # #     b_future = client.submit(fib, n - 2)
-# #     a, b = client.gather([a_future, b_future])
-# #     return a + b
+# #     orthoxml_to_newick.py, b = client.gather([a_future, b_future])
+# #     return orthoxml_to_newick.py + b
 # #
 # # if __name__ == "__main__":
 # #     client = Client()

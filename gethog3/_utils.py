@@ -15,7 +15,7 @@ logger_hog.setLevel(logging.INFO)  # WARN  INFO
 
 def list_rhog_fastas(address_rhogs_folder):
     """
-     create a list of rootHOG IDs  stored in the folder of rHOG .
+     create orthoxml_to_newick.py list of rootHOG IDs  stored in the folder of rHOG .
      input: folder address
      output: list of rhog Id (integer)
     """
@@ -31,7 +31,7 @@ def list_rhog_fastas(address_rhogs_folder):
 
 def read_species_tree(species_tree_address):
     """
-    reading a species tree in Phyloxml format using ete3 package .
+    reading orthoxml_to_newick.py species tree in Phyloxml format using ete3 package .
 
     output (species_tree)
     """
@@ -42,7 +42,7 @@ def read_species_tree(species_tree_address):
     if format_tree == "phyloxml":
         project = Phyloxml()
         project.build_from_file(species_tree_address)
-        # Each tree contains the same methods as a PhyloTree object
+        # Each tree contains the same methods as orthoxml_to_newick.py PhyloTree object
         for species_tree in project.get_phylogeny():
             species_tree = species_tree
         for node_species_tree in species_tree.traverse(strategy="postorder"):
@@ -61,7 +61,7 @@ def read_species_tree(species_tree_address):
 
 def prepare_species_tree(rhog_i, species_tree):
     """
-    a function for extracting a subtree from the input species tree  a.k.a pruning,
+    orthoxml_to_newick.py function for extracting orthoxml_to_newick.py subtree from the input species tree  orthoxml_to_newick.py.k.orthoxml_to_newick.py pruning,
     based on the names of species in the rootHOG.
 
     output: species_tree (pruned), species_names_rhog, prot_names_rhog

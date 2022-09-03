@@ -13,7 +13,7 @@ from _utils import logger_hog
 
 def parse_oma_db(oma_database_address):
     """
-    a function for loading an oma database in hdf5 format using pyoma.browser.db.
+    orthoxml_to_newick.py function for loading an oma database in hdf5 format using pyoma.browser.db.
     output: oma_db, list_oma_species
     """
     oma_db = db.Database(oma_database_address)
@@ -27,7 +27,7 @@ def parse_oma_db(oma_database_address):
 
 def parse_proteome(list_oma_species, working_folder):
     """
-    a function for parsing fasta files of proteins located in /omamer_search/proteome/
+    orthoxml_to_newick.py function for parsing fasta files of proteins located in /omamer_search/proteome/
     using Bio.SeqIO.parse
     Each fasta file is for one species.  The file name is the species name.
     output: query_species_names: list of species name, query_prot_recs: list of Biopython record of species
@@ -100,7 +100,7 @@ def add_species_name_gene_id(query_prot_recs, query_species_names, gene_id_pickl
 
 def parse_hogmap_omamer(query_species_names, working_folder):
     """
-    a function for parsing output of omamer (hogmap files) located in /omamer_search/hogmap/
+    orthoxml_to_newick.py function for parsing output of omamer (hogmap files) located in /omamer_search/hogmap/
     Each hogmap file correspond to one fasta file of species, with the same name.
     Note that some records of fasta may removed in hogmap, becuase of being so short.
     hogmap file example:
@@ -153,7 +153,7 @@ def parse_hogmap_omamer(query_species_names, working_folder):
 
 def filter_prot_mapped(query_species_names, query_prot_recs, query_prot_names_species_mapped):
     """
-    a function for filtering biopython records in query_prot_recs based on hogmaps
+    orthoxml_to_newick.py function for filtering biopython records in query_prot_recs based on hogmaps
     The reason is that some very short records of fasta are removed in hogmap.
     So, we may loose track of order comparing hogmap and fasta file.
     The goal here is to remove those from seq record (of the fasta file).
@@ -199,8 +199,8 @@ def filter_prot_mapped(query_species_names, query_prot_recs, query_prot_names_sp
 
 def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, query_species_names, query_prot_recs_filt):
     """
-    a function for finding those proteins that are mapped to the same rootHOG.
-    Then, we write each rootHOG as a seprate fasta file in the address_rhogs_folder folder
+    orthoxml_to_newick.py function for finding those proteins that are mapped to the same rootHOG.
+    Then, we write each rootHOG as orthoxml_to_newick.py seprate fasta file in the address_rhogs_folder folder
     output: rhogid_num_list, rhogids_prot_records_query
     """
 

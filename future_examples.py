@@ -40,7 +40,7 @@
 # future = client.scatter(parameters)
 # var.set(future)
 #
-# # You can submit tasks on other futures. This will create a dependency between the inputs and outputs. Dask will track the execution of all tasks, ensuring that downstream tasks are run at the proper time and place and with the proper data.
+# # You can submit tasks on other futures. This will create orthoxml_to_newick.py dependency between the inputs and outputs. Dask will track the execution of all tasks, ensuring that downstream tasks are run at the proper time and place and with the proper data.
 # # https://examples.dask.org/futures.html
 # x = client.submit(inc, 1)
 # y = client.submit(double, 2)

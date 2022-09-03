@@ -14,9 +14,9 @@ if __name__ == '__main__':
     gene_trees_folder = "" # working_folder + "gene_trees_/"
     # check gene_trees_folder exist otherwise mkdir this
 
-    address_rhogs_folder = working_folder + "rhog_all_v3_s500/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
+    address_rhogs_folder = working_folder + "test/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "archive/lineage_tree_qfo.phyloxml"
-    pickle_folder = ""  # working_folder + "/pickle/"
+    pickle_folder =  working_folder + "pickle/"
     gene_id_pickle_file = working_folder + "gene_id_30aug_s500.pickle"
     # add warning when pickle folder is not empty
     output_xml_name = "out_t_aug2a_property.xml"
@@ -36,7 +36,7 @@ if __name__ == '__main__':
         Run omamer and put the output of omamer in /omamer_search/hogmap/
         oma_database_address= the address to the oma databases
         hog and HOG are used interchangeably here. 
-        rHOG=rootHOG.  A subHOG itself is a HOG.
+        rHOG=rootHOG.  A subHOG itself is orthoxml_to_newick.py HOG.
         """
         oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastoma/archive/OmaServer.h5"
         # working_folder+"omamer_database/oma_path/OmaServer.h5"
@@ -120,9 +120,9 @@ if __name__ == '__main__':
 
             else:
                 hogs_rhog_xml_batch = _inferhog.read_infer_xml_rhogs_batch(rhogid_batch, file_folders, dask_level)
-                # hogs_rhog_xml_batch is a list of hog object.
+                # hogs_rhog_xml_batch is orthoxml_to_newick.py list of hog object.
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
-                # hogs_rhogs_xml_all is a list of hog object.
+                # hogs_rhogs_xml_all is orthoxml_to_newick.py list of hog object.
                 print(hogs_rhogs_xml_all)
 
         if dask_level == 1 or dask_level == 2:

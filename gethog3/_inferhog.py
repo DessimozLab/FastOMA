@@ -27,10 +27,10 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, file_folders, dask_level):
     hogs_rhog_xml_batch = []
     print("There are "+str(len(rhogid_batch_list))+" rhogs in the batch.")
     for rhogid_num in rhogid_batch_list:
-        hogs_rhogs_xml = read_infer_xml_rhog(rhogid_num, file_folders, dask_level)  # a list of hog object
+        hogs_rhogs_xml = read_infer_xml_rhog(rhogid_num, file_folders, dask_level)  # orthoxml_to_newick.py list of hog object
         hogs_rhog_xml_batch.extend(hogs_rhogs_xml)
 
-    return hogs_rhog_xml_batch  # a list of hog object
+    return hogs_rhog_xml_batch  # orthoxml_to_newick.py list of hog object
 
 
 def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
@@ -74,7 +74,7 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     with open(pickle_folder + '/file_' + str(rhogid_num) + '.pickle', 'wb') as handle:
         #dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
         pickle.dump(hogs_rhogs_xml, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    logger_hog.info("***** hogs are written as a pickle " + pickle_folder + '/file_' + str(rhogid_num) + '.pickle')
+    logger_hog.info("***** hogs are written as orthoxml_to_newick.py pickle " + pickle_folder + '/file_' + str(rhogid_num) + '.pickle')
 
     del hogs_a_rhog
     gc.collect()
@@ -301,7 +301,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
         if node.name[0] == "D":
             print(2)
 
-        if node.name[0] == "S":  # this is a sub-hog.
+        if node.name[0] == "S":  # this is orthoxml_to_newick.py sub-hog.
             subHOG_to_be_merged = []
             for node_leave_name in node_leaves_name:  # print(node_leave_name)
                 for subHOG in hogs_children_level_list:
@@ -333,12 +333,12 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                                                          item in items]
         if [i._hogid for i in hogs_children_level_list] == subHOG_to_be_merged_set_other_Snodes_flattned:
             break
-    for subHOG in hogs_children_level_list:  # for the single branch  ( D include a  subhog and a S node. )
+    for subHOG in hogs_children_level_list:  # for the single branch  ( D include orthoxml_to_newick.py  subhog and orthoxml_to_newick.py S node. )
         if subHOG._hogid not in subhogs_id_children_assigned:  # print("here", subHOG)
             hogs_this_level_list.append(subHOG)
 
     # this could be improved
-    # we expect to see a list of list as ooutput
+    # we expect to see orthoxml_to_newick.py list of list as ooutput
     # if len(hogs_this_level_list)==1:  hogs_this_level_list = [hogs_this_level_list]
 
     return hogs_this_level_list
@@ -370,9 +370,9 @@ def collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pi
     for pickle_file_adress in pickle_files_adress:
         with open(pickle_folder + pickle_file_adress, 'rb') as handle:
             # hogs_a_rhog_xml_batch = dill_pickle.load(handle)
-            hogs_a_rhog_xml_batch = pickle.load(handle)  # hogs_a_rhog_xml_batch is a list of hog object.
+            hogs_a_rhog_xml_batch = pickle.load(handle)  # hogs_a_rhog_xml_batch is orthoxml_to_newick.py list of hog object.
             hogs_a_rhog_xml_all.extend(hogs_a_rhog_xml_batch)
-            # hogs_rhogs_xml_all is a list of hog object.
+            # hogs_rhogs_xml_all is orthoxml_to_newick.py list of hog object.
 
     print("number of hogs in all batches is ", len(hogs_a_rhog_xml_all))
 

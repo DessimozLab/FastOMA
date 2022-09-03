@@ -22,7 +22,7 @@ if __name__ == '__main__':
         oma_database_address= the address to the oma databases
 
         hog and HOG are used interchangeably here. 
-        rHOG=rootHOG.  A subHOG itself is a HOG.
+        rHOG=rootHOG.  A subHOG itself is orthoxml_to_newick.py HOG.
         """
 
         oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastoma/archive/OmaServer.h5"
@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
             # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, vars_input)
             # dask_out_list.append(dask_out)
-            print("*a*" * 5)
+            print("*orthoxml_to_newick.py*" * 5)
 #             else:
 #                 print("*b*" * 100)
 #                 dask_future_taxon = True  # second level of parralelizion

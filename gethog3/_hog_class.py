@@ -15,14 +15,14 @@ class HOG:
 
     def __init__(self, input_instantiate, taxnomic_range, rhogid_num, msa=None):  # _prot_names
         # the input_instantiate could be either
-        #     1) a protein as the biopython seq record  SeqRecord(seq=Seq('MAPSSRSPSPRT. ]
-        # or  2) a set of intances of class HOG   wit a big msa
+        #     1) orthoxml_to_newick.py protein as the biopython seq record  SeqRecord(seq=Seq('MAPSSRSPSPRT. ]
+        # or  2) orthoxml_to_newick.py set of intances of class HOG   wit orthoxml_to_newick.py big msa
         # those variable starting with _ are local to the class, should not access directly  (although it is possbile)
         self._rhogid_num = rhogid_num
         self.__class__._hogid_iter += 1
         # 0070124
         self._hogid = "HOG:B" + str(self._rhogid_num).zfill(7) + "_sub" + str(self.__class__._hogid_iter)
-        self._taxnomic_range = taxnomic_range  # print("**** a new HOG is instantiated with id", self._hogid)
+        self._taxnomic_range = taxnomic_range  # print("**** orthoxml_to_newick.py new HOG is instantiated with id", self._hogid)
 
         if isinstance(input_instantiate, SeqRecord):  # if len(sub_hogs)==1:
             only_protein = input_instantiate  # only one seq, only on child, leaf
@@ -32,7 +32,7 @@ class HOG:
             # <<class 'Bio.Align.MultipleSeqAlignment'> instance (1 records of length 314) at 7f0e86c713d0>
 
         elif msa and all(isinstance(x, HOG) for x in input_instantiate):
-            # here we want to merge few subhogs and creat a new HOG.   #the n
+            # here we want to merge few subhogs and creat orthoxml_to_newick.py new HOG.   #the n
             sub_hogs = input_instantiate
             hog_members = set()
             for sub_hog in sub_hogs:
@@ -53,7 +53,7 @@ class HOG:
             self._msa = MultipleSeqAlignment(records_sub_sampled)
             # without replacement sampling ,  # self._children = sub_hogs # as legacy  ?
         else:
-            logger_hog.error("Error 169,  check the input format to instantiate a HOG class")
+            logger_hog.error("Error 169,  check the input format to instantiate orthoxml_to_newick.py HOG class")
             assert False
 
     def __repr__(self):
