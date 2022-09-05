@@ -8,11 +8,11 @@ import os
 
 print("started ")
 working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-pickle_folder = working_folder + "/pickle_folder_g2_s500/"
+pickle_folder = working_folder + "/pickle_folder_3sep10pm_allv3_new/"
 
 
-output_xml_name = "out_30aug_g2_s500_3.xml"
-gene_id_pickle_file = working_folder + "gene_id_30aug_g2_s500.pickle"
+output_xml_name = "out_3sep_all_new_6.xml"
+gene_id_pickle_file = working_folder + "gene_id_28aug.pickle"
 
 
 if os.path.getsize(gene_id_pickle_file) > 0:
@@ -40,13 +40,14 @@ print("gene_xml created ")
 pickle_files_adress = listdir(pickle_folder)
 print("number of hog is", len(pickle_files_adress))
 hogs_a_rhog_xml_all = []
+print("Following files are with 0 byte (if any, so hog inferecnce should be repeated after deleting the files):")
 for pickle_file_adress in pickle_files_adress:
     if os.path.getsize(pickle_folder + pickle_file_adress) > 0:
         with open(pickle_folder + pickle_file_adress, 'rb') as handle:
             hogs_a_rhog_xml_batch = pickle.load(handle)  # hogs_a_rhog_xml_batch is orthoxml_to_newick.py list of hog object.
             hogs_a_rhog_xml_all.extend(hogs_a_rhog_xml_batch)
     else:
-        print("empty ", pickle_file_adress)
+        print(pickle_file_adress)
 
 print("after reading number of hogs is  ", len(hogs_a_rhog_xml_all))
 
