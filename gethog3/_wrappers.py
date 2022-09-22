@@ -5,8 +5,9 @@ import zoo.wrappers.treebuilders.fasttree as fasttree
 
 from _utils import logger_hog
 
+from Bio import SeqIO
 
-def merge_msa(list_msas):
+def merge_msa(list_msas, gene_tree_file_addr):
     """
     merge orthoxml_to_newick.py list of MSAs (multiple sequnce aligmnet)
     by run mafft on them.
@@ -22,6 +23,8 @@ def merge_msa(list_msas):
     logger_hog.info \
         (str(len(list_msas)) + " msas are merged into one with the length of  " + str(len(merged)) + "  " + str
         (len(merged[0])))
+    SeqIO.write(merged, gene_tree_file_addr + ".fa", "fasta")
+
     return merged
 
 
@@ -34,7 +37,7 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     output: gene tree in nwk format
     """
     wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
-    wrapper_tree.options.options['-fastest']
+    wrapper_tree.options.options['-fastest'].active = True
     result_tree1 = wrapper_tree()
 
     time_taken_tree = wrapper_tree.elapsed_time
@@ -46,11 +49,12 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     # instead -> hash thing
     # ??? hashlib.md5(original_name).hexdig..it()
 
+
     # as the debug==True
-    # if len(gene_tree_file_addr) > 255: gene_tree_file_addr = gene_tree_file_addr[:250] + ".nwk"
-    # file_gene_tree = open(gene_tree_file_addr, "w")
-    # file_gene_tree.write(tree_nwk)
-    # file_gene_tree.write(";\n")
-    # file_gene_tree.close()
+
+    file_gene_tree = open(gene_tree_file_addr, "w")
+    file_gene_tree.write(tree_nwk)
+    file_gene_tree.write(";\n")
+    file_gene_tree.close()
 
     return tree_nwk

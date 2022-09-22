@@ -245,12 +245,18 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
 
 
     sub_msa_list_lowerLevel_ready = [hog._msa for hog in hogs_children_level_list]
-    merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready)
+    gene_tree_file_addr = gene_trees_folder + "/tree_" + str(rhogid_num) + "_" + str(
+        node_species_tree.name) + ".nwk"
+
+    if len(gene_tree_file_addr) > 245:
+        import random
+        rand_num = random.randint(1, 10000)
+        gene_tree_file_addr = gene_tree_file_addr[:245] + str(rand_num)+".nwk"
+
+    merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, gene_tree_file_addr)
     # logger_hog.info("All subhogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
     #   len(merged_msa[0])) + ".")
 
-    gene_tree_file_addr = gene_trees_folder + "/tree_" + str(rhogid_num) + "_" + str(
-        node_species_tree.name) + ".nwk"
     gene_tree_raw = _wrappers.infer_gene_tree(merged_msa, gene_tree_file_addr)
     gene_tree = Tree(gene_tree_raw + ";", format=0)
     logger_hog.info("Gene tree is inferred with length of " + str(len(gene_tree)) + ".")
