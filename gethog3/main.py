@@ -55,7 +55,7 @@ if __name__ == '__main__':
                                                                query_species_names, gene_id_pickle_file)
         hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
 
-        (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_subfscore_allspecies,
+        (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_fscore_allspecies,
         prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
 
         query_prot_recs_filt = _utils_rhog.filter_prot_mapped(query_species_names,

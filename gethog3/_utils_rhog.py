@@ -114,7 +114,8 @@ def parse_hogmap_omamer(query_species_names, working_folder):
     """
     prots_hogmap_name_allspecies = []
     prots_hogmap_hogid_allspecies = []
-    prots_hogmap_subfscore_allspecies = []
+    prots_hogmap_overlp_allspecies = []
+    prots_hogmap_fscore_allspecies = []
     prots_hogmap_seqlen_allspecies = []
     prots_hogmap_subfmedseqlen_allspecies = []
     for query_species_name in query_species_names:
@@ -122,8 +123,9 @@ def parse_hogmap_omamer(query_species_names, working_folder):
         omamer_output_file = open(omamer_output_address, 'r')
         prots_hogmap_name = []
         prots_hogmap_hogid = []
-        prots_hogmap_subfscore = []
         prots_hogmap_seqlen = []
+        prots_hogmap_fscore = []
+        prots_hogmap_overlp = []
         prots_hogmap_subfmedseqlen = []
         for line in omamer_output_file:
             line_strip = line.strip()
@@ -132,12 +134,14 @@ def parse_hogmap_omamer(query_species_names, working_folder):
                 # if line_split[1]!='na':
                 prots_hogmap_name.append(line_split[0])
                 prots_hogmap_hogid.append(line_split[1])
-                prots_hogmap_subfscore.append(line_split[4])  # subfamily
+                prots_hogmap_overlp.append(line_split[2])
+                prots_hogmap_fscore.append(line_split[3])  # subfamily
                 prots_hogmap_seqlen.append(line_split[5])
                 prots_hogmap_subfmedseqlen.append(line_split[6])
         prots_hogmap_name_allspecies.append(prots_hogmap_name)
         prots_hogmap_hogid_allspecies.append(prots_hogmap_hogid)
-        prots_hogmap_subfscore_allspecies.append(prots_hogmap_subfscore)
+        prots_hogmap_overlp_allspecies.append(prots_hogmap_overlp)
+        prots_hogmap_fscore_allspecies.append(prots_hogmap_fscore)
         prots_hogmap_seqlen_allspecies.append(prots_hogmap_seqlen)
         prots_hogmap_subfmedseqlen_allspecies.append(prots_hogmap_subfmedseqlen)
 
@@ -146,8 +150,8 @@ def parse_hogmap_omamer(query_species_names, working_folder):
     print(current_time, "- The first species", query_species_names[0], " contains ",
           len(prots_hogmap_hogid_allspecies[0]), " proteins.")
     print(current_time, "- The first protein of first species is ", prots_hogmap_name_allspecies[0][0])
-    hogmap_allspecies = (prots_hogmap_name_allspecies, prots_hogmap_hogid_allspecies, prots_hogmap_subfscore_allspecies,
-                         prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies)
+    hogmap_allspecies = (prots_hogmap_name_allspecies, prots_hogmap_hogid_allspecies, prots_hogmap_overlp_allspecies,
+                         prots_hogmap_fscore_allspecies, prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies)
     return hogmap_allspecies
 
 
