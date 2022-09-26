@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
         # rhogid_num_list =  [3339] #rhogid_num_list[:200]
 
-        rhogid_num_list_raw = [ 811161]  # rhogid_num_list[:10] # [613860]  # , 618939, 615514, 834209 ]  #rhogid_num_list
+        rhogid_num_list_raw = [ 834261 ] #  811161  # rhogid_num_list[:10] # [613860]  # , 618939, 615514, 834209 ]  #rhogid_num_list
 
 
 

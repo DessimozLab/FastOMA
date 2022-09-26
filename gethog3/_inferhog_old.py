@@ -19,8 +19,6 @@ from _utils import logger_hog
 
 from dask.distributed import rejoin, secede
 
-import networkx as nx
-import matplotlib.pyplot as plt
 
 
 def read_infer_xml_rhogs_batch(rhogid_batch_list, file_folders, dask_level):
@@ -301,21 +299,6 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     hogs_this_level_list = []
     subHOG_to_be_merged_set_other_Snodes = []
     subHOG_to_be_merged_set_other_Snodes_flattned_temp = []
-
-    hoggraph_node_name = [i._hogid.split("_")[1][3:] for i in hogs_children_level_list]
-    hog_size_dic = {}
-    dic_hog = {}
-    for hog in hogs_children_level_list:
-        hog_id_short = hog._hogid.split("_")[1][3:]
-        for prot in hog._members:
-            dic_hog[prot] = hog_id_short + "_" + str(len(hog._members))
-        hog_size_dic[hog_id_short] = len(hog._members)
-
-    hoggraph_node_name_len = [i+"_"+str(hog_size_dic[i]) for i in hoggraph_node_name]
-
-    hoggraph = nx.Graph()
-    hoggraph.add_nodes_from(hoggraph_node_name_len)
-    print(gene_tree.write(format=1))
     for node in gene_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n,"processed") and n.processed==True):
         # print("Leaves assigned to hog are ", assigned_leaves_to_hog)   #print("Traversing gene tree. Now at node", node.name)
         if node.is_leaf():
@@ -323,23 +306,8 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
         node_leaves_name = [i.name for i in node.get_leaves()]
         # if node.name[0] == "D":
         #     print(2)
-        s_gene_tree_leaves = [i.name for i in node.get_leaves()]
-        #s_gene_tree_leaves_update = [i.split("_")[1][3:] for i in s_gene_tree_leaves]
+
         if node.name[0] == "S":  # this is orthoxml_to_newick.py sub-hog.
-            num_prot = len(s_gene_tree_leaves)
-            for i in range(num_prot):
-                hog_i = dic_hog[s_gene_tree_leaves[i]]
-                for j in range(i):
-                    hog_j = dic_hog[s_gene_tree_leaves[j]]
-                    if hoggraph.has_edge(hog_i, hog_j):
-                        hoggraph[hog_i][hog_j]['weight'] += 1
-                    else:
-                        hoggraph.add_edge(hog_i, hog_j, weight=1)
-
-            print(hoggraph.edges(data=True))
-
-
-
             subHOG_to_be_merged = []
             for node_leave_name in node_leaves_name:  # print(node_leave_name)
                 for subHOG in hogs_children_level_list:
@@ -367,22 +335,10 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                 #  I don't need to traverse deeper in this clade
             node.processed = True  # print("?*?*  ", node.name)
 
-
         subHOG_to_be_merged_set_other_Snodes_flattned = [item for items in subHOG_to_be_merged_set_other_Snodes for
                                                          item in items]
         if [i._hogid for i in hogs_children_level_list] == subHOG_to_be_merged_set_other_Snodes_flattned:
             break
-        print("node name ", node.name)
-
-    pos = nx.spring_layout(hoggraph, k=10)  # For better example looking
-    nx.draw(hoggraph, pos, with_labels=True, node_color='y', node_size=0, alpha=0.4, font_size=16 )
-    # nx.draw(G, pos,, edge_color="r", font_size=16, with_labels=True)
-    labels = {e: hoggraph.edges[e]['weight'] for e in hoggraph.edges}
-    nx.draw_networkx_edge_labels(hoggraph, pos, edge_labels=labels)
-    plt.savefig("/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/" + hogs_children_level_list[0]._hogid + "file.jpg")
-    plt.show()
-
-
     for subHOG in hogs_children_level_list:  # for the single branch  ( D include orthoxml_to_newick.py  subhog and orthoxml_to_newick.py S node. )
         if subHOG._hogid not in subhogs_id_children_assigned:  # print("here", subHOG)
             hogs_this_level_list.append(subHOG)
