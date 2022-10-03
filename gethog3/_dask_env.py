@@ -21,7 +21,7 @@ from dask_jobqueue import SLURMCluster
 machine = "slurm"  # slurm local
 
 memory_slurm = "1GB"
-time_slurm = "00:10:00"
+time_slurm = "00:50:00"
 
 if machine == "local":
     n_workers = 3
@@ -30,7 +30,7 @@ if machine == "local":
 elif machine == "slurm":
     n_core = 1
     n_proc = n_core
-    n_jobs = 60
+    n_jobs = 10
     #n_jobs = 3
     cluster = SLURMCluster(cores=n_core, processes=n_proc, memory=str(memory_slurm), walltime=time_slurm)
 
