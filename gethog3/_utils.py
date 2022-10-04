@@ -6,9 +6,15 @@ from os import listdir
 from ete3 import Phyloxml
 from ete3 import Tree
 
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq, UnknownSeq
 
 import logging
-logging.basicConfig()
+#logging.basicConfig()
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 logger_hog = logging.getLogger("hog")
 logger_hog.setLevel(logging.INFO)  # WARN  INFO
 
@@ -136,3 +142,52 @@ def lable_sd_internal_nodes(tree_out):
                 node.name = "S" + str(counter_S)
     return tree_out
 
+
+def msa_filter_row(msa, tresh_ratio_gap_row):  # gene_tree_file_addr
+
+    msa_filtered_row = []
+    ratio_records=[]
+    for record in msa:
+        seq = record.seq
+        seqLen = len(record)
+        gap_count = seq.count("-") + seq.count("?") + seq.count(".") +seq.count("~")
+        ratio_record_nongap= 1-gap_count/seqLen
+        ratio_records.append(round(ratio_record_nongap, 3))
+        if ratio_record_nongap > tresh_ratio_gap_row:
+            msa_filtered_row.append(record)
+    # out_name_msa=gene_tree_file_addr +"filtered_row_"+str(tresh_ratio_gap_row)+".txt"
+    # handle_msa_fasta = open(out_name_msa,"w")
+    # SeqIO.write(msa_filtered_row, handle_msa_fasta,"fasta")
+    # handle_msa_fasta.close()
+    return msa_filtered_row
+
+def msa_filter_col(msa, tresh_ratio_gap_col):
+
+    ratio_col_all = []
+    length_record= len(msa[1])
+    num_records = len(msa)
+    keep_cols = []
+    for col_i in range(length_record):
+        col_values = [record.seq[col_i] for record in msa]
+        gap_count=col_values.count("-") + col_values.count("?") + col_values.count(".") +col_values.count("~")
+        ratio_col_nongap = 1- gap_count/num_records
+        ratio_col_all.append(ratio_col_nongap)
+        if ratio_col_nongap > tresh_ratio_gap_col:
+            keep_cols.append(col_i)
+    #plt.hist(ratio_col_all,bins=100) # , bins=10
+    #plt.show()
+    #plt.savefig(gene_tree_file_addr+ "filtered_row_"+"_col_"+str(tresh_ratio_gap_col)+".txt.pdf")
+    #print("- Columns indecis extracted. Out of ", length_record,"columns,",len(keep_cols),"is remained.")
+    msa_filtered_col = []
+    for record in msa :
+        record_seq = str(record.seq)
+        record_seq_edited  = ''.join([record_seq[i] for i in keep_cols  ])
+        record_edited= SeqRecord(Seq(record_seq_edited), record.id, '', '')
+        msa_filtered_col.append(record_edited)
+
+    # out_name_msa=gene_tree_file_addr+ "filtered_row_"+"_col_"+str(tresh_ratio_gap_col)+".txt"
+    # handle_msa_fasta = open(out_name_msa,"w")
+    # SeqIO.write(msa_filtered_col, handle_msa_fasta,"fasta")
+    # handle_msa_fasta.close()
+    # print("- Column-wise filtering of MSA is finished",len(msa_filtered_col),len(msa_filtered_col[0]))
+    return msa_filtered_col

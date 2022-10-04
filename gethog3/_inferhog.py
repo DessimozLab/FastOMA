@@ -46,6 +46,9 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree)
     # species_tree.write();  print(species_tree.write())
 
+
+
+
     recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
     if len(rhog_i) > 20 and (dask_level == 2 or dask_level == 3):
         # dask_future_taxon = True
@@ -259,7 +262,25 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
     logger_hog.info("All subhogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
     len(merged_msa[0])) + ".")
 
-    gene_tree_raw = _wrappers.infer_gene_tree(merged_msa, gene_tree_file_addr)
+    if (len(merged_msa) > 1000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 10*1000):
+        # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
+        logger_hog.info("We are doing MSA trimming "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
+        tresh_ratio_gap_row = 0.1   # by 0.6 the whole row with few domains will
+        tresh_ratio_gap_col = 0.1
+        print(len(merged_msa), len(merged_msa[0]))
+        msa_filt_row = _utils.msa_filter_col(merged_msa, tresh_ratio_gap_col)
+        print(len(msa_filt_row), len(msa_filt_row[0]))
+        msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
+        print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
+        merged_msa2 = msa_filt_row_col
+
+    else:
+        merged_msa2 = merged_msa
+
+
+
+
+    gene_tree_raw = _wrappers.infer_gene_tree(merged_msa2, gene_tree_file_addr)
     gene_tree = Tree(gene_tree_raw + ";", format=0)
     logger_hog.info("Gene tree is inferred with length of " + str(len(gene_tree)) + ".")
     R_outgroup = gene_tree.get_midpoint_outgroup()
@@ -437,3 +458,15 @@ def collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pi
 
     print("orthoxml is written in "+ working_folder+output_xml_name)
     return 1
+
+
+
+
+
+# msa=merged_msa
+# out = msa_filter_col(msa, 0.5, gene_tree_file_addr)
+#
+#     merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, gene_tree_file_addr)
+#     logger_hog.info("All subhogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
+#     len(merged_msa[0])) + ".")
+

@@ -13,13 +13,13 @@ import os
 
 if __name__ == '__main__':
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-    gene_trees_folder = working_folder+"gene_tree_f/" # working_folder + "gene_trees_/"
+    gene_trees_folder = working_folder+"gene_tree_g/" # working_folder + "gene_trees_/"
     # check gene_trees_folder exist otherwise mkdir this
     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
 
     address_rhogs_folder = working_folder + "rhog_all_v3/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "archive/lineage_tree_qfo.phyloxml"
-    pickle_folder = working_folder + "pickle_folder_f/"
+    pickle_folder = working_folder + "pickle_folder_g/"
     gene_id_pickle_file = working_folder + "gene_id_30aug_s500.pickle"
     # add warning when pickle folder is not empty
     output_xml_name = "out_xml_f.xml"
@@ -77,15 +77,13 @@ if __name__ == '__main__':
 
         # rhogid_num_list =  [3339] #rhogid_num_list[:200]
 
-        rhogid_num_list_raw = [614128, 599704,839732, 581211, 594354, 606190, 581722]
+        rhogid_num_list_raw = [811161]
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
         # 613986 337 prots
         # 0589674 56 prots
         # [606409, 575384, 834730, 606033, 618436, 620754, 614327, 613986  ] #    # rhogid_num_list[:10] # [613860]  # , 618939, 615514, 834209 ]  #rhogid_num_list
         # itermediate size 834261 614102
-        # very big 811161
-
-
+        # very big 811161 811184
 
         list_done_raw = listdir(pickle_folder)
         list_done = []
@@ -98,7 +96,7 @@ if __name__ == '__main__':
         print(rhogid_num_list)
         a=2
 
-        dask_level = 2  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+        dask_level = 0  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
         print(dask_level)
         if dask_level != 0:
