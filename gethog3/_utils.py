@@ -85,7 +85,7 @@ def prepare_species_tree(rhog_i, species_tree):
         prot_names_rhog.append(prot_name)
 
     species_names_uniqe = set(species_names_rhog)
-    logger_hog.info("The number of unique species in the rHOG is " + str(len(species_names_uniqe)) + ".")
+
     species_tree.prune(species_names_uniqe, preserve_branch_length=True)
     # species_tree.write()
     for node in species_tree.traverse(strategy="postorder"):
@@ -99,7 +99,8 @@ def prepare_species_tree(rhog_i, species_tree):
                 list_children_names = [node_child.name for node_child in node_children]
                 node.name = '_'.join(list_children_names)
     print("Working on the following species tree.")
-    print(species_tree)
+    # print(species_tree)
+    species_tree.write()
 
     return (species_tree, species_names_rhog, prot_names_rhog)
 

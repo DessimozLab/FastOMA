@@ -40,12 +40,11 @@ class HOG:
             self._members = hog_members  # set.union(*tup)
             self._subhogs = list(input_instantiate)  # full members
 
-            max_num_seq = 30  # subsampling in msa
+            max_num_seq = 5  # subsampling in msa
             records_full = [record for record in msa if record.id in self._members]
             if len(records_full) > max_num_seq:
                 records_sub_sampled = sample(records_full, max_num_seq)  # without replacement.
-                logger_hog.info(
-                    "we are doing subsamping now from " + str(len(records_full)) + " to " + str(max_num_seq) + "seqs.")
+                # logger_hog.info( "we are doing subsamping now from " + str(len(records_full)) + " to " + str(max_num_seq) + " seqs.")
             else:
                 records_sub_sampled = records_full
             # removing some columns completely gap -  (not x   )

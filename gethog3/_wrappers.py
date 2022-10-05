@@ -22,9 +22,8 @@ def merge_msa(list_msas, gene_tree_file_addr):
     wrapper_mafft_merge = mafft.Mafft(list_msas, datatype="PROTEIN")
     wrapper_mafft_merge.options['--merge'].active = True
     merged = wrapper_mafft_merge()
-    logger_hog.info \
-        (str(len(list_msas)) + " msas are merged into one with the length of  " + str(len(merged)) + "  " + str
-        (len(merged[0])))
+    #logger_hog.info \
+    #    (str(len(list_msas)) + " msas are merged with length of "+ str(len(merged)) + "  " + str (len(merged[0])))
     SeqIO.write(merged, gene_tree_file_addr + ".fa", "fasta")
 
     return merged

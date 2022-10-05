@@ -11,18 +11,39 @@ import os
 # from dask.distributed import rejoin, secede
 
 
+"""
+parameters 
+    _hog_class.py
+    max_num_seq = 5
+     
+    _inferhog
+    if (len(merged_msa) > 1000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000):
+    tresh_ratio_gap_row = 0.1   # by 0.6 the whole row with few domains will
+    tresh_ratio_gap_col = 0.2
+    
+    
+    if len(rhog_i) > 20 and (dask_level == 2 or dask_level == 3): 
+
+"""
+
+
+
+
 if __name__ == '__main__':
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
     gene_trees_folder = working_folder+"gene_tree_g/" # working_folder + "gene_trees_/"
+    # gene_trees_folder = working_folder + "/analyse/gene_tree_" + rhog_num_input + "/"
     # check gene_trees_folder exist otherwise mkdir this
     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
 
     address_rhogs_folder = working_folder + "rhog_all_v3/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
     species_tree_address = working_folder + "archive/lineage_tree_qfo.phyloxml"
     pickle_folder = working_folder + "pickle_folder_g/"
+    # pickle_folder = working_folder + "/analyse/pickle_folder_"+rhog_num_input+"/"
     gene_id_pickle_file = working_folder + "gene_id_30aug_s500.pickle"
     # add warning when pickle folder is not empty
-    output_xml_name = "out_xml_f.xml"
+    output_xml_name = "out_xml_g.xml"
+    #  output_xml_name = "analyse/out_xml_"+rhog_num_input+".xml"
 
     if not os.path.exists(pickle_folder):
         os.mkdir(pickle_folder)
@@ -36,7 +57,7 @@ if __name__ == '__main__':
     # step = "rhog"     # to infersubhogs when roothogs are ready.
     step = "hog"  # collect pickle file and write xml file
 
-    print("we are here line25")
+    # print("we are here line25")
     if step == "rhog":
         """
         Structure of folders:
@@ -71,13 +92,16 @@ if __name__ == '__main__':
         #step = "hog"
 
     if step == "hog":
-        print("we are here line 60")
+        #print("we are here line 60")
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
         # rhogid_num_list =  [3339] #rhogid_num_list[:200]
 
-        rhogid_num_list_raw = [811161]
+        rhogid_num_list_raw = [687464]
+        # rhog_num_input = sys.argv[1]
+        #rhogid_num_list_raw = [int(rhog_num_input)]
+
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
         # 613986 337 prots
         # 0589674 56 prots

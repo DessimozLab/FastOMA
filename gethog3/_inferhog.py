@@ -44,6 +44,8 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     logger_hog.info("number of proteins in the rHOG is "+str(len(rhog_i))+".")
     (species_tree) = _utils.read_species_tree(species_tree_address)
     (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree)
+    species_names_uniqe = set(species_names_rhog)
+    logger_hog.info("The number of unique species in the rHOG " + str(rhogid_num) + "is " + str(len(species_names_uniqe)) + ".")
     # species_tree.write();  print(species_tree.write())
 
 
@@ -237,8 +239,6 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
     # if len(hogs_children_level_list)>0:
     #    print("**",hogs_children_level_list[0], len(hogs_children_level_list))
 
-
-
     # hogs_children_level_list
     # if isinstance(hogs_children_level_list[0], list):
     #     hogs_children_level_list_flatten = []
@@ -257,16 +257,20 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
         import random
         rand_num = random.randint(1, 10000)
         gene_tree_file_addr = gene_tree_file_addr[:245] + str(rand_num)+".nwk"
-
+    logger_hog.info("Merging " + str(len(sub_msa_list_lowerLevel_ready)) + " MSAs for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
+            node_species_tree.name))
     merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, gene_tree_file_addr)
     logger_hog.info("All subhogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
-    len(merged_msa[0])) + ".")
+    len(merged_msa[0])) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
+            node_species_tree.name))
 
-    if (len(merged_msa) > 1000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 10*1000):
+
+    # 893*4839, 10 mins
+    if (len(merged_msa) > 1000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000):
         # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
         logger_hog.info("We are doing MSA trimming "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
         tresh_ratio_gap_row = 0.1   # by 0.6 the whole row with few domains will
-        tresh_ratio_gap_col = 0.1
+        tresh_ratio_gap_col = 0.2
         print(len(merged_msa), len(merged_msa[0]))
         msa_filt_row = _utils.msa_filter_col(merged_msa, tresh_ratio_gap_col)
         print(len(msa_filt_row), len(msa_filt_row[0]))
@@ -277,18 +281,40 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
     else:
         merged_msa2 = merged_msa
 
-
-
-
     gene_tree_raw = _wrappers.infer_gene_tree(merged_msa2, gene_tree_file_addr)
     gene_tree = Tree(gene_tree_raw + ";", format=0)
-    logger_hog.info("Gene tree is inferred with length of " + str(len(gene_tree)) + ".")
+    logger_hog.info("Gene tree is inferred with length of " + str(len(gene_tree)) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
+            node_species_tree.name))
     R_outgroup = gene_tree.get_midpoint_outgroup()
     gene_tree.set_outgroup(R_outgroup)  # print("Midpoint rooting is done for gene tree.")
     gene_tree = _utils.lable_sd_internal_nodes(gene_tree)
     # print("Overlap speciation is done for internal nodes of gene tree, as following:")
-    print(str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;")
+    # print(str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;")
+    logger_hog.info("Merging sub-hogs of children started  for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
+            node_species_tree.name))
     hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa)
+
+    for hog in hogs_this_level_list:
+        msa_hog = hog._msa
+        if (len(msa_hog) > 1000 and len(msa_hog[0]) > 3000) or (len(msa_hog) > 500 and len(msa_hog[0]) > 5000):
+            # replace the msa inside the hog, with filtered version
+
+            # previously we did on merged on msa only helping gene tree faster
+            logger_hog.info("We are doing HOG MSA trimming only column "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
+            # tresh_ratio_gap_row = 0.1   # by 0.6 the whole row with few domains will
+            tresh_ratio_gap_col = 0.2
+            print(len(msa_hog), len(msa_hog[0]))
+            msa_filt_row = _utils.msa_filter_col(msa_hog, tresh_ratio_gap_col)
+            print(len(msa_filt_row), len(msa_filt_row[0]))
+            #msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
+            #print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
+            # merged_msa2 = msa_filt_row_col
+            hog._msa =  msa_filt_row
+
+    logger_hog.info("Hogs of this level is found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
+            node_species_tree.name))
+
+
 
     # check for conflicts in merging
     #     for i in range(subHOG_to_be_merged_set_other_Snodes):  if
