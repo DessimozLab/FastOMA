@@ -178,9 +178,9 @@ def filter_prot_mapped(query_species_names, query_prot_recs, query_prot_names_sp
                 else:
                     logger_hog.error("Error 1349 " + query_species_name + " " + query_prot_name+". This shouldn't happen many times.")
 
-            logger_hog.info("For the species"+query_species_name+", few proteins were ignored by omamer.")
-            logger_hog.info("Before filtering: in hogmap"+str(len(query_prot_names_species_i))+", in proteome "+str(len(query_prot_recs_i)))
-            logger_hog.info("After filtering: in hogmap"+str(len(query_prot_names_species_i))+" in proteome",+str(len(query_prot_records_filterd_sp)))
+            logger_hog.info("For the species"+query_species_name+", few proteins were ignored by omamer, probably cause prot length .")
+            logger_hog.info("Before filtering: in hogmap "+str(len(query_prot_names_species_i))+", in proteome "+str(len(query_prot_recs_i)))
+            logger_hog.info("After filtering: in hogmap "+str(len(query_prot_names_species_i))+" in proteome "+str(len(query_prot_records_filterd_sp)))
         else:
             query_prot_records_filterd_sp = query_prot_recs_i
         query_prot_recs_filt.append(query_prot_records_filterd_sp)
@@ -229,13 +229,13 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, que
                 rhogid_prot_records.append(prot_record)
                 species_idx_rhogid.append(species_idx)
                 rhogids_prot_records_query.append(rhogid_prot_records)
-    logger_hog.info("There are " + str(len(rhogids_list)) + " rhogs, but some of them are size 1, we save >1 as fasta file.")
+    logger_hog.info("There are " + str(len(rhogids_list)) + " rhogs, no matter their size.")
     return rhogids_list, rhogids_prot_records_query
 
 
 def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  prots_hogmap_name_allspecies, omamer_fscore_treshold_big_rhog, treshold_big_rhog_szie):
 
-    logger_hog.info("Filtering started with fscore treshold"+str(omamer_fscore_treshold_big_rhog)+"for rhogs size > "+str(treshold_big_rhog_szie) )
+    logger_hog.info("Filtering rhogs with fscore treshold"+str(omamer_fscore_treshold_big_rhog)+"for rhogs size > "+str(treshold_big_rhog_szie) )
     rhogids_prot_records_query_filt = []
     rhogids_list_filt = []
     for rhogid_idx, rhogid in enumerate(rhogids_list):
@@ -277,100 +277,3 @@ def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, m
     logger_hog.info("Writing Sequences of roothogs finished." )
 
     return rhogid_num_list
-
-# rhogids_prot_records_oma = []
-# for hog_elements in oma_db.member_of_fam(rhogid_num):   # this gets the member of roothog 2 (HOG:000002)
-#    prot_hog_element = ProteinEntry(oma_db, hog_elements)
-#    #print(prot_hog_element.omaid, prot_hog_element.hog_family_nr, len(prot_hog_element.sequence),prot_hog_element.sequence[0])
-#    rhogids_prot_records_oma.append(SeqRecord(Seq(prot_hog_element.sequence), id=prot_hog_element.omaid))
-# rhogids_prot_records_both= rhogids_prot_records_oma +  rhogid_prot_records_query
-# rhogids_prot_records.append(rhogids_prot_records_both)
-
-
-# def group_prots_roothogs(prots_hogmap_hogid_allspecies,  address_rhogs_folder, query_species_names, query_prot_recs_filt):
-#     """
-#     orthoxml_to_newick.py function for finding those proteins that are mapped to the same rootHOG.
-#     Then, we write each rootHOG as orthoxml_to_newick.py seprate fasta file in the address_rhogs_folder folder
-#     output: rhogid_num_list, rhogids_prot_records_query
-#     """
-#
-#     if not os.path.exists(address_rhogs_folder):
-#         os.mkdir(address_rhogs_folder)
-#
-#     print_hog_more_than_one_species = False  # if false keep those rootHOG containing only one species
-#
-#     # extract rootHOG ID  "B0833755.5c.10g.24e.16c.18b" ->"B0833755"
-#     prots_hogmap_rhogid_allspecies = []
-#     for prots_hogmap_hogid in prots_hogmap_hogid_allspecies:
-#         prots_hogmap_rhogid = []
-#         for prot_hogmap_hogid in prots_hogmap_hogid:
-#             prot_hogmap_rhogid = prot_hogmap_hogid.split(".")[0]
-#             prots_hogmap_rhogid.append(prot_hogmap_rhogid)
-#         prots_hogmap_rhogid_allspecies.append(prots_hogmap_rhogid)
-#
-#     # gathering name of prots from all species,  group them based on rHOG that they mapped on
-#     rhogid_prot_idx_dic = {}
-#     for species_idx in range(len(query_species_names)):
-#         # species_name = query_species_names[species_idx]
-#         prots_hogmap_rhogid = prots_hogmap_rhogid_allspecies[species_idx]
-#         # for prots_hogmap_idx in range(len(prots_hogmap_rhogid)):
-#         #     prot_hogmap_rhogid = prots_hogmap_rhogid[prots_hogmap_idx]
-#         for prots_hogmap_idx, prot_hogmap_rhogid in enumerate(prots_hogmap_rhogid):
-#             if prot_hogmap_rhogid in rhogid_prot_idx_dic:
-#                 rhogid_prot_idx_dic[prot_hogmap_rhogid].append((species_idx, prots_hogmap_idx))
-#             else:
-#                 rhogid_prot_idx_dic[prot_hogmap_rhogid] = [(species_idx, prots_hogmap_idx)]
-#     # print(len(rhogid_prot_idx_dic)) #  rhogid_prot_idx_dic['HOG:0018405']
-#
-#     # extracting prot records for each rootHOG
-#     rhogids_prot_records_query = []
-#     rhogids_list = []
-#     for rhogid in rhogid_prot_idx_dic.keys():
-#         rhogid_prot_records = []
-#         species_idx_rhogid = []
-#         if rhogid != "na" and len(rhogid) > 1:  # ignore un-mapped prots
-#             rhogids_list.append(rhogid)
-#             rhogid_prot_idx = rhogid_prot_idx_dic[rhogid]
-#             for (species_idx, prots_hogmap_idx) in rhogid_prot_idx:
-#                 prot_record = query_prot_recs_filt[species_idx][prots_hogmap_idx]
-#                 rhogid_prot_records.append(prot_record)
-#                 species_idx_rhogid.append(species_idx)
-#
-#             if print_hog_more_than_one_species:
-#                 if len(set(species_idx_rhogid)) > 1:
-#                     rhogids_prot_records_query.append(rhogid_prot_records)
-#             else:  # print roothog even with one species
-#                 rhogids_prot_records_query.append(rhogid_prot_records)
-#                 # else:
-#         #    print("root hog na / lenght of one ",rhogid)
-#
-#     # print(len(rhogids_prot_records_query),len(rhogids_prot_records_query[0]))
-#     rhogid_num_list = []
-#     # for rhogid_idx in range(len(rhogids_list)):
-#     #     rhogid = rhogids_list[rhogid_idx]
-#
-#     logger_hog.error("There are " + str(len(rhogids_list)) + " rhogs, but some of them are size 1, we save >1 as fasta file.")
-#     for rhogid_idx, rhogid in enumerate(rhogids_list):
-#         rhogid_prot_rec_query = rhogids_prot_records_query[rhogid_idx]
-#         rhogid_B = rhogid.split(":")[1]
-#         rhogid_num = int(rhogid_B[1:])  # # B0613860
-#         rhogid_num_list.append(rhogid_num)
-#
-#         if 1 < len(rhogid_prot_rec_query):  # < 500
-#             SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder +"HOG_B"+ str(rhogid_num).zfill(7)+".fa", "fasta")
-#             # rhogids_prot_records_oma = []
-#             # for hog_elements in oma_db.member_of_fam(rhogid_num):   # this gets the member of roothog 2 (HOG:000002)
-#             #    prot_hog_element = ProteinEntry(oma_db, hog_elements)
-#             #    #print(prot_hog_element.omaid, prot_hog_element.hog_family_nr, len(prot_hog_element.sequence),prot_hog_element.sequence[0])
-#             #    rhogids_prot_records_oma.append(SeqRecord(Seq(prot_hog_element.sequence), id=prot_hog_element.omaid))
-#             # rhogids_prot_records_both= rhogids_prot_records_oma +  rhogid_prot_records_query
-#             # rhogids_prot_records.append(rhogids_prot_records_both)
-#
-#     # print("all hogs   (>2 <100) has written.",len(rhogids_prot_records_query),len(rhogids_list),
-#     # len(rhogid_prot_records_query), len(rhogid_prot_records_query[0]))
-#
-#     current_time = datetime.now().strftime("%H:%M:%S")
-#     print(current_time, "- Sequences of roothogs are writtend as fasta file in " + address_rhogs_folder)
-#
-#     return rhogid_num_list, rhogids_prot_records_query
-

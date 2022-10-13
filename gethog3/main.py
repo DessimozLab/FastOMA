@@ -12,7 +12,12 @@ import os
 
 
 """
-parameters 
+Hard coded parameters
+
+    max_num_prot = int(1e9)
+    max_num_prot_per_sp = int(1e6) 
+
+
     _hog_class.py
     max_num_seq = 5
      
@@ -48,21 +53,21 @@ if __name__ == '__main__':
 
     output_xml_name = "out_xml_"+name+".xml"
 
-    if not os.path.exists(pickle_folder):
-        os.mkdir(pickle_folder)
-    if not os.path.exists(gene_trees_folder):
-        os.mkdir(gene_trees_folder)
+
+
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
     file_folders = (address_rhogs_folder_filt, gene_trees_folder, pickle_folder, species_tree_address)
 
     # step = "find_rhog"  # to infer roothogs when you have the proteome & hogmap.
-    # step = "rhog"     # to infersubhogs when roothogs are ready.
+    # step = "find_subhog"     # to infer subhogs when roothogs are ready.
 
-    step = "find_rhog"  # collect pickle file and write xml file
+    step = "find_subhog"
+    # collect pickle file and write xml file
 
     # print("we are here line25")
     if step == "find_rhog":
+
         """
         Structure of folders:
         Put proteomes of species as fasta files in /omamer_search/proteome/
@@ -97,7 +102,7 @@ if __name__ == '__main__':
 
 
         rhogids_list, rhogids_prot_records_query = _utils_rhog.group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, query_prot_recs_filt)
-        rhogid_num_list_raw = _utils_rhog.write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder_raw, 2)  # min_rhog_size=1, max_rhog_size=1e100
+        # rhogid_num_list_raw = _utils_rhog.write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder_raw, 2)  # min_rhog_size=1, max_rhog_size=1e100
 
 
         rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  prots_hogmap_name_allspecies, omamer_fscore_treshold_big_rhog, treshold_big_rhog_szie)
@@ -109,6 +114,11 @@ if __name__ == '__main__':
 
 
     if step == "find_subhog":
+
+        if not os.path.exists(gene_trees_folder):
+            os.mkdir(gene_trees_folder)
+        if not os.path.exists(pickle_folder):
+            os.mkdir(pickle_folder)
         #print("we are here line 60")
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")

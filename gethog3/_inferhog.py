@@ -122,68 +122,6 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_in
 
     return hogs_this_level_list
 
-#     # hogs_children_level_list_futures = client_dask_working.map(infer_hogs_for_rhog_levels_recursively_future, children_nodes, [recursive_input] * len(children_nodes))
-#     # hogs_children_level_list = client_dask_working.gather(hogs_children_level_list_futures)
-#     # hogs_children_level_list_futures = client_dask_working.gather(hogs_children_level_list_futures)
-#     # for hogs_children_level_list_future in as_completed(hogs_children_level_list_futures):
-#     #     hogs_children_level_list = hogs_children_level_list_future.result()
-
-#
-# def infer_hogs_for_rhog_levels_future(species_tree, recursive_input):
-#     (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder) = recursive_input
-#     # dic_hogs ={}
-#     # dic_hogs[node_species_tree] = hogs_a_rhog_sub
-#     # for node_species_tree in species_tree.traverse(strategy="preorder"):
-#     #    print(node_species_tree.name)
-#     children_nodes = species_tree.children
-#
-#     # hogs_children_level_list =[]
-#     # for child_node in children_nodes:
-#     #     hogs_child_level = infer_hogs_for_rhog_sub_tree(child_node, recursive_input)
-#     #     hogs_children_level_list.append(hogs_child_level)
-#
-#     client_dask_working = get_client()
-#     secede()
-#     hogs_children_level_list_futures = [client_dask_working.submit(infer_hogs_for_rhog_sub_tree, child, recursive_input) for child in children_nodes]
-#     #  hogs_children_level_list_futures = client_dask_working.map(infer_hogs_for_rhog_sub_tree, children_nodes, [recursive_input] * len(children_nodes))
-#     # hogs_children_level_list = client_dask_working.gather(hogs_children_level_list_futures)
-#
-#     hogs_children_level_list = [future.result() for future in hogs_children_level_list_futures] # future.result() compute()
-#     # rejoin()
-#
-#     if isinstance(hogs_children_level_list[0], list):
-#         hogs_children_level_list_flatten = []
-#         for hog_ in hogs_children_level_list:
-#             hogs_children_level_list_flatten.extend(hog_)
-#
-#     hogs_a_rhog = infer_hogs_this_level(species_tree, recursive_input, hogs_children_level_list_flatten)
-#
-#     return hogs_a_rhog
-#
-#
-# def infer_hogs_for_rhog_sub_tree(sub_species_tree, recursive_input):
-#     (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder) = recursive_input
-#     dic_hogs = {}
-#     for node_species_tree in sub_species_tree.traverse(strategy="postorder"):
-#         print(node_species_tree.name)
-#         if node_species_tree.is_leaf():
-#             hogs_this_level_list = singletone_hog(node_species_tree, rhog_i, species_names_rhog, rhogid_num)
-#         else:
-#             children_nodes = node_species_tree.children
-#             hogs_children_level_list = [dic_hogs[child] for child in children_nodes]
-#
-#             if isinstance(hogs_children_level_list[0], list):
-#                 hogs_children_level_list_flatten = []
-#                 for hog_ in hogs_children_level_list:
-#                     hogs_children_level_list_flatten.extend(hog_)
-#
-#             hogs_this_level_list = infer_hogs_this_level(node_species_tree, recursive_input,hogs_children_level_list_flatten)
-#
-#         dic_hogs[node_species_tree] = hogs_this_level_list
-#
-#     return hogs_this_level_list
-
-
 def infer_hogs_for_rhog_levels_recursively(sub_species_tree, recursive_input):
 
     if sub_species_tree.is_leaf():
@@ -265,22 +203,25 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
     len(merged_msa[0])) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
             node_species_tree.name))
 
-    merged_msa2 = merged_msa
+    # merged_msa_filt = merged_msa
     # 893*4839, 10 mins
-    # if (len(merged_msa) > 1000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
-    #     # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
-    #     logger_hog.info("We are doing MSA trimming "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
-    #     tresh_ratio_gap_row = 0.1   # by 0.6 the whole row with few domains will
-    #     tresh_ratio_gap_col = 0.3
-    #     print(len(merged_msa), len(merged_msa[0]))
-    #     msa_filt_row = _utils.msa_filter_col(merged_msa, tresh_ratio_gap_col)
-    #     print(len(msa_filt_row), len(msa_filt_row[0]))
-    #     msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
-    #     print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
-    #     merged_msa2 = msa_filt_row_col
+    tresh_ratio_gap_row = 0.4
+    tresh_ratio_gap_col = 0.2
+    min_cols_msa_to_filter = 3000      # used for msa before gene tree inference and  saving msa in hog class
 
+    if len(merged_msa[0]) >= min_cols_msa_to_filter:
+        # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
+        # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
+        logger_hog.info("We are doing MSA trimming "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
 
-    gene_tree_raw = _wrappers.infer_gene_tree(merged_msa2, gene_tree_file_addr)
+        print(len(merged_msa), len(merged_msa[0]))
+        msa_filt_row = _utils.msa_filter_col(merged_msa, tresh_ratio_gap_col, gene_tree_file_addr)
+        print(len(msa_filt_row), len(msa_filt_row[0]))
+        msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row, gene_tree_file_addr)
+        print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
+        merged_msa_filt = msa_filt_row_col
+
+    gene_tree_raw = _wrappers.infer_gene_tree(merged_msa_filt, gene_tree_file_addr)
     gene_tree = Tree(gene_tree_raw + ";", format=0)
     logger_hog.info("Gene tree is inferred with length of " + str(len(gene_tree)) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
             node_species_tree.name))
@@ -293,24 +234,19 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
             node_species_tree.name))
     hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa)
 
-    # for hog in hogs_this_level_list:
-    #     msa_hog = hog._msa
-    #     #if len(msa_hog)>1:
-    #     #    print("here", len(msa_hog), len(msa_hog[0]))
-    #     if  len(msa_hog[0]) > 2000:  #(len(msa_hog) > 100 and len(msa_hog[0]) > 3000) or (len(msa_hog) > 500 and len(msa_hog[0]) > 5000):
-    #         # replace the msa inside the hog, with filtered version
-    #
-    #         # previously we did on merged on msa only helping gene tree faster
-    #         logger_hog.info("We are doing HOG MSA trimming only column "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
-    #         # tresh_ratio_gap_row = 0.1   # by 0.6 the whole row with few domains will
-    #         tresh_ratio_gap_col = 0.3
-    #         print(len(msa_hog), len(msa_hog[0]))
-    #         msa_filt_row = _utils.msa_filter_col(msa_hog, tresh_ratio_gap_col)
-    #         print(len(msa_filt_row), len(msa_filt_row[0]))
-    #         #msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
-    #         #print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
-    #         # merged_msa2 = msa_filt_row_col
-    #         hog._msa = MultipleSeqAlignment(msa_filt_row)
+    for hog in hogs_this_level_list:
+        msa_hog = hog._msa
+        if len(msa_hog[0]) > min_cols_msa_to_filter:    # can it be only few rows ?
+            # replace the msa inside the hog, with filtered version
+            # previously we did on merged on msa only helping gene tree faster
+            logger_hog.info("We are doing HOG MSA trimming only column "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
+            print(len(msa_hog), len(msa_hog[0]))
+            msa_filt_row = _utils.msa_filter_col(msa_hog, tresh_ratio_gap_col)
+            print(len(msa_filt_row), len(msa_filt_row[0]))
+            #msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
+            #print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
+            # merged_msa2 = msa_filt_row_col
+            hog._msa = MultipleSeqAlignment(msa_filt_row)
 
     logger_hog.info("Hogs of this level is found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
             node_species_tree.name))
@@ -487,15 +423,4 @@ def collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pi
 
     print("orthoxml is written in "+ working_folder+output_xml_name)
     return 1
-
-
-
-
-
-# msa=merged_msa
-# out = msa_filter_col(msa, 0.5, gene_tree_file_addr)
-#
-#     merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, gene_tree_file_addr)
-#     logger_hog.info("All subhogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
-#     len(merged_msa[0])) + ".")
 

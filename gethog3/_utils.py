@@ -1,13 +1,13 @@
 
 
 from os import listdir
-# from Bio import SeqIO
+from Bio import SeqIO
 # import xml.etree.ElementTree as ET
 from ete3 import Phyloxml
 from ete3 import Tree
 
 from Bio.SeqRecord import SeqRecord
-from Bio.Seq import Seq, UnknownSeq
+from Bio.Seq import Seq  # , UnknownSeq
 
 import logging
 #logging.basicConfig()
@@ -148,25 +148,8 @@ def lable_sd_internal_nodes(tree_out):
     return tree_out
 
 
-def msa_filter_row(msa, tresh_ratio_gap_row):  # gene_tree_file_addr
 
-    msa_filtered_row = []
-    ratio_records=[]
-    for record in msa:
-        seq = record.seq
-        seqLen = len(record)
-        gap_count = seq.count("-") + seq.count("?") + seq.count(".") +seq.count("~")
-        ratio_record_nongap= 1-gap_count/seqLen
-        ratio_records.append(round(ratio_record_nongap, 3))
-        if ratio_record_nongap > tresh_ratio_gap_row:
-            msa_filtered_row.append(record)
-    # out_name_msa=gene_tree_file_addr +"filtered_row_"+str(tresh_ratio_gap_row)+".txt"
-    # handle_msa_fasta = open(out_name_msa,"w")
-    # SeqIO.write(msa_filtered_row, handle_msa_fasta,"fasta")
-    # handle_msa_fasta.close()
-    return msa_filtered_row
-
-def msa_filter_col(msa, tresh_ratio_gap_col):
+def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr= "no_write"):
 
     ratio_col_all = []
     length_record= len(msa[0])
@@ -189,10 +172,29 @@ def msa_filter_col(msa, tresh_ratio_gap_col):
         record_seq_edited  = ''.join([record_seq[i] for i in keep_cols  ])
         record_edited= SeqRecord(Seq(record_seq_edited), record.id, '', '')
         msa_filtered_col.append(record_edited)
-
-    # out_name_msa=gene_tree_file_addr+ "filtered_row_"+"_col_"+str(tresh_ratio_gap_col)+".txt"
-    # handle_msa_fasta = open(out_name_msa,"w")
-    # SeqIO.write(msa_filtered_col, handle_msa_fasta,"fasta")
-    # handle_msa_fasta.close()
+    if gene_tree_file_addr != "no_write":
+        out_name_msa=gene_tree_file_addr+"filtered_"+"_col_"+str(tresh_ratio_gap_col)+".msa.fa"
+        handle_msa_fasta = open(out_name_msa,"w")
+        SeqIO.write(msa_filtered_col, handle_msa_fasta,"fasta")
+        handle_msa_fasta.close()
     # print("- Column-wise filtering of MSA is finished",len(msa_filtered_col),len(msa_filtered_col[0]))
     return msa_filtered_col
+
+
+def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr= "no_write"):
+    msa_filtered_row = []
+    ratio_records=[]
+    for record in msa:
+        seq = record.seq
+        seqLen = len(record)
+        gap_count = seq.count("-") + seq.count("?") + seq.count(".") +seq.count("~")
+        ratio_record_nongap= 1-gap_count/seqLen
+        ratio_records.append(round(ratio_record_nongap, 3))
+        if ratio_record_nongap > tresh_ratio_gap_row:
+            msa_filtered_row.append(record)
+    if gene_tree_file_addr != "no_write":
+        out_name_msa=gene_tree_file_addr +"filtered_row_"+str(tresh_ratio_gap_row)+".msa.fa"
+        handle_msa_fasta = open(out_name_msa,"w")
+        SeqIO.write(msa_filtered_row, handle_msa_fasta,"fasta")
+        handle_msa_fasta.close()
+    return msa_filtered_row
