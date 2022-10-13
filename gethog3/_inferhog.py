@@ -9,6 +9,7 @@ from distributed import get_client
 from os import listdir
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+from Bio.Align import MultipleSeqAlignment
 
 import _wrappers
 import _utils
@@ -257,29 +258,27 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
         import random
         rand_num = random.randint(1, 10000)
         gene_tree_file_addr = gene_tree_file_addr[:245] + str(rand_num)+".nwk"
-    logger_hog.info("Merging " + str(len(sub_msa_list_lowerLevel_ready)) + " MSAs for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
+    logger_hog.info("Merging "+str(len(sub_msa_list_lowerLevel_ready))+" MSAs for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
             node_species_tree.name))
     merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, gene_tree_file_addr)
-    logger_hog.info("All subhogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
+    logger_hog.info("All sub-hogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
     len(merged_msa[0])) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
             node_species_tree.name))
 
-
+    merged_msa2 = merged_msa
     # 893*4839, 10 mins
-    if (len(merged_msa) > 1000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000):
-        # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
-        logger_hog.info("We are doing MSA trimming "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
-        tresh_ratio_gap_row = 0.1   # by 0.6 the whole row with few domains will
-        tresh_ratio_gap_col = 0.2
-        print(len(merged_msa), len(merged_msa[0]))
-        msa_filt_row = _utils.msa_filter_col(merged_msa, tresh_ratio_gap_col)
-        print(len(msa_filt_row), len(msa_filt_row[0]))
-        msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
-        print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
-        merged_msa2 = msa_filt_row_col
+    # if (len(merged_msa) > 1000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
+    #     # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
+    #     logger_hog.info("We are doing MSA trimming "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
+    #     tresh_ratio_gap_row = 0.1   # by 0.6 the whole row with few domains will
+    #     tresh_ratio_gap_col = 0.3
+    #     print(len(merged_msa), len(merged_msa[0]))
+    #     msa_filt_row = _utils.msa_filter_col(merged_msa, tresh_ratio_gap_col)
+    #     print(len(msa_filt_row), len(msa_filt_row[0]))
+    #     msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
+    #     print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
+    #     merged_msa2 = msa_filt_row_col
 
-    else:
-        merged_msa2 = merged_msa
 
     gene_tree_raw = _wrappers.infer_gene_tree(merged_msa2, gene_tree_file_addr)
     gene_tree = Tree(gene_tree_raw + ";", format=0)
@@ -294,22 +293,24 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
             node_species_tree.name))
     hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa)
 
-    for hog in hogs_this_level_list:
-        msa_hog = hog._msa
-        if (len(msa_hog) > 1000 and len(msa_hog[0]) > 3000) or (len(msa_hog) > 500 and len(msa_hog[0]) > 5000):
-            # replace the msa inside the hog, with filtered version
-
-            # previously we did on merged on msa only helping gene tree faster
-            logger_hog.info("We are doing HOG MSA trimming only column "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
-            # tresh_ratio_gap_row = 0.1   # by 0.6 the whole row with few domains will
-            tresh_ratio_gap_col = 0.2
-            print(len(msa_hog), len(msa_hog[0]))
-            msa_filt_row = _utils.msa_filter_col(msa_hog, tresh_ratio_gap_col)
-            print(len(msa_filt_row), len(msa_filt_row[0]))
-            #msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
-            #print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
-            # merged_msa2 = msa_filt_row_col
-            hog._msa =  msa_filt_row
+    # for hog in hogs_this_level_list:
+    #     msa_hog = hog._msa
+    #     #if len(msa_hog)>1:
+    #     #    print("here", len(msa_hog), len(msa_hog[0]))
+    #     if  len(msa_hog[0]) > 2000:  #(len(msa_hog) > 100 and len(msa_hog[0]) > 3000) or (len(msa_hog) > 500 and len(msa_hog[0]) > 5000):
+    #         # replace the msa inside the hog, with filtered version
+    #
+    #         # previously we did on merged on msa only helping gene tree faster
+    #         logger_hog.info("We are doing HOG MSA trimming only column "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
+    #         # tresh_ratio_gap_row = 0.1   # by 0.6 the whole row with few domains will
+    #         tresh_ratio_gap_col = 0.3
+    #         print(len(msa_hog), len(msa_hog[0]))
+    #         msa_filt_row = _utils.msa_filter_col(msa_hog, tresh_ratio_gap_col)
+    #         print(len(msa_filt_row), len(msa_filt_row[0]))
+    #         #msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
+    #         #print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
+    #         # merged_msa2 = msa_filt_row_col
+    #         hog._msa = MultipleSeqAlignment(msa_filt_row)
 
     logger_hog.info("Hogs of this level is found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
             node_species_tree.name))
@@ -455,7 +456,9 @@ def collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pi
         genes_xml = ET.SubElement(database_xml, "genes")
 
         for (gene_idx_integer, query_prot_name) in list_prots:
-            query_prot_name_pure = query_prot_name.split("||")[0].strip().split("|")[1]
+            query_prot_name_pure1 = query_prot_name.split("||")[0].strip()
+            if "|" in query_prot_name_pure1:
+                query_prot_name_pure = query_prot_name_pure1.split("|")[1]
             gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
 
     pickle_files_adress = listdir(pickle_folder)

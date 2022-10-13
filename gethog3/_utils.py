@@ -78,7 +78,11 @@ def prepare_species_tree(rhog_i, species_tree):
         # qfo : >tr|A0A0N7KF21|A0A0N7KF21_ORYSJ||ORYSJ_||1000000344 tr|A0A0N7KF21|A0A0N7KF21_ORYSJ Os02g0264501 protein OS=Oryza sativa subsp. japonica (Rice) OX=39947 GN=Os02g0264501 PE=4 SV=1
         prot_id = rec.id.split("||")
         prot_name = prot_id[2]   # for debugging  prot_id[0] readable prot name,  for xml prot_id[2]
-        species_name = prot_id[1][:-1]
+        species_name = prot_id[1]
+
+        bird_dataset = False
+        if species_name.endswith("_") and not bird_dataset:
+           species_name = prot_id[1][:-1]
         if species_name == 'RAT': species_name = "RATNO"
         # gene_id = prot_id[2]
         species_names_rhog.append(species_name)
@@ -165,7 +169,7 @@ def msa_filter_row(msa, tresh_ratio_gap_row):  # gene_tree_file_addr
 def msa_filter_col(msa, tresh_ratio_gap_col):
 
     ratio_col_all = []
-    length_record= len(msa[1])
+    length_record= len(msa[0])
     num_records = len(msa)
     keep_cols = []
     for col_i in range(length_record):

@@ -30,20 +30,23 @@ parameters
 
 
 if __name__ == '__main__':
-    working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-    gene_trees_folder = working_folder+"gene_tree_g/" # working_folder + "gene_trees_/"
-    # gene_trees_folder = working_folder + "/analyse/gene_tree_" + rhog_num_input + "/"
-    # check gene_trees_folder exist otherwise mkdir this
     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
 
-    address_rhogs_folder = working_folder + "rhog_all_v3/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
-    species_tree_address = working_folder + "archive/lineage_tree_qfo.phyloxml"
-    pickle_folder = working_folder + "pickle_folder_g/"
-    # pickle_folder = working_folder + "/analyse/pickle_folder_"+rhog_num_input+"/"
-    gene_id_pickle_file = working_folder + "gene_id_30aug_s500.pickle"
-    # add warning when pickle folder is not empty
-    output_xml_name = "out_xml_g.xml"
-    #  output_xml_name = "analyse/out_xml_"+rhog_num_input+".xml"
+    working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/" #fastget/qfo2/"
+    gene_id_pickle_file = working_folder + "gene_id_13oct.pickle"
+    species_tree_address = working_folder + "archive/lineage_tree_qfo.phyloxml" # bird  "concatanted_363.fasta.contree_edited.nwk"
+
+    omamer_fscore_treshold_big_rhog = 0.5  # 0.2
+    treshold_big_rhog_szie = 4000
+
+    name = str(omamer_fscore_treshold_big_rhog)+"_"+str(treshold_big_rhog_szie)
+
+    address_rhogs_folder_raw = working_folder + "rhog_all_v4_raw/"
+    address_rhogs_folder_filt = working_folder + "rhog_all_v4_" + name + "/"
+    pickle_folder = working_folder + "pickle_folder_"+name+"/"
+    gene_trees_folder = working_folder+"gene_tree_"+name+"/"
+
+    output_xml_name = "out_xml_"+name+".xml"
 
     if not os.path.exists(pickle_folder):
         os.mkdir(pickle_folder)
@@ -51,14 +54,15 @@ if __name__ == '__main__':
         os.mkdir(gene_trees_folder)
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
-    file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
+    file_folders = (address_rhogs_folder_filt, gene_trees_folder, pickle_folder, species_tree_address)
 
-    # step = "rhog"  # to infer roothogs when you have the proteome & hogmap.
+    # step = "find_rhog"  # to infer roothogs when you have the proteome & hogmap.
     # step = "rhog"     # to infersubhogs when roothogs are ready.
-    step = "hog"  # collect pickle file and write xml file
+
+    step = "find_rhog"  # collect pickle file and write xml file
 
     # print("we are here line25")
-    if step == "rhog":
+    if step == "find_rhog":
         """
         Structure of folders:
         Put proteomes of species as fasta files in /omamer_search/proteome/
@@ -77,28 +81,43 @@ if __name__ == '__main__':
                                                                query_species_names, gene_id_pickle_file)
         hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
 
-        (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_fscore_allspecies,
-        prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
+        # (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_fscore_allspecies,
+        # prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
+
+        (prots_hogmap_name_allspecies, prots_hogmap_hogid_allspecies, prots_hogmap_overlp_allspecies,
+        prots_hogmap_fscore_allspecies, prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
+
+        query_prot_names_species_mapped = prots_hogmap_name_allspecies # double check ?
 
         query_prot_recs_filt = _utils_rhog.filter_prot_mapped(query_species_names,
                                                               query_prot_recs,
                                                               query_prot_names_species_mapped)
 
         print(len(query_prot_recs_filt), len(query_prot_recs_filt[0]))
-        (rhogid_num_list, rhogids_prot_records_query) = _utils_rhog.group_prots_roothogs(prots_hogmap_hogid_allspecies,
-                                                                                         address_rhogs_folder,
-                                                                                         query_species_names,
-                                                                                         query_prot_recs_filt)
-        #step = "hog"
 
-    if step == "hog":
+
+        rhogids_list, rhogids_prot_records_query = _utils_rhog.group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, query_prot_recs_filt)
+        rhogid_num_list_raw = _utils_rhog.write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder_raw, 2)  # min_rhog_size=1, max_rhog_size=1e100
+
+
+        rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  prots_hogmap_name_allspecies, omamer_fscore_treshold_big_rhog, treshold_big_rhog_szie)
+
+        rhogid_num_list_filt = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, address_rhogs_folder_filt, 2)  # min_rhog_size=1, max_rhog_size=1e100
+
+
+       #step = "find_subhog"
+
+
+    if step == "find_subhog":
         #print("we are here line 60")
-        rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
+        rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
         # rhogid_num_list =  [3339] #rhogid_num_list[:200]
 
-        rhogid_num_list_raw = [687464]
+        #rhogid_num_list_raw = [811161] # 687464 7k prots  811184
+
+        rhogid_num_list_raw = rhogid_num_list[:5]
         # rhog_num_input = sys.argv[1]
         #rhogid_num_list_raw = [int(rhog_num_input)]
 
@@ -111,9 +130,9 @@ if __name__ == '__main__':
 
         list_done_raw = listdir(pickle_folder)
         list_done = []
-        # for file in list_done_raw:
-        #     numr = int(file.split(".")[0].split("_")[1])
-        #     list_done.append(numr)
+        for file in list_done_raw:
+            numr = int(file.split(".")[0].split("_")[1])
+            list_done.append(numr)
 
         rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
         print("number of remained is ", len(rhogid_num_list))

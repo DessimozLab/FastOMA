@@ -11,10 +11,10 @@ working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
 
 #address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
 #species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-pickle_folder = working_folder + "/pickle_folder_all_27aug/"
+pickle_folder = working_folder + "/pickle_bigomamer0.2_small/"
 # add warning when pickle folder is not empty
-output_xml_name = "out_28aug_3pm.xml"
-gene_id_pickle_file = working_folder + "gene_id_28aug.pickle"
+output_xml_name = "out_9oct_bigomamer0.2_small.xml"
+gene_id_pickle_file = working_folder + "gene_id_30aug_s500.pickle"
 
 
 
@@ -26,6 +26,7 @@ with open(gene_id_pickle_file, 'rb') as handle:
     gene_id_name = dill_pickle.load(handle)
     # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
 print("gene_id_name read ")
+
 
 for query_species_name, list_prots in gene_id_name.items():
 
@@ -39,7 +40,7 @@ for query_species_name, list_prots in gene_id_name.items():
 
 print("gene_xml created ")
 pickle_files_adress = listdir(pickle_folder)
-
+print(len(pickle_files_adress))
 hogs_a_rhog_xml_all = []
 for pickle_file_adress in pickle_files_adress:
     with open(pickle_folder + pickle_file_adress, 'rb') as handle:
