@@ -228,7 +228,7 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, que
                 prot_record = query_prot_recs_filt[species_idx][prots_hogmap_idx]
                 rhogid_prot_records.append(prot_record)
                 species_idx_rhogid.append(species_idx)
-                rhogids_prot_records_query.append(rhogid_prot_records)
+            rhogids_prot_records_query.append(rhogid_prot_records)
     logger_hog.info("There are " + str(len(rhogids_list)) + " rhogs, no matter their size.")
     return rhogids_list, rhogids_prot_records_query
 
@@ -244,6 +244,7 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
         if len(rhogid_prot_record_query) < treshold_big_rhog_szie:
             rhogid_prot_record_query_filt = rhogid_prot_record_query  # without change for small rhogs
         else:
+            logger_hog.info("started omamer tresh on " + str(rhogid) + " idx " + str(rhogid_idx))
             rhogid_prot_record_query_filt = []
             for i in range(len(rhogid_prot_record_query)):
                 prot_bio_seq = rhogid_prot_record_query[i]
@@ -254,6 +255,7 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
                 fsore = float(prots_hogmap_fscore_allspecies[specis_idx][prot_idx])
                 if fsore > omamer_fscore_treshold_big_rhog:
                     rhogid_prot_record_query_filt.append(prot_bio_seq)
+            logger_hog.info("finished omamer tresh on " + str(rhogid) + " idx " + str(rhogid_idx))
         if rhogid_prot_record_query_filt:  # at least one prot in the rhog
             rhogids_prot_records_query_filt.append(rhogid_prot_record_query_filt)
             rhogids_list_filt.append(rhogid)

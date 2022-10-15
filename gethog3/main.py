@@ -38,7 +38,7 @@ if __name__ == '__main__':
     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
 
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/" #fastget/qfo2/"
-    gene_id_pickle_file = working_folder + "gene_id_13oct.pickle"
+    gene_id_pickle_file = working_folder + "gene_id_v4.pickle"
     species_tree_address = working_folder + "archive/lineage_tree_qfo.phyloxml" # bird  "concatanted_363.fasta.contree_edited.nwk"
 
     omamer_fscore_treshold_big_rhog = 0.5  # 0.2
@@ -65,7 +65,6 @@ if __name__ == '__main__':
     step = "find_subhog"
     # collect pickle file and write xml file
 
-    # print("we are here line25")
     if step == "find_rhog":
 
         """
@@ -78,8 +77,7 @@ if __name__ == '__main__':
         """
 
         # working_folder+"omamer_database/oma_path/OmaServer.h5"
-
-        print("rHOG inferece has started. The oma database address is in ", oma_database_address)
+        logger_hog.info("rHOG inferece has started. The oma database address is in "+oma_database_address)
         (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
         (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
         query_prot_recs = _utils_rhog.add_species_name_gene_id(query_prot_recs,
@@ -98,12 +96,11 @@ if __name__ == '__main__':
                                                               query_prot_recs,
                                                               query_prot_names_species_mapped)
 
-        print(len(query_prot_recs_filt), len(query_prot_recs_filt[0]))
+        logger_hog.info("size of query_prot_recs_filt is "+str(len(query_prot_recs_filt))+" "+str(len(query_prot_recs_filt[0])))
 
 
         rhogids_list, rhogids_prot_records_query = _utils_rhog.group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, query_prot_recs_filt)
         # rhogid_num_list_raw = _utils_rhog.write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder_raw, 2)  # min_rhog_size=1, max_rhog_size=1e100
-
 
         rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  prots_hogmap_name_allspecies, omamer_fscore_treshold_big_rhog, treshold_big_rhog_szie)
 
@@ -119,17 +116,12 @@ if __name__ == '__main__':
             os.mkdir(gene_trees_folder)
         if not os.path.exists(pickle_folder):
             os.mkdir(pickle_folder)
-        #print("we are here line 60")
+
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        # rhogid_num_list =  [3339] #rhogid_num_list[:200]
-
-        #rhogid_num_list_raw = [811161] # 687464 7k prots  811184
-
         rhogid_num_list_raw = rhogid_num_list[:5]
-        # rhog_num_input = sys.argv[1]
-        #rhogid_num_list_raw = [int(rhog_num_input)]
+        # rhog_num_input = sys.argv[1]; rhogid_num_list_raw = [int(rhog_num_input)]
 
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
         # 613986 337 prots
@@ -137,7 +129,6 @@ if __name__ == '__main__':
         # [606409, 575384, 834730, 606033, 618436, 620754, 614327, 613986  ] #    # rhogid_num_list[:10] # [613860]  # , 618939, 615514, 834209 ]  #rhogid_num_list
         # itermediate size 834261 614102
         # very big 811161 811184
-
         list_done_raw = listdir(pickle_folder)
         list_done = []
         for file in list_done_raw:
@@ -145,17 +136,15 @@ if __name__ == '__main__':
             list_done.append(numr)
 
         rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
-        print("number of remained is ", len(rhogid_num_list))
-        print(rhogid_num_list)
-        a=2
+        logger_hog.info("number of remained is "+str(len(rhogid_num_list)))
 
         dask_level = 0  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
-        print(dask_level)
+        logger_hog.info("Dask level is "+str(dask_level))
         if dask_level != 0:
             from _dask_env import client_dask
 
-        print(rhogid_num_list[:7])
+        logger_hog.info("Few of rhog num ids are"+" ".join([str(i) for i in  rhogid_num_list[:7]]))
         number_roothog = len(rhogid_num_list)
         num_per_parralel = 1
         parralel_num = int(number_roothog/num_per_parralel)
@@ -191,13 +180,12 @@ if __name__ == '__main__':
                 # hogs_rhog_xml_batch is orthoxml_to_newick.py list of hog object.
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
                 # hogs_rhogs_xml_all is orthoxml_to_newick.py list of hog object.
-                print(hogs_rhogs_xml_all)
+
 
         if dask_level == 1 or dask_level == 2:
             for dask_out in dask_out_list:
                 hogs_rhog_xml_batch = dask_out.result()
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
-            print(hogs_rhogs_xml_all)
             print("dask out gathered")
 
         step = "collect"
@@ -205,7 +193,7 @@ if __name__ == '__main__':
     if step == "collect":
         _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pickle_file)
 
-    print("main py is finished s !.")
+    logger_hog.info("main py is finished !.")
 
 """
 to do : 
