@@ -17,6 +17,13 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S')
 logger_hog = logging.getLogger("hog")
 logger_hog.setLevel(logging.INFO)  # WARN  INFO
+#
+# TRACE
+# DEBUG
+# INFO
+# WARN
+# ERROR
+# FATAL
 
 
 def list_rhog_fastas(address_rhogs_folder):
@@ -80,7 +87,8 @@ def prepare_species_tree(rhog_i, species_tree):
         prot_name = prot_id[2]   # for debugging  prot_id[0] readable prot name,  for xml prot_id[2]
         species_name = prot_id[1]
 
-        bird_dataset = False
+        bird_dataset = True
+
         if species_name.endswith("_") and not bird_dataset:
            species_name = prot_id[1][:-1]
         if species_name == 'RAT': species_name = "RATNO"
@@ -92,6 +100,7 @@ def prepare_species_tree(rhog_i, species_tree):
 
     species_tree.prune(species_names_uniqe, preserve_branch_length=True)
     # species_tree.write()
+    counter_internal = 0
     for node in species_tree.traverse(strategy="postorder"):
         node_name = node.name
         num_leaves_no_name = 0
@@ -102,7 +111,9 @@ def prepare_species_tree(rhog_i, species_tree):
                 node_children = node.children
                 list_children_names = [node_child.name for node_child in node_children]
                 node.name = '_'.join(list_children_names)
-    print("Working on the following species tree.")
+                node.name = counter_internal
+                counter_internal += 1
+    # print("Working on the following species tree.")
     # print(species_tree)
     species_tree.write()
 
@@ -125,6 +136,7 @@ def lable_sd_internal_nodes(tree_out):
         if node.is_leaf():
             prot_i = node.name
             # species_name_dic[node] = {str(prot_i).split("|")[-1].split("_")[-1]}
+            #print(prot_i)
             species_name_dic[node] = {str(prot_i).split("||")[1][:-1]}
         else:
             node.name = "S/D"

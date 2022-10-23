@@ -24,7 +24,8 @@ def merge_msa(list_msas, gene_tree_file_addr):
     merged = wrapper_mafft_merge()
     #logger_hog.info \
     #    (str(len(list_msas)) + " msas are merged with length of "+ str(len(merged)) + "  " + str (len(merged[0])))
-    SeqIO.write(merged, gene_tree_file_addr + "msa.fa", "fasta")
+    if gene_tree_file_addr != "no_write":
+        SeqIO.write(merged, gene_tree_file_addr + "msa.fa", "fasta")
 
     return merged
 
@@ -52,10 +53,10 @@ def infer_gene_tree(msa, gene_tree_file_addr):
 
 
     # as the debug==True
-
-    file_gene_tree = open(gene_tree_file_addr, "w")
-    file_gene_tree.write(tree_nwk)
-    file_gene_tree.write(";\n")
-    file_gene_tree.close()
+    if gene_tree_file_addr != "no_write":
+        file_gene_tree = open(gene_tree_file_addr, "w")
+        file_gene_tree.write(tree_nwk)
+        file_gene_tree.write(";\n")
+        file_gene_tree.close()
 
     return tree_nwk

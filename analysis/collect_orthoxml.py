@@ -5,16 +5,16 @@ from os import listdir
 from xml.dom import minidom
 
 print("started ")
-working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog"
 # gene_trees_folder = ""  # working_folder + "/gene_trees_/"
 # check gene_trees_folder exist otherwise mkdir this
 
 #address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
 #species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-pickle_folder = working_folder + "/pickle_bigomamer0.2_small/"
+pickle_folder = working_folder + "/pickle_0.5_3000/"
 # add warning when pickle folder is not empty
-output_xml_name = "out_9oct_bigomamer0.2_small.xml"
-gene_id_pickle_file = working_folder + "gene_id_30aug_s500.pickle"
+output_xml_name = "pickle_0.5_3000_.xml"
+gene_id_pickle_file = working_folder + "gene_id_v1_bird.pickle"
 
 
 

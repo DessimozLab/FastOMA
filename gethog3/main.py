@@ -37,23 +37,21 @@ Hard coded parameters
 if __name__ == '__main__':
     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
 
-    working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/" #fastget/qfo2/"
-    gene_id_pickle_file = working_folder + "gene_id_v4.pickle"
-    species_tree_address = working_folder + "archive/lineage_tree_qfo.phyloxml" # bird  "concatanted_363.fasta.contree_edited.nwk"
+    working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/" #fastget/qfo2/"
+    gene_id_pickle_file = working_folder + "gene_id_v1_bird.pickle"
+    species_tree_address = working_folder + "concatanted_363.fasta.contree_edited.nwk"
+                           #"archive/lineage_tree_qfo.phyloxml" # bird
 
     omamer_fscore_treshold_big_rhog = 0.5  # 0.2
-    treshold_big_rhog_szie = 4000
+    treshold_big_rhog_szie = 3000
 
     name = str(omamer_fscore_treshold_big_rhog)+"_"+str(treshold_big_rhog_szie)
 
-    address_rhogs_folder_raw = working_folder + "rhog_all_v4_raw/"
-    address_rhogs_folder_filt = working_folder + "rhog_all_v4_" + name + "/"
-    pickle_folder = working_folder + "pickle_folder_"+name+"/"
-    gene_trees_folder = working_folder+"gene_tree_"+name+"/"
-
-    output_xml_name = "out_xml_"+name+".xml"
-
-
+    address_rhogs_folder_raw = working_folder + "rhogs_v1_raw/"
+    address_rhogs_folder_filt = working_folder + "rhogs_v1_" + name + "/"
+    pickle_folder = working_folder + "pickle_"+name+"/"
+    gene_trees_folder = working_folder+"genetree_"+name+"/"
+    output_xml_name = "out_xml_"+name+"_.xml"
 
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
@@ -63,6 +61,7 @@ if __name__ == '__main__':
     # step = "find_subhog"     # to infer subhogs when roothogs are ready.
 
     step = "find_subhog"
+    # find_subhog  find_rhog
     # collect pickle file and write xml file
 
     if step == "find_rhog":
@@ -120,7 +119,7 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list_raw = rhogid_num_list[:5]
+        rhogid_num_list_raw =   [570080] #rhogid_num_list  # [:5] # 605945 # 560403
         # rhog_num_input = sys.argv[1]; rhogid_num_list_raw = [int(rhog_num_input)]
 
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
@@ -136,7 +135,11 @@ if __name__ == '__main__':
             list_done.append(numr)
 
         rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
-        logger_hog.info("number of remained is "+str(len(rhogid_num_list)))
+        # rhogid_num_list = rhogid_num_list_raw
+        logger_hog.info("number of remained is " + str(len(rhogid_num_list)))
+        if not rhogid_num_list:
+            exit
+
 
         dask_level = 0  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
@@ -182,21 +185,31 @@ if __name__ == '__main__':
                 # hogs_rhogs_xml_all is orthoxml_to_newick.py list of hog object.
 
 
+
+        logger_hog.info("start gathering dask")
         if dask_level == 1 or dask_level == 2:
             for dask_out in dask_out_list:
                 hogs_rhog_xml_batch = dask_out.result()
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
-            print("dask out gathered")
+
+
+
+            logger_hog.info("dask out gathered")
+            client_dask.close()
+            client_dask.shutdown()
+            logger_hog.info("client dask closed and shut down.")
 
         step = "collect"
 
     if step == "collect":
+        logger_hog.info("start writing xml")
         _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pickle_file)
+        logger_hog.info("writing xml finished")
 
     logger_hog.info("main py is finished !.")
 
 """
 to do : 
-    - dobule check function merge_subhogs 
+    -  
 """
 

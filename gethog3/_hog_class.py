@@ -55,39 +55,18 @@ class HOG:
                     print(len(records_sub_sampled_raw), len(records_sub_sampled_raw[0]))
                     records_sub_sampled = _utils.msa_filter_col(records_sub_sampled_raw, tresh_ratio_gap_col)
                     print(len(records_sub_sampled), len(records_sub_sampled[0]))
+                else:
+                    records_sub_sampled = records_sub_sampled_raw
             #         print(len(msa_filt_row), len(msa_filt_row[0]))
             #         # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
             #         # print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
-
             # logger_hog.info( "we are doing subsamping now from " + str(len(records_full)) + " to " + str(max_num_seq) + " seqs.")
             else:
                 records_sub_sampled = records_full
 
-
-            # for hog in hogs_this_level_list:
-            #     msa_hog = hog._msa
-            #       # can it be only few rows ?
-            #         # replace the msa inside the hog, with filtered version
-            #         # previously we did on merged on msa only helping gene tree faster
-            #
-            #         logger_hog.info(
-            #             "We are doing HOG MSA trimming only column " + str(rhogid_num) + ", for taxonomic level:" + str(
-            #                 node_species_tree.name))
-            #         print(len(msa_hog), len(msa_hog[0]))
-            #         # merged_msa2 = msa_filt_row_col
-            #
-            #         hog._msa = MultipleSeqAlignment(msa_filt_row)
-
             # removing some columns completely gap -  (not x   )
-            #
-            #
-            # refilter the      records_sub_sampled
-            #
-            # now select those proteins
+
             self._msa = MultipleSeqAlignment(records_sub_sampled)
-
-            #
-
 
             # without replacement sampling ,  # self._children = sub_hogs # as legacy  ?
         else:

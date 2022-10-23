@@ -28,7 +28,7 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, file_folders, dask_level):
     # file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 
     hogs_rhog_xml_batch = []
-    print("There are "+str(len(rhogid_batch_list))+" rhogs in the batch.")
+    #print("There are "+str(len(rhogid_batch_list))+" rhogs in the batch.")
     for rhogid_num in rhogid_batch_list:
         hogs_rhogs_xml = read_infer_xml_rhog(rhogid_num, file_folders, dask_level)  # orthoxml_to_newick.py list of hog object
         hogs_rhog_xml_batch.extend(hogs_rhogs_xml)
@@ -49,22 +49,22 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     logger_hog.info("The number of unique species in the rHOG " + str(rhogid_num) + "is " + str(len(species_names_uniqe)) + ".")
     # species_tree.write();  print(species_tree.write())
 
+    # hogs_a_rhog = infer_hogs_for_rhog_levels_future(species_tree, recursive_input)
 
 
 
     recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
     if len(rhog_i) > 200 and (dask_level == 2 or dask_level == 3):
         # dask_future_taxon = True
-        print("Dask future taxon is on for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
+        logger_hog.info("Dask future taxon is on for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
         client_dask_working = get_client()
         secede()
-        # hogs_a_rhog = infer_hogs_for_rhog_levels_future(species_tree, recursive_input)
         hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, species_tree, recursive_input)
         hogs_a_rhog = hogs_a_rhog_future.result()
 
     else:
         # dask_future_taxon = False
-        print("Dask future taxon is off for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
+        logger_hog.info("Dask future taxon is off for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
         hogs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, recursive_input)
 
     logger_hog.info("subhogs in this level are "+' '.join(["[" + str(i) + "]" for i in hogs_a_rhog])+".")
@@ -91,6 +91,8 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
 
 
 def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_input):
+    #(rhog_i, species_names_rhog, rhogid_num, gene_trees_folder) = recursive_input
+    #logger_hog.info("\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")
 
     if sub_species_tree.is_leaf():
         (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder) = recursive_input
@@ -104,6 +106,7 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_in
     hogs_children_level_list_futures = [client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, child, recursive_input) for child in children_nodes ]
 
     hogs_children_level_list_futures = client_dask_working.gather(hogs_children_level_list_futures)
+
     # hogs_children_level_list = hogs_children_level_list_futures
     # hogs_children_level_list = []
     # for future in hogs_children_level_list_futures:
@@ -223,6 +226,12 @@ def infer_hogs_this_level(sub_species_tree, recursive_input, hogs_children_level
     else:
         msa_filt_row_col = merged_msa
         msa_filt_col = merged_msa
+
+    # the msa may be empty
+    if len(msa_filt_row_col) < 2:
+        msa_filt_row_col = msa_filt_col[:2]
+
+
 
     gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, gene_tree_file_addr)
     gene_tree = Tree(gene_tree_raw + ";", format=0)
@@ -389,6 +398,8 @@ def collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pi
             query_prot_name_pure1 = query_prot_name.split("||")[0].strip()
             if "|" in query_prot_name_pure1:
                 query_prot_name_pure = query_prot_name_pure1.split("|")[1]
+            else:
+                query_prot_name_pure = query_prot_name
             gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
 
     pickle_files_adress = listdir(pickle_folder)
