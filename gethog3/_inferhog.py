@@ -61,6 +61,7 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
         secede()
         hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, species_tree, recursive_input)
         hogs_a_rhog = hogs_a_rhog_future.result()
+        rejoin()
 
     else:
         # dask_future_taxon = False
@@ -106,7 +107,7 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_in
     hogs_children_level_list_futures = [client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, child, recursive_input) for child in children_nodes ]
 
     hogs_children_level_list_futures = client_dask_working.gather(hogs_children_level_list_futures)
-
+    rejoin()
     # hogs_children_level_list = hogs_children_level_list_futures
     # hogs_children_level_list = []
     # for future in hogs_children_level_list_futures:
