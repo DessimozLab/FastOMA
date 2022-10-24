@@ -49,9 +49,9 @@ if __name__ == '__main__':
 
     address_rhogs_folder_raw = working_folder + "rhogs_v1_raw/"
     address_rhogs_folder_filt = working_folder + "rhogs_v1_" + name + "/"
-    pickle_folder = working_folder + "pickle_"+name+"/"
+    pickle_folder = working_folder + "pickle2_"+name+"/"
     gene_trees_folder = working_folder+"genetree_"+name+"/"
-    output_xml_name = "out_xml_"+name+"_.xml"
+    output_xml_name = "out_xml__"+name+"_.xml"
 
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list_raw = rhogid_num_list[:3]  # 605945 # 560403 [570080] #
+        rhogid_num_list_raw = rhogid_num_list[:6]  # 605945 # 560403 [570080] #
         # rhog_num_input = sys.argv[1]; rhogid_num_list_raw = [int(rhog_num_input)]
 
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
@@ -141,7 +141,7 @@ if __name__ == '__main__':
             exit
 
 
-        dask_level = 0  # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+        dask_level = 2   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
         logger_hog.info("Dask level is "+str(dask_level))
         if dask_level != 0:
