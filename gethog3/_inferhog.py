@@ -173,6 +173,7 @@ def infer_hogs_for_rhog_levels_recursively(sub_species_tree, recursive_4inputs):
 def singletone_hog_(node_species_tree, species_names_rhog, rhogid_num, address_rhogs_folder):
 
     prot_address = address_rhogs_folder+"HOG_B"+str(rhogid_num).zfill(7)+".fa"
+    logger_hog.info("* reading prot address  " + prot_address)
     rhog_i = list(SeqIO.parse(prot_address, "fasta"))
 
     node_species_name = node_species_tree.name  # there is only one species (for the one protein)

@@ -50,7 +50,7 @@ if __name__ == '__main__':
     address_rhogs_folder_raw = working_folder + "rhogs_v1_raw/"
     address_rhogs_folder_filt = working_folder + "rhogs_v1_" + name + "/"
     pickle_folder = working_folder + "pickle2_"+name+"/"
-    gene_trees_folder = working_folder+"genetree_"+name+"/"
+    gene_trees_folder =  "no_write_tree_no" #  working_folder+"genetree_"+name+"/"
     output_xml_name = "out_xml__"+name+"_.xml"
 
 

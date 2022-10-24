@@ -165,7 +165,7 @@ def lable_sd_internal_nodes(tree_out):
 
 
 
-def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr= "no_write"):
+def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr= "no_write_tree_no"):
 
     ratio_col_all = []
     length_record= len(msa[0])
@@ -188,7 +188,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr= "no_write"):
         record_seq_edited  = ''.join([record_seq[i] for i in keep_cols  ])
         record_edited= SeqRecord(Seq(record_seq_edited), record.id, '', '')
         msa_filtered_col.append(record_edited)
-    if gene_tree_file_addr != "no_write":
+    if gene_tree_file_addr != "no_write_tree_no":
         out_name_msa=gene_tree_file_addr+"filtered_"+"_col_"+str(tresh_ratio_gap_col)+".msa.fa"
         handle_msa_fasta = open(out_name_msa,"w")
         SeqIO.write(msa_filtered_col, handle_msa_fasta,"fasta")
@@ -197,7 +197,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr= "no_write"):
     return msa_filtered_col
 
 
-def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr= "no_write"):
+def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr= "no_write_tree_no"):
     msa_filtered_row = []
     ratio_records=[]
     for record in msa:
@@ -208,7 +208,7 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr= "no_write"):
         ratio_records.append(round(ratio_record_nongap, 3))
         if ratio_record_nongap > tresh_ratio_gap_row:
             msa_filtered_row.append(record)
-    if gene_tree_file_addr != "no_write":
+    if gene_tree_file_addr != "no_write_tree_no":
         out_name_msa=gene_tree_file_addr +"filtered_row_"+str(tresh_ratio_gap_row)+".msa.fa"
         handle_msa_fasta = open(out_name_msa,"w")
         SeqIO.write(msa_filtered_row, handle_msa_fasta,"fasta")
