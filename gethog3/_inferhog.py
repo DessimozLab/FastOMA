@@ -53,17 +53,24 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
 
 
 
-    recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
+
     if len(rhog_i) > 200 and (dask_level == 2 or dask_level == 3):
         # dask_future_taxon = True
         logger_hog.info("Dask future taxon is on for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
         client_dask_working = get_client()
         secede()
+        recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
         hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, species_tree, recursive_input)
+
+        #rhog_i_future = client_dask_working.scatter(rhog_i)
+        #recursive_input_future = (rhog_i_future, species_names_rhog, rhogid_num, gene_trees_folder)
+        #hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, species_tree, recursive_input_future)
+
         hogs_a_rhog = hogs_a_rhog_future.result()
         rejoin()
 
     else:
+        recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
         # dask_future_taxon = False
         logger_hog.info("Dask future taxon is off for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
         hogs_a_rhog = infer_hogs_for_rhog_levels_recursively(species_tree, recursive_input)
