@@ -49,8 +49,8 @@ if __name__ == '__main__':
 
     address_rhogs_folder_raw = working_folder + "rhogs_v1_raw/"
     address_rhogs_folder_filt = working_folder + "rhogs_v1_" + name + "/"
-    pickle_folder = working_folder + "pickle2_"+name+"/"
-    gene_trees_folder =  "no_write_tree_no" #  working_folder+"genetree_"+name+"/"
+    pickle_folder = working_folder + "pickle3_"+name+"/"
+    gene_trees_folder = "no_write_tree_no"  #  working_folder+"genetree_"+name+"/"
     output_xml_name = "out_xml__"+name+"_.xml"
 
 
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list_raw = rhogid_num_list[:6]  # 605945 # 560403 [570080] #
+        rhogid_num_list_raw = rhogid_num_list[:1]  # 605945 # 560403 [570080] #
         # rhog_num_input = sys.argv[1]; rhogid_num_list_raw = [int(rhog_num_input)]
 
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
@@ -128,6 +128,7 @@ if __name__ == '__main__':
         # [606409, 575384, 834730, 606033, 618436, 620754, 614327, 613986  ] #    # rhogid_num_list[:10] # [613860]  # , 618939, 615514, 834209 ]  #rhogid_num_list
         # itermediate size 834261 614102
         # very big 811161 811184
+        print("***** pickle_folder ", pickle_folder)
         list_done_raw = listdir(pickle_folder)
         list_done = []
         for file in list_done_raw:
@@ -141,7 +142,7 @@ if __name__ == '__main__':
             exit
 
 
-        dask_level = 2   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+        dask_level = 0   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
         logger_hog.info("Dask level is "+str(dask_level))
         if dask_level != 0:

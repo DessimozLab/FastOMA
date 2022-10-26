@@ -16,7 +16,7 @@ logging.basicConfig(
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 logger_hog = logging.getLogger("hog")
-logger_hog.setLevel(logging.INFO)  # WARN  INFO
+logger_hog.setLevel(logging.INFO)  # DEBUG WARN  INFO
 #
 # TRACE
 # DEBUG
@@ -188,7 +188,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr= "no_write_tree
         record_seq_edited  = ''.join([record_seq[i] for i in keep_cols  ])
         record_edited= SeqRecord(Seq(record_seq_edited), record.id, '', '')
         msa_filtered_col.append(record_edited)
-    if gene_tree_file_addr != "no_write_tree_no":
+    if "no_write_tree_no" not in gene_tree_file_addr:
         out_name_msa=gene_tree_file_addr+"filtered_"+"_col_"+str(tresh_ratio_gap_col)+".msa.fa"
         handle_msa_fasta = open(out_name_msa,"w")
         SeqIO.write(msa_filtered_col, handle_msa_fasta,"fasta")
@@ -208,7 +208,7 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr= "no_write_tree
         ratio_records.append(round(ratio_record_nongap, 3))
         if ratio_record_nongap > tresh_ratio_gap_row:
             msa_filtered_row.append(record)
-    if gene_tree_file_addr != "no_write_tree_no":
+    if "no_write_tree_no" not in gene_tree_file_addr:
         out_name_msa=gene_tree_file_addr +"filtered_row_"+str(tresh_ratio_gap_row)+".msa.fa"
         handle_msa_fasta = open(out_name_msa,"w")
         SeqIO.write(msa_filtered_row, handle_msa_fasta,"fasta")
