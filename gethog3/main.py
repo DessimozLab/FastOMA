@@ -119,7 +119,7 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list_raw = rhogid_num_list[:3]  # 605945 # 560403 [570080] #
+        rhogid_num_list_raw = rhogid_num_list[:10]  # 605945 # 560403 [570080] #
         # rhog_num_input = sys.argv[1]; rhogid_num_list_raw = [int(rhog_num_input)]
 
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
@@ -142,13 +142,13 @@ if __name__ == '__main__':
             exit
 
 
-        dask_level = 0   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+        dask_level = 2   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
         logger_hog.info("Dask level is "+str(dask_level))
         if dask_level != 0:
             from _dask_env import client_dask
 
-        logger_hog.info("Few of rhog num ids are"+" ".join([str(i) for i in  rhogid_num_list[:7]]))
+        logger_hog.info("Few of rhog num ids are "+" ".join([str(i) for i in  rhogid_num_list[:7]]))
         number_roothog = len(rhogid_num_list)
         num_per_parralel = 1
         parralel_num = int(number_roothog/num_per_parralel)

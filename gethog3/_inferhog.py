@@ -128,9 +128,9 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_4i
 
         (species_names_rhog, rhogid_num, gene_trees_folder, address_rhogs_folder) = recursive_4inputs
         hogs_this_level_list = singletone_hog_(sub_species_tree, species_names_rhog, rhogid_num, address_rhogs_folder)
-        return hogs_this_level_list
-    else:
-        children_nodes = sub_species_tree.children
+        return len(hogs_this_level_list)
+
+    children_nodes = sub_species_tree.children
 
     client_dask_working = get_client()
     secede()
@@ -142,19 +142,21 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_4i
     # hogs_children_level_list = []
     # for future in hogs_children_level_list_futures:
     #    hogs_children_level_list.extend(future.result())
-    if hogs_children_level_list_futures:
-        if isinstance(hogs_children_level_list_futures[0], list):
-            hogs_children_level_list_flatten = []
-            for hog_ in hogs_children_level_list_futures:
-                # for hog in hogs_list:
-                hogs_children_level_list_flatten.extend(hog_)
-
-    hogs_children_level_list = hogs_children_level_list_flatten
 
 
-    hogs_this_level_list = infer_hogs_this_level(sub_species_tree, recursive_4inputs, hogs_children_level_list)
+    # if hogs_children_level_list_futures:
+    #     if isinstance(hogs_children_level_list_futures[0], list):
+    #         hogs_children_level_list_flatten = []
+    #         for hog_ in hogs_children_level_list_futures:
+    #             # for hog in hogs_list:
+    #             hogs_children_level_list_flatten.extend(hog_)
 
-    return hogs_this_level_list
+    # hogs_children_level_list = hogs_children_level_list_flatten
+
+
+    hogs_this_level_list = infer_hogs_this_level(sub_species_tree, recursive_4inputs) # hogs_children_level_list
+
+    return len(hogs_this_level_list)
 
 def infer_hogs_for_rhog_levels_recursively(sub_species_tree, recursive_4inputs):
 
@@ -218,7 +220,7 @@ def singletone_hog_(node_species_tree, species_names_rhog, rhogid_num, address_r
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
     logger_hog.debug("HOGs for  " + str(this_level_node_name)+" including "+str(len(hogs_this_level_list))+ " hogs was written as pickle file.")
 
-    return 1 # hogs_this_level_list _
+    return len(hogs_this_level_list) # hogs_this_level_list _
 
 
 def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children_level_list
@@ -266,7 +268,7 @@ def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children
         with open(hogs_children_level_pickle_file+".pickle", 'wb') as handle:
             pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        return 1
+        return len(hogs_children_level_list)
 
     # print("*7*", len(hogs_children_level_list), hogs_children_level_list)
     # if len(hogs_children_level_list)>0:
@@ -364,7 +366,7 @@ def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children
     with open(hogs_children_level_pickle_file + ".pickle", 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    return 1
+    return len(hogs_children_level_list)
 
 
 
