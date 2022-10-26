@@ -119,7 +119,7 @@ if __name__ == '__main__':
         rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
 
-        rhogid_num_list_raw = rhogid_num_list[:1]  # 605945 # 560403 [570080] #
+        rhogid_num_list_raw = rhogid_num_list[:3]  # 605945 # 560403 [570080] #
         # rhog_num_input = sys.argv[1]; rhogid_num_list_raw = [int(rhog_num_input)]
 
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
@@ -187,8 +187,9 @@ if __name__ == '__main__':
 
 
 
-        logger_hog.info("start gathering dask")
+
         if dask_level == 1 or dask_level == 2:
+            logger_hog.info("start gathering dask")
             for dask_out in dask_out_list:
                 hogs_rhog_xml_batch = dask_out.result()
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
@@ -200,7 +201,7 @@ if __name__ == '__main__':
             client_dask.shutdown()
             logger_hog.info("client dask closed and shut down.")
 
-        step = "collect"
+        # step = "collect"
 
     if step == "collect":
         logger_hog.info("start writing xml")

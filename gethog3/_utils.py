@@ -48,7 +48,7 @@ def read_species_tree(species_tree_address):
 
     output (species_tree)
     """
-    logger_hog.info(species_tree_address)
+    # logger_hog.info(species_tree_address)
     # print(round(os.path.getsize(species_tree_address)/1000),"kb")
     format_tree = species_tree_address.split(".")[-1]
 

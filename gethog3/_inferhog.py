@@ -5,6 +5,7 @@ from Bio import SeqIO
 import pickle
 import gc
 from distributed import get_client
+import os
 
 from os import listdir
 import xml.etree.ElementTree as ET
@@ -38,6 +39,14 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, file_folders, dask_level):
 
 def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address) = file_folders
+    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog3_16oct/pickle_hog_children/"
+    hogs_children_level_pickle_folder_rhog = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num)
+
+    if not os.path.exists(hogs_children_level_pickle_folder):
+        os.mkdir(hogs_children_level_pickle_folder)
+    if not os.path.exists(hogs_children_level_pickle_folder_rhog):
+        os.mkdir(hogs_children_level_pickle_folder_rhog)
+
 
     logger_hog.debug("\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")
     prot_address = address_rhogs_folder+"HOG_B"+str(rhogid_num).zfill(7)+".fa"
@@ -77,13 +86,17 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
         hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, recursive_4inputs)
         # hogs_a_rhog_1  is 1
 
-    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog3_16oct/pickle_hog_children/"
+
+
+
     root_node_name= species_tree.name
-    hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_"+str(rhogid_num) + "_"+ str(root_node_name)
+    hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_"+str(rhogid_num) + "/_"+ str(root_node_name)
     with open(hogs_children_level_pickle_file+".pickle", 'rb') as handle:
         hogs_a_rhog = pickle.load(handle)
     # ?? logger_hog.debug("subhogs in this level are "+' '.join(["[" + str(i) + "]" for i in ?? ])+".") # hogs_a_rhog
-
+    keep_intermediate_files = True
+    if not keep_intermediate_files:
+     os.rmdir(hogs_children_level_pickle_folder_rhog)
 
     hogs_rhogs_xml = []
     for hog_i in hogs_a_rhog:
@@ -92,7 +105,7 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
             # could be improved # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
             hogs_a_rhog_xml = hog_i.to_orthoxml()
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
-    print(hogs_rhogs_xml)
+    # print(hogs_rhogs_xml)
     logger_hog.debug("we are not reporting single tone hogs in the output xml.")
     # how to handle empty hogs !? why happening and if not save pickle, file not exist error from rhog id list
 
@@ -200,7 +213,7 @@ def singletone_hog_(node_species_tree, species_names_rhog, rhogid_num, address_r
 
 
     hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog3_16oct/pickle_hog_children/"
-    hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num) + "_" + str(this_level_node_name)
+    hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num) + "/_" + str(this_level_node_name)
     with open(hogs_children_level_pickle_file+".pickle", 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
     logger_hog.debug("HOGs for  " + str(this_level_node_name)+" including "+str(len(hogs_this_level_list))+ " hogs was written as pickle file.")
@@ -222,7 +235,7 @@ def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children
         # we shouldnt be here ???
         #
         # child_name = node_species_tree.name
-        # hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num) + "_" + str(child_name)
+        # hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num) + "/_" + str(child_name)
         # with open(hogs_children_level_pickle_file+".pickle", 'wb') as handle:
         #     pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -231,7 +244,7 @@ def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children
     children_name = [child.name for child in node_species_tree.children]
     hogs_children_level_list =[]
     for child_name in children_name:
-        hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_"+str(rhogid_num) + "_"+ str(child_name)
+        hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_"+str(rhogid_num) + "/_"+ str(child_name)
         with open(hogs_children_level_pickle_file+".pickle", 'rb') as handle:
             hogs_children_level_list.extend(pickle.load(handle))
      # check file doenst exist ? how to handle, if not
@@ -249,7 +262,7 @@ def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children
         assert len(children_name) == 1
 
         hogs_this_level_list = hogs_children_level_list
-        hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num) + "_" + str(this_level_node_name)
+        hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num) + "/_" + str(this_level_node_name)
         with open(hogs_children_level_pickle_file+".pickle", 'wb') as handle:
             pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -295,11 +308,11 @@ def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children
         # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
         logger_hog.debug("We are doing MSA trimming "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
 
-        print(len(merged_msa), len(merged_msa[0]))
+        #print(len(merged_msa), len(merged_msa[0]))
         msa_filt_col = _utils.msa_filter_col(merged_msa, tresh_ratio_gap_col, gene_tree_file_addr)
-        print(len(msa_filt_col), len(msa_filt_col[0]))
+        #print(len(msa_filt_col), len(msa_filt_col[0]))
         msa_filt_row_col = _utils.msa_filter_row(msa_filt_col, tresh_ratio_gap_row, gene_tree_file_addr)
-        print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
+        #print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
         merged_msa_filt = msa_filt_row_col
     else:
         msa_filt_row_col = merged_msa
@@ -347,7 +360,7 @@ def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children
     # logger_hog.debug(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
     #     [str(i) for i in prot_list_sbuhog_short]))
 
-    hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num) + "_" + str(this_level_node_name)
+    hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num) + "/_" + str(this_level_node_name)
     with open(hogs_children_level_pickle_file + ".pickle", 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
