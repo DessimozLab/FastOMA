@@ -39,7 +39,7 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, file_folders, dask_level):
 
 def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address) = file_folders
-    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog3_16oct/pickle_hog_children/"
+    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog32oct/pickle_hog_children/"
     hogs_children_level_pickle_folder_rhog = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num)
 
     if not os.path.exists(hogs_children_level_pickle_folder):
@@ -127,8 +127,8 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_4i
     if sub_species_tree.is_leaf():
 
         (species_names_rhog, rhogid_num, gene_trees_folder, address_rhogs_folder) = recursive_4inputs
-        hogs_this_level_list = singletone_hog_(sub_species_tree, species_names_rhog, rhogid_num, address_rhogs_folder)
-        return len(hogs_this_level_list)
+        singletone_hog_out = singletone_hog_(sub_species_tree, species_names_rhog, rhogid_num, address_rhogs_folder)
+        return singletone_hog_out
 
     children_nodes = sub_species_tree.children
 
@@ -154,18 +154,18 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_4i
     # hogs_children_level_list = hogs_children_level_list_flatten
 
 
-    hogs_this_level_list = infer_hogs_this_level(sub_species_tree, recursive_4inputs) # hogs_children_level_list
+    infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, recursive_4inputs) # hogs_children_level_list
 
-    return len(hogs_this_level_list)
+    return infer_hogs_this_level_out
 
 def infer_hogs_for_rhog_levels_recursively(sub_species_tree, recursive_4inputs):
 
     if sub_species_tree.is_leaf():
         (species_names_rhog, rhogid_num, gene_trees_folder, address_rhogs_folder) = recursive_4inputs
         #hogs_this_level_list = singletone_hog(sub_species_tree, rhog_i, species_names_rhog, rhogid_num)
-        out = singletone_hog_(sub_species_tree, species_names_rhog, rhogid_num, address_rhogs_folder)
+        singletone_hog_out = singletone_hog_(sub_species_tree, species_names_rhog, rhogid_num, address_rhogs_folder)
         # out 1 succesful
-        return 1
+        return singletone_hog_out
 
     children_nodes = sub_species_tree.children
 
@@ -174,10 +174,10 @@ def infer_hogs_for_rhog_levels_recursively(sub_species_tree, recursive_4inputs):
         hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, recursive_4inputs)
         # hogs_children_level_list_i should be 1
         #hogs_children_level_list.extend(hogs_children_level_list_i)
-    hogs_this_level_list = infer_hogs_this_level(sub_species_tree, recursive_4inputs) # ,hogs_children_level_list
+    infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, recursive_4inputs) # ,hogs_children_level_list
     # hogs_this_level_list should be one
 
-    return 1
+    return infer_hogs_this_level_out
 
 #
 # def singletone_hog(node_species_tree, rhog_i, species_names_rhog, rhogid_num):
@@ -214,7 +214,7 @@ def singletone_hog_(node_species_tree, species_names_rhog, rhogid_num, address_r
         hogs_this_level_list.append(hog_leaf)
 
 
-    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog3_16oct/pickle_hog_children/"
+    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog3_26oct/pickle_hog_children/"
     hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num) + "/_" + str(this_level_node_name)
     with open(hogs_children_level_pickle_file+".pickle", 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -225,7 +225,7 @@ def singletone_hog_(node_species_tree, species_names_rhog, rhogid_num, address_r
 
 def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children_level_list
     (species_names_rhog, rhogid_num, gene_trees_folder, address_rhogs_folder) = recursive_4inputs
-    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog3_16oct/pickle_hog_children/"
+    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog3_26oct/pickle_hog_children/"
 
     node_species_tree = sub_species_tree
     this_level_node_name = node_species_tree.name

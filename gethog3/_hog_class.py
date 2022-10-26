@@ -52,9 +52,9 @@ class HOG:
                 # future"  select best seq
 
                 if len(records_sub_sampled_raw[0]) > min_cols_msa_to_filter:
-                    print(len(records_sub_sampled_raw), len(records_sub_sampled_raw[0]))
+                    # print(len(records_sub_sampled_raw), len(records_sub_sampled_raw[0]))
                     records_sub_sampled = _utils.msa_filter_col(records_sub_sampled_raw, tresh_ratio_gap_col)
-                    print(len(records_sub_sampled), len(records_sub_sampled[0]))
+                    # print(len(records_sub_sampled), len(records_sub_sampled[0]))
                 else:
                     records_sub_sampled = records_sub_sampled_raw
             #         print(len(msa_filt_row), len(msa_filt_row[0]))
