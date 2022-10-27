@@ -39,7 +39,7 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, file_folders, dask_level):
 
 def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address) = file_folders
-    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog32oct/pickle_hog_children/"
+    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/gethog3_27oct/pickle_hog_children2/"
     hogs_children_level_pickle_folder_rhog = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num)
 
     if not os.path.exists(hogs_children_level_pickle_folder):
@@ -53,9 +53,9 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     rhog_i = list(SeqIO.parse(prot_address, "fasta"))
     logger_hog.debug("number of proteins in the rHOG is "+str(len(rhog_i))+".")
     (species_tree) = _utils.read_species_tree(species_tree_address)
-    (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree)
-    species_names_uniqe = set(species_names_rhog)
-    logger_hog.debug("The number of unique species in the rHOG " + str(rhogid_num) + "is " + str(len(species_names_uniqe)) + ".")
+    (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree, rhogid_num)
+    species_names_rhog = list(set(species_names_rhog))
+    logger_hog.debug("The number of unique species in the rHOG " + str(rhogid_num) + "is " + str(len(species_names_rhog)) + ".")
     # species_tree.write();  print(species_tree.write())
 
     # hogs_a_rhog = infer_hogs_for_rhog_levels_future(species_tree, recursive_input)
@@ -214,7 +214,7 @@ def singletone_hog_(node_species_tree, species_names_rhog, rhogid_num, address_r
         hogs_this_level_list.append(hog_leaf)
 
 
-    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog3_26oct/pickle_hog_children/"
+    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/gethog3_27oct/pickle_hog_children2/"
     hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_" + str(rhogid_num) + "/_" + str(this_level_node_name)
     with open(hogs_children_level_pickle_file+".pickle", 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -225,7 +225,7 @@ def singletone_hog_(node_species_tree, species_names_rhog, rhogid_num, address_r
 
 def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children_level_list
     (species_names_rhog, rhogid_num, gene_trees_folder, address_rhogs_folder) = recursive_4inputs
-    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/gethog3_26oct/pickle_hog_children/"
+    hogs_children_level_pickle_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/gethog3_27oct/pickle_hog_children2/"
 
     node_species_tree = sub_species_tree
     this_level_node_name = node_species_tree.name
@@ -295,34 +295,40 @@ def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children
     logger_hog.debug("Merging "+str(len(sub_msa_list_lowerLevel_ready))+" MSAs for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
             node_species_tree.name))
     merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, gene_tree_file_addr)
-    logger_hog.debug("All sub-hogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
-    len(merged_msa[0])) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
-            node_species_tree.name))
 
-    # merged_msa_filt = merged_msa
-    # 893*4839, 10 mins
-    tresh_ratio_gap_row = 0.4
-    tresh_ratio_gap_col = 0.2
-    min_cols_msa_to_filter = 3000      # used for msa before gene tree inference and  saving msa in hog class
+    if merged_msa:
+        logger_hog.debug("All sub-hogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
+        len(merged_msa[0])) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
+                node_species_tree.name))
 
-    if len(merged_msa[0]) >= min_cols_msa_to_filter:
-        # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
-        # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
-        logger_hog.debug("We are doing MSA trimming "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
+        # merged_msa_filt = merged_msa
+        # 893*4839, 10 mins
+        tresh_ratio_gap_row = 0.4
+        tresh_ratio_gap_col = 0.2
+        min_cols_msa_to_filter = 3000      # used for msa before gene tree inference and  saving msa in hog class
 
-        #print(len(merged_msa), len(merged_msa[0]))
-        msa_filt_col = _utils.msa_filter_col(merged_msa, tresh_ratio_gap_col, gene_tree_file_addr)
-        #print(len(msa_filt_col), len(msa_filt_col[0]))
-        msa_filt_row_col = _utils.msa_filter_row(msa_filt_col, tresh_ratio_gap_row, gene_tree_file_addr)
-        #print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
-        merged_msa_filt = msa_filt_row_col
+        if len(merged_msa[0]) >= min_cols_msa_to_filter:
+            # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
+            # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
+            logger_hog.debug("We are doing MSA trimming "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
+
+            #print(len(merged_msa), len(merged_msa[0]))
+            msa_filt_col = _utils.msa_filter_col(merged_msa, tresh_ratio_gap_col, gene_tree_file_addr)
+            #print(len(msa_filt_col), len(msa_filt_col[0]))
+            msa_filt_row_col = _utils.msa_filter_row(msa_filt_col, tresh_ratio_gap_row, gene_tree_file_addr)
+            #print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
+            merged_msa_filt = msa_filt_row_col
+        else:
+            msa_filt_row_col = merged_msa
+            msa_filt_col = merged_msa
+
+            # the msa may be empty
+        if len(msa_filt_row_col) < 2:
+            msa_filt_row_col = msa_filt_col[:2]
     else:
-        msa_filt_row_col = merged_msa
-        msa_filt_col = merged_msa
+        logger_hog.info("Issue 1455, merged_msa is empty " + str(rhogid_num) + ", for taxonomic level:" + str(node_species_tree.name))
 
-    # the msa may be empty
-    if len(msa_filt_row_col) < 2:
-        msa_filt_row_col = msa_filt_col[:2]
+
 
 
 

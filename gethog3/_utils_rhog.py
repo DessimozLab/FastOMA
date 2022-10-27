@@ -83,6 +83,10 @@ def add_species_name_gene_id(query_prot_recs, query_species_names, gene_id_pickl
         for query_prot_idx, query_prot_record in enumerate(query_prot_records):
             gene_idx_integer = gene_counter + query_prot_idx
             query_prot_name = query_prot_record.id
+            query_prot_record_id = query_prot_record.id
+            if len(query_prot_name) > 230:
+                logger_hog.info("We are truncating the prot name as it may be problamatic for mafft, " + str(query_prot_name))
+                query_prot_name = query_prot_name[:230]
             query_prot_record.id += "||"+query_species_name+"||"+str(gene_idx_integer)
             gene_id_name[query_species_name].append((gene_idx_integer, query_prot_name))
     # this is used to creat the first part of xml file, gene name and
@@ -142,7 +146,7 @@ def parse_hogmap_omamer(query_species_names, working_folder):
         prots_hogmap_subfmedseqlen_allspecies.append(prots_hogmap_subfmedseqlen)
 
     logger_hog.info("There are "+str(len(prots_hogmap_name_allspecies))+" species in the hogmap folder.")
-    logger_hog.info("The first species"+query_species_names[0]+" contains "+str(len(prots_hogmap_hogid_allspecies[0]))+" proteins.")
+    logger_hog.info("The first species "+query_species_names[0]+" contains "+str(len(prots_hogmap_hogid_allspecies[0]))+" proteins.")
     logger_hog.info("The first protein of first species is "+prots_hogmap_name_allspecies[0][0])
     hogmap_allspecies = (prots_hogmap_name_allspecies, prots_hogmap_hogid_allspecies, prots_hogmap_overlp_allspecies,
                          prots_hogmap_fscore_allspecies, prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies)
@@ -165,7 +169,11 @@ def filter_prot_mapped(query_species_names, query_prot_recs, query_prot_names_sp
         # we added the species name and the as the fasta record usign ||
         # but this is not done in the hog map
         # I beliEve .split("||")[0] solve this.
-        query_prot_ids_records = [record.id.split("||")[0] for record in query_prot_recs_i]
+        query_prot_ids_records = [record.id.split("||")[2] for record in query_prot_recs_i]
+
+        ## ?? how about for truncatead
+
+
         # from hogmap file without proteins that are not mapped on any hogs
         query_prot_names_species_i = query_prot_names_species_mapped[species_idx]
         if len(query_prot_names_species_i) != len(query_prot_recs_i):
@@ -235,7 +243,7 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, que
 
 def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  prots_hogmap_name_allspecies, omamer_fscore_treshold_big_rhog, treshold_big_rhog_szie):
 
-    logger_hog.info("Filtering rhogs with fscore treshold"+str(omamer_fscore_treshold_big_rhog)+"for rhogs size > "+str(treshold_big_rhog_szie) )
+    logger_hog.info("Filtering rhogs with fscore treshold "+str(omamer_fscore_treshold_big_rhog)+"for rhogs size > "+str(treshold_big_rhog_szie) )
     rhogids_prot_records_query_filt = []
     rhogids_list_filt = []
     for rhogid_idx, rhogid in enumerate(rhogids_list):
@@ -244,7 +252,7 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
         if len(rhogid_prot_record_query) < treshold_big_rhog_szie:
             rhogid_prot_record_query_filt = rhogid_prot_record_query  # without change for small rhogs
         else:
-            logger_hog.info("started omamer tresh on " + str(rhogid) + " idx " + str(rhogid_idx))
+            #logger_hog.info("started omamer tresh on " + str(rhogid) + " idx " + str(rhogid_idx))
             rhogid_prot_record_query_filt = []
             for i in range(len(rhogid_prot_record_query)):
                 prot_bio_seq = rhogid_prot_record_query[i]
@@ -255,7 +263,7 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
                 fsore = float(prots_hogmap_fscore_allspecies[specis_idx][prot_idx])
                 if fsore > omamer_fscore_treshold_big_rhog:
                     rhogid_prot_record_query_filt.append(prot_bio_seq)
-            logger_hog.info("finished omamer tresh on " + str(rhogid) + " idx " + str(rhogid_idx))
+            # logger_hog.debug("finished omamer tresh on " + str(rhogid) + " idx " + str(rhogid_idx))
         if rhogid_prot_record_query_filt:  # at least one prot in the rhog
             rhogids_prot_records_query_filt.append(rhogid_prot_record_query_filt)
             rhogids_list_filt.append(rhogid)

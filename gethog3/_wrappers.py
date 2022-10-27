@@ -16,7 +16,7 @@ def merge_msa(list_msas, gene_tree_file_addr):
     output: merged (msa)
     """
     logger_hog.debug(list_msas)
-    logger_hog.debug(str(list_msas[0][0].id ) + "\n")
+    # logger_hog.debug(str(list_msas[0][0].id ) + "\n")
     # SeqIO.write(list_msas ?? , gene_tree_file_addr + ".unaligned.fa", "fasta")
 
     wrapper_mafft_merge = mafft.Mafft(list_msas, datatype="PROTEIN")

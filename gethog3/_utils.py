@@ -72,7 +72,7 @@ def read_species_tree(species_tree_address):
     return (species_tree)
 
 
-def prepare_species_tree(rhog_i, species_tree):
+def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     """
     orthoxml_to_newick.py function for extracting orthoxml_to_newick.py subtree from the input species tree  orthoxml_to_newick.py.k.orthoxml_to_newick.py pruning,
     based on the names of species in the rootHOG.
@@ -115,7 +115,7 @@ def prepare_species_tree(rhog_i, species_tree):
                 # ?? to imrpove, if the species tree has internal node name, keep it,
                 # then checn condition in  _inferhog.py, where logger_hog.info("Finding hogs for rhogid_num: "+str(rh
 
-                node.name = "internal_" + str(counter_internal)
+                node.name = "internal_" + str(counter_internal)+"_rhg"+str(rhogid_num)
                 counter_internal += 1
     # print("Working on the following species tree.")
     # print(species_tree)

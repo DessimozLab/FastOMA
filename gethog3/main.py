@@ -37,19 +37,18 @@ Hard coded parameters
 if __name__ == '__main__':
     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
 
-    working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog/" #fastget/qfo2/"
-    gene_id_pickle_file = working_folder + "gene_id_v1_bird.pickle"
+    working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/" #fastget/qfo2/"
+    gene_id_pickle_file = working_folder + "gene_id_v2_bird.pickle"
     species_tree_address = working_folder + "concatanted_363.fasta.contree_edited.nwk"
-                           #"archive/lineage_tree_qfo.phyloxml" # bird
 
     omamer_fscore_treshold_big_rhog = 0.5  # 0.2
     treshold_big_rhog_szie = 3000
 
     name = str(omamer_fscore_treshold_big_rhog)+"_"+str(treshold_big_rhog_szie)
 
-    address_rhogs_folder_raw = working_folder + "rhogs_v1_raw/"
-    address_rhogs_folder_filt = working_folder + "rhogs_v1_" + name + "/"
-    pickle_folder = working_folder + "pickle3_"+name+"/"
+    address_rhogs_folder_raw = working_folder + "rhogs_v2_raw/"
+    address_rhogs_folder_filt = working_folder + "rhogs_v2_" + name + "/"
+    pickle_folder = working_folder + "pickle_"+name+"/"
     gene_trees_folder = "no_write_tree_no"  #  working_folder+"genetree_"+name+"/"
     output_xml_name = "out_xml__"+name+"_.xml"
 
@@ -99,7 +98,7 @@ if __name__ == '__main__':
 
 
         rhogids_list, rhogids_prot_records_query = _utils_rhog.group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, query_prot_recs_filt)
-        # rhogid_num_list_raw = _utils_rhog.write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder_raw, 2)  # min_rhog_size=1, max_rhog_size=1e100
+        rhogid_num_list_raw = _utils_rhog.write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder_raw, 2)  # min_rhog_size=1, max_rhog_size=1e100
 
         rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  prots_hogmap_name_allspecies, omamer_fscore_treshold_big_rhog, treshold_big_rhog_szie)
 
@@ -136,7 +135,7 @@ if __name__ == '__main__':
             list_done.append(numr)
 
         #rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
-        rhogid_num_list = rhogid_num_list_raw
+        rhogid_num_list = rhogid_num_list_raw[:10]
         logger_hog.info("number of remained is " + str(len(rhogid_num_list)))
         if not rhogid_num_list:
             exit
@@ -147,6 +146,13 @@ if __name__ == '__main__':
         logger_hog.info("Dask level is "+str(dask_level))
         if dask_level != 0:
             from _dask_env import client_dask
+            import dask.distributed
+            # export DASK_DISTRIBUTED__SCHEDULER__EVENTS_CLEANUP_DELAY=10h
+            print(dask.config.get("distributed.scheduler"))
+            dask.config.set({'distributed.scheduler.events-cleanup-delay': "10h"})
+            print(dask.config.get("distributed.scheduler"))
+
+
 
         logger_hog.info("Few of rhog num ids are "+" ".join([str(i) for i in  rhogid_num_list[:7]]))
         number_roothog = len(rhogid_num_list)
