@@ -65,29 +65,32 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
     if len(rhog_i) > 200 and (dask_level == 2 or dask_level == 3):
         # dask_future_taxon = True
         logger_hog.debug("Dask future taxon is on for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
-        client_dask_working = get_client()
-        secede()
-        #recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
 
-        hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, species_tree, recursive_4inputs)
+        # client_dask_working = get_client()
+        # secede()
+        # #recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
+        #
+        # hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, species_tree, recursive_4inputs)
+        #
+        # #rhog_i_future = client_dask_working.scatter(rhog_i)
+        # #recursive_input_future = (rhog_i_future, species_names_rhog, rhogid_num, gene_trees_folder)
+        # #hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, species_tree, recursive_input_future)
+        #
+        # hogs_a_rhog = hogs_a_rhog_future.result()
+        # rejoin()
 
-        #rhog_i_future = client_dask_working.scatter(rhog_i)
-        #recursive_input_future = (rhog_i_future, species_names_rhog, rhogid_num, gene_trees_folder)
-        #hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, species_tree, recursive_input_future)
+        hogs_a_rhog_1 = infer_hogs_for_rhog_future_v2(species_tree, recursive_4inputs)
 
-        hogs_a_rhog = hogs_a_rhog_future.result()
-        rejoin()
 
     else:
         # recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
         # ?? we can have recursive_input includign rhog_i  for  small rhogs
         # dask_future_taxon = False
         logger_hog.debug("Dask future taxon is off for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
-        hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, recursive_4inputs)
+
+        #hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, recursive_4inputs)
+        hogs_a_rhog_1 = infer_hogs_for_rhog_future_v2(species_tree, recursive_4inputs)
         # hogs_a_rhog_1  is 1
-
-
-
 
     root_node_name= species_tree.name
     hogs_children_level_pickle_file = hogs_children_level_pickle_folder + "rhog_"+str(rhogid_num) + "/_"+ str(root_node_name)
@@ -105,10 +108,8 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
             # could be improved # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
             hogs_a_rhog_xml = hog_i.to_orthoxml()
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
-    # print(hogs_rhogs_xml)
     logger_hog.debug("we are not reporting single tone hogs in the output xml.")
     # how to handle empty hogs !? why happening and if not save pickle, file not exist error from rhog id list
-
     with open(pickle_folder + '/file_' + str(rhogid_num) + '.pickle', 'wb') as handle:
         #dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
         pickle.dump(hogs_rhogs_xml, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -119,44 +120,82 @@ def read_infer_xml_rhog(rhogid_num, file_folders, dask_level):
 
     return hogs_rhogs_xml
 
+#############
 
-def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_4inputs):
-    #(rhog_i, species_names_rhog, rhogid_num, gene_trees_folder) = recursive_input
-    #logger_hog.debug("\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")
+def infer_hogs_for_rhog_future_v2(sub_species_tree, recursive_4inputs):
 
-    if sub_species_tree.is_leaf():
+    out_1 = 0
+    for node_species_tree in sub_species_tree.traverse(strategy="postorder"):
+        species_leaves_names = [i.name for i in node_species_tree.get_leaves()]
 
-        (species_names_rhog, rhogid_num, gene_trees_folder, address_rhogs_folder) = recursive_4inputs
-        singletone_hog_out = singletone_hog_(sub_species_tree, species_names_rhog, rhogid_num, address_rhogs_folder)
-        return singletone_hog_out
+        if len(species_leaves_names) > 10:
+            out_1 = infer_hogs_for_rhog_levels_recursively_v2(node_species_tree, recursive_4inputs)
+            for node in node_species_tree.traverse():
+                node.processed = True
+    #
+    #     node_children = [i.name for i in node.children]
+    #     #node.name = "_".join(node_children)
+    #
+    #     # infer_hogs_for_rhog_levels_recursively(sub_species_tree, recursive_4inputs)
+    #
+    #     # print("Leaves assigned to hog are ", assigned_leaves_to_hog)   #print("Traversing gene tree. Now at node", node.name)
+    #     # if node.is_leaf():
+    #         (species_names_rhog, rhogid_num, gene_trees_folder, address_rhogs_folder) = recursive_4inputs
+    #         singletone_hog_out = singletone_hog_(sub_species_tree, species_names_rhog, rhogid_num, address_rhogs_folder)
+    #
+    #
+    # #children_nodes = sub_species_tree.children
+    #
+    # client_dask_working = get_client()
+    # secede()
+    # hogs_children_level_list_futures = [client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, child, recursive_4inputs) for child in children_nodes ]
+    # hogs_children_level_list_futures = client_dask_working.gather(hogs_children_level_list_futures)
+    # rejoin()
+    # infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, recursive_4inputs) # hogs_children_level_list
 
-    children_nodes = sub_species_tree.children
-
-    client_dask_working = get_client()
-    secede()
-    hogs_children_level_list_futures = [client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, child, recursive_4inputs) for child in children_nodes ]
-
-    hogs_children_level_list_futures = client_dask_working.gather(hogs_children_level_list_futures)
-    rejoin()
-    # hogs_children_level_list = hogs_children_level_list_futures
-    # hogs_children_level_list = []
-    # for future in hogs_children_level_list_futures:
-    #    hogs_children_level_list.extend(future.result())
+    return out_1
 
 
-    # if hogs_children_level_list_futures:
-    #     if isinstance(hogs_children_level_list_futures[0], list):
-    #         hogs_children_level_list_flatten = []
-    #         for hog_ in hogs_children_level_list_futures:
-    #             # for hog in hogs_list:
-    #             hogs_children_level_list_flatten.extend(hog_)
-
-    # hogs_children_level_list = hogs_children_level_list_flatten
 
 
-    infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, recursive_4inputs) # hogs_children_level_list
 
-    return infer_hogs_this_level_out
+# def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, recursive_4inputs):
+#     #(rhog_i, species_names_rhog, rhogid_num, gene_trees_folder) = recursive_input
+#     #logger_hog.debug("\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")
+#
+#     if sub_species_tree.is_leaf():
+#
+#         (species_names_rhog, rhogid_num, gene_trees_folder, address_rhogs_folder) = recursive_4inputs
+#         singletone_hog_out = singletone_hog_(sub_species_tree, species_names_rhog, rhogid_num, address_rhogs_folder)
+#         return singletone_hog_out
+#
+#     children_nodes = sub_species_tree.children
+#
+#     client_dask_working = get_client()
+#     secede()
+#     hogs_children_level_list_futures = [client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, child, recursive_4inputs) for child in children_nodes ]
+#
+#     hogs_children_level_list_futures = client_dask_working.gather(hogs_children_level_list_futures)
+#     rejoin()
+#     # hogs_children_level_list = hogs_children_level_list_futures
+#     # hogs_children_level_list = []
+#     # for future in hogs_children_level_list_futures:
+#     #    hogs_children_level_list.extend(future.result())
+#
+#
+#     # if hogs_children_level_list_futures:
+#     #     if isinstance(hogs_children_level_list_futures[0], list):
+#     #         hogs_children_level_list_flatten = []
+#     #         for hog_ in hogs_children_level_list_futures:
+#     #             # for hog in hogs_list:
+#     #             hogs_children_level_list_flatten.extend(hog_)
+#
+#     # hogs_children_level_list = hogs_children_level_list_flatten
+#
+#
+#     infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, recursive_4inputs) # hogs_children_level_list
+#
+#     return infer_hogs_this_level_out
 
 def infer_hogs_for_rhog_levels_recursively(sub_species_tree, recursive_4inputs):
 
@@ -179,7 +218,29 @@ def infer_hogs_for_rhog_levels_recursively(sub_species_tree, recursive_4inputs):
 
     return infer_hogs_this_level_out
 
-#
+
+
+
+def infer_hogs_for_rhog_levels_recursively_v2(sub_species_tree, recursive_4inputs):
+
+    infer_hogs_this_level_out= 0
+    if sub_species_tree.is_leaf():
+        if not (hasattr(sub_species_tree, "processed") and sub_species_tree.processed == True):
+            (species_names_rhog, rhogid_num, gene_trees_folder, address_rhogs_folder) = recursive_4inputs
+            infer_hogs_this_level_out = singletone_hog_(sub_species_tree, species_names_rhog, rhogid_num, address_rhogs_folder)
+        return infer_hogs_this_level_out
+
+    children_nodes = sub_species_tree.children
+    for node_species_tree_child in children_nodes:
+        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively_v2(node_species_tree_child, recursive_4inputs)
+    infer_hogs_this_level_out = 0
+    if not (hasattr(sub_species_tree, "processed") and sub_species_tree.processed == True):
+        infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, recursive_4inputs)  # output is an integer, which is the length
+
+    return infer_hogs_this_level_out
+
+
+
 # def singletone_hog(node_species_tree, rhog_i, species_names_rhog, rhogid_num):
 #
 #     node_species_name = node_species_tree.name  # there is only one species (for the one protein)
@@ -531,4 +592,5 @@ def collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pi
 
     print("orthoxml is written in "+ working_folder+output_xml_name)
     return 1
+
 

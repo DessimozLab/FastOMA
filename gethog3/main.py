@@ -49,6 +49,7 @@ if __name__ == '__main__':
     address_rhogs_folder_raw = working_folder + "rhogs_v2_raw/"
     address_rhogs_folder_filt = working_folder + "rhogs_v2_" + name + "/"
     pickle_folder = working_folder + "pickle_"+name+"/"
+    print(pickle_folder)
     gene_trees_folder = "no_write_tree_no"  #  working_folder+"genetree_"+name+"/"
     output_xml_name = "out_xml__"+name+"_.xml"
 
@@ -115,10 +116,10 @@ if __name__ == '__main__':
         if not os.path.exists(pickle_folder):
             os.mkdir(pickle_folder)
 
-        rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder_filt)
-        logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list)) + ".")
+        rhogid_num_list_raw = _utils.list_rhog_fastas(address_rhogs_folder_filt)
+        logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list_raw)) + ".")
 
-        rhogid_num_list_raw = rhogid_num_list[:10]  # 605945 # 560403 [570080] #
+        #rhogid_num_list_raw = rhogid_num_list_raw[:2]  # 605945 # 560403 [570080] #
         # rhog_num_input = sys.argv[1]; rhogid_num_list_raw = [int(rhog_num_input)]
 
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
@@ -134,14 +135,18 @@ if __name__ == '__main__':
             numr = int(file.split(".")[0].split("_")[1])
             list_done.append(numr)
 
-        #rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
-        rhogid_num_list = rhogid_num_list_raw[:10]
+        rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
+
+
+
         logger_hog.info("number of remained is " + str(len(rhogid_num_list)))
+        rhogid_num_list = rhogid_num_list[:3]
+        logger_hog.info("working on a list with number of " + str(len(rhogid_num_list)))
         if not rhogid_num_list:
             exit
 
 
-        dask_level = 2   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+        dask_level = 0   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 
         logger_hog.info("Dask level is "+str(dask_level))
         if dask_level != 0:
@@ -150,7 +155,10 @@ if __name__ == '__main__':
             # export DASK_DISTRIBUTED__SCHEDULER__EVENTS_CLEANUP_DELAY=10h
             print(dask.config.get("distributed.scheduler"))
             dask.config.set({'distributed.scheduler.events-cleanup-delay': "10h"})
-            print(dask.config.get("distributed.scheduler"))
+            dask.config.set({'distributed.logging.distributed': "debug"})
+            dask.config.set({'distributed.logging.client': "debug"})
+            dask.config.set({'distributed.logging.scheduler': "debug"})
+            print(dask.config.get("distributed"))
 
 
 
@@ -218,6 +226,10 @@ if __name__ == '__main__':
 
 """
 to do : 
-    -  
+
+to improve:
+    - dask=2: i don't need to write all hogs of different taxonomic level as  pickle
+    - dask=0: or  rhog<200,  i don't need to write all hogs of different taxonomic level as  pickle
+    
 """
 
