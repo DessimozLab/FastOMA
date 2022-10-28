@@ -119,7 +119,7 @@ if __name__ == '__main__':
         rhogid_num_list_raw = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list_raw)) + ".")
 
-        #rhogid_num_list_raw = rhogid_num_list_raw[:2]  # 605945 # 560403 [570080] #
+        rhogid_num_list_raw = [600465]  # rhogid_num_list_raw[:10] # 605945 # 560403 [570080] #
         # rhog_num_input = sys.argv[1]; rhogid_num_list_raw = [int(rhog_num_input)]
 
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
@@ -135,12 +135,13 @@ if __name__ == '__main__':
             numr = int(file.split(".")[0].split("_")[1])
             list_done.append(numr)
 
-        rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
 
+        # rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
+        rhogid_num_list = rhogid_num_list_raw
 
 
         logger_hog.info("number of remained is " + str(len(rhogid_num_list)))
-        rhogid_num_list = rhogid_num_list[:3]
+        rhogid_num_list = rhogid_num_list[:6]
         logger_hog.info("working on a list with number of " + str(len(rhogid_num_list)))
         if not rhogid_num_list:
             exit
