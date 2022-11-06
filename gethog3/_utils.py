@@ -16,7 +16,7 @@ logging.basicConfig(
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 logger_hog = logging.getLogger("hog")
-logger_hog.setLevel(logging.DEBUG)  # DEBUG WARN  INFO
+logger_hog.setLevel(logging.INFO)  # DEBUG WARN  INFO
 #
 # TRACE
 # DEBUG

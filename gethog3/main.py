@@ -47,7 +47,7 @@ if __name__ == '__main__':
     name = str(omamer_fscore_treshold_big_rhog)+"_"+str(treshold_big_rhog_szie)
 
     address_rhogs_folder_raw = working_folder + "rhogs_v2_raw/"
-    address_rhogs_folder_filt = working_folder + "rhogs_v2_" + name + "/"
+    address_rhogs_folder_filt = working_folder + "rhogs_v2_" + name + "_/"
     pickle_folder = working_folder + "pickle_"+name+"/"
     print(pickle_folder)
     gene_trees_folder = "no_write_tree_no"  #  working_folder+"genetree_"+name+"/"
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     # step = "find_rhog"  # to infer roothogs when you have the proteome & hogmap.
     # step = "find_subhog"     # to infer subhogs when roothogs are ready.
 
-    step = "find_subhog"
+    step = "find_rhog"
     # find_subhog  find_rhog
     # collect pickle file and write xml file
 
@@ -99,15 +99,26 @@ if __name__ == '__main__':
 
 
         rhogids_list, rhogids_prot_records_query = _utils_rhog.group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, query_prot_recs_filt)
-        rhogid_num_list_raw = _utils_rhog.write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder_raw, 2)  # min_rhog_size=1, max_rhog_size=1e100
+        #rhogid_num_list_raw = _utils_rhog.write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder_raw, 2)  # min_rhog_size=1, max_rhog_size=1e100
 
         rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  prots_hogmap_name_allspecies, omamer_fscore_treshold_big_rhog, treshold_big_rhog_szie)
 
-        rhogid_num_list_filt = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, address_rhogs_folder_filt, 2)  # min_rhog_size=1, max_rhog_size=1e100
+        #rhogid_num_list_filt = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, address_rhogs_folder_filt, 2)  # min_rhog_size=1, max_rhog_size=1e100
+
+        rhogid_num_list_filt1 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
+                                                      address_rhogs_folder_filt[:-1]+"_g2_s200/", 2, 200)
+
+        rhogid_num_list_filt2 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
+                                                      address_rhogs_folder_filt[:-1]+"_g201_s1000/", 201, 1000)
+        rhogid_num_list_filt2 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
+                                                      address_rhogs_folder_filt[:-1]+"_g1001_s6000/", 1001, 6000)
+        rhogid_num_list_filt2 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
+                                                      address_rhogs_folder_filt[:-1]+"_g6001_s11000/", 6001, 11000)
+        rhogid_num_list_filt2 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
+                                                      address_rhogs_folder_filt[:-1]+"_g11001/", 11001)
 
 
-       #step = "find_subhog"
-
+        #step = "find_subhog"
 
     if step == "find_subhog":
 
@@ -119,7 +130,7 @@ if __name__ == '__main__':
         rhogid_num_list_raw = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list_raw)) + ".")
 
-        rhogid_num_list_raw = [600465]  # rhogid_num_list_raw[:10] # 605945 # 560403 [570080] #
+        rhogid_num_list_raw = [572180] # rhogid_num_list_raw # 605945 # 560403 [570080] #
         # rhog_num_input = sys.argv[1]; rhogid_num_list_raw = [int(rhog_num_input)]
 
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
@@ -135,13 +146,15 @@ if __name__ == '__main__':
             numr = int(file.split(".")[0].split("_")[1])
             list_done.append(numr)
 
+        # rhogid_num_list = rhogid_num_list_raw
+        rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
 
-        # rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
-        rhogid_num_list = rhogid_num_list_raw
 
 
         logger_hog.info("number of remained is " + str(len(rhogid_num_list)))
-        rhogid_num_list = rhogid_num_list[:6]
+        rhogid_num_list = rhogid_num_list[:5]
+
+        # print(rhogid_num_list[:4])
         logger_hog.info("working on a list with number of " + str(len(rhogid_num_list)))
         if not rhogid_num_list:
             exit
@@ -154,7 +167,7 @@ if __name__ == '__main__':
             from _dask_env import client_dask
             import dask.distributed
             # export DASK_DISTRIBUTED__SCHEDULER__EVENTS_CLEANUP_DELAY=10h
-            print(dask.config.get("distributed.scheduler"))
+            #print(dask.config.get("distributed.scheduler"))
             dask.config.set({'distributed.scheduler.events-cleanup-delay': "10h"})
             dask.config.set({'distributed.logging.distributed': "debug"})
             dask.config.set({'distributed.logging.client': "debug"})
@@ -228,9 +241,25 @@ if __name__ == '__main__':
 """
 to do : 
 
+
+run mani again
+- double check 
+
+    elif (dask_level == 2 or dask_level == 3): # 200
+
+
+    if len(rhog_i) > 20000 and (dask_level == 2 or dask_level == 3): # 200
+        # dask_future_taxon = True
+        logger_hog.
+
+
+
 to improve:
     - dask=2: i don't need to write all hogs of different taxonomic level as  pickle
     - dask=0: or  rhog<200,  i don't need to write all hogs of different taxonomic level as  pickle
+    
+    - how decide  subtree 
+    if len(species_leaves_names) <= 10:
     
 """
 

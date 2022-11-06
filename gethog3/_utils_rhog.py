@@ -83,11 +83,11 @@ def add_species_name_gene_id(query_prot_recs, query_species_names, gene_id_pickl
         for query_prot_idx, query_prot_record in enumerate(query_prot_records):
             gene_idx_integer = gene_counter + query_prot_idx
             query_prot_name = query_prot_record.id
-            query_prot_record_id = query_prot_record.id
+            # query_prot_record_id = query_prot_record.id
             if len(query_prot_name) > 230:
                 logger_hog.info("We are truncating the prot name as it may be problamatic for mafft, " + str(query_prot_name))
                 query_prot_name = query_prot_name[:230]
-            query_prot_record.id += "||"+query_species_name+"||"+str(gene_idx_integer)
+            query_prot_record.id = query_prot_name + "||"+query_species_name+"||"+str(gene_idx_integer)
             gene_id_name[query_species_name].append((gene_idx_integer, query_prot_name))
     # this is used to creat the first part of xml file, gene name and
     with open(gene_id_pickle_file, 'wb') as handle:
@@ -256,7 +256,8 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
             rhogid_prot_record_query_filt = []
             for i in range(len(rhogid_prot_record_query)):
                 prot_bio_seq = rhogid_prot_record_query[i]
-                prot_name, species_name, prot_idx_xml = prot_bio_seq.id.split("||")
+                prot_name_trunc, species_name, prot_idx_xml = prot_bio_seq.id.split("||")
+                prot_name = prot_bio_seq.name    # .id is the truncated one but .name is full
                 specis_idx = query_species_names.index(species_name)
                 prot_list = prots_hogmap_name_allspecies[specis_idx]
                 prot_idx = prot_list.index(prot_name)
