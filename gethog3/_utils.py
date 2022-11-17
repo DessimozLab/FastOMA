@@ -65,7 +65,14 @@ def read_species_tree(species_tree_address):
                 node_species_tree.name = temp1.get_code()
         # print(len(species_tree)); print(species_tree)
     elif format_tree == "nwk":
-        species_tree = Tree(species_tree_address)
+        try:
+            species_tree = Tree(species_tree_address)
+        except:
+            try:
+                species_tree = Tree(species_tree_address, format=1)
+            except:
+                print("format of species tree is not known")
+
     else:
         print("for now we accept phyloxml or nwk format for input species tree.")
 
@@ -100,23 +107,23 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
 
     species_tree.prune(species_names_uniqe, preserve_branch_length=True)
     # species_tree.write()
-    counter_internal = 0
-    for node in species_tree.traverse(strategy="postorder"):
-        node_name = node.name
-        num_leaves_no_name = 0
-        if len(node_name) < 1:
-            if node.is_leaf():
-                node.name = "leaf_" + str(num_leaves_no_name)
-            else:
-                node_children = node.children
-                # list_children_names = [str(node_child.name) for node_child in node_children]
-                # node.name = '_'.join(list_children_names)
-
-                # ?? to imrpove, if the species tree has internal node name, keep it,
-                # then checn condition in  _inferhog.py, where logger_hog.info("Finding hogs for rhogid_num: "+str(rh
-
-                node.name = "internal_" + str(counter_internal)+"_rhg"+str(rhogid_num)
-                counter_internal += 1
+    # counter_internal = 0
+    # for node in species_tree.traverse(strategy="postorder"):
+    #     node_name = node.name
+    #     num_leaves_no_name = 0
+    #     if len(node_name) < 1:
+    #         if node.is_leaf():
+    #             node.name = "leaf_" + str(num_leaves_no_name)
+    #         else:
+    #             node_children = node.children
+    #             # list_children_names = [str(node_child.name) for node_child in node_children]
+    #             # node.name = '_'.join(list_children_names)
+    #
+    #             # ?? to imrpove, if the species tree has internal node name, keep it,
+    #             # then checn condition in  _inferhog.py, where logger_hog.info("Finding hogs for rhogid_num: "+str(rh
+    #
+    #             node.name = "internal_" + str(counter_internal)  #  +"_rhg"+str(rhogid_num)  #  for debuging
+    #             counter_internal += 1
     # print("Working on the following species tree.")
     # print(species_tree)
     species_tree.write()

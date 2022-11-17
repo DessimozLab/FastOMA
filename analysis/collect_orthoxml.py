@@ -5,16 +5,16 @@ from os import listdir
 from xml.dom import minidom
 
 print("started ")
-working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/bird_hog"
+working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"
 # gene_trees_folder = ""  # working_folder + "/gene_trees_/"
 # check gene_trees_folder exist otherwise mkdir this
 
 #address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
 #species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-pickle_folder = working_folder + "/pickle_0.5_3000/"
+pickle_folder = working_folder + "/pickl_rhg_0.5_3000/"
 # add warning when pickle folder is not empty
-output_xml_name = "pickle_0.5_3000_.xml"
-gene_id_pickle_file = working_folder + "gene_id_v1_bird.pickle"
+output_xml_name = "pickle_0.5_3000_6Nov_9pm.xml"
+gene_id_pickle_file = working_folder + "gene_id_v2_bird.pickle"
 
 
 
@@ -35,7 +35,7 @@ for query_species_name, list_prots in gene_id_name.items():
     genes_xml = ET.SubElement(database_xml, "genes")
 
     for (gene_idx_integer, query_prot_name) in list_prots:
-        query_prot_name_pure = query_prot_name.split("||")[0].strip().split("|")[1]
+        query_prot_name_pure = query_prot_name # .split("||")[0].strip().split("|")[1]
         gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
 
 print("gene_xml created ")

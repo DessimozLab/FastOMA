@@ -12,6 +12,9 @@ import os
 
 
 """
+
+input species tree should have internal node name
+
 Hard coded parameters
 
     max_num_prot = int(1e9)
@@ -38,20 +41,21 @@ if __name__ == '__main__':
     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
 
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/" #fastget/qfo2/"
-    gene_id_pickle_file = working_folder + "gene_id_v2_bird.pickle"
-    species_tree_address = working_folder + "concatanted_363.fasta.contree_edited.nwk"
+    gene_id_pickle_file = working_folder + "gene_id_v2b_bird.pickle"
+    species_tree_address = working_folder + "birds370_iqtree_treefile_95bootstrap_internal_name_6let_16Nov_.nwk"
+                           #"concatanted_363.fasta.contree_edited.nwk"
 
     omamer_fscore_treshold_big_rhog = 0.5  # 0.2
     treshold_big_rhog_szie = 3000
 
     name = str(omamer_fscore_treshold_big_rhog)+"_"+str(treshold_big_rhog_szie)
 
-    address_rhogs_folder_raw = working_folder + "rhogs_v2_raw/"
-    address_rhogs_folder_filt = working_folder + "rhogs_v2_" + name + "_/"
-    pickle_folder = working_folder + "pickle_"+name+"/"
+    address_rhogs_folder_raw = working_folder + "rhogs_v3_raw/"
+    address_rhogs_folder_filt = working_folder + "rhogs_v3_" + name + "/"
+    pickle_folder = working_folder + "pickle_b_"+name+"/"
     print(pickle_folder)
     gene_trees_folder = "no_write_tree_no"  #  working_folder+"genetree_"+name+"/"
-    output_xml_name = "out_xml__"+name+"_.xml"
+    output_xml_name = "out_xml_b_"+name+"_.xml"
 
 
     # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
@@ -60,7 +64,7 @@ if __name__ == '__main__':
     # step = "find_rhog"  # to infer roothogs when you have the proteome & hogmap.
     # step = "find_subhog"     # to infer subhogs when roothogs are ready.
 
-    step = "find_rhog"
+    step = "find_subhog"
     # find_subhog  find_rhog
     # collect pickle file and write xml file
 
@@ -106,16 +110,9 @@ if __name__ == '__main__':
         #rhogid_num_list_filt = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, address_rhogs_folder_filt, 2)  # min_rhog_size=1, max_rhog_size=1e100
 
         rhogid_num_list_filt1 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
-                                                      address_rhogs_folder_filt[:-1]+"_g2_s200/", 2, 200)
+                                                      address_rhogs_folder_filt[:-1]+"_g2/", 2)
 
-        rhogid_num_list_filt2 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
-                                                      address_rhogs_folder_filt[:-1]+"_g201_s1000/", 201, 1000)
-        rhogid_num_list_filt2 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
-                                                      address_rhogs_folder_filt[:-1]+"_g1001_s6000/", 1001, 6000)
-        rhogid_num_list_filt2 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
-                                                      address_rhogs_folder_filt[:-1]+"_g6001_s11000/", 6001, 11000)
-        rhogid_num_list_filt2 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
-                                                      address_rhogs_folder_filt[:-1]+"_g11001/", 11001)
+
 
 
         #step = "find_subhog"
@@ -130,7 +127,8 @@ if __name__ == '__main__':
         rhogid_num_list_raw = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list_raw)) + ".")
 
-        rhogid_num_list_raw = [572180] # rhogid_num_list_raw # 605945 # 560403 [570080] #
+        rhogid_num_list_raw = [614128]  # rhogid_num_list_raw # 605945 # 560403 [570080] #
+        # 572180 big with 2k protss
         # rhog_num_input = sys.argv[1]; rhogid_num_list_raw = [int(rhog_num_input)]
 
         # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
@@ -242,6 +240,8 @@ if __name__ == '__main__':
 to do : 
 
 
+- as an argument differnt format of ete3 for reading species tree
+
 run mani again
 - double check 
 
@@ -255,11 +255,34 @@ run mani again
 
 
 to improve:
+
+
+-  use  uniq internal node naming, and save as nwk, code below
+
     - dask=2: i don't need to write all hogs of different taxonomic level as  pickle
     - dask=0: or  rhog<200,  i don't need to write all hogs of different taxonomic level as  pickle
     
     - how decide  subtree 
     if len(species_leaves_names) <= 10:
+    
+    
+    
+from ete3 import Tree 
+species_tree = Tree(nwk_path)
+counter_internal = 0
+for node in species_tree.traverse(strategy="postorder"):
+    node_name = node.name
+    num_leaves_no_name = 0
+    if len(node_name) < 1:
+        if node.is_leaf():
+            node.name = "leaf_" + str(num_leaves_no_name)
+        else:
+            node.name = "internal_" + str(counter_internal)
+            counter_internal += 1
+# print("Working on the following species tree.")
+# print(species_tree)
+species_tree.write(format=1, outfile=nwk_path+"_edit.nwk")
+
     
 """
 

@@ -326,7 +326,7 @@ def infer_hogs_this_level(sub_species_tree, recursive_4inputs):  # hogs_children
 
 
     #if len(node_species_tree.name.split("_")) > 1:
-    #if "internal" in node_species_tree.name:
+
     logger_hog.debug("Finding hogs for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
             node_species_tree.name)+"\n"+str(node_species_tree.write())+"\n")
 

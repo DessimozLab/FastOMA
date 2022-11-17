@@ -1,13 +1,64 @@
 
-import xml.etree.ElementTree as ET
-import dill as dill_pickle
-from os import listdir
-from xml.dom import minidom
-import os
+import pyham # pyham package for ham analysis
+import pandas as pd # pandas for dataframes
 
 
 
+working_folder="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"
+nwk_path = working_folder+"concatanted_363.fasta.contree_edited.nwk"
 
+tree_str = pyham.utils.get_newick_string(nwk_path, type="nwk")
+tree_str[:20]
+# Then you select your favorite orthoXML file
+orthoxml_path =  working_folder+ "pickle_0.5_3000_6Nov_.xml"
+# removing from tree internal node    <property name="TaxRange" value="internal_247_rhg602692"/>
+#
+# with open(orthoxml_path + "_ed.xml", 'w') as orthoxml_file_edited:
+#     with open(orthoxml_path, 'r') as orthoxml_file:
+#         for val in orthoxml_file:
+#             val_edited = val
+#             if val.strip().startswith("<property name=\"TaxRange\" value="):
+#                 val_edited = "_".join(val.split("_")[:2]) + "\"/>\n"
+#
+#             orthoxml_file_edited.write(val_edited)
+#
+# from ete3 import Tree
+# species_tree = Tree(nwk_path)
+# counter_internal = 0
+# for node in species_tree.traverse(strategy="postorder"):
+#     node_name = node.name
+#     num_leaves_no_name = 0
+#     if len(node_name) < 1:
+#         if node.is_leaf():
+#             node.name = "leaf_" + str(num_leaves_no_name)
+#         else:
+#             node.name = "internal_" + str(counter_internal)
+#             counter_internal += 1
+# # print("Working on the following species tree.")
+# # print(species_tree)
+# species_tree.set_outgroup("SPHPU_")
+#
+# species_tree.write(format=0, outfile=nwk_path+"_edit.nwk")
+
+
+
+ham_analysis = pyham.Ham(nwk_path+"_edit.nwk", orthoxml_path+"_ed.xml", tree_format='newick') # , use_internal_name=False
+
+
+a=2
+
+print(a)
+
+
+# import xml.etree.ElementTree as ET
+# import dill as dill_pickle
+# from os import listdir
+# from xml.dom import minidom
+# import os
+#
+#
+#
+#
 
 
 
