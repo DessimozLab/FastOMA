@@ -1,14 +1,12 @@
+
 import pyoma.browser.db as db
-from datetime import datetime
 from Bio import SeqIO
-# import dill as dill_pickle
 import pickle
 from os import listdir
 import os
 
-
 from _utils import logger_hog
-
+import _config
 
 
 def parse_oma_db(oma_database_address):
@@ -24,26 +22,22 @@ def parse_oma_db(oma_database_address):
     return oma_db, list_oma_species
 
 
-def parse_proteome(list_oma_species, working_folder):
+def parse_proteome(list_oma_species):
     """
     orthoxml_to_newick.py function for parsing fasta files of proteins located in /omamer_search/proteome/
     using Bio.SeqIO.parse
     Each fasta file is for one species.  The file name is the species name.
     output: query_species_names: list of species name, query_prot_recs: list of Biopython record of species
     """
-    project_files = listdir(working_folder + "/omamer_search/proteome/")
+    project_files = listdir(_config.working_folder_root + "/omamer_search/proteome/")
     query_species_names = []
     for file in project_files:
         if file.split(".")[-1] == "fa" or file.split(".")[-1] == "fasta":
             file_name_split = file.split(".")[:-1]
             query_species_names.append('.'.join(file_name_split))
-
-    # we may assert existence of query_species_name+".fa/hogmap"
     query_prot_recs = []
-    # for query_species_names_idx in range(len(query_species_names)):
-    #     query_species_name = query_species_names[query_species_names_idx]
     for query_species_names_idx, query_species_name in enumerate(query_species_names):
-        prot_address = working_folder + "omamer_search/proteome/" + query_species_name + ".fa"
+        prot_address = _config.working_folder_root + "omamer_search/proteome/" + query_species_name + ".fa"
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
         query_prot_recs.append(prots_record)
 
@@ -51,9 +45,7 @@ def parse_proteome(list_oma_species, working_folder):
     logger_hog.info("The are "+str(query_species_num)+" species in the proteome folder.")
     # for development
     for species_i in range(query_species_num):
-        # len_prot_record_i = len(query_prot_recs[species_i])
         species_name_i = query_species_names[species_i]
-        # print(species_name_i,len_prot_record_i)
         if species_name_i in list_oma_species:
             logger_hog.error("The species"+species_name_i+" already exists in the oma database, remove/rename it first.")
             exit()
@@ -65,16 +57,16 @@ def parse_proteome(list_oma_species, working_folder):
     return query_species_names, query_prot_recs
 
 
-def add_species_name_gene_id(query_prot_recs, query_species_names, gene_id_pickle_file):
+def add_species_name_gene_id(query_prot_recs, query_species_names, ):
     """
     adding the name of species to each protein record
         - based on file name
     adding gene id number, integer imposed by xml format
     output: updated version of input
     """
+    gene_id_pickle_file = _config.working_folder + "gene_id_dic_xml.pickle"
     max_num_prot = int(1e9)
     max_num_prot_per_sp = int(1e6)
-
     gene_id_name = {}
     for query_species_idx, query_species_name in enumerate(query_species_names):
         query_prot_records = query_prot_recs[query_species_idx]
@@ -83,22 +75,19 @@ def add_species_name_gene_id(query_prot_recs, query_species_names, gene_id_pickl
         for query_prot_idx, query_prot_record in enumerate(query_prot_records):
             gene_idx_integer = gene_counter + query_prot_idx
             query_prot_name = query_prot_record.id
-            # query_prot_record_id = query_prot_record.id
             if len(query_prot_name) > 230:
                 logger_hog.info("We are truncating the prot name as it may be problamatic for mafft, " + str(query_prot_name))
                 query_prot_name = query_prot_name[:230]
             query_prot_record.id = query_prot_name + "||"+query_species_name+"||"+str(gene_idx_integer)
             gene_id_name[query_species_name].append((gene_idx_integer, query_prot_name))
-    # this is used to creat the first part of xml file, gene name and
+    # this is used to create the first part of xml file.
     with open(gene_id_pickle_file, 'wb') as handle:
-        # dill_pickle.dump(gene_id_name, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
         pickle.dump(gene_id_name, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return query_prot_recs
 
 
-
-def parse_hogmap_omamer(query_species_names, working_folder):
+def parse_hogmap_omamer(query_species_names):
     """
     orthoxml_to_newick.py function for parsing output of omamer (hogmap files) located in /omamer_search/hogmap/
     Each hogmap file correspond to one fasta file of species, with the same name.
@@ -119,7 +108,7 @@ def parse_hogmap_omamer(query_species_names, working_folder):
     prots_hogmap_seqlen_allspecies = []
     prots_hogmap_subfmedseqlen_allspecies = []
     for query_species_name in query_species_names:
-        omamer_output_address = working_folder + "omamer_search/hogmap/" + query_species_name + ".hogmap"
+        omamer_output_address = _config.working_folder_root + "omamer_search/hogmap/" + query_species_name + ".hogmap"
         omamer_output_file = open(omamer_output_address, 'r')
         prots_hogmap_name = []
         prots_hogmap_hogid = []
@@ -131,11 +120,10 @@ def parse_hogmap_omamer(query_species_names, working_folder):
             line_strip = line.strip()
             if not line_strip.startswith('qs'):
                 line_split = line_strip.split("\t")
-                # if line_split[1]!='na':
                 prots_hogmap_name.append(line_split[0])
                 prots_hogmap_hogid.append(line_split[1])
                 prots_hogmap_overlp.append(line_split[2])
-                prots_hogmap_fscore.append(line_split[3])  # subfamily
+                prots_hogmap_fscore.append(line_split[3])
                 prots_hogmap_seqlen.append(line_split[5])
                 prots_hogmap_subfmedseqlen.append(line_split[6])
         prots_hogmap_name_allspecies.append(prots_hogmap_name)
@@ -163,29 +151,23 @@ def filter_prot_mapped(query_species_names, query_prot_recs, query_prot_names_sp
     """
     logger_hog.info("Filtering proteins started.")
     query_prot_recs_filt = []
-
+    logger_hog.error("warning: we are reporting protes whose names are truncated. Becuase it is not in hogmap.")
     for species_idx, query_species_name in enumerate(query_species_names):  # from fasta file
         query_prot_recs_i = query_prot_recs[species_idx]
-        # we added the species name and the as the fasta record usign ||
-        # but this is not done in the hog map
-        # I beliEve .split("||")[0] solve this.
-        query_prot_ids_records = [record.id.split("||")[2] for record in query_prot_recs_i]
-
-        ## ?? how about for truncatead
-
-
+        # we added the species name and the as the fasta record using || but this is not done in the hog map
+        # record.id = 'tr|A0A024FLK4|A0A024FLK4_ORYSJ' || ORYSJ || 1000000
+        query_prot_names_records = [record.id.split("||")[0] for record in query_prot_recs_i]
         # from hogmap file without proteins that are not mapped on any hogs
         query_prot_names_species_i = query_prot_names_species_mapped[species_idx]
         if len(query_prot_names_species_i) != len(query_prot_recs_i):
             query_prot_records_filterd_sp = []
             for query_prot_name in query_prot_names_species_i:
-                if query_prot_name in query_prot_ids_records:
-                    prot_record_idx = query_prot_ids_records.index(query_prot_name)
+                if query_prot_name in query_prot_names_records:
+                    prot_record_idx = query_prot_names_records.index(query_prot_name)
                     prot_record = query_prot_recs_i[prot_record_idx]
                     query_prot_records_filterd_sp.append(prot_record)
                 else:
                     logger_hog.error("Error 1349 " + query_species_name + " " + query_prot_name+". This shouldn't happen many times.")
-
             logger_hog.info("For the species"+query_species_name+", few proteins were ignored by omamer, probably cause prot length .")
             logger_hog.info("Before filtering: in hogmap "+str(len(query_prot_names_species_i))+", in proteome "+str(len(query_prot_recs_i)))
             logger_hog.info("After filtering: in hogmap "+str(len(query_prot_names_species_i))+" in proteome "+str(len(query_prot_records_filterd_sp)))
@@ -213,16 +195,12 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, que
     # gathering name of prots from all species,  group them based on rHOG that they mapped on
     rhogid_prot_idx_dic = {}
     for species_idx in range(len(query_species_names)):
-        # species_name = query_species_names[species_idx]
         prots_hogmap_rhogid = prots_hogmap_rhogid_allspecies[species_idx]
-        # for prots_hogmap_idx in range(len(prots_hogmap_rhogid)):
-        #     prot_hogmap_rhogid = prots_hogmap_rhogid[prots_hogmap_idx]
         for prots_hogmap_idx, prot_hogmap_rhogid in enumerate(prots_hogmap_rhogid):
             if prot_hogmap_rhogid in rhogid_prot_idx_dic:
                 rhogid_prot_idx_dic[prot_hogmap_rhogid].append((species_idx, prots_hogmap_idx))
             else:
                 rhogid_prot_idx_dic[prot_hogmap_rhogid] = [(species_idx, prots_hogmap_idx)]
-    # print(len(rhogid_prot_idx_dic)) #  rhogid_prot_idx_dic['HOG:0018405']
     # extracting prot records for each rootHOG
     rhogids_prot_records_query = []
     rhogids_list = []
@@ -241,18 +219,21 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, que
     return rhogids_list, rhogids_prot_records_query
 
 
-def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  prots_hogmap_name_allspecies, omamer_fscore_treshold_big_rhog, treshold_big_rhog_szie):
+def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  prots_hogmap_name_allspecies):
+    """
+    Some of the rhogs are very big. We filter those rhogs where many proteins several tousands are mapped on.
+    The treshold is set in the _config.py file.
+    """
 
-    logger_hog.info("Filtering rhogs with fscore treshold "+str(omamer_fscore_treshold_big_rhog)+"for rhogs size > "+str(treshold_big_rhog_szie) )
+    logger_hog.info("Filtering rhogs with fscore treshold "+str(_config.omamer_fscore_treshold_big_rhog)+"for rhogs size > "+str(_config.treshold_big_rhog_szie) )
     rhogids_prot_records_query_filt = []
     rhogids_list_filt = []
     for rhogid_idx, rhogid in enumerate(rhogids_list):
 
         rhogid_prot_record_query = rhogids_prot_records_query[rhogid_idx]
-        if len(rhogid_prot_record_query) < treshold_big_rhog_szie:
+        if len(rhogid_prot_record_query) < _config.treshold_big_rhog_szie:
             rhogid_prot_record_query_filt = rhogid_prot_record_query  # without change for small rhogs
         else:
-            #logger_hog.info("started omamer tresh on " + str(rhogid) + " idx " + str(rhogid_idx))
             rhogid_prot_record_query_filt = []
             for i in range(len(rhogid_prot_record_query)):
                 prot_bio_seq = rhogid_prot_record_query[i]
@@ -262,13 +243,13 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
                 prot_list = prots_hogmap_name_allspecies[specis_idx]
                 prot_idx = prot_list.index(prot_name)
                 fsore = float(prots_hogmap_fscore_allspecies[specis_idx][prot_idx])
-                if fsore > omamer_fscore_treshold_big_rhog:
+                if fsore > _config.omamer_fscore_treshold_big_rhog:
                     rhogid_prot_record_query_filt.append(prot_bio_seq)
-            # logger_hog.debug("finished omamer tresh on " + str(rhogid) + " idx " + str(rhogid_idx))
         if rhogid_prot_record_query_filt:  # at least one prot in the rhog
             rhogids_prot_records_query_filt.append(rhogid_prot_record_query_filt)
             rhogids_list_filt.append(rhogid)
     return rhogids_list_filt, rhogids_prot_records_query_filt
+
 
 def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, min_rhog_size=1, max_rhog_size=1e100):
     logger_hog.info("Writing Sequences of roothogs are fasta file in " + address_rhogs_folder)

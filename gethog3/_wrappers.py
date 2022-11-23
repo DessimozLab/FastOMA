@@ -1,11 +1,11 @@
 
-from datetime import datetime
 import zoo.wrappers.aligners.mafft as mafft
 import zoo.wrappers.treebuilders.fasttree as fasttree
-
 from _utils import logger_hog
-
 from Bio import SeqIO
+
+import _config
+
 
 def merge_msa(list_msas, gene_tree_file_addr):
     """
@@ -24,7 +24,7 @@ def merge_msa(list_msas, gene_tree_file_addr):
     merged = wrapper_mafft_merge()
     #logger_hog.info \
     #    (str(len(list_msas)) + " msas are merged with length of "+ str(len(merged)) + "  " + str (len(merged[0])))
-    if "no_write_tree_no" not in gene_tree_file_addr:
+    if _config.gene_trees_write:
         SeqIO.write(merged, gene_tree_file_addr + "msa.fa", "fasta")
 
     return merged
@@ -52,8 +52,7 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     # ??? hashlib.md5(original_name).hexdig..it()
 
 
-    # as the debug==True
-    if "no_write_tree_no" not in gene_tree_file_addr:
+    if _config.gene_trees_write:
         file_gene_tree = open(gene_tree_file_addr, "w")
         file_gene_tree.write(tree_nwk)
         file_gene_tree.write(";\n")

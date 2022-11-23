@@ -7,6 +7,8 @@ from _utils import logger_hog
 import _utils_rhog
 from os import listdir
 import os
+
+import _config
 # from distributed import get_client
 # from dask.distributed import rejoin, secede
 
@@ -35,144 +37,95 @@ Hard coded parameters
 """
 
 
-
-
 if __name__ == '__main__':
-    oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
 
-    working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/" #fastget/qfo2/"
-    gene_id_pickle_file = working_folder + "gene_id_v2b_bird.pickle"
-    species_tree_address = working_folder + "birds370_iqtree_treefile_95bootstrap_internal_name_6let_16Nov_.nwk"
-                           #"concatanted_363.fasta.contree_edited.nwk"
+    # step = "find_rhog"   #  to infer roothogs when you have the proteome & hogmap.
+    # step = "find_subhog" # to infer subhogs when roothogs are ready.
 
-    omamer_fscore_treshold_big_rhog = 0.5  # 0.2
-    treshold_big_rhog_szie = 3000
-
-    name = str(omamer_fscore_treshold_big_rhog)+"_"+str(treshold_big_rhog_szie)
-
-    address_rhogs_folder_raw = working_folder + "rhogs_v3_raw/"
-    address_rhogs_folder_filt = working_folder + "rhogs_v3_" + name + "/"
-    pickle_folder = working_folder + "pickle_b_"+name+"/"
-    print(pickle_folder)
-    gene_trees_folder = "no_write_tree_no"  #  working_folder+"genetree_"+name+"/"
-    output_xml_name = "out_xml_b_"+name+"_.xml"
-
-
-    # format_prot_name = 1  # 0:bird(TYTALB_R04643)  1:qfo(tr|E3JPS4|E3JPS4_PUCGT)
-    file_folders = (address_rhogs_folder_filt, gene_trees_folder, pickle_folder, species_tree_address)
-
-    # step = "find_rhog"  # to infer roothogs when you have the proteome & hogmap.
-    # step = "find_subhog"     # to infer subhogs when roothogs are ready.
-
-    step = "find_subhog"
-    # find_subhog  find_rhog
-    # collect pickle file and write xml file
+    step = "find_subhog"  # find_subhog  find_rhog
 
     if step == "find_rhog":
 
         """
-        Structure of folders:
+        Structure of folders in working_folder
         Put proteomes of species as fasta files in /omamer_search/proteome/
         Run omamer and put the output of omamer in /omamer_search/hogmap/
-        oma_database_address= the address to the oma databases
+        oma_database_address = the address to the oma databases
         hog and HOG are used interchangeably here. 
         rHOG=rootHOG.  A subHOG itself is orthoxml_to_newick.py HOG.
         """
 
+        if not os.path.exists(_config.working_folder):
+            os.mkdir(_config.working_folder)
+
         # working_folder+"omamer_database/oma_path/OmaServer.h5"
-        logger_hog.info("rHOG inferece has started. The oma database address is in "+oma_database_address)
-        (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
-        (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
-        query_prot_recs = _utils_rhog.add_species_name_gene_id(query_prot_recs,
-                                                               query_species_names, gene_id_pickle_file)
-        hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
+        logger_hog.info("rHOG inferece has started. The oma database address is in "+_config.oma_database_address)
+        (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(_config.oma_database_address)
+        (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species)
+        query_prot_recs = _utils_rhog.add_species_name_gene_id(query_prot_recs, query_species_names)
+        hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names)
 
-        # (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_fscore_allspecies,
-        # prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
-
-        (prots_hogmap_name_allspecies, prots_hogmap_hogid_allspecies, prots_hogmap_overlp_allspecies,
+        (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_overlp_allspecies,
         prots_hogmap_fscore_allspecies, prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
 
-        query_prot_names_species_mapped = prots_hogmap_name_allspecies # double check ?
-
-        query_prot_recs_filt = _utils_rhog.filter_prot_mapped(query_species_names,
-                                                              query_prot_recs,
+        query_prot_recs_filt = _utils_rhog.filter_prot_mapped(query_species_names, query_prot_recs,
                                                               query_prot_names_species_mapped)
 
         logger_hog.info("size of query_prot_recs_filt is "+str(len(query_prot_recs_filt))+" "+str(len(query_prot_recs_filt[0])))
 
-
         rhogids_list, rhogids_prot_records_query = _utils_rhog.group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, query_prot_recs_filt)
-        #rhogid_num_list_raw = _utils_rhog.write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder_raw, 2)  # min_rhog_size=1, max_rhog_size=1e100
+        # rhogid_num_list_raw=utils_rhog.write_rhog(rhogids_list,rhogids_prot_records_query, _config.working_folder+"rhogs/". "rhogs_raw",2)
 
-        rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  prots_hogmap_name_allspecies, omamer_fscore_treshold_big_rhog, treshold_big_rhog_szie)
-
-        #rhogid_num_list_filt = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, address_rhogs_folder_filt, 2)  # min_rhog_size=1, max_rhog_size=1e100
+        rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  query_prot_names_species_mapped)
 
         rhogid_num_list_filt1 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
-                                                      address_rhogs_folder_filt[:-1]+"_g2/", 2)
-
-
+                                                      _config.working_folder+"rhogs/", 2)  # min_rhog_size, max_rhog_size
 
 
         #step = "find_subhog"
 
     if step == "find_subhog":
 
-        if not os.path.exists(gene_trees_folder):
-            os.mkdir(gene_trees_folder)
+        pickle_folder = _config.working_folder + "pickles_rhog"
+        if _config.gene_trees_write:
+            gene_trees_folder = _config.working_folder + "genetrees/"
+            if not os.path.exists(gene_trees_folder):
+                os.mkdir(gene_trees_folder)
         if not os.path.exists(pickle_folder):
             os.mkdir(pickle_folder)
 
+        address_rhogs_folder_filt = _config.working_folder + "rhogs/"
         rhogid_num_list_raw = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list_raw)) + ".")
 
-        rhogid_num_list_raw = [614128]  # rhogid_num_list_raw # 605945 # 560403 [570080] #
-        # 572180 big with 2k protss
-        # rhog_num_input = sys.argv[1]; rhogid_num_list_raw = [int(rhog_num_input)]
-
-        # small size [614128, 599704,839732, 581211, 594354, 606190, 581722]
-        # 613986 337 prots
-        # 0589674 56 prots
-        # [606409, 575384, 834730, 606033, 618436, 620754, 614327, 613986  ] #    # rhogid_num_list[:10] # [613860]  # , 618939, 615514, 834209 ]  #rhogid_num_list
-        # itermediate size 834261 614102
-        # very big 811161 811184
         print("***** pickle_folder ", pickle_folder)
         list_done_raw = listdir(pickle_folder)
-        list_done = []
+        list_done_rhogid = []
         for file in list_done_raw:
             numr = int(file.split(".")[0].split("_")[1])
-            list_done.append(numr)
+            list_done_rhogid.append(numr)
 
         # rhogid_num_list = rhogid_num_list_raw
-        rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done]
-
-
+        rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done_rhogid]
 
         logger_hog.info("number of remained is " + str(len(rhogid_num_list)))
-        rhogid_num_list = rhogid_num_list[:5]
 
+        rhogid_num_list = rhogid_num_list[:5]
         # print(rhogid_num_list[:4])
         logger_hog.info("working on a list with number of " + str(len(rhogid_num_list)))
         if not rhogid_num_list:
-            exit
+            exit()
 
 
-        dask_level = 0   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
-
-        logger_hog.info("Dask level is "+str(dask_level))
-        if dask_level != 0:
+        logger_hog.info("Dask level is "+str(_config.dask_level))
+        if _config.dask_level != 0:
             from _dask_env import client_dask
             import dask.distributed
-            # export DASK_DISTRIBUTED__SCHEDULER__EVENTS_CLEANUP_DELAY=10h
-            #print(dask.config.get("distributed.scheduler"))
             dask.config.set({'distributed.scheduler.events-cleanup-delay': "10h"})
             dask.config.set({'distributed.logging.distributed': "debug"})
             dask.config.set({'distributed.logging.client': "debug"})
             dask.config.set({'distributed.logging.scheduler': "debug"})
-            print(dask.config.get("distributed"))
-
-
+            #print(dask.config.get("distributed"))
 
         logger_hog.info("Few of rhog num ids are "+" ".join([str(i) for i in  rhogid_num_list[:7]]))
         number_roothog = len(rhogid_num_list)
@@ -189,49 +142,38 @@ if __name__ == '__main__':
                 rhogid_num_list_portion = rhogid_num_list[list_idx * num_per_parralel:(list_idx + 1) * num_per_parralel]
             rhogid_batch_list.append(rhogid_num_list_portion)
 
-        if dask_level == 1 or dask_level == 2:
+        if _config.dask_level == 1 or _config.dask_level == 2:
             dask_out_list = []
         dask_out_list = []
         hogs_rhogs_xml_all =[]
         for rhogid_batch_idx in range(len(rhogid_batch_list)):
             rhogid_batch = rhogid_batch_list[rhogid_batch_idx]
-            # logger_hog.info("\n *==* \nNumber of working root hog in the batchid:"+str(rhogid_batch_idx)+" is " +
-            # str(len(rhogid_batch)) + ".")
-
-            if dask_level == 1 or dask_level == 2:
+            if _config.dask_level == 1 or _config.dask_level == 2:
                 # vars_input_future = client_dask.scatter(vars_input)
                 # client_dask = get_client()
-
-                dask_out = client_dask.submit(_inferhog.read_infer_xml_rhogs_batch, rhogid_batch, file_folders, dask_level)
+                dask_out = client_dask.submit(_inferhog.read_infer_xml_rhogs_batch, rhogid_batch)
                 dask_out_list.append(dask_out)
-
             else:
-                hogs_rhog_xml_batch = _inferhog.read_infer_xml_rhogs_batch(rhogid_batch, file_folders, dask_level)
+                hogs_rhog_xml_batch = _inferhog.read_infer_xml_rhogs_batch(rhogid_batch)
                 # hogs_rhog_xml_batch is orthoxml_to_newick.py list of hog object.
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
-                # hogs_rhogs_xml_all is orthoxml_to_newick.py list of hog object.
 
-
-
-
-        if dask_level == 1 or dask_level == 2:
+        if _config.dask_level == 1 or _config.dask_level == 2:
             logger_hog.info("start gathering dask")
             for dask_out in dask_out_list:
                 hogs_rhog_xml_batch = dask_out.result()
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
 
-
-
-            logger_hog.info("dask out gathered")
+            logger_hog.info("Dask out gathered")
             client_dask.close()
             client_dask.shutdown()
-            logger_hog.info("client dask closed and shut down.")
+            logger_hog.info("Client dask closed and shut down.")
 
         # step = "collect"
 
     if step == "collect":
         logger_hog.info("start writing xml")
-        _inferhog.collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pickle_file)
+        _inferhog.collect_write_xml(_config.working_folder)
         logger_hog.info("writing xml finished")
 
     logger_hog.info("main py is finished !.")

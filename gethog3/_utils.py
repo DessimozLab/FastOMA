@@ -2,15 +2,15 @@
 
 from os import listdir
 from Bio import SeqIO
-# import xml.etree.ElementTree as ET
 from ete3 import Phyloxml
 from ete3 import Tree
-
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq  # , UnknownSeq
-
 import logging
-#logging.basicConfig()
+
+
+import _config
+
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
     level=logging.INFO,
@@ -98,7 +98,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
 
         if species_name.endswith("_") and not bird_dataset:
            species_name = prot_id[1][:-1]
-        if species_name == 'RAT': species_name = "RATNO"
+        if species_name == 'RAT_': species_name = "RATNO_"
         # gene_id = prot_id[2]
         species_names_rhog.append(species_name)
         prot_names_rhog.append(prot_name)
@@ -172,7 +172,7 @@ def lable_sd_internal_nodes(tree_out):
 
 
 
-def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr= "no_write_tree_no"):
+def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr):
 
     ratio_col_all = []
     length_record= len(msa[0])
@@ -195,7 +195,8 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr= "no_write_tree
         record_seq_edited  = ''.join([record_seq[i] for i in keep_cols  ])
         record_edited= SeqRecord(Seq(record_seq_edited), record.id, '', '')
         msa_filtered_col.append(record_edited)
-    if "no_write_tree_no" not in gene_tree_file_addr:
+
+    if _config.gene_trees_write:
         out_name_msa=gene_tree_file_addr+"filtered_"+"_col_"+str(tresh_ratio_gap_col)+".msa.fa"
         handle_msa_fasta = open(out_name_msa,"w")
         SeqIO.write(msa_filtered_col, handle_msa_fasta,"fasta")
@@ -204,7 +205,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr= "no_write_tree
     return msa_filtered_col
 
 
-def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr= "no_write_tree_no"):
+def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr):
     msa_filtered_row = []
     ratio_records=[]
     for record in msa:
@@ -215,9 +216,9 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr= "no_write_tree
         ratio_records.append(round(ratio_record_nongap, 3))
         if ratio_record_nongap > tresh_ratio_gap_row:
             msa_filtered_row.append(record)
-    if "no_write_tree_no" not in gene_tree_file_addr:
-        out_name_msa=gene_tree_file_addr +"filtered_row_"+str(tresh_ratio_gap_row)+".msa.fa"
-        handle_msa_fasta = open(out_name_msa,"w")
-        SeqIO.write(msa_filtered_row, handle_msa_fasta,"fasta")
+    if _config.gene_trees_write:
+        out_name_msa = gene_tree_file_addr +"filtered_row_"+str(tresh_ratio_gap_row)+".msa.fa"
+        handle_msa_fasta = open(out_name_msa, "w")
+        SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
     return msa_filtered_row

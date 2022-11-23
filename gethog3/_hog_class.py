@@ -1,19 +1,17 @@
 
-
-from _utils import logger_hog
-
 import xml.etree.ElementTree as ET
-from Bio.Align import MultipleSeqAlignment
-import itertools
 from Bio.SeqRecord import SeqRecord
-
+from Bio.Align import MultipleSeqAlignment
 from random import sample
+import itertools
 
 import _utils
+from _utils import logger_hog
+import _config
 
 
 class HOG:
-    _hogid_iter = 1000
+    _hogid_iter = 10000
 
     def __init__(self, input_instantiate, taxnomic_range, rhogid_num, msa=None):  # _prot_names
         # the input_instantiate could be either
@@ -42,32 +40,23 @@ class HOG:
             self._members = hog_members  # set.union(*tup)
             self._subhogs = list(input_instantiate)  # full members
 
-            max_num_seq = 5  # subsampling in msa
-            min_cols_msa_to_filter = max_num_seq * 500
-            tresh_ratio_gap_col = 0.2
             records_full = [record for record in msa if record.id in self._members]
 
-            if len(records_full) > max_num_seq:
-                records_sub_sampled_raw = sample(records_full, max_num_seq)  # without replacement.
-                # future"  select best seq
+            if len(records_full) > _config.hogclass_max_num_seq:
+                records_sub_sampled_raw = sample(records_full, _config.hogclass_max_num_seq)  # without replacement.
+                # to do in future:  select best seq
 
-                if len(records_sub_sampled_raw[0]) > min_cols_msa_to_filter:
-                    # print(len(records_sub_sampled_raw), len(records_sub_sampled_raw[0]))
-                    records_sub_sampled = _utils.msa_filter_col(records_sub_sampled_raw, tresh_ratio_gap_col)
-                    # print(len(records_sub_sampled), len(records_sub_sampled[0]))
+                if len(records_sub_sampled_raw[0]) > _config.hogclass_min_cols_msa_to_filter:
+                    records_sub_sampled = _utils.msa_filter_col(records_sub_sampled_raw, _config.hogclass_tresh_ratio_gap_col)
                 else:
                     records_sub_sampled = records_sub_sampled_raw
-            #         print(len(msa_filt_row), len(msa_filt_row[0]))
             #         # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
             #         # print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
             # logger_hog.info( "we are doing subsamping now from " + str(len(records_full)) + " to " + str(max_num_seq) + " seqs.")
             else:
                 records_sub_sampled = records_full
-
-            # removing some columns completely gap -  (not x   )
-
+                # removing some columns completely gap -  (not x   )
             self._msa = MultipleSeqAlignment(records_sub_sampled)
-
             # without replacement sampling ,  # self._children = sub_hogs # as legacy  ?
         else:
             logger_hog.error("Error 169,  check the input format to instantiate orthoxml_to_newick.py HOG class")
@@ -79,15 +68,13 @@ class HOG:
 
     def get_members(self):
         return set(self._members)
-        # merge, gene tree, midpoint, lable_SD_internal_nodes, traverse_geneTree_assign_hog
 
-    #def to_orthoxml(self, **gene_id_name):  # , indent=0):
     def to_orthoxml(self):
-        # indent = 0
+
         hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
         property_element = ET.SubElement(hog_elemnt, "property",
                                         attrib={"name": "TaxRange", "value": str(self._taxnomic_range)})
-        # the following could be improved ???   without this if it will be like, one property is enough
+        # to do the following could be improved ???   without this if it will be like, one property is enough
         # <orthologGroup>
         #    <property name="TaxRange" value="GORGO_HUMAN_PANTR"/>
         #    <property name="TaxRange" value="GORGO_HUMAN_PANTR"/>
@@ -98,21 +85,19 @@ class HOG:
         # hog_elemnt = ET.SubElement(species,
 
         if len(self._subhogs) == 0:
-            # print(self._members)
-            # print("we are here   ********???--??? ",self._hogid)
             list_member_first = list(self._members)[0]
             # 'tr|A0A3Q2UIK0|A0A3Q2UIK0_CHICK||CHICK_||1053007703'
             prot_name_integer = list_member_first.split("||")[2].strip()
             geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(prot_name_integer)})
                 #'id': str(gene_id_name[list_member_first])})  # # gene_id_name[query_prot_record.id]
             # hog_elemnt.append(geneRef_elemnt)
-            # could be improved when the rhog contains only one protein
+            # to do could be improved when the rhog contains only one protein
             return geneRef_elemnt  # hog_elemnt
 
         def _sorter_key(sh):
             return sh._taxnomic_range
 
-        self._subhogs.sort(key=_sorter_key)  # print(f'{" "*indent}subhog: {self._taxnomic_range}:')
+        self._subhogs.sort(key=_sorter_key)
         for sub_clade, sub_hogs in itertools.groupby(self._subhogs, key=_sorter_key):
             list_of_subhogs_of_same_clade = list(sub_hogs)
             # print(f'{" "*(indent+1)} clade: {sub_clade} with {str(len(list_of_subhogs_of_same_clade))}')

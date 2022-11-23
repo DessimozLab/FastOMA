@@ -11,9 +11,9 @@ working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"
 
 #address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
 #species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-pickle_folder = working_folder + "/pickl_rhg_0.5_3000/"
+pickle_folder = working_folder + "/pickle_b_0.5_3000/"
 # add warning when pickle folder is not empty
-output_xml_name = "pickle_0.5_3000_6Nov_9pm.xml"
+output_xml_name = "pickle_0.5_3000_17nov_ts.xml"
 gene_id_pickle_file = working_folder + "gene_id_v2_bird.pickle"
 
 
