@@ -189,7 +189,8 @@ def lable_sd_internal_nodes(tree_out):
 
 
 
-def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr):
+def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
+    # gene_tree_file_addr contains roothog numebr
 
     ratio_col_all = []
     length_record= len(msa[0])
@@ -213,7 +214,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr):
         record_edited= SeqRecord(Seq(record_seq_edited), record.id, '', '')
         msa_filtered_col.append(record_edited)
 
-    if _config.gene_trees_write:
+    if _config.gene_trees_write and gene_tree_file_addr:
         out_name_msa=gene_tree_file_addr+"filtered_"+"_col_"+str(tresh_ratio_gap_col)+".msa.fa"
         handle_msa_fasta = open(out_name_msa,"w")
         SeqIO.write(msa_filtered_col, handle_msa_fasta,"fasta")
