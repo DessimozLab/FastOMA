@@ -4,10 +4,9 @@
 oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
 working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"  # bird_hog
 
-species_tree_address = working_folder_root + "lineage_tree_qfo_.phyloxml"
+species_tree_address = working_folder_root + "lineage_tree_qfo_.nwk" #phyloxml"
 working_id = "hog3_nov23/"
 working_folder = working_folder_root + working_id
-
 omamer_fscore_treshold_big_rhog = 0.5  # 0.2
 treshold_big_rhog_szie = 3000
 
@@ -15,11 +14,10 @@ gene_trees_write = False # this also goes for writing msas
 
 keep_subhog_each_pickle = False
 
-
 ###  dask configs
-dask_level = 0   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+dask_level = 1   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 dask_n_core = 1
-dask_machine= "local"  # "local"  "slurm"
+dask_machine = "local"  # "local"  "slurm"
 dask_memory_slurm = "2GB"
 dask_time_slurm = "00:20:00"
 dask_n_jobs = 3

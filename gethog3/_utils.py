@@ -8,6 +8,10 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq  # , UnknownSeq
 import logging
 
+import pickle
+from os import listdir
+from xml.dom import minidom
+import xml.etree.ElementTree as ET
 
 import _config
 
@@ -76,6 +80,19 @@ def read_species_tree(species_tree_address):
     else:
         print("for now we accept phyloxml or nwk format for input species tree.")
 
+    # add name for the internal or leaf, if no name is provided
+    num_leaves_no_name = 0
+    counter_internal = 0
+    for node in species_tree.traverse(strategy="postorder"):
+        node_name = node.name
+        if len(node_name) < 1:
+            if node.is_leaf():
+                node.name = "leaf_" + str(num_leaves_no_name)
+                num_leaves_no_name += 1
+            else:
+                node.name = "internal_" + str(counter_internal)
+                counter_internal += 1
+
     return (species_tree)
 
 
@@ -98,7 +115,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
 
         if species_name.endswith("_") and not bird_dataset:
            species_name = prot_id[1][:-1]
-        if species_name == 'RAT_': species_name = "RATNO_"
+        # if species_name == 'RAT_': species_name = "RATNO_"
         # gene_id = prot_id[2]
         species_names_rhog.append(species_name)
         prot_names_rhog.append(prot_name)
@@ -222,3 +239,61 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr):
         SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
     return msa_filtered_row
+
+
+
+
+
+def collect_write_xml():
+
+
+    gene_id_pickle_file = _config.working_folder + "gene_id_dic_xml.pickle"
+    pickles_rhog_folder = _config.working_folder + "pickles_rhog/"
+    output_xml_file = _config.working_folder + "hogs.orthoxml"
+
+    orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
+                                                   "originVersion": "Nov 2021", "version": "0.3"})  #
+
+    with open(gene_id_pickle_file, 'rb') as handle:
+        #gene_id_name = dill_pickle.load(handle)
+        gene_id_name = pickle.load(handle)
+        # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
+
+    for query_species_name, list_prots in gene_id_name.items():
+
+        species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": query_species_name, "NCBITaxId": "1"})
+        database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})
+        genes_xml = ET.SubElement(database_xml, "genes")
+
+        for (gene_idx_integer, query_prot_name) in list_prots:
+            query_prot_name_pure1 = query_prot_name.split("||")[0].strip()
+            if "|" in query_prot_name_pure1:
+                query_prot_name_pure = query_prot_name_pure1.split("|")[1]
+            else:
+                query_prot_name_pure = query_prot_name
+            gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
+
+    pickle_files_adress = listdir(pickles_rhog_folder)
+
+    hogs_a_rhog_xml_all = []
+    for pickle_file_adress in pickle_files_adress:
+        with open(pickles_rhog_folder + pickle_file_adress, 'rb') as handle:
+            hogs_a_rhog_xml_batch = pickle.load(handle)  # hogs_a_rhog_xml_batch is orthoxml_to_newick.py list of hog object.
+            hogs_a_rhog_xml_all.extend(hogs_a_rhog_xml_batch)
+    print("number of hogs in all batches is ", len(hogs_a_rhog_xml_all))
+    groups_xml = ET.SubElement(orthoxml_file, "groups")
+
+    for hogs_a_rhog_xml in hogs_a_rhog_xml_all:
+        groups_xml.append(hogs_a_rhog_xml)
+
+    xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
+    # print(xml_str[:-1000])
+
+    with open(output_xml_file, "w") as file_xml:
+        file_xml.write(xml_str)
+    file_xml.close()
+
+    print("orthoxml is written in "+ output_xml_file)
+    return 1
+
+

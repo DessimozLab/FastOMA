@@ -3,9 +3,7 @@ from dask.distributed import rejoin, secede
 from ete3 import Tree
 from Bio import SeqIO
 from distributed import get_client
-from os import listdir
-from xml.dom import minidom
-import xml.etree.ElementTree as ET
+
 import os
 import shutil
 
@@ -35,12 +33,10 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list):
 def read_infer_xml_rhog(rhogid_num):
 
     pickles_subhog_folder_all = _config.working_folder + "/pickles_subhog/"
-    if not os.path.exists(pickles_subhog_folder_all):
-        os.mkdir(pickles_subhog_folder_all)
 
     pickles_subhog_folder = _config.working_folder + "/pickles_subhog/rhog_" + str(rhogid_num)+"/"
     if not os.path.exists(pickles_subhog_folder):
-        os.mkdir(pickles_subhog_folder)
+        os.makedirs(pickles_subhog_folder)
 
 
     logger_hog.debug("\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")
@@ -86,7 +82,7 @@ def read_infer_xml_rhog(rhogid_num):
     # ?? logger_hog.debug("subhogs in this level are "+' '.join(["[" + str(i) + "]" for i in ?? ])+".") # hogs_a_rhog
 
     if not _config.keep_subhog_each_pickle:
-        shutil.rmtree(pickles_subhog_folder_all)
+        shutil.rmtree(pickles_subhog_folder)
 
     hogs_rhogs_xml = []
     for hog_i in hogs_a_rhog:
@@ -500,57 +496,4 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     # if len(hogs_this_level_list)==1:  hogs_this_level_list = [hogs_this_level_list]
 
     return hogs_this_level_list
-
-
-def collect_write_xml(working_folder, pickle_folder, output_xml_name, gene_id_pickle_file):
-
-    orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
-                                                   "originVersion": "Nov 2021", "version": "0.3"})  #
-
-    with open(gene_id_pickle_file, 'rb') as handle:
-        #gene_id_name = dill_pickle.load(handle)
-        gene_id_name = pickle.load(handle)
-        # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
-
-    for query_species_name, list_prots in gene_id_name.items():
-
-        species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": query_species_name, "NCBITaxId": "1"})
-        database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})
-        genes_xml = ET.SubElement(database_xml, "genes")
-
-        for (gene_idx_integer, query_prot_name) in list_prots:
-            query_prot_name_pure1 = query_prot_name.split("||")[0].strip()
-            if "|" in query_prot_name_pure1:
-                query_prot_name_pure = query_prot_name_pure1.split("|")[1]
-            else:
-                query_prot_name_pure = query_prot_name
-            gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
-
-    pickle_files_adress = listdir(pickle_folder)
-
-    hogs_a_rhog_xml_all = []
-    for pickle_file_adress in pickle_files_adress:
-        with open(pickle_folder + pickle_file_adress, 'rb') as handle:
-            # hogs_a_rhog_xml_batch = dill_pickle.load(handle)
-            hogs_a_rhog_xml_batch = pickle.load(handle)  # hogs_a_rhog_xml_batch is orthoxml_to_newick.py list of hog object.
-            hogs_a_rhog_xml_all.extend(hogs_a_rhog_xml_batch)
-            # hogs_rhogs_xml_all is orthoxml_to_newick.py list of hog object.
-
-    print("number of hogs in all batches is ", len(hogs_a_rhog_xml_all))
-
-    groups_xml = ET.SubElement(orthoxml_file, "groups")
-
-    for hogs_a_rhog_xml in hogs_a_rhog_xml_all:
-        groups_xml.append(hogs_a_rhog_xml)
-
-    xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
-    # print(xml_str[:-1000])
-
-    with open(working_folder+output_xml_name, "w") as file_xml:
-        file_xml.write(xml_str)
-    file_xml.close()
-
-    print("orthoxml is written in "+ working_folder+output_xml_name)
-    return 1
-
 

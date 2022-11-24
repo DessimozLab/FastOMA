@@ -110,12 +110,11 @@ if __name__ == '__main__':
 
         logger_hog.info("number of remained is " + str(len(rhogid_num_list)))
 
-        rhogid_num_list = rhogid_num_list[:5]
+        rhogid_num_list = rhogid_num_list[:10]
         # print(rhogid_num_list[:4])
         logger_hog.info("working on a list with number of " + str(len(rhogid_num_list)))
         if not rhogid_num_list:
             exit()
-
 
         logger_hog.info("Dask level is "+str(_config.dask_level))
         if _config.dask_level != 0:
@@ -169,11 +168,11 @@ if __name__ == '__main__':
             client_dask.shutdown()
             logger_hog.info("Client dask closed and shut down.")
 
-        # step = "collect"
+        step = "collect"
 
     if step == "collect":
         logger_hog.info("start writing xml")
-        _inferhog.collect_write_xml(_config.working_folder)
+        _utils.collect_write_xml()
         logger_hog.info("writing xml finished")
 
     logger_hog.info("main py is finished !.")
