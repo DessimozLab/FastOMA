@@ -17,7 +17,6 @@ protein_format_qfo_dataset = True
 
 
 
-
 ###  dask configs
 dask_level = 0   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 dask_n_core = 1
