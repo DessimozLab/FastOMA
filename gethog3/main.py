@@ -81,9 +81,7 @@ if __name__ == '__main__':
         rhogid_num_list_filt1 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
                                                       _config.working_folder+"rhogs/", 2)  # min_rhog_size, max_rhog_size
 
-
         #step = "find_subhog"
-
     if step == "find_subhog":
 
         pickle_folder = _config.working_folder + "pickles_rhog"
@@ -110,7 +108,7 @@ if __name__ == '__main__':
 
         logger_hog.info("number of remained is " + str(len(rhogid_num_list)))
 
-        rhogid_num_list = rhogid_num_list[:5000]
+        rhogid_num_list = [575381] #rhogid_num_list[:10]
         # print(rhogid_num_list[:4])
         logger_hog.info("working on a list with number of " + str(len(rhogid_num_list)))
         if not rhogid_num_list:
@@ -126,7 +124,7 @@ if __name__ == '__main__':
             dask.config.set({'distributed.logging.scheduler': "debug"})
             #print(dask.config.get("distributed"))
 
-        logger_hog.info("Few of rhog num ids are "+" ".join([str(i) for i in  rhogid_num_list[:7]]))
+        logger_hog.info("Few of rhog num ids are "+" ".join([str(i) for i in rhogid_num_list[:7]]))
         number_roothog = len(rhogid_num_list)
         num_per_parralel = 1
         parralel_num = int(number_roothog/num_per_parralel)

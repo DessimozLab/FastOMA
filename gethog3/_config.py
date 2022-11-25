@@ -10,17 +10,23 @@ working_folder = working_folder_root + working_id
 omamer_fscore_treshold_big_rhog = 0.5  # 0.2
 treshold_big_rhog_szie = 3000
 
-gene_trees_write = False # this also goes for writing msas
+gene_trees_write = False  # this also goes for writing msas
 
-keep_subhog_each_pickle = False
+keep_subhog_each_pickle = True #False
+
+protein_format_qfo_dataset = True
+
+
+
+
 
 ###  dask configs
-dask_level = 2   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+dask_level = 0   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 dask_n_core = 1
 dask_machine = "slurm"  # "local"  "slurm"
 dask_memory_slurm = "50GB"
 dask_time_slurm = "00:20:00"
-dask_n_jobs = 150
+dask_n_jobs = 5  #150
 
 ## hogclass configs
 hogclass_max_num_seq = 5  # subsampling in msa
@@ -35,6 +41,9 @@ inferhog_tresh_ratio_gap_col = 0.2
 inferhog_min_cols_msa_to_filter = 3000  # used for msa before gene tree inference and  saving msa in hog class
 
 
+## xml
+write_all_prots_in_header = False  # if false writes only those in the hog group
+inferhog_min_hog_size_xml = 2
 
 
 

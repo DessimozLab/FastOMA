@@ -121,8 +121,10 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
         prot_names_rhog.append(prot_name)
 
     species_names_uniqe = set(species_names_rhog)
-
+    first_common_ancestor_name = species_tree.get_common_ancestor(species_names_uniqe).name
     species_tree.prune(species_names_uniqe, preserve_branch_length=True)
+    species_tree.name = first_common_ancestor_name
+
     # species_tree.write()
     # counter_internal = 0
     # for node in species_tree.traverse(strategy="postorder"):
@@ -142,8 +144,8 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     #             node.name = "internal_" + str(counter_internal)  #  +"_rhg"+str(rhogid_num)  #  for debuging
     #             counter_internal += 1
     # print("Working on the following species tree.")
-    # print(species_tree)
-    species_tree.write()
+    print(species_tree.write(format=1))
+    #species_tree.write()
 
     return (species_tree, species_names_rhog, prot_names_rhog)
 
@@ -191,6 +193,7 @@ def lable_sd_internal_nodes(tree_out):
 
 def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
     # gene_tree_file_addr contains roothog numebr
+    # note this is used in hog class as well
 
     ratio_col_all = []
     length_record= len(msa[0])
@@ -223,7 +226,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
     return msa_filtered_col
 
 
-def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr):
+def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
     msa_filtered_row = []
     ratio_records=[]
     for record in msa:
@@ -234,7 +237,7 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr):
         ratio_records.append(round(ratio_record_nongap, 3))
         if ratio_record_nongap > tresh_ratio_gap_row:
             msa_filtered_row.append(record)
-    if _config.gene_trees_write:
+    if _config.gene_trees_write and gene_tree_file_addr:
         out_name_msa = gene_tree_file_addr +"filtered_row_"+str(tresh_ratio_gap_row)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
@@ -242,11 +245,7 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr):
     return msa_filtered_row
 
 
-
-
-
 def collect_write_xml():
-
 
     gene_id_pickle_file = _config.working_folder + "gene_id_dic_xml.pickle"
     pickles_rhog_folder = _config.working_folder + "pickles_rhog/"
@@ -260,19 +259,24 @@ def collect_write_xml():
         gene_id_name = pickle.load(handle)
         # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
 
+    #if not _config.write_all_prots_in_header:
+
     for query_species_name, list_prots in gene_id_name.items():
 
         species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": query_species_name, "NCBITaxId": "1"})
         database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})
         genes_xml = ET.SubElement(database_xml, "genes")
 
-        for (gene_idx_integer, query_prot_name) in list_prots:
-            query_prot_name_pure1 = query_prot_name.split("||")[0].strip()
-            if "|" in query_prot_name_pure1:
-                query_prot_name_pure = query_prot_name_pure1.split("|")[1]
-            else:
+        if _config.protein_format_qfo_dataset:
+            for (gene_idx_integer, query_prot_name) in list_prots:
+                # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ   for qfo benchamrk, the middle should be wirtten in the file
+                query_prot_name_pure = query_prot_name.split("|")[1]
+                gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
+        else:
+            for (gene_idx_integer, query_prot_name) in list_prots:
                 query_prot_name_pure = query_prot_name
-            gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
+                gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
+
 
     pickle_files_adress = listdir(pickles_rhog_folder)
 
@@ -298,3 +302,105 @@ def collect_write_xml():
     return 1
 
 
+
+
+
+from collections import defaultdict
+from typing import List, Tuple
+import random
+from itertools import combinations
+
+import numpy as np
+from ete3 import PhyloTree
+
+
+def get_farthest_leaf(tree: PhyloTree, target_leaf: PhyloTree, leaves_list: List[PhyloTree]) -> Tuple[float, PhyloTree]:
+    """
+    Given a target leaf it returns the farthest leave to it from a given list of leaves
+    by Ali Yazdizadeh Kharrazi
+    """
+    max_dist = 0
+    max_leaf: PhyloTree = None
+    for leaf in leaves_list:
+        if leaf == target_leaf:
+            continue
+
+        dist = tree.get_distance(target_leaf, leaf)
+        if dist >= max_dist:
+            max_dist = dist
+            max_leaf = leaf
+
+    print('&', max_leaf, max_dist)
+    return max_dist, max_leaf
+
+
+def midpoint_rooting_longest_path(tree: PhyloTree, leaves_to_exclude=None) -> Tuple[float, PhyloTree, PhyloTree]:
+    """
+    given a gene tree and optionally a list of leaves to exclude it find the two
+    furthest leave in the tree to be used for midpoint rooting
+    by Ali Yazdizadeh Kharrazi
+    """
+    leaves_list = tree.get_leaves()
+
+    if leaves_to_exclude:
+        leaves_set = set(leaves_list)
+        leaves_set -= set(leaves_to_exclude)
+        leaves_list = list(leaves_set)
+
+    random_leaf = random.choice(leaves_list)
+    print('&&2', tree, leaves_list, leaves_to_exclude, random_leaf)
+    _, first_leaf = get_farthest_leaf(tree=tree, target_leaf=random_leaf, leaves_list=leaves_list)
+    _, second_leaf = get_farthest_leaf(tree=tree, target_leaf=first_leaf, leaves_list=leaves_list)
+    longest_dist = tree.get_distance(first_leaf, second_leaf)
+
+    print('&&', random_leaf, first_leaf, second_leaf, longest_dist)
+    return longest_dist, first_leaf, second_leaf
+
+
+def midpoint_rooting_outgroup(tree: PhyloTree, leaves_to_exclude=None) -> PhyloTree:
+    """
+    Using midpoint rooting algorithm find the outgroup to be used to root the tree.
+    you can provide a list of leaves to be ignored for example because of long branch
+    by Ali Yazdizadeh Kharrazi
+    """
+    distance, first_leaf, second_leaf = midpoint_rooting_longest_path(tree, leaves_to_exclude)
+    distance_first = tree.get_distance(first_leaf)
+    distance_second = tree.get_distance(second_leaf)
+
+    farther_node = first_leaf if distance_first > distance_second else second_leaf
+
+    current_distance = 0
+    current_node = farther_node
+    while current_distance + current_node.dist < distance / 2:
+        current_distance += current_node.dist
+        current_node = current_node.up
+
+    print('&&&', distance, first_leaf, second_leaf, distance_first, distance_second, farther_node, current_node,
+          current_distance)
+    return current_node
+
+
+def find_outlier_leaves(tree: PhyloTree):
+    """
+    by Ali Yazdizadeh Kharrazi
+    """
+    distances = defaultdict(list)
+
+    leaves_name = tree.get_leaves()
+    for i, j in combinations(leaves_name, 2):
+        distances[i].append(tree.get_distance(i, j))
+        distances[j].append(tree.get_distance(j, i))
+
+    distances_agg = []
+    for leaf in distances.keys():
+        distances_agg.append(sum(distances[leaf]))
+    q3, q1 = np.percentile(distances_agg, [75, 25])
+    iqr = q3 - q1
+    threshold = q3 + (1.5 * iqr)
+
+    outliers = []
+    for leaf in distances.keys():
+        if sum(distances[leaf]) > threshold:
+            outliers.append(leaf)
+    print('+++', distances_agg, q3, q1, iqr, threshold, outliers)
+    return outliers

@@ -70,7 +70,6 @@ class HOG:
         return set(self._members)
 
     def to_orthoxml(self):
-
         hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
         property_element = ET.SubElement(hog_elemnt, "property",
                                         attrib={"name": "TaxRange", "value": str(self._taxnomic_range)})
