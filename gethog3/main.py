@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
         logger_hog.info("number of remained is " + str(len(rhogid_num_list)))
 
-        # rhogid_num_list = rhogid_num_list[:10]
+        rhogid_num_list = rhogid_num_list[:10]
         # print(rhogid_num_list[:4])
         logger_hog.info("working on a list with number of " + str(len(rhogid_num_list)))
         if not rhogid_num_list:

@@ -2,18 +2,30 @@
 
 
 oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
-working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"  # bird_hog
 
-species_tree_address = working_folder_root + "lineage_tree_qfo_.nwk" #phyloxml"
+# bird
+working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"  # bird_hog
+species_tree_address = working_folder_root + "birds370_iqtree_treefile_95bootstrap_internal_name_6let_16Nov_.nwk"
 working_id = "hog3_nov25/"
-working_folder = working_folder_root + working_id
-omamer_fscore_treshold_big_rhog = 0.5  # 0.2
-treshold_big_rhog_szie = 3000
+protein_format_qfo_dataset = False
 
+# qfo
+# working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"  # bird_hog
+# species_tree_address = working_folder_root + "lineage_tree_qfo_.nwk" #phyloxml"
+# working_id = "hog3_nov25/"
+# protein_format_qfo_dataset = True
+
+
+working_folder = working_folder_root + working_id
+
+## output writing files
 gene_trees_write = True  # this also goes for writing msas
 keep_subhog_each_pickle = True #False
-protein_format_qfo_dataset = True
 
+
+# filtering omamer
+omamer_fscore_treshold_big_rhog = 0.5  # 0.2
+treshold_big_rhog_szie = 3000
 
 
 
@@ -46,24 +58,10 @@ inferhog_min_hog_size_xml = 2
 """
 hardcoded folder names
 omamer_search in folder working_folder_root
-
 gene_id_pickle_file = working_folder + "gene_id_dic_xml.pickle"
 address_rhogs_folder_raw = working_folder + "rhogs_raw/"
-
 pickles_subhog_folder_all = _config.working_folder + "/pickles_subhog/"
 pickles_rhog_folder = = _config.working_folder + "/pickles_rhog/"
-
 gene_trees_folder =  working_folder+"genetrees"
-
-#file_folders = (address_rhogs_folder_filt, gene_trees_folder, pickle_folder, species_tree_address)
-# gene_id_pickle_file = working_folder + "gene_id_dic_xml.pickle"
-    name = str(omamer_fscore_treshold_big_rhog)+"_"+str(treshold_big_rhog_szie    
-    address_rhogs_folder_filt = working_folder + "rhogs_" + name + "/"
-    pickle_folder = working_folder + "pickle_b_"+name+"/"
-    hogs_children_level_pickle_folder = working_folder+"/pickle_hog_children3/"
-    print(pickle_folder)
-    
-    output_xml_name = "out_xml_b_"+name+"_.xml"
-
 
 """
