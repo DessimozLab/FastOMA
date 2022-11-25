@@ -5,15 +5,13 @@ oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/arch
 working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"  # bird_hog
 
 species_tree_address = working_folder_root + "lineage_tree_qfo_.nwk" #phyloxml"
-working_id = "hog3_nov23/"
+working_id = "hog3_nov25/"
 working_folder = working_folder_root + working_id
 omamer_fscore_treshold_big_rhog = 0.5  # 0.2
 treshold_big_rhog_szie = 3000
 
-gene_trees_write = False  # this also goes for writing msas
-
+gene_trees_write = True  # this also goes for writing msas
 keep_subhog_each_pickle = True #False
-
 protein_format_qfo_dataset = True
 
 
@@ -24,9 +22,9 @@ protein_format_qfo_dataset = True
 dask_level = 0   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 dask_n_core = 1
 dask_machine = "slurm"  # "local"  "slurm"
-dask_memory_slurm = "50GB"
-dask_time_slurm = "00:20:00"
-dask_n_jobs = 5  #150
+dask_memory_slurm = "40GB"
+dask_time_slurm = "05:00:00"
+dask_n_jobs = 180
 
 ## hogclass configs
 hogclass_max_num_seq = 5  # subsampling in msa
@@ -34,7 +32,6 @@ hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 500
 hogclass_tresh_ratio_gap_col = 0.2
 
 ##inferhog
-
 inferhog_dask_2nd_rhogsize = 200
 inferhog_tresh_ratio_gap_row = 0.4
 inferhog_tresh_ratio_gap_col = 0.2

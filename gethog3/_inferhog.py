@@ -18,6 +18,9 @@ import _config
 # import networkx as nx
 # import matplotlib.pyplot as plt
 
+from ete3 import PhyloTree
+
+
 
 def read_infer_xml_rhogs_batch(rhogid_batch_list):
 
@@ -346,8 +349,16 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num):  # hogs_children_level_
     gene_tree = Tree(gene_tree_raw + ";", format=0)
     logger_hog.debug("Gene tree is inferred with length of " + str(len(gene_tree)) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
             node_species_tree.name))
+
     R_outgroup = gene_tree.get_midpoint_outgroup()
     gene_tree.set_outgroup(R_outgroup)  # print("Midpoint rooting is done for gene tree.")
+
+    #gene_tree = PhyloTree(gene_tree_raw + ";", format=0)
+    # outliers = find_outlier_leaves(gene_tree)
+    # R = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
+    # gene_tree.set_outgroup(R)
+
+
     gene_tree = _utils.lable_sd_internal_nodes(gene_tree)
     # print("Overlap speciation is done for internal nodes of gene tree, as following:")
     # print(str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;")
