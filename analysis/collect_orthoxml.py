@@ -5,7 +5,7 @@ from os import listdir
 from xml.dom import minidom
 
 print("started ")
-working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/hog3_nov23/"
+working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/hog3_nov25/"
 
 #"/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"
 # gene_trees_folder = ""  # working_folder + "/gene_trees_/"
@@ -13,7 +13,7 @@ working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/hog3_n
 
 #address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
 #species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-pickle_folder = working_folder + "t1/pickles_rhog/" #"/pickle_b_0.5_3000/"
+pickle_folder = working_folder + "pickles_rhog/" #"/pickle_b_0.5_3000/"
 # add warning when pickle folder is not empty
 output_xml_name = "out.xml"
     #"pickle_0.5_3000_17nov_ts.xml"

@@ -6,7 +6,7 @@ oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/arch
 # bird
 working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"  # bird_hog
 species_tree_address = working_folder_root + "birds370_iqtree_treefile_95bootstrap_internal_name_6let_16Nov_.nwk"
-working_id = "hog3_nov25b/"
+working_id = "hog3_nov25/"
 protein_format_qfo_dataset = False
 
 # qfo
@@ -36,7 +36,7 @@ dask_n_core = 1
 dask_machine = "slurm"  # "local"  "slurm"
 dask_memory_slurm = "40GB"
 dask_time_slurm = "01:00:00"
-dask_n_jobs = 50
+dask_n_jobs = 4
 
 ## hogclass configs
 hogclass_max_num_seq = 5  # subsampling in msa

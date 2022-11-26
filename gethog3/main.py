@@ -96,7 +96,7 @@ if __name__ == '__main__':
         rhogid_num_list_raw = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list_raw)) + ".")
 
-        # rhogid_num_list_raw = [615509, 534754, 615509, 606082, 606083, 614136, 613892, 614147] #[574027, 834977]
+        # rhogid_num_list_raw =  [615509]  #  [615509, 534754, 615509, 606082, 606083, 614136, 613892, 614147] #[574027, 834977]
         print("***** pickle_folder ", pickle_folder)
 
         if _config.inferhog_resume_rhog:

@@ -58,7 +58,7 @@ def read_infer_xml_rhog(rhogid_num):
         secede()
         # #recursive_input = (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder)
         #hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_future_v2, species_tree, recursive_4inputs)
-        hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, species_tree, species_names_rhog, rhogid_num)
+        hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, species_tree, rhogid_num)
         # #rhog_i_future = client_dask_working.scatter(rhog_i)
         # #recursive_input_future = (rhog_i_future, species_names_rhog, rhogid_num, gene_trees_folder)
         # #hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, species_tree, species_names_rhog, rhogid_num)
@@ -69,13 +69,13 @@ def read_infer_xml_rhog(rhogid_num):
         # logger_hog.debug("Dask future taxon is off for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
         client_dask_working = get_client()
         secede()
-        hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively, species_tree, species_names_rhog, rhogid_num)
+        hogs_a_rhog_future = client_dask_working.submit(infer_hogs_for_rhog_levels_recursively, species_tree, rhogid_num)
         hogs_a_rhog = hogs_a_rhog_future.result()
         rejoin()
 
     else:
         logger_hog.debug("Dask future taxon is off for hogid "+str(rhogid_num)+" with length "+str(len(rhog_i)))
-        hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, species_names_rhog, rhogid_num)
+        hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, rhogid_num)
         # hogs_a_rhog_1  is an integeer as the length
 
     root_node_name= species_tree.name
@@ -149,7 +149,7 @@ def read_infer_xml_rhog(rhogid_num):
 #     return out_1
 
 
-def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, species_names_rhog, rhogid_num):
+def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, rhogid_num):
     # (rhog_i, species_names_rhog, rhogid_num, gene_trees_folder) = recursive_input
     # logger_hog.debug("\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")
 
@@ -162,7 +162,7 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, species_name
 
     client_dask_working = get_client()
     secede()
-    hogs_children_level_list_futures = [client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, child, species_names_rhog, rhogid_num) for child in children_nodes]
+    hogs_children_level_list_futures = [client_dask_working.submit(infer_hogs_for_rhog_levels_recursively_future, child, rhogid_num) for child in children_nodes]
     hogs_children_level_list_futures = client_dask_working.gather(hogs_children_level_list_futures)
     rejoin()
     # hogs_children_level_list = hogs_children_level_list_futures
@@ -180,7 +180,7 @@ def infer_hogs_for_rhog_levels_recursively_future(sub_species_tree, species_name
 
     return infer_hogs_this_level_out
 
-def infer_hogs_for_rhog_levels_recursively(sub_species_tree, species_names_rhog, rhogid_num):
+def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid_num):
 
     if sub_species_tree.is_leaf():
         # hogs_this_level_list = singletone_hog(sub_species_tree, rhog_i, species_names_rhog, rhogid_num)
@@ -191,7 +191,7 @@ def infer_hogs_for_rhog_levels_recursively(sub_species_tree, species_names_rhog,
 
     hogs_children_level_list = []
     for node_species_tree_child in children_nodes:
-        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, species_names_rhog, rhogid_num)
+        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhogid_num)
         # hogs_children_level_list_i should be 1
         # hogs_children_level_list.extend(hogs_children_level_list_i)
     infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, rhogid_num)  # ,hogs_children_level_list
@@ -252,7 +252,6 @@ def singletone_hog_(node_species_tree, rhogid_num):
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
 
     species_names_rhog_nonuniq = [seq.id.split("||")[1] for seq in rhog_i]
-
     prot_idx_interest_in_rhog = [idx for idx in range(len(species_names_rhog_nonuniq)) if
                                  species_names_rhog_nonuniq[idx] == node_species_name]
     rhog_part = [rhog_i[i] for i in prot_idx_interest_in_rhog]
@@ -273,6 +272,7 @@ def singletone_hog_(node_species_tree, rhogid_num):
 def infer_hogs_this_level(sub_species_tree, rhogid_num):  # hogs_children_level_list
 
     node_species_tree = sub_species_tree
+
     this_level_node_name = node_species_tree.name
     if node_species_tree.is_leaf():
         print(" issue 1235, single tone hogs are treated in another function, the code shouldn't reach here.", rhogid_num )
@@ -300,7 +300,7 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num):  # hogs_children_level_
                     if hogs_children_level_list:
                         return len(hogs_children_level_list)
 
-
+    print(this_level_node_name, rhogid_num)
     children_name = [child.name for child in node_species_tree.children]
     hogs_children_level_list = []
     pickles_subhog_folder = _config.working_folder + "/pickles_subhog/rhog_" + str(rhogid_num) + "/"
@@ -358,7 +358,10 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num):  # hogs_children_level_
             # print(len(merged_msa), len(merged_msa[0]))
             msa_filt_col = _utils.msa_filter_col(merged_msa, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr)
             # print(len(msa_filt_col), len(msa_filt_col[0]))
-            msa_filt_row_col = _utils.msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
+            if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
+                msa_filt_row_col = _utils.msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
+            else:
+                msa_filt_row_col = msa_filt_col
             # print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
             merged_msa_filt = msa_filt_row_col
         else:

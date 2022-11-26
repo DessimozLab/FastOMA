@@ -233,10 +233,13 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
         seq = record.seq
         seqLen = len(record)
         gap_count = seq.count("-") + seq.count("?") + seq.count(".") +seq.count("~")
-        ratio_record_nongap= 1-gap_count/seqLen
-        ratio_records.append(round(ratio_record_nongap, 3))
-        if ratio_record_nongap > tresh_ratio_gap_row:
-            msa_filtered_row.append(record)
+        if seqLen:
+            ratio_record_nongap = 1-gap_count/seqLen
+            ratio_records.append(round(ratio_record_nongap, 3))
+            if ratio_record_nongap > tresh_ratio_gap_row:
+                msa_filtered_row.append(record)
+        else:
+            print("issue 12788 : error , seq len is zero when msa_filter_row")
     if _config.gene_trees_write and gene_tree_file_addr:
         out_name_msa = gene_tree_file_addr +"filtered_row_"+str(tresh_ratio_gap_row)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
