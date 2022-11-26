@@ -96,19 +96,24 @@ if __name__ == '__main__':
         rhogid_num_list_raw = _utils.list_rhog_fastas(address_rhogs_folder_filt)
         logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list_raw)) + ".")
 
+        # rhogid_num_list_raw = [615509, 534754, 615509, 606082, 606083, 614136, 613892, 614147] #[574027, 834977]
         print("***** pickle_folder ", pickle_folder)
-        list_done_raw = listdir(pickle_folder)
-        list_done_rhogid = []
-        for file in list_done_raw:
-            numr = int(file.split(".")[0].split("_")[1])
-            list_done_rhogid.append(numr)
 
-        # rhogid_num_list = rhogid_num_list_raw
-        rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done_rhogid]
+        if _config.inferhog_resume_rhog:
+            list_done_raw = listdir(pickle_folder)
+            list_done_rhogid = []
+            for file in list_done_raw:
+                numr = int(file.split(".")[0].split("_")[1])
+                list_done_rhogid.append(numr)
+
+            # rhogid_num_list = rhogid_num_list_raw
+            rhogid_num_list = [i for i in rhogid_num_list_raw if i not in list_done_rhogid]
+        else:
+            rhogid_num_list =  rhogid_num_list_raw
 
         logger_hog.info("number of remained is " + str(len(rhogid_num_list)))
 
-        rhogid_num_list = rhogid_num_list[:10]
+        # rhogid_num_list = rhogid_num_list[:2]
         # print(rhogid_num_list[:4])
         logger_hog.info("working on a list with number of " + str(len(rhogid_num_list)))
         if not rhogid_num_list:
@@ -166,7 +171,7 @@ if __name__ == '__main__':
             client_dask.shutdown()
             logger_hog.info("Client dask closed and shut down.")
 
-        step = "collect"
+        # step = "collect"
 
     if step == "collect":
         logger_hog.info("start writing xml")

@@ -232,9 +232,21 @@ def infer_hogs_for_rhog_levels_recursively(sub_species_tree, species_names_rhog,
 
 
 def singletone_hog_(node_species_tree, rhogid_num):
-
     node_species_name = node_species_tree.name  # there is only one species (for the one protein)
     this_level_node_name = node_species_name
+
+    if _config.inferhog_resume_subhog:
+        pickles_subhog_folder = _config.working_folder + "/pickles_subhog/rhog_" + str(rhogid_num) + "/"
+        pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)
+        # open already calculated subhogs , but not completed till root in previous run
+        if os.path.exists(pickle_subhog_file + ".pickle"):
+            if os.path.getsize(pickle_subhog_file + ".pickle") > 3:  # 3 bytes
+                with open(pickle_subhog_file + ".pickle", 'rb') as handle:
+                    # i don't even need to open this even
+                    hogs_children_level_list = pickle.load(handle)
+                    if hogs_children_level_list:  # hogs_children_level_list is sth like [an object of class HOG of hogID=HOG:B0574027_sub10001, length=1, taxonomy= PSETE_]
+                        return len(hogs_children_level_list)
+
     logger_hog.debug("* reading prot address  " + str(this_level_node_name))
     rhog_i_prot_address = _config.working_folder + "rhogs/HOG_B"+str(rhogid_num).zfill(7)+".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
@@ -255,7 +267,7 @@ def singletone_hog_(node_species_tree, rhogid_num):
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
     logger_hog.debug("HOGs for  " + str(this_level_node_name)+" including "+str(len(hogs_this_level_list))+ " hogs was written as pickle file.")
 
-    return len(hogs_this_level_list) # hogs_this_level_list _
+    return len(hogs_this_level_list)
 
 
 def infer_hogs_this_level(sub_species_tree, rhogid_num):  # hogs_children_level_list
@@ -274,6 +286,20 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num):  # hogs_children_level_
         # with open(pickle_subhog_file+".pickle", 'wb') as handle:
         #     pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
         return 1  # [child_name] # hogs_this_level_list
+
+    pickles_subhog_folder = _config.working_folder + "/pickles_subhog/rhog_" + str(rhogid_num) + "/"
+    pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)
+
+    if _config.inferhog_resume_subhog:
+        # open already calculated subhogs , but not completed till root in previous run
+        if  os.path.exists(pickle_subhog_file + ".pickle"):
+            if os.path.getsize(pickle_subhog_file + ".pickle") > 3: # bytes
+                with open(pickle_subhog_file + ".pickle", 'rb') as handle:
+                    # i don't even need to open this even
+                    hogs_children_level_list = pickle.load(handle)
+                    if hogs_children_level_list:
+                        return len(hogs_children_level_list)
+
 
     children_name = [child.name for child in node_species_tree.children]
     hogs_children_level_list = []

@@ -144,7 +144,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     #             node.name = "internal_" + str(counter_internal)  #  +"_rhg"+str(rhogid_num)  #  for debuging
     #             counter_internal += 1
     # print("Working on the following species tree.")
-    print(species_tree.write(format=1))
+    # print(species_tree.write(format=1))
     #species_tree.write()
 
     return (species_tree, species_names_rhog, prot_names_rhog)
