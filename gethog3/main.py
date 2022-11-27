@@ -183,6 +183,12 @@ if __name__ == '__main__':
 """
 to do : 
 
+- division by zero ???? 
+Cettiidae-Erythrocercus_mccallii 606083
+not happening without dask
+
+- low_col_trheshold_erre.txt
+
 
 - as an argument differnt format of ete3 for reading species tree
 

@@ -42,15 +42,14 @@ for query_species_name, list_prots in gene_id_name.items():
     #     query_prot_name_pure = query_prot_name  # .split("||")[0].strip().split("|")[1]
     #     gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
 
-
+    protein_format_qfo_dataset = False
     for (gene_idx_integer, query_prot_name) in list_prots:
         #if _config.protein_format_qfo_dataset :
-        protein_format_qfo_dataset = True
         if protein_format_qfo_dataset:
             if "|" in query_prot_name:
                 query_prot_name_pure = query_prot_name.split("|")[1]
             else:
-                print(query_prot_name_pure)  # query_prot_name_pure = query_prot_name
+                print(query_prot_name)  # query_prot_name_pure = query_prot_name
         else:
             query_prot_name_pure = query_prot_name
         gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
@@ -78,7 +77,7 @@ print("convert to string")
 
 xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
 # print(xml_str[:-1000])
-
+print("writing")
 with open(working_folder +output_xml_name, "w") as file_xml:
     file_xml.write(xml_str)
 file_xml.close()

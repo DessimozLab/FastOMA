@@ -35,8 +35,8 @@ dask_level = 2   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only ta
 dask_n_core = 1
 dask_machine = "slurm"  # "local"  "slurm"
 dask_memory_slurm = "40GB"
-dask_time_slurm = "01:00:00"
-dask_n_jobs = 4
+dask_time_slurm = "11:00:00"
+dask_n_jobs = 2
 
 ## hogclass configs
 hogclass_max_num_seq = 5  # subsampling in msa
