@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
         logger_hog.info("number of remained is " + str(len(rhogid_num_list)))
 
-        # rhogid_num_list = rhogid_num_list[:2]
+        rhogid_num_list = rhogid_num_list[:2]
         # print(rhogid_num_list[:4])
         logger_hog.info("working on a list with number of " + str(len(rhogid_num_list)))
         if not rhogid_num_list:
@@ -167,6 +167,7 @@ if __name__ == '__main__':
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
 
             logger_hog.info("Dask out gathered")
+            client_dask.p(filename=_config.working_folder+"dask-profile.html")rofile
             client_dask.close()
             client_dask.shutdown()
             logger_hog.info("Client dask closed and shut down.")

@@ -103,6 +103,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
 
     output: species_tree (pruned), species_names_rhog, prot_names_rhog
     """
+    assert len(rhog_i) > 0, 'input hog_i is empty, probably previous step find_rhog has issue, rhogs/HOG_B0'+str(rhogid_num)+'is empty?'
     species_names_rhog = []
     prot_names_rhog = []
     for rec in rhog_i:
@@ -119,6 +120,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
         # gene_id = prot_id[2]
         species_names_rhog.append(species_name)
         prot_names_rhog.append(prot_name)
+    assert len(species_names_rhog) > 0, "species names list is empty in rhog, probably issue in formating with || in previous step find rhog"
 
     species_names_uniqe = set(species_names_rhog)
     first_common_ancestor_name = species_tree.get_common_ancestor(species_names_uniqe).name

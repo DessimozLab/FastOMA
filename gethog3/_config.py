@@ -4,24 +4,24 @@
 oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
 
 # bird
-working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"  # bird_hog
-species_tree_address = working_folder_root + "birds370_iqtree_treefile_95bootstrap_internal_name_6let_16Nov_.nwk"
-working_id = "hog3_nov25/"
-protein_format_qfo_dataset = False
+# working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"  # bird_hog
+# species_tree_address = working_folder_root + "birds370_iqtree_treefile_95bootstrap_internal_name_6let_16Nov_.nwk"
+# working_id = "hog3_nov25f/"
+# protein_format_qfo_dataset = False
 
 # qfo
-# working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"  # bird_hog
-# species_tree_address = working_folder_root + "lineage_tree_qfo_.nwk" #phyloxml"
-# working_id = "hog3_nov25/"
-# protein_format_qfo_dataset = True
+working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"  # bird_hog
+species_tree_address = working_folder_root + "lineage_tree_qfo_.nwk" #phyloxml"
+working_id = "hog3_nov25_prof/"
+protein_format_qfo_dataset = True
 
 
 
 working_folder = working_folder_root + working_id
 
 ## output writing files
-gene_trees_write = True  # this also goes for writing msas
-keep_subhog_each_pickle = True #False
+gene_trees_write = False  # this also goes for writing msas
+keep_subhog_each_pickle = False #False
 
 
 # filtering omamer
@@ -35,7 +35,7 @@ dask_level = 2   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only ta
 dask_n_core = 1
 dask_machine = "slurm"  # "local"  "slurm"
 dask_memory_slurm = "40GB"
-dask_time_slurm = "11:00:00"
+dask_time_slurm = "00:10:00"
 dask_n_jobs = 2
 
 ## hogclass configs
