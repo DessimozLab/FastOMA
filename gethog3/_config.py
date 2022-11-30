@@ -12,7 +12,7 @@ oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/arch
 # qfo
 working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"  # bird_hog
 species_tree_address = working_folder_root + "lineage_tree_qfo_.nwk" #phyloxml"
-working_id = "hog3_nov25_prof/"
+working_id = "test_rhog/"
 protein_format_qfo_dataset = True
 
 
@@ -31,7 +31,7 @@ treshold_big_rhog_szie = 3000
 
 
 ###  dask configs
-dask_level = 2   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
+dask_level = 0   # 1:one level (rhog), 2:both levels (rhog+taxonomic)  3:only taxonomic level  0: no dask
 dask_n_core = 1
 dask_machine = "slurm"  # "local"  "slurm"
 dask_memory_slurm = "40GB"

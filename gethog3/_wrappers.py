@@ -22,6 +22,8 @@ def merge_msa(list_msas, gene_tree_file_addr):
     wrapper_mafft_merge = mafft.Mafft(list_msas, datatype="PROTEIN")
     wrapper_mafft_merge.options['--merge'].active = True
     merged = wrapper_mafft_merge()
+    time_duration = wrapper_mafft_merge.elapsed_time
+    # print(time_duration)
     #logger_hog.info \
     #    (str(len(list_msas)) + " msas are merged with length of "+ str(len(merged)) + "  " + str (len(merged[0])))
     if _config.gene_trees_write:
@@ -45,6 +47,8 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     time_taken_tree = wrapper_tree.elapsed_time
     result_tree2 = wrapper_tree.result
     tree_nwk = str(result_tree2["tree"])
+    # print(time_taken_tree)
+
     # current_time = datetime.now().strftime("%H:%M:%S")
     # for development we write the gene tree, the name of file should be limit in size in linux.
     # danger of overwriting

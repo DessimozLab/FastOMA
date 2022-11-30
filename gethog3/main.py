@@ -167,7 +167,7 @@ if __name__ == '__main__':
                 hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
 
             logger_hog.info("Dask out gathered")
-            client_dask.p(filename=_config.working_folder+"dask-profile.html")rofile
+            client_dask.profile(filename=_config.working_folder+"dask-profile.html")
             client_dask.close()
             client_dask.shutdown()
             logger_hog.info("Client dask closed and shut down.")

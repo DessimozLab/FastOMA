@@ -301,7 +301,7 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num):  # hogs_children_level_
                     if hogs_children_level_list:
                         return len(hogs_children_level_list)
 
-    print(this_level_node_name, rhogid_num)
+    # print(this_level_node_name, rhogid_num)
     children_name = [child.name for child in node_species_tree.children]
     hogs_children_level_list = []
     pickles_subhog_folder = _config.working_folder + "/pickles_subhog/rhog_" + str(rhogid_num) + "/"
