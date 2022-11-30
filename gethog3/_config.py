@@ -53,7 +53,7 @@ inferhog_min_cols_msa_to_filter = 3000  # used for msa before gene tree inferenc
 inferhog_resume_rhog = True   # main.py
 inferhog_resume_subhog = True  # read pickle_subhog  # _inferhog.py
 
-
+inferhog_concurrent_on = False
 
 ## xml
 write_all_prots_in_header = False  # if false writes only those in the hog group
