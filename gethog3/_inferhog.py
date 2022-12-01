@@ -3,7 +3,9 @@ from dask.distributed import rejoin, secede
 from ete3 import Tree
 from Bio import SeqIO
 from distributed import get_client
+import concurrent.futures
 
+import time
 import os
 import shutil
 
@@ -22,18 +24,18 @@ from ete3 import PhyloTree
 
 
 
-def read_infer_xml_rhogs_batch(rhogid_batch_list):
+def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, folder=""):
 
     # for now each contain one rhog
     hogs_rhog_xml_batch = []
     for rhogid_num in rhogid_batch_list:
-        hogs_rhogs_xml = read_infer_xml_rhog_v2(rhogid_num)  # orthoxml_to_newick.py list of hog object
+        hogs_rhogs_xml = read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, folder)  # orthoxml_to_newick.py list of hog object
         hogs_rhog_xml_batch.extend(hogs_rhogs_xml)
 
     return hogs_rhog_xml_batch  # orthoxml_to_newick.py list of hog object
 
 
-def read_infer_xml_rhog_v2(rhogid_num):
+def read_infer_xml_rhog_v2(rhogid_num , inferhog_concurrent_on, folder=""):
     pickles_subhog_folder_all = _config.working_folder + "/pickles_subhog/"
 
     pickles_subhog_folder = _config.working_folder + "/pickles_subhog/rhog_" + str(rhogid_num) + "/"
@@ -41,7 +43,7 @@ def read_infer_xml_rhog_v2(rhogid_num):
         os.makedirs(pickles_subhog_folder)
 
     logger_hog.debug("\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")
-    rhog_i_prot_address = _config.working_folder + "rhogs/" + "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
+    rhog_i_prot_address = _config.working_folder + "rhogs/" + folder+"/HOG_B" + str(rhogid_num).zfill(7) + ".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
     logger_hog.debug("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
     (species_tree) = _utils.read_species_tree(_config.species_tree_address)
@@ -53,8 +55,8 @@ def read_infer_xml_rhog_v2(rhogid_num):
 
     logger_hog.debug("Dask future taxon is off for hogid " + str(rhogid_num) + " with length " + str(len(rhog_i)))
 
-    if _config.inferhog_concurrent_on:
-        hogs_a_rhog_1 = infer_hogs_concurrent(species_tree, rhogid_num)
+    if inferhog_concurrent_on : # _config.inferhog_concurrent_on:
+        hogs_a_rhog_1 = infer_hogs_concurrent(species_tree, rhogid_num, folder )
     else:
         hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, rhogid_num)
     # hogs_a_rhog_1  is an integeer as the length
@@ -93,15 +95,15 @@ def read_infer_xml_rhog_v2(rhogid_num):
 max_workers_num = 10  # config
 
 
-def infer_hogs_concurrent(species_tree, rhogid_num):
+def infer_hogs_concurrent(species_tree, rhogid_num, folder ="" ):
     pending_futures = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers_num) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=_config.inferhog_max_workers_num) as executor:
 
         for node in species_tree.traverse(strategy="preorder"):
             node.dependencies_fulfilled = set()  # a set
 
             if node.is_leaf():
-                future_id = executor.submit(_inferhog.singletone_hog_, node, rhogid_num)
+                future_id = executor.submit(singletone_hog_, node, rhogid_num, folder)
                 pending_futures[future_id] = node.name
 
         while len(pending_futures) > 0:
@@ -115,11 +117,11 @@ def infer_hogs_concurrent(species_tree, rhogid_num):
 
                     # print(future_id)
 
-                    del pending_futures[future_id]
+
 
                     parent_node = species_node.up
                     if not parent_node:  # we reach the root
-                        assert len(pending_futures) == 0
+                        # assert len(pending_futures) == 0, str(species_node_name)+" "+str(rhogid_num)
                         assert species_node.name == species_tree.name
                         break
 
@@ -128,9 +130,12 @@ def infer_hogs_concurrent(species_tree, rhogid_num):
                     childrend_parent_nodes = set(node.name for node in parent_node.get_children())
                     if parent_node.dependencies_fulfilled == childrend_parent_nodes:
                         # print("here", species_node_name)
-                        future_id_parent = executor.submit(_inferhog.infer_hogs_this_level, parent_node, rhogid_num)
+                        future_id_parent = executor.submit(infer_hogs_this_level, parent_node, rhogid_num)
                         # future_id_parent= parent_node.name+"aaa"
                         pending_futures[future_id_parent] = parent_node.name
+                        #for future_id
+                        #    del pending_futures[future_id]
+                        # i need another dictionary the other way arround to removes this futures
 
             # print(" ", pending_futures)
 
@@ -337,7 +342,7 @@ def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid_num):
 #     return hogs_this_level_list
 
 
-def singletone_hog_(node_species_tree, rhogid_num):
+def singletone_hog_(node_species_tree, rhogid_num, folder=""):
     node_species_name = node_species_tree.name  # there is only one species (for the one protein)
     this_level_node_name = node_species_name
 
@@ -354,7 +359,7 @@ def singletone_hog_(node_species_tree, rhogid_num):
                         return len(hogs_children_level_list)
 
     logger_hog.debug("* reading prot address  " + str(this_level_node_name))
-    rhog_i_prot_address = _config.working_folder + "rhogs/HOG_B"+str(rhogid_num).zfill(7)+".fa"
+    rhog_i_prot_address = _config.working_folder + "rhogs/"+folder+"/HOG_B"+str(rhogid_num).zfill(7)+".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
 
     species_names_rhog_nonuniq = [seq.id.split("||")[1] for seq in rhog_i]

@@ -12,12 +12,15 @@ oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/arch
 # qfo
 working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"  # bird_hog
 species_tree_address = working_folder_root + "lineage_tree_qfo_.nwk" #phyloxml"
-working_id = "test_rhog/"
+working_id = "working_nf/"
 protein_format_qfo_dataset = True
 
 
 
 working_folder = working_folder_root + working_id
+# pickles_subhog_folder = working_folder+
+
+
 
 ## output writing files
 gene_trees_write = False  # this also goes for writing msas
@@ -53,12 +56,14 @@ inferhog_min_cols_msa_to_filter = 3000  # used for msa before gene tree inferenc
 inferhog_resume_rhog = True   # main.py
 inferhog_resume_subhog = True  # read pickle_subhog  # _inferhog.py
 
-inferhog_concurrent_on = False
+# inferhog_concurrent_on = True
+inferhog_max_workers_num = 5
 
 ## xml
 write_all_prots_in_header = False  # if false writes only those in the hog group
 inferhog_min_hog_size_xml = 2
 
+logger_level = "INFO"  # DEBUG INFO
 
 
 """
