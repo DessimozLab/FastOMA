@@ -37,6 +37,8 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, folder
 
 def read_infer_xml_rhog_v2(rhogid_num , inferhog_concurrent_on, folder=""):
     pickles_subhog_folder_all = _config.working_folder + "/pickles_subhog/"
+    if not os.path.exists(pickles_subhog_folder_all):
+        os.makedirs(pickles_subhog_folder_all)
 
     pickles_subhog_folder = _config.working_folder + "/pickles_subhog/rhog_" + str(rhogid_num) + "/"
     if not os.path.exists(pickles_subhog_folder):
@@ -115,6 +117,7 @@ def infer_hogs_concurrent(species_tree, rhogid_num, folder ="" ):
 
                 if future_id.done():
                     species_node_name = pending_futures[future_id]
+                    del pending_futures[future_id]
                     species_node = species_tree.search_nodes(name=species_node_name)[0]
 
                     # print(future_id)

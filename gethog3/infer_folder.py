@@ -8,12 +8,13 @@ import os
 # from os import listdir
 # import os
 import sys
+
 import _config
 
 #address_rhogs_folder = sys.argv[1]
-address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf/rhogs/1/"
-inferhog_concurrent_on_string = True  # sys.argv[2]
-inferhog_concurrent_on = inferhog_concurrent_on_string == "True"
+address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf/rhogs/207/"
+inferhog_concurrent_on_string = "True"  # sys.argv[2]
+inferhog_concurrent_on = inferhog_concurrent_on_string == "True"  # sys.argv[2]
 
 print("input is", address_rhogs_folder)
 pickle_folder = _config.working_folder + "pickles_rhog"
