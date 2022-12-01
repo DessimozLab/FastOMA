@@ -53,8 +53,8 @@ inferhog_tresh_ratio_gap_col = 0.2
 inferhog_min_cols_msa_to_filter = 3000  # used for msa before gene tree inference and  saving msa in hog class
 
 
-inferhog_resume_rhog = True   # main.py
-inferhog_resume_subhog = True  # read pickle_subhog  # _inferhog.py
+inferhog_resume_rhog = False  #True   # main.py
+inferhog_resume_subhog = False # True  # read pickle_subhog  # _inferhog.py
 
 # inferhog_concurrent_on = True
 inferhog_max_workers_num = 5

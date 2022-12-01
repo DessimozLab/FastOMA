@@ -55,10 +55,10 @@ def read_infer_xml_rhog_v2(rhogid_num , inferhog_concurrent_on, folder=""):
 
     logger_hog.debug("Dask future taxon is off for hogid " + str(rhogid_num) + " with length " + str(len(rhog_i)))
 
-    if inferhog_concurrent_on : # _config.inferhog_concurrent_on:
+    if inferhog_concurrent_on:  # _config.inferhog_concurrent_on:
         hogs_a_rhog_1 = infer_hogs_concurrent(species_tree, rhogid_num, folder )
     else:
-        hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, rhogid_num)
+        hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, rhogid_num, folder)
     # hogs_a_rhog_1  is an integeer as the length
 
     root_node_name = species_tree.name
@@ -101,10 +101,12 @@ def infer_hogs_concurrent(species_tree, rhogid_num, folder ="" ):
 
         for node in species_tree.traverse(strategy="preorder"):
             node.dependencies_fulfilled = set()  # a set
+            node.infer_submitted = False
 
             if node.is_leaf():
                 future_id = executor.submit(singletone_hog_, node, rhogid_num, folder)
                 pending_futures[future_id] = node.name
+                node.infer_submitted = True
 
         while len(pending_futures) > 0:
             time.sleep(0.1)
@@ -116,9 +118,6 @@ def infer_hogs_concurrent(species_tree, rhogid_num, folder ="" ):
                     species_node = species_tree.search_nodes(name=species_node_name)[0]
 
                     # print(future_id)
-
-
-
                     parent_node = species_node.up
                     if not parent_node:  # we reach the root
                         # assert len(pending_futures) == 0, str(species_node_name)+" "+str(rhogid_num)
@@ -130,7 +129,9 @@ def infer_hogs_concurrent(species_tree, rhogid_num, folder ="" ):
                     childrend_parent_nodes = set(node.name for node in parent_node.get_children())
                     if parent_node.dependencies_fulfilled == childrend_parent_nodes:
                         # print("here", species_node_name)
-                        future_id_parent = executor.submit(infer_hogs_this_level, parent_node, rhogid_num)
+                        if not parent_node.infer_submitted:
+                            future_id_parent = executor.submit(infer_hogs_this_level, parent_node, rhogid_num)
+                            parent_node.infer_submitted = True
                         # future_id_parent= parent_node.name+"aaa"
                         pending_futures[future_id_parent] = parent_node.name
                         #for future_id
@@ -291,18 +292,18 @@ def infer_hogs_concurrent(species_tree, rhogid_num, folder ="" ):
 #
 #     return infer_hogs_this_level_out
 
-def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid_num):
+def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid_num,folder=""):
 
     if sub_species_tree.is_leaf():
         # hogs_this_level_list = singletone_hog(sub_species_tree, rhog_i, species_names_rhog, rhogid_num)
-        singletone_hog_out = singletone_hog_(sub_species_tree, rhogid_num)
+        singletone_hog_out = singletone_hog_(sub_species_tree, rhogid_num, folder)
         # out 1 succesful
         return singletone_hog_out
     children_nodes = sub_species_tree.children
 
     hogs_children_level_list = []
     for node_species_tree_child in children_nodes:
-        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhogid_num)
+        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhogid_num,folder)
         # hogs_children_level_list_i should be 1
         # hogs_children_level_list.extend(hogs_children_level_list_i)
     infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, rhogid_num)  # ,hogs_children_level_list
