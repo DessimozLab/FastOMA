@@ -52,7 +52,7 @@ def list_rhog_fastas(address_rhogs_folder):
     return rhogid_num_list
 
 
-def read_species_tree(species_tree_address):
+def read_species_tree_add_internal(species_tree_address):
     """
     reading orthoxml_to_newick.py species tree in Phyloxml format using ete3 package .
 
@@ -62,6 +62,8 @@ def read_species_tree(species_tree_address):
     # print(round(os.path.getsize(species_tree_address)/1000),"kb")
     format_tree = species_tree_address.split(".")[-1]
 
+    print("there shouldnt be any space in the tree name internal node name as well")
+
     if format_tree == "phyloxml":
         project = Phyloxml()
         project.build_from_file(species_tree_address)
@@ -69,17 +71,18 @@ def read_species_tree(species_tree_address):
         for species_tree in project.get_phylogeny():
             species_tree = species_tree
         for node_species_tree in species_tree.traverse(strategy="postorder"):
-            if node_species_tree.is_leaf():
-                temp1 = node_species_tree.phyloxml_clade.get_taxonomy()[0]
-                # print(temp1.get_code())
+            temp1 = node_species_tree.phyloxml_clade.get_taxonomy()[0]
+            if temp1.get_code():
                 node_species_tree.name = temp1.get_code()
+            else:
+                node_species_tree.name = temp1.get_scientific_name()
         # print(len(species_tree)); print(species_tree)
     elif format_tree == "nwk":
         try:
-            species_tree = Tree(species_tree_address)
+            species_tree = Tree(species_tree_address, format=1)
         except:
             try:
-                species_tree = Tree(species_tree_address, format=1)
+                species_tree = Tree(species_tree_address)
             except:
                 print("format of species tree is not known")
 
@@ -96,7 +99,7 @@ def read_species_tree(species_tree_address):
                 node.name = "leaf_" + str(num_leaves_no_name)
                 num_leaves_no_name += 1
             else:
-                node.name = "internal_" + str(counter_internal)
+                node.name = "internal_ad_" + str(counter_internal)
                 counter_internal += 1
 
     return (species_tree)

@@ -3,8 +3,8 @@ params.inputs = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/workin
 
 process gHOG {
 
-  cpus 4
-  time {10.h}
+  cpus 1
+  time {2.h}
   memory {20.GB}
 
 
@@ -14,7 +14,7 @@ process gHOG {
 
   script:
   """
-  python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/gethog3_nf/gethog3_30nov/infer_batch.py  $rhog_fa  True
+  python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/gethog3_nf/gethog3_30nov/infer_folder.py  $rhog_fa  True
   """
 }
 

@@ -37,8 +37,8 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, folder
 
 def read_infer_xml_rhog_v2(rhogid_num , inferhog_concurrent_on, folder=""):
     pickles_subhog_folder_all = _config.working_folder + "/pickles_subhog/"
-    if not os.path.exists(pickles_subhog_folder_all):
-        os.makedirs(pickles_subhog_folder_all)
+    # if not os.path.exists(pickles_subhog_folder_all):
+    #     os.makedirs(pickles_subhog_folder_all)
 
     pickles_subhog_folder = _config.working_folder + "/pickles_subhog/rhog_" + str(rhogid_num) + "/"
     if not os.path.exists(pickles_subhog_folder):
@@ -48,7 +48,7 @@ def read_infer_xml_rhog_v2(rhogid_num , inferhog_concurrent_on, folder=""):
     rhog_i_prot_address = _config.working_folder + "rhogs/" + folder+"/HOG_B" + str(rhogid_num).zfill(7) + ".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
     logger_hog.debug("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
-    (species_tree) = _utils.read_species_tree(_config.species_tree_address)
+    (species_tree) = _utils.read_species_tree_add_internal(_config.species_tree_address)
     (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree, rhogid_num)
     species_names_rhog = list(set(species_names_rhog))
     logger_hog.debug(
@@ -103,15 +103,15 @@ def infer_hogs_concurrent(species_tree, rhogid_num, folder ="" ):
 
         for node in species_tree.traverse(strategy="preorder"):
             node.dependencies_fulfilled = set()  # a set
-            node.infer_submitted = False
+            # node.infer_submitted = False
 
             if node.is_leaf():
                 future_id = executor.submit(singletone_hog_, node, rhogid_num, folder)
                 pending_futures[future_id] = node.name
-                node.infer_submitted = True
+                # node.infer_submitted = True
 
         while len(pending_futures) > 0:
-            time.sleep(0.1)
+            time.sleep(0.01)
             future_id_list = list(pending_futures.keys())
             for future_id in future_id_list:
 
@@ -132,9 +132,9 @@ def infer_hogs_concurrent(species_tree, rhogid_num, folder ="" ):
                     childrend_parent_nodes = set(node.name for node in parent_node.get_children())
                     if parent_node.dependencies_fulfilled == childrend_parent_nodes:
                         # print("here", species_node_name)
-                        if not parent_node.infer_submitted:
-                            future_id_parent = executor.submit(infer_hogs_this_level, parent_node, rhogid_num)
-                            parent_node.infer_submitted = True
+                        #if not parent_node.infer_submitted:
+                        future_id_parent = executor.submit(infer_hogs_this_level, parent_node, rhogid_num)
+                            # parent_node.infer_submitted = True
                         # future_id_parent= parent_node.name+"aaa"
                         pending_futures[future_id_parent] = parent_node.name
                         #for future_id
@@ -295,7 +295,7 @@ def infer_hogs_concurrent(species_tree, rhogid_num, folder ="" ):
 #
 #     return infer_hogs_this_level_out
 
-def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid_num,folder=""):
+def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid_num, folder=""):
 
     if sub_species_tree.is_leaf():
         # hogs_this_level_list = singletone_hog(sub_species_tree, rhog_i, species_names_rhog, rhogid_num)
@@ -488,7 +488,6 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num):  # hogs_children_level_
     else:
         logger_hog.info("Issue 1455, merged_msa is empty " + str(rhogid_num) + ", for taxonomic level:" + str(node_species_tree.name))
 
-
     gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, gene_tree_file_addr)
     gene_tree = Tree(gene_tree_raw + ";", format=0)
     logger_hog.debug("Gene tree is inferred with length of " + str(len(gene_tree)) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
@@ -501,7 +500,6 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num):  # hogs_children_level_
     # outliers = find_outlier_leaves(gene_tree)
     # R = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
     # gene_tree.set_outgroup(R)
-
 
     gene_tree = _utils.lable_sd_internal_nodes(gene_tree)
     # print("Overlap speciation is done for internal nodes of gene tree, as following:")

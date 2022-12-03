@@ -12,8 +12,9 @@ import sys
 import _config
 
 #address_rhogs_folder = sys.argv[1]
-address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf/rhogs/207/"
-inferhog_concurrent_on_string = "True"  # sys.argv[2]
+address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf/rhogs/bb1/"
+inferhog_concurrent_on_string = "False"  # sys.argv[2]
+
 inferhog_concurrent_on = inferhog_concurrent_on_string == "True"  # sys.argv[2]
 
 print("input is", address_rhogs_folder)
@@ -34,7 +35,7 @@ elif "/" in address_rhogs_folder:
 else:
     folder = address_rhogs_folder
 
-print("rhogs in the input folder",folder)
+print("rhogs in the input folder", folder)
 
 from os import listdir
 #pickle_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/gethog3_nf_/pickles_rhog"
@@ -44,19 +45,22 @@ list_done_rhogid = []
 #    numr = int(file.split(".")[0].split("_")[1])
 #    list_done_rhogid.append(numr)
 
-
 list_rhog_fastas_files_rem = [i for i in list_rhog_fastas_files if i not in list_done_rhogid]
 
-print("there are ",len(list_rhog_fastas_files_rem),"rhogs remained in the input folder", list_rhog_fastas_files_rem[:5] )
+print("there are ", len(list_rhog_fastas_files_rem),"rhogs remained in the input folder", list_rhog_fastas_files_rem[:5] )
 
 hogs_rhog_xml_batch = _inferhog.read_infer_xml_rhogs_batch(list_rhog_fastas_files_rem, inferhog_concurrent_on, folder)
 
-
-print("finsihed ",address_rhogs_folder)
-
+print("finsihed ", address_rhogs_folder)
 
 
-# to do   FileNotFoundError: [Errno 2] No such file or directory: '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3//gethog3_nf_//pickles_rhog//file_69696.pickle'
+"""
+to do
+print("there shouldnt be any space in the tree name internal node name as well")
+  '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf//pickles_subhog/rhog_833762/delta/epsilon subdivisions.pickle'
 
 
+  FileExistsError: [Errno 17] File exists: '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf//pickles_subhog/'
 
+
+"""

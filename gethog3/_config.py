@@ -11,7 +11,7 @@ oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/arch
 
 # qfo
 working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"  # bird_hog
-species_tree_address = working_folder_root + "lineage_tree_qfo_.nwk" #phyloxml"
+species_tree_address = working_folder_root + "lineage_tree_qfo_2.phyloxml" #phyloxml"
 working_id = "working_nf/"
 protein_format_qfo_dataset = True
 
@@ -24,7 +24,7 @@ working_folder = working_folder_root + working_id
 
 ## output writing files
 gene_trees_write = False  # this also goes for writing msas
-keep_subhog_each_pickle = False #False
+keep_subhog_each_pickle = True #False
 
 
 # filtering omamer
