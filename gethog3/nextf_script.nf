@@ -3,8 +3,8 @@ params.inputs = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/workin
 
 process gHOG {
 
-  cpus 1
-  time {2.h}
+  cpus 1      // 8
+  time {2.h}  // 8.h
   memory {20.GB}
 
 

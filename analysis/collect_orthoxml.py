@@ -5,7 +5,12 @@ from os import listdir
 from xml.dom import minidom
 
 print("started ")
-working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf/"
+
+protein_format_qfo_dataset = False
+qfo_bird = "bird_hog"  #  qfo3
+
+
+working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/"+qfo_bird+"/working_nf/"
 
 
 # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf/rhogs/bb1
@@ -17,7 +22,7 @@ working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/workin
 #species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
 pickle_folder = working_folder + "pickles_rhog/" #"/pickle_b_0.5_3000/" pickles_rhog
 # add warning when pickle folder is not empty
-output_xml_name = "out_3dec.xml"
+output_xml_name = "bird_hog_4dec.orthoxml"
     #"pickle_0.5_3000_17nov_ts.xml"
 gene_id_pickle_file = working_folder + "gene_id_dic_xml.pickle" #"gene_id_v2_bird.pickle"
 
@@ -40,7 +45,7 @@ for query_species_name, list_prots in gene_id_name.items():
     database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})
     genes_xml = ET.SubElement(database_xml, "genes")
 
-    protein_format_qfo_dataset = True
+
     if protein_format_qfo_dataset:
         for (gene_idx_integer, query_prot_name) in list_prots:
             # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ   for qfo benchamrk, the middle should be wirtten in the file

@@ -6,7 +6,7 @@
 #SBATCH --mem 3G
 #SBATCH --time 05:00:00
 
-export PYTHONUNBUFFERED=2
+export PYTHONUNBUFFERED=1
 
 echo "started"
 #python main.py

@@ -8,7 +8,7 @@ import os
 # from os import listdir
 # import os
 import sys
-
+from os import listdir
 import _config
 
 #address_rhogs_folder = sys.argv[1]
@@ -37,13 +37,14 @@ else:
 
 print("rhogs in the input folder", folder)
 
-from os import listdir
-#pickle_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/gethog3_nf_/pickles_rhog"
-#list_done_raw = listdir(pickle_folder)
+
+pickle_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf/pickles_rhog"
 list_done_rhogid = []
-#for file in list_done_raw:
-#    numr = int(file.split(".")[0].split("_")[1])
-#    list_done_rhogid.append(numr)
+if _config.inferhog_resume_rhog:
+    list_done_raw = listdir(pickle_folder)
+    for file in list_done_raw:
+       numr = int(file.split(".")[0].split("_")[1])
+       list_done_rhogid.append(numr)
 
 list_rhog_fastas_files_rem = [i for i in list_rhog_fastas_files if i not in list_done_rhogid]
 
