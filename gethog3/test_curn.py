@@ -9,7 +9,7 @@ a= ete3.Tree(tree_path, format=1, quoted_node_names= True)
 a.write(format=1), a
 
 
-orthoxml_path= working_folder + "working_nf/out_3dec_ed.xml"
+orthoxml_path = working_folder + "working_nf/out_3dec.xml"
 ham_analysis = pyham.Ham(tree_path, orthoxml_path, tree_format='newick', use_internal_name=True)
 
 print(222)

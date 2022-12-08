@@ -62,7 +62,7 @@ def read_species_tree_add_internal(species_tree_address):
     # print(round(os.path.getsize(species_tree_address)/1000),"kb")
     format_tree = species_tree_address.split(".")[-1]
 
-    print("there shouldnt be any space in the tree name internal node name as well")
+    # print("there shouldnt be any space in the tree name internal node name as well")
 
     if format_tree == "phyloxml":
         project = Phyloxml()

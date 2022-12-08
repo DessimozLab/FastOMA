@@ -1,13 +1,13 @@
 
 import xml.etree.ElementTree as ET
-import dill as dill_pickle
+import pickle
 from os import listdir
 from xml.dom import minidom
 
 print("started ")
 
-protein_format_qfo_dataset = False
-qfo_bird = "bird_hog"  #  qfo3
+protein_format_qfo_dataset = True
+qfo_bird = "qfo3"  #  qfo3
 
 
 working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/"+qfo_bird+"/working_nf/"
@@ -22,7 +22,7 @@ working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/"+qfo_bird+
 #species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
 pickle_folder = working_folder + "pickles_rhog/" #"/pickle_b_0.5_3000/" pickles_rhog
 # add warning when pickle folder is not empty
-output_xml_name = "bird_hog_4dec.orthoxml"
+output_xml_name = "bird_hog_7dec.orthoxml"
     #"pickle_0.5_3000_17nov_ts.xml"
 gene_id_pickle_file = working_folder + "gene_id_dic_xml.pickle" #"gene_id_v2_bird.pickle"
 
@@ -34,7 +34,7 @@ orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/201
                                                "originVersion": "Nov 2021", "version": "0.3"})  #
 
 with open(gene_id_pickle_file, 'rb') as handle:
-    gene_id_name = dill_pickle.load(handle)
+    gene_id_name = pickle.load(handle)
     # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
 print("gene_id_name read ")
 
@@ -64,7 +64,7 @@ print(len(pickle_files_adress))
 hogs_a_rhog_xml_all = []
 for pickle_file_adress in pickle_files_adress:
     with open(pickle_folder + pickle_file_adress, 'rb') as handle:
-        hogs_a_rhog_xml_batch = dill_pickle.load(handle)  # hogs_a_rhog_xml_batch is orthoxml_to_newick.py list of hog object.
+        hogs_a_rhog_xml_batch = pickle.load(handle)  # hogs_a_rhog_xml_batch is orthoxml_to_newick.py list of hog object.
         hogs_a_rhog_xml_all.extend(hogs_a_rhog_xml_batch)
         # hogs_rhogs_xml_all is orthoxml_to_newick.py list of hog object.
 

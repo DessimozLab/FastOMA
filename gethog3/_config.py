@@ -16,15 +16,13 @@ working_id = "working_nf/"
 protein_format_qfo_dataset = True
 
 
-
 working_folder = working_folder_root + working_id
 # pickles_subhog_folder = working_folder+
 
 
-
 ## output writing files
 gene_trees_write = False  # this also goes for writing msas
-keep_subhog_each_pickle = True #False
+keep_subhog_each_pickle = True # False
 
 
 # filtering omamer
