@@ -21,8 +21,8 @@ working_folder = working_folder_root + working_id
 
 
 ## output writing files
-gene_trees_write = False  # this also goes for writing msas
-keep_subhog_each_pickle = True # False
+gene_trees_write = True  # this also goes for writing msas
+keep_subhog_each_pickle = True   # False
 
 
 # filtering omamer
@@ -40,7 +40,7 @@ dask_time_slurm = "00:10:00"
 dask_n_jobs = 2
 
 ## hogclass configs
-hogclass_max_num_seq = 5  # subsampling in msa
+hogclass_max_num_seq = 200  # subsampling in msa
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 500
 hogclass_tresh_ratio_gap_col = 0.2
 
@@ -50,9 +50,10 @@ inferhog_tresh_ratio_gap_row = 0.4
 inferhog_tresh_ratio_gap_col = 0.2
 inferhog_min_cols_msa_to_filter = 3000  # used for msa before gene tree inference and  saving msa in hog class
 
+inferhog_filter_all_msas_row = True
 
-inferhog_resume_rhog = False  #True   # main.py
-inferhog_resume_subhog = False # True  # read pickle_subhog  # _inferhog.py
+inferhog_resume_rhog   = False #True  # True   # main.py
+inferhog_resume_subhog = False  #True  # True  # read pickle_subhog  # _inferhog.py
 
 # inferhog_concurrent_on = True
 inferhog_max_workers_num = 8

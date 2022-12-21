@@ -257,7 +257,7 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
             node_species_tree.name)+"\n"+str(node_species_tree.write())+"\n")
 
     if len(hogs_children_level_list) == 1:
-        assert len(children_name) == 1
+        # assert len(children_name) == 1
         hogs_this_level_list = hogs_children_level_list
 
         pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+".pickle"
@@ -293,61 +293,83 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
                 node_species_tree.name))
         # merged_msa_filt = merged_msa
         # 893*4839, 10 mins
+        msa_filt_row_1 = merged_msa #
+        #if _config.inferhog_filter_all_msas_row:
+        #    msa_filt_row_1 = _utils.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
 
-        if len(merged_msa[0]) >= _config.inferhog_min_cols_msa_to_filter:
+        #if   msa_filt_row_1 and len(msa_filt_row_1[0]) >=
+        if len(msa_filt_row_1[0]) >= _config.inferhog_min_cols_msa_to_filter:
             # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
             # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
             logger_hog.debug("We are doing MSA trimming "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
             # print(len(merged_msa), len(merged_msa[0]))
-            msa_filt_col = _utils.msa_filter_col(merged_msa, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr)
+            msa_filt_col = _utils.msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr)
             if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
                 msa_filt_row_col = _utils.msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
+
+                # compare msa_filt_row_col and msa_filt_col,
+                if len(msa_filt_row_col) != len(msa_filt_col) :
+                    a=1
+                    # remove prot from all subhogs
+
             else:
                 msa_filt_row_col = msa_filt_col
             merged_msa_filt = msa_filt_row_col
         else:
-            msa_filt_row_col = merged_msa
-            msa_filt_col = merged_msa
+            msa_filt_row_col = msa_filt_row_1
+            msa_filt_col = msa_filt_row_1
             # the msa may be empty
-        if len(msa_filt_row_col) < 2:
-            msa_filt_row_col = msa_filt_col[:2]
+        #if len(msa_filt_row_col) < 2:
+        #    msa_filt_row_col = msa_filt_col[:2]
     else:
         logger_hog.info("Issue 1455, merged_msa is empty " + str(rhogid_num) + ", for taxonomic level:" + str(node_species_tree.name))
 
-    gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, gene_tree_file_addr)
-    gene_tree = Tree(gene_tree_raw + ";", format=0)
-    logger_hog.debug("Gene tree is inferred with length of " + str(len(gene_tree)) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
-            node_species_tree.name))
+    if len(msa_filt_row_col) > 1:
 
-    R_outgroup = gene_tree.get_midpoint_outgroup()
-    gene_tree.set_outgroup(R_outgroup)  # print("Midpoint rooting is done for gene tree.")
-    #gene_tree = PhyloTree(gene_tree_raw + ";", format=0)
-    # outliers = find_outlier_leaves(gene_tree)
-    # R = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
-    # gene_tree.set_outgroup(R)
-    gene_tree = _utils.lable_sd_internal_nodes(gene_tree)
-    # print("Overlap speciation is done for internal nodes of gene tree, as following:")
-    # print(str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;")
-    logger_hog.debug("Merging sub-hogs of children started  for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
-            node_species_tree.name))
-    # we may use this merged_msa here
-    hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, msa_filt_col)
+        gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, gene_tree_file_addr)
+        gene_tree = Tree(gene_tree_raw + ";", format=0)
+        logger_hog.debug("Gene tree is inferred with length of " + str(len(gene_tree)) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
+                node_species_tree.name))
 
-    logger_hog.debug("Hogs of this level is found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(this_level_node_name))
-    # check for conflicts in merging
-    #     for i in range(subHOG_to_be_merged_set_other_Snodes):  if
-    #         for i in range(subHOG_to_be_merged_set_other_Snodes):  print("*&*& ",node_species_tree.name)
-    # # dvelopmnet mode  logger info
-    # prot_list_sbuhog = [i._members for i in hogs_this_level_list]
-    # prot_list_sbuhog_short = []
-    # for prot_sub_list_sbuhog in prot_list_sbuhog:
-    #     if format_prot_name == 0:  # bird dataset TYTALB_R04643
-    #         prot_list_sbuhog_short = prot_sub_list_sbuhog
-    #     elif format_prot_name == 1:  # qfo dataset  'tr|E3JPS4|E3JPS4_PUCGT
-    #         prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
-    # logger_hog.debug(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
-    #     [str(i) for i in prot_list_sbuhog_short]))
+        R_outgroup = gene_tree.get_midpoint_outgroup()
+        gene_tree.set_outgroup(R_outgroup)  # print("Midpoint rooting is done for gene tree.")
+        #gene_tree = PhyloTree(gene_tree_raw + ";", format=0)
+        # outliers = find_outlier_leaves(gene_tree)
+        # R = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
+        # gene_tree.set_outgroup(R)
+        gene_tree = _utils.lable_sd_internal_nodes(gene_tree)
+        # print("Overlap speciation is done for internal nodes of gene tree, as following:")
+        # print(str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;")
+        logger_hog.debug("Merging sub-hogs of children started  for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
+                node_species_tree.name))
+        # we may use this merged_msa here
+        hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, msa_filt_col)
 
+        print(node_species_tree.name)  # ssh
+        #logger_hog.warn(str(node_species_tree.name)) s
+
+        for i in hogs_this_level_list:
+            #logger_hog.warn(str(i))
+            #logger_hog.warn(str(i))
+            print(i)
+            print(i.get_members())
+
+        logger_hog.debug("Hogs of this level is found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(this_level_node_name))
+        # check for conflicts in merging
+        #     for i in range(subHOG_to_be_merged_set_other_Snodes):  if
+        #         for i in range(subHOG_to_be_merged_set_other_Snodes):  print("*&*& ",node_species_tree.name)
+        # # dvelopmnet mode  logger info
+        # prot_list_sbuhog = [i._members for i in hogs_this_level_list]
+        # prot_list_sbuhog_short = []
+        # for prot_sub_list_sbuhog in prot_list_sbuhog:
+        #     if format_prot_name == 0:  # bird dataset TYTALB_R04643
+        #         prot_list_sbuhog_short = prot_sub_list_sbuhog
+        #     elif format_prot_name == 1:  # qfo dataset  'tr|E3JPS4|E3JPS4_PUCGT
+        #         prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
+        # logger_hog.debug(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
+        #     [str(i) for i in prot_list_sbuhog_short]))
+    else:
+        hogs_this_level_list = []
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+ ".pickle"
     with open(pickle_subhog_file, 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -384,7 +406,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     # hoggraph = nx.Graph()
     # hoggraph.add_nodes_from(hoggraph_node_name_len)
 
-    for node in gene_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n,"processed") and n.processed==True):
+    for node in gene_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "processed") and n.processed==True):
         # print("Leaves assigned to hog are ", assigned_leaves_to_hog)   #print("Traversing gene tree. Now at node", node.name)
         if node.is_leaf():
             continue

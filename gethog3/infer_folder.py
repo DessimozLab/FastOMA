@@ -12,12 +12,16 @@ from os import listdir
 import _config
 
 #address_rhogs_folder = sys.argv[1]
-address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf/rhogs_big/b0/"
-inferhog_concurrent_on_string = "True"  # sys.argv[2]
+address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf/rhogs_rest/bb1/"
+inferhog_concurrent_on_string = "False"  # sys.argv[2]
+
+
+# check 16 Dec rhogs_big/b7/"  for very small
+
 
 prefix_pickle = "pick_big"  # sys.argv[3]
 
-rhogs_fa_folder_pure = "rhogs_big"  # or  "rhogs_big"
+rhogs_fa_folder_pure = "rhogs_rest"  # or  "rhogs_big"
 
 pickles_rhog_folder = _config.working_folder + "/" + prefix_pickle + "_rhog/"
 pickles_subhog_folder_all = _config.working_folder + "/" + prefix_pickle + "_subhog/"
@@ -42,7 +46,7 @@ print("input is", address_rhogs_folder)
 #rhogid_batch = [rhogid_num]
 
 list_rhog_fastas_files = _utils.list_rhog_fastas(address_rhogs_folder)
-print("there are ",len(list_rhog_fastas_files),"rhogs in the input folder")
+print("there are ",len(list_rhog_fastas_files), "rhogs in the input folder")
 if address_rhogs_folder.endswith("/"):
     batch_folder=address_rhogs_folder.split("/")[-2]
 elif "/" in address_rhogs_folder:
@@ -62,9 +66,10 @@ if _config.inferhog_resume_rhog:
        numr = int(file.split(".")[0].split("_")[1])
        list_done_rhogid.append(numr)
 
-list_rhog_fastas_files_rem = [i for i in list_rhog_fastas_files if i not in list_done_rhogid]
+# list_rhog_fastas_files_rem = [i for i in list_rhog_fastas_files if i not in list_done_rhogid]
+list_rhog_fastas_files_rem = [594043]
 
-print("there are ", len(list_rhog_fastas_files_rem),"rhogs remained in the input folder", list_rhog_fastas_files_rem[:5] )
+print("there are ", len(list_rhog_fastas_files_rem), "rhogs remained in the input folder", list_rhog_fastas_files_rem[:5] )
 
 hogs_rhog_xml_batch = _inferhog.read_infer_xml_rhogs_batch(list_rhog_fastas_files_rem, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, rhogs_fa_folder)
 
