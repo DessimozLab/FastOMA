@@ -57,7 +57,7 @@ def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_fold
     logger_hog.debug("Dask future taxon is off for hogid " + str(rhogid_num) + " with length " + str(len(rhog_i)))
 
     if inferhog_concurrent_on:  # _config.inferhog_concurrent_on:
-        hogs_a_rhog_1 = infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
+        hogs_a_rhog_1 = infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder, prots_to_remove)
     else:
         hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder, prots_to_remove)
     # hogs_a_rhog_1  is an integeer as the length
@@ -109,7 +109,7 @@ def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_fold
 max_workers_num = 10  # config
 
 
-def infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder):
+def infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder, prots_to_remove):
 
     pending_futures = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=_config.inferhog_max_workers_num) as executor:
@@ -147,7 +147,7 @@ def infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, r
                     if parent_node.dependencies_fulfilled == childrend_parent_nodes:
                         # print("here", species_node_name)
                         #if not parent_node.infer_submitted:
-                        future_id_parent = executor.submit(infer_hogs_this_level, parent_node, rhogid_num, pickles_subhog_folder_all)
+                        future_id_parent = executor.submit(infer_hogs_this_level, parent_node, rhogid_num, pickles_subhog_folder_all, prots_to_remove)
                             # parent_node.infer_submitted = True
                         # future_id_parent= parent_node.name+"aaa"
                         pending_futures[future_id_parent] = parent_node.name

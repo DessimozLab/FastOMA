@@ -62,7 +62,7 @@ inferhog_max_workers_num = 8
 write_all_prots_in_header = False  # if false writes only those in the hog group
 inferhog_min_hog_size_xml = 2
 
-logger_level = "DEBUG"  # DEBUG INFO
+logger_level = "INFO"  # DEBUG INFO
 
 
 """
