@@ -373,7 +373,7 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
         # we may use this merged_msa here
         hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, msa_filt_col)
 
-        print(node_species_tree.name)   # ssh
+        # print(node_species_tree.name)   # ssh
         # logger_hog.warn(str(node_species_tree.name))
 
         # for i in hogs_this_level_list:

@@ -21,7 +21,7 @@ working_folder = working_folder_root + working_id
 
 
 ## output writing files
-gene_trees_write = True  # this also goes for writing msas
+gene_trees_write = False  # this also goes for writing msas
 keep_subhog_each_pickle = True   # False
 
 
@@ -52,8 +52,8 @@ inferhog_min_cols_msa_to_filter = 3000  # used for msa before gene tree inferenc
 
 inferhog_filter_all_msas_row = True
 
-inferhog_resume_rhog   = False #True  # True   # main.py
-inferhog_resume_subhog = False  #True  # True  # read pickle_subhog  # _inferhog.py
+inferhog_resume_rhog   = True #True  # True   # main.py
+inferhog_resume_subhog = True  #True  # True  # read pickle_subhog  # _inferhog.py
 
 # inferhog_concurrent_on = True
 inferhog_max_workers_num = 8
