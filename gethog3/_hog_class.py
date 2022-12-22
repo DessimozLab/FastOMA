@@ -38,7 +38,7 @@ class HOG:
             for sub_hog in sub_hogs:
                 hog_members |= sub_hog.get_members()  # union
             self._members = hog_members  # set.union(*tup)
-            self._subhogs = list(input_instantiate)  # full members
+            self._subhogs = list(input_instantiate)  # full members of subhog, children
 
             records_full = [record for record in msa if record.id in self._members]
 
@@ -69,10 +69,26 @@ class HOG:
     def get_members(self):
         return set(self._members)
 
+    def remove_prots_from_hog(self, prots_to_remove):
+        prot_members_hog_old = self._members
+
+        if prot_members_hog_old & prots_to_remove:
+            prot_members_hog_edited = prot_members_hog_old - prots_to_remove
+            self._members = prot_members_hog_edited
+            msa_old = self._msa
+            msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id not in prots_to_remove])
+            self._msa = msa_edited
+
+            if len(prot_members_hog_edited) == 0:  # hog should be removed , no members is left
+                return 0
+
+        return 1
+
     def to_orthoxml(self):
         hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
         property_element = ET.SubElement(hog_elemnt, "property",
                                         attrib={"name": "TaxRange", "value": str(self._taxnomic_range)})
+
         # to do the following could be improved ???   without this if it will be like, one property is enough
         # <orthologGroup>
         #    <property name="TaxRange" value="GORGO_HUMAN_PANTR"/>
@@ -103,9 +119,10 @@ class HOG:
             if len(list_of_subhogs_of_same_clade) > 1:
                 paralog_element = ET.Element('paralogGroup')
                 for sh in list_of_subhogs_of_same_clade:
-                    # paralog_element.append(sh.to_orthoxml(**gene_id_name))
                     paralog_element.append(sh.to_orthoxml())  # ,**gene_id_name  indent+2
                 hog_elemnt.append(paralog_element)
             else:
                 hog_elemnt.append(list_of_subhogs_of_same_clade[0].to_orthoxml())  # indent+2
+
         return hog_elemnt
+

@@ -37,6 +37,8 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, pickle
 def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,  pickles_subhog_folder_all, rhogs_fa_folder):
                 #(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, batch_folder, big_rest):
 
+    prots_to_remove = set()
+
     pickles_subhog_folder = pickles_subhog_folder_all + "/rhog_" + str(rhogid_num) + "/"
     if not os.path.exists(pickles_subhog_folder):
         os.makedirs(pickles_subhog_folder)
@@ -57,7 +59,7 @@ def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_fold
     if inferhog_concurrent_on:  # _config.inferhog_concurrent_on:
         hogs_a_rhog_1 = infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
     else:
-        hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
+        hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder, prots_to_remove)
     # hogs_a_rhog_1  is an integeer as the length
 
     root_node_name = species_tree.name
@@ -68,6 +70,22 @@ def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_fold
 
     if not _config.keep_subhog_each_pickle:
         shutil.rmtree(pickles_subhog_folder)
+
+    def remove_prots_from_hog_hierarchy(hog_ii, prots_to_remove):
+        for subhog in hog_ii._subhogs:
+            remove_prots_from_hog_hierarchy(subhog, prots_to_remove)
+        hog_ii.remove_prots_from_hog(prots_to_remove)
+        # remove inside subhog if
+        hog_ii._subhogs = [i for i in hog_ii._subhogs if len(i._members) > 0]
+        # print(hog._taxnomic_range)
+        #if list(prots_to_remove)[0] in hog._members:
+        #    print(hog._members, hog._taxnomic_range)
+        return 1
+
+    for hog_i in hogs_a_rhog:
+        remove_prots_from_hog_hierarchy(hog_i, prots_to_remove)
+        # It may result in empty hog
+        # an object of class HOG of hogID=HOG:B0594043_sub10008, length=0, taxonomy= HUMAN_]
 
     hogs_rhogs_xml = []
     for hog_i in hogs_a_rhog:
@@ -154,7 +172,7 @@ def infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, r
 #                 node.processed = True
 #     return out_1
 
-def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder):
+def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder, prots_to_remove):
 
     if sub_species_tree.is_leaf():
         # hogs_this_level_list = singletone_hog(sub_species_tree, rhog_i, species_names_rhog, rhogid_num)
@@ -165,10 +183,10 @@ def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid_num, pickles
 
     hogs_children_level_list = []
     for node_species_tree_child in children_nodes:
-        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
+        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder, prots_to_remove)
         # hogs_children_level_list_i should be 1
         # hogs_children_level_list.extend(hogs_children_level_list_i)
-    infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_all)  # ,hogs_children_level_list
+    infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_all, prots_to_remove)  # ,hogs_children_level_list
     # hogs_this_level_list should be one
     return infer_hogs_this_level_out
 
@@ -222,7 +240,7 @@ def singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rh
     return len(hogs_this_level_list)
 
 
-def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_all):  # hogs_children_level_list
+def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_all, prots_to_remove):  # hogs_children_level_list
 
     node_species_tree = sub_species_tree
     this_level_node_name = node_species_tree.name
@@ -235,7 +253,7 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+ ".pickle"
     if _config.inferhog_resume_subhog:
         # open already calculated subhogs , but not completed till root in previous run
-        if  os.path.exists(pickle_subhog_file):
+        if os.path.exists(pickle_subhog_file):
             if os.path.getsize(pickle_subhog_file) > 3: # bytes
                 with open(pickle_subhog_file, 'rb') as handle:
                     # i don't even need to open this even
@@ -294,7 +312,7 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
         # merged_msa_filt = merged_msa
         # 893*4839, 10 mins
         msa_filt_row_1 = merged_msa #
-        #if _config.inferhog_filter_all_msas_row:
+        # if _config.inferhog_filter_all_msas_row:
         #    msa_filt_row_1 = _utils.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
 
         #if   msa_filt_row_1 and len(msa_filt_row_1[0]) >=
@@ -308,9 +326,19 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
                 msa_filt_row_col = _utils.msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
 
                 # compare msa_filt_row_col and msa_filt_col,
-                if len(msa_filt_row_col) != len(msa_filt_col) :
-                    a=1
+                if len(msa_filt_row_col) != len(msa_filt_col):
+                    set_prot_before = set([i.id for i in msa_filt_col])
+                    set_prot_after = set([i.id for i in msa_filt_row_col])
+                    prots_to_remove_level = set_prot_before - set_prot_after
+                    assert len(prots_to_remove_level), "issue 31235"
+                    prots_to_remove |= prots_to_remove_level
                     # remove prot from all subhogs
+                    hogs_children_level_list_raw = hogs_children_level_list
+                    hogs_children_level_list = []
+                    for hog_i in hogs_children_level_list_raw:
+                        result_removal = hog_i.remove_prots_from_hog(prots_to_remove)
+                        if result_removal != 0:
+                            hogs_children_level_list.append(hog_i)
 
             else:
                 msa_filt_row_col = msa_filt_col
@@ -319,7 +347,7 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
             msa_filt_row_col = msa_filt_row_1
             msa_filt_col = msa_filt_row_1
             # the msa may be empty
-        #if len(msa_filt_row_col) < 2:
+        # if len(msa_filt_row_col) < 2:
         #    msa_filt_row_col = msa_filt_col[:2]
     else:
         logger_hog.info("Issue 1455, merged_msa is empty " + str(rhogid_num) + ", for taxonomic level:" + str(node_species_tree.name))
@@ -345,14 +373,14 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
         # we may use this merged_msa here
         hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, msa_filt_col)
 
-        print(node_species_tree.name)  # ssh
-        #logger_hog.warn(str(node_species_tree.name)) s
+        print(node_species_tree.name)   # ssh
+        # logger_hog.warn(str(node_species_tree.name))
 
-        for i in hogs_this_level_list:
-            #logger_hog.warn(str(i))
-            #logger_hog.warn(str(i))
-            print(i)
-            print(i.get_members())
+        # for i in hogs_this_level_list:
+            # logger_hog.warn(str(i))
+            # logger_hog.warn(str(i))
+            # print(i)
+            # print(i.get_members())
 
         logger_hog.debug("Hogs of this level is found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(this_level_node_name))
         # check for conflicts in merging
@@ -446,7 +474,6 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                                                                       item in items]
                 #  I don't need to traverse deeper in this clade
             node.processed = True  # print("?*?*  ", node.name)
-
 
         subHOG_to_be_merged_set_other_Snodes_flattned = [item for items in subHOG_to_be_merged_set_other_Snodes for
                                                          item in items]
