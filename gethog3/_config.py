@@ -4,16 +4,16 @@
 oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
 
 # bird
-# working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"  # bird_hog
-# species_tree_address = working_folder_root + "birds370_iqtree_treefile_95bootstrap_internal_name_6let_16Nov_.nwk"
-# working_id = "hog3_nov25f/"
-# protein_format_qfo_dataset = False
+working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"  # bird_hog
+species_tree_address = working_folder_root + "birds370_iqtree_treefile_95bootstrap_internal_name_6let_16Nov_.nwk"
+working_id = "working_nf/"
+protein_format_qfo_dataset = False
 
 # qfo
-working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"  # bird_hog
-species_tree_address = working_folder_root + "lineage_tree_qfo_2.phyloxml" #phyloxml"
-working_id = "working_nf/"
-protein_format_qfo_dataset = True
+# working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"  # bird_hog
+# species_tree_address = working_folder_root + "lineage_tree_qfo_2.phyloxml" #phyloxml"
+# working_id = "working_nf/"
+# protein_format_qfo_dataset = True
 
 
 working_folder = working_folder_root + working_id
@@ -40,7 +40,7 @@ dask_time_slurm = "00:10:00"
 dask_n_jobs = 2
 
 ## hogclass configs
-hogclass_max_num_seq = 200  # subsampling in msa
+hogclass_max_num_seq = 20  # subsampling in msa
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 500
 hogclass_tresh_ratio_gap_col = 0.2
 
@@ -52,8 +52,8 @@ inferhog_min_cols_msa_to_filter = 3000  # used for msa before gene tree inferenc
 
 inferhog_filter_all_msas_row = True
 
-inferhog_resume_rhog   = True #True  # True   # main.py
-inferhog_resume_subhog = True  #True  # True  # read pickle_subhog  # _inferhog.py
+inferhog_resume_rhog   = False #True  # True   # main.py
+inferhog_resume_subhog = False  #True  # True  # read pickle_subhog  # _inferhog.py
 
 # inferhog_concurrent_on = True
 inferhog_max_workers_num = 8

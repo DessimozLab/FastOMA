@@ -136,7 +136,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     species_tree.prune(species_names_uniqe, preserve_branch_length=True)
     species_tree.name = first_common_ancestor_name
 
-    # species_tree.write()
+    # print(species_tree.write(format=1))
     # counter_internal = 0
     # for node in species_tree.traverse(strategy="postorder"):
     #     node_name = node.name

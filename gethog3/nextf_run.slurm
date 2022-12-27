@@ -4,7 +4,7 @@
 #SBATCH --ntasks 1
 #SBATCH --cpus-per-task 1
 #SBATCH --mem 3G
-#SBATCH --time 05:00:00
+#SBATCH --time 09:00:00
 
 export PYTHONUNBUFFERED=1
 
