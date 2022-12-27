@@ -39,6 +39,7 @@ dask_memory_slurm = "40GB"
 dask_time_slurm = "00:10:00"
 dask_n_jobs = 2
 
+
 ## hogclass configs
 hogclass_max_num_seq = 20  # subsampling in msa
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 500
@@ -52,18 +53,17 @@ inferhog_min_cols_msa_to_filter = 3000  # used for msa before gene tree inferenc
 
 inferhog_filter_all_msas_row = True
 
-inferhog_resume_rhog   = False #True  # True   # main.py
-inferhog_resume_subhog = False  #True  # True  # read pickle_subhog  # _inferhog.py
+inferhog_resume_rhog   = True #True  # True   # main.py
+inferhog_resume_subhog = True  #True  # True  # read pickle_subhog  # _inferhog.py
 
-# inferhog_concurrent_on = True
+#  inferhog_concurrent_on = True
 inferhog_max_workers_num = 8
 
-## xml
+##  xml
 write_all_prots_in_header = False  # if false writes only those in the hog group
 inferhog_min_hog_size_xml = 2
 
-logger_level = "INFO"  # DEBUG INFO
-
+logger_level = "DEBUG"  # DEBUG INFO
 
 """
 hardcoded folder names

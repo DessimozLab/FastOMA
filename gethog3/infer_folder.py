@@ -12,15 +12,15 @@ from os import listdir
 import _config
 
 
-address_rhogs_folder = sys.argv[1]
-# address_rhogs_folder =  "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/working_nf/rhogs_rest/bb1/"
-inferhog_concurrent_on_string = sys.argv[2]  # "False"  # "False"  # sys.argv[2]
+#address_rhogs_folder = sys.argv[1]
+address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/working_nf/rhogs_rest/33/"
+inferhog_concurrent_on_string = "False"  # "False"  # sys.argv[2]  sys.argv[2]  #
 
 # mkdir pi_big_rhog pi_big_subhog pi_rest_rhog  pi_rest_subhog genetrees
 # check 16 Dec rhogs_big/b7/"  for very small
 
-prefix_pickle = sys.argv[3] # "pi_rest"     #
-rhogs_fa_folder_pure = sys.argv[4] # "rhogs_rest"  # or  "rhogs_big" #
+prefix_pickle = "pi_rest"     #  sys.argv[3] #
+rhogs_fa_folder_pure = "rhogs_rest"  # or  "rhogs_big" # sys.argv[4] #
 
 pickles_rhog_folder = _config.working_folder + "/" + prefix_pickle + "_rhog/"
 pickles_subhog_folder_all = _config.working_folder + "/" + prefix_pickle + "_subhog/"
@@ -63,7 +63,7 @@ if _config.inferhog_resume_rhog:
        list_done_rhogid.append(numr)
 
 
-list_done_rhogid = []
+#list_done_rhogid = []
 
 list_rhog_fastas_files_rem = [i for i in list_rhog_fastas_files if i not in list_done_rhogid]
 # list_rhog_fastas_files_rem = [606099] #[622140] #[605975] #[594043]

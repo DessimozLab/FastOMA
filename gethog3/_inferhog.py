@@ -242,6 +242,7 @@ def singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rh
 
 def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_all, prots_to_remove):  # hogs_children_level_list
 
+    msa_filt_row_col = []
     node_species_tree = sub_species_tree
     this_level_node_name = node_species_tree.name
     if node_species_tree.is_leaf():
@@ -303,9 +304,10 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
     logger_hog.debug("Merging "+str(len(sub_msa_list_lowerLevel_ready))+" MSAs for rhogid_num: "+
                      str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
 
-    merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, gene_tree_file_addr)
+    if sub_msa_list_lowerLevel_ready:
 
-    if merged_msa:
+        merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, gene_tree_file_addr)
+
         logger_hog.debug("All sub-hogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
         len(merged_msa[0])) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
                 node_species_tree.name))
