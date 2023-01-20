@@ -13,7 +13,7 @@ import _config
 
 
 #address_rhogs_folder = sys.argv[1]
-address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/working_nf/rhogs_rest/33/"
+address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/working_nf/rhogs_rest/bb1/"
 inferhog_concurrent_on_string = "False"  # "False"  # sys.argv[2]  sys.argv[2]  #
 
 # mkdir pi_big_rhog pi_big_subhog pi_rest_rhog  pi_rest_subhog genetrees
@@ -65,8 +65,8 @@ if _config.inferhog_resume_rhog:
 
 #list_done_rhogid = []
 
-list_rhog_fastas_files_rem = [i for i in list_rhog_fastas_files if i not in list_done_rhogid]
-# list_rhog_fastas_files_rem = [606099] #[622140] #[605975] #[594043]
+list_rhog_fastas_files_rem = [i for i in list_rhog_fastas_files if i not in list_done_rhogid][:2]
+#list_rhog_fastas_files_rem = [687464]  # [622140] #[605975] #[594043]
 
 print("there are ", len(list_rhog_fastas_files_rem), "rhogs remained in the input folder", list_rhog_fastas_files_rem[:5] )
 

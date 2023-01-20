@@ -21,10 +21,11 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S')
 logger_hog = logging.getLogger("hog")
 
-if _config.logger_level == "INFO" :
+if _config.logger_level == "INFO":
     logger_hog.setLevel(logging.INFO)  # DEBUG WARN  INFO
 if _config.logger_level == "DEBUG" :
     logger_hog.setLevel(logging.DEBUG)  # DEBUG WARN  INFO
+
 
 
 #
@@ -136,7 +137,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     species_tree.prune(species_names_uniqe, preserve_branch_length=True)
     species_tree.name = first_common_ancestor_name
 
-    # print(species_tree.write(format=1))
+    #   print(species_tree.write(format=1))
     # counter_internal = 0
     # for node in species_tree.traverse(strategy="postorder"):
     #     node_name = node.name
@@ -200,6 +201,95 @@ def lable_sd_internal_nodes(tree_out):
                 node.name = "S" + str(counter_S)
     return tree_out
 
+
+def lable_SD_internal_nodes_reconcilation(gene_tree, species_tree):
+    """
+    for the input gene tree, run the gene/species tree reconciliation method
+    and label internal nodes of the gene tree
+
+    output: labeled gene tree
+    """
+    try:
+        gene_tree_reconciled = get_reconciled_tree_zmasek(gene_tree, species_tree, inplace=False)
+    except ValueError:
+        print("### Algorithm can only work with binary trees. Force resolved polytomies.")
+        gene_tree.resolve_polytomy()
+        gene_tree_reconciled = get_reconciled_tree_zmasek(gene_tree, species_tree, inplace=False)
+    for node in gene_tree_reconciled.traverse(strategy="postorder"):
+        if node.is_leaf():
+            pass
+        else:
+            node.name = node.evoltype
+    return gene_tree_reconciled
+
+
+def get_reconciled_tree_zmasek(gtree, sptree, inplace=False):
+    """
+    from ete3
+    https://github.com/etetoolkit/ete/blob/1f587a315f3c61140e3bdbe697e3e86eda6d2eca/ete3/phylo/reconciliation.py
+
+    Reconciles the gene tree with the species tree
+    using Zmasek and Eddy's algorithm. Details can be
+    found in the paper:
+    Christian M. Zmasek, Sean R. Eddy: A simple algorithm
+    to infer gene duplication and speciation events on a
+    gene tree. Bioinformatics 17(9): 821-828 (2001)
+    :argument gtree: gene tree (PhyloTree instance)
+    :argument sptree: species tree (PhyloTree instance)
+    :argument False inplace: if True, the provided gene tree instance is
+       modified. Otherwise a reconciled copy of the gene tree is returned.
+    :returns: reconciled gene tree
+    """
+    # some cleanup operations
+    def cleanup(tree):
+        for node in tree.traverse():
+            node.del_feature("M")
+
+    if not inplace:
+        gtree = gtree.copy('deepcopy')
+
+    # check for missing species
+    g_node_species_all = []
+    for g_node in gtree.get_leaves():
+        g_node_species_all.append(g_node.name.split("||")[1])
+    species_sptree_all = [i.name for i in sptree.get_leaves()]
+    missing_sp = set(g_node_species_all) - set(species_sptree_all)
+    if missing_sp:
+        raise KeyError("* The following species are not contained in the species tree: "+ ', '.join(missing_sp))
+
+    # initialization
+    sp2node = dict()
+    for sp_node in sptree.get_leaves():
+        sp2node[sp_node.name] = sp_node
+
+    # set/compute the mapping function M(g) for the
+    # leaf nodes in the gene tree (see paper for details)
+    species = [i.name for i in sptree.get_leaves()]   #sptree.get_species()
+    for g_node in gtree.get_leaves():
+        g_node_species = g_node.name.split("||")[1]
+        g_node.add_feature("M", sp2node[g_node_species])
+
+    # visit each internal node in the gene tree
+    # and detect its event (duplication or speciation)
+    for node in gtree.traverse(strategy="postorder"):
+        if len(node.children) == 0:
+            continue # nothing to do for leaf nodes
+
+        if len(node.children) != 2:
+            cleanup(gtree)
+            raise ValueError("Algorithm can only work with binary trees.")
+
+        lca = node.children[0].M.get_common_ancestor(node.children[1].M) # LCA in the species tree
+        node.add_feature("M",lca)
+
+        node.add_feature("evoltype", "S")
+        #node.name = "S"
+        if id(node.children[0].M) == id(node.M) or id(node.children[1].M) == id(node.M):
+                node.evoltype = "D"
+                #node.name = "D"
+
+    cleanup(gtree)
+    return gtree
 
 
 def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):

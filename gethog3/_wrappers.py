@@ -62,3 +62,25 @@ def infer_gene_tree(msa, gene_tree_file_addr):
         file_gene_tree.close()
 
     return tree_nwk
+
+
+
+
+
+from zoo.wrappers.trimmers.trimal import TrimAl
+
+def trim_msa(msa):
+
+
+    try :
+        trimal = TrimAl(msa)
+        trimal.options['-automated1'].set_value(True)
+        msa_out = trimal()
+
+    except:
+        # when the input msa is too much gappy
+        # output trimmed msa is empty and trimal do not generate output file and raise FileNotFoundError  and  WrapperError
+        # return AlignIO.read(output, 'fasta')
+        msa_out = []
+
+    return msa_out
