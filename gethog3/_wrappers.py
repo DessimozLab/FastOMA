@@ -1,6 +1,12 @@
 
 import zoo.wrappers.aligners.mafft as mafft
 import zoo.wrappers.treebuilders.fasttree as fasttree
+import zoo.wrappers.treebuilders.iqtree as iqtree
+
+from zoo.wrappers.trimmers.trimal import TrimAl
+
+
+
 from _utils import logger_hog
 from Bio import SeqIO
 
@@ -40,9 +46,25 @@ def infer_gene_tree(msa, gene_tree_file_addr):
 
     output: gene tree in nwk format
     """
-    wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
-    wrapper_tree.options.options['-fastest'].active = True
+
+    if len(msa) <= 2:
+        wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
+        wrapper_tree.options.options['-fastest'].active = True
+
+    elif _config.tree_tool == "fasttree":
+        wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
+        wrapper_tree.options.options['-fastest'].active = True
+
+    elif _config.tree_tool == "iqtree":
+        wrapper_tree = iqtree.Iqtree(msa, datatype="PROTEIN")
+        wrapper_tree.options.options['-m'].set_value("LG+I+G")
+        wrapper_tree.options.options['-nt'].set_value(1)
+
+
+
     result_tree1 = wrapper_tree()
+
+    logger_hog.debug("iqtree stderr " + str(wrapper_tree.stderr))
 
     time_taken_tree = wrapper_tree.elapsed_time
     result_tree2 = wrapper_tree.result
@@ -66,8 +88,6 @@ def infer_gene_tree(msa, gene_tree_file_addr):
 
 
 
-
-from zoo.wrappers.trimmers.trimal import TrimAl
 
 def trim_msa(msa):
 

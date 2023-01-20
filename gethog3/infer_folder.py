@@ -13,7 +13,7 @@ import _config
 
 
 #address_rhogs_folder = sys.argv[1]
-address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/working_nf/rhogs_rest/bb1/"
+address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/working_nf/rhogs_rest/69/"  # bb1
 inferhog_concurrent_on_string = "False"  # "False"  # sys.argv[2]  sys.argv[2]  #
 
 # mkdir pi_big_rhog pi_big_subhog pi_rest_rhog  pi_rest_subhog genetrees
@@ -66,7 +66,8 @@ if _config.inferhog_resume_rhog:
 #list_done_rhogid = []
 
 list_rhog_fastas_files_rem = [i for i in list_rhog_fastas_files if i not in list_done_rhogid][:2]
-#list_rhog_fastas_files_rem = [687464]  # [622140] #[605975] #[594043]
+
+list_rhog_fastas_files_rem = [573914]  # [622140] #[605975] #[594043]
 
 print("there are ", len(list_rhog_fastas_files_rem), "rhogs remained in the input folder", list_rhog_fastas_files_rem[:5] )
 
@@ -89,6 +90,15 @@ add eception to show , whn this happens for which taxnomic level and rhog
 """
 
 """
+
+    if len(msa) <= 2:
+        wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
+        wrapper_tree.options.options['-fastest'].active = True
+        
+        we don't need tree for msa of 2 !
+
+
+
 precuaitions
 genetrees     is not with prefix
 there shouldnt be any space in the tree name internal node name as well"

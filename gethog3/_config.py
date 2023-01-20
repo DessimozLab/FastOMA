@@ -19,7 +19,7 @@ working_folder = working_folder_root + working_id
 
 
 ## output writing files
-gene_trees_write = True  # this also goes for writing msas
+gene_trees_write = False  # this also goes for writing msas
 keep_subhog_each_pickle =  False
 
 
@@ -36,6 +36,8 @@ hogclass_tresh_ratio_gap_col = 0.2
 
 automated_trimAL = True
 lable_SD_internal = "species_overlap"   #  "reconcilation" "species_overlap"
+tree_tool = "iqtree" #  "fasttree"  "iqtree"  # for  gene tree with two, we use
+
 
 ##inferhog
 inferhog_tresh_ratio_gap_row = 0.4
@@ -44,8 +46,8 @@ inferhog_min_cols_msa_to_filter = 3000  # used for msa before gene tree inferenc
 
 inferhog_filter_all_msas_row = True
 
-inferhog_resume_rhog   = False      # main.py False
-inferhog_resume_subhog = False      # read pickle_subhog  # _inferhog.py
+inferhog_resume_rhog  = True      # main.py False
+inferhog_resume_subhog = True      # read pickle_subhog  # _inferhog.py
 
 # inferhog_concurrent_on = True now as an argument
 inferhog_max_workers_num = 8
