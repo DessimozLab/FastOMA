@@ -27,6 +27,7 @@ def merge_msa(list_msas, gene_tree_file_addr):
 
     wrapper_mafft_merge = mafft.Mafft(list_msas, datatype="PROTEIN")
     wrapper_mafft_merge.options['--merge'].active = True
+    wrapper_mafft_merge.options['--anysymbol'].active = True
     merged = wrapper_mafft_merge()
     time_duration = wrapper_mafft_merge.elapsed_time
     # print(time_duration)

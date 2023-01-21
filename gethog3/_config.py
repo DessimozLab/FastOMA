@@ -1,6 +1,7 @@
 
 
-#oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/omafast/archive/OmaServer.h5"
+oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/archive/OmaServer.h5"
+
 
 # bird
 # working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"  # bird_hog
