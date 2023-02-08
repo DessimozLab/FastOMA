@@ -60,8 +60,9 @@ if __name__ == '__main__':
 
         # working_folder+"omamer_database/oma_path/OmaServer.h5"
         logger_hog.info("rHOG inferece has started. The oma database address is in "+_config.oma_database_address)
-        (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(_config.oma_database_address)
-        (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species)
+        # (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(_config.oma_database_address)
+        #(query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species)
+        (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome()
         query_prot_recs = _utils_rhog.add_species_name_gene_id(query_prot_recs, query_species_names)
         hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names)
 
@@ -79,7 +80,7 @@ if __name__ == '__main__':
         rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  query_prot_names_species_mapped)
 
         rhogid_num_list_filt1 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt,
-                                                      _config.working_folder+"rhogs/", 2)  # min_rhog_size, max_rhog_size
+                                                      _config.working_folder+"rhogs_all/", 2)  # min_rhog_size, max_rhog_size
 
     #     #step = "find_subhog"
     # if step == "find_subhog":

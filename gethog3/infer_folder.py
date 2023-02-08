@@ -13,13 +13,13 @@ import _config
 
 
 #address_rhogs_folder = sys.argv[1]
-address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/working_nf/rhogs_rest/69/"  # bb1
+address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/working_nf/rhogs_rest/122/"  # bb1
 inferhog_concurrent_on_string = "False"  # "False"  # sys.argv[2]  sys.argv[2]  #
 
 # mkdir pi_big_rhog pi_big_subhog pi_rest_rhog  pi_rest_subhog genetrees
 # check 16 Dec rhogs_big/b7/"  for very small
 
-prefix_pickle = "pi_rest"     #  sys.argv[3] #
+prefix_pickle = "pi_big"     #  sys.argv[3] #
 rhogs_fa_folder_pure = "rhogs_rest"  # or  "rhogs_big" # sys.argv[4] #
 
 pickles_rhog_folder = _config.working_folder + "/" + prefix_pickle + "_rhog/"
@@ -42,8 +42,9 @@ print("input is", address_rhogs_folder)
 #rhogid_num = int(rhog_file.split("/")[-1].split(".")[0].split("_")[1][1:])
 #rhogid_batch = [rhogid_num]
 
+
 list_rhog_fastas_files = _utils.list_rhog_fastas(address_rhogs_folder)
-print("there are ",len(list_rhog_fastas_files), "rhogs in the input folder")
+print("there are ", len(list_rhog_fastas_files), "rhogs in the input folder")
 if address_rhogs_folder.endswith("/"):
     batch_folder=address_rhogs_folder.split("/")[-2]
 elif "/" in address_rhogs_folder:
@@ -65,9 +66,9 @@ if _config.inferhog_resume_rhog:
 
 #list_done_rhogid = []
 
-list_rhog_fastas_files_rem = [i for i in list_rhog_fastas_files if i not in list_done_rhogid][:2]
+list_rhog_fastas_files_rem = [i for i in list_rhog_fastas_files if i not in list_done_rhogid]
 
-list_rhog_fastas_files_rem = [573914]  # [622140] #[605975] #[594043]
+#list_rhog_fastas_files_rem = [573914]  # [622140] #[605975] #[594043]
 
 print("there are ", len(list_rhog_fastas_files_rem), "rhogs remained in the input folder", list_rhog_fastas_files_rem[:5] )
 
@@ -78,6 +79,16 @@ print("finsihed ", address_rhogs_folder)
 
 """
 to do
+
+print as debug
+# [_config.oma_database_address, _config.working_folder_root , _config.species_tree_address , _config.working_id , _config.protein_format_qfo_dataset, _config.working_folder, _config.omamer_fscore_treshold_big_rhog, _config.treshold_big_rhog_szie, _config.gene_trees_write, _config.keep_subhog_each_pickle, _config.hogclass_max_num_seq, _config.hogclass_min_cols_msa_to_filter, _config.hogclass_tresh_ratio_gap_col, _config.automated_trimAL, _config.lable_SD_internal , _config.rooting_method, _config.rooting_mad_executable_path , _config.inferhog_tresh_ratio_gap_row , _config.inferhog_tresh_ratio_gap_col , _config.inferhog_min_cols_msa_to_filter , _config.inferhog_filter_all_msas_row , _config.inferhog_resume_rhog  , _config.inferhog_resume_subhog , _config.inferhog_max_workers_num , _config.inferhog_min_hog_size_xml, _config.logger_level]
+
+
+
+species_tree_address = working_folder_root + "tree_fastaname.nwk" # no space or special charcter in internal node, 
+arise error or solve it
+
+
 print("there shouldnt be any space in the tree name internal node name as well")
   '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf//pickles_subhog/rhog_833762/delta/epsilon subdivisions.pickle'
 

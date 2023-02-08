@@ -3,8 +3,8 @@
 // check folder exitst
 // resubmit some jobs
 
-params.inputs_rest = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/working_nf/rhogs_rest/*"
-params.inputs_big = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/working_nf/rhogs_big/*"
+params.inputs_rest = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota//working_nf/rhogs_rest/*"
+params.inputs_big = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota//working_nf/rhogs_big/*"
 
 process start {
 
@@ -29,7 +29,7 @@ process qfhogbg {
 
   script:
   """
-  python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/gethog3/infer_folder.py  $rhog_fa  True pi_big rhogs_big
+  python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/gethog3/infer_folder.py  $rhog_fa  True pi_big rhogs_big
   """
 }
 
@@ -44,15 +44,15 @@ process qfhogrs {
 
   script:
   """
-  python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/gethog3/infer_folder.py  $rhog_fa  False pi_rest rhogs_rest
+  python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/gethog3/infer_folder.py  $rhog_fa  False pi_rest rhogs_rest
   """
 }
 
 process collect_ortho{
   script:
   """
-  cp /work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/working_nf/pi_big_rhog/* /work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf/pi_rest_rhog/
-  python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/gethog3/collect_orthoxml.py
+  cp /work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/working_nf/pi_big_rhog/* /work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/working_nf/pi_rest_rhog/
+  python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/gethog3/collect_orthoxml.py
   """
 }
 
@@ -60,7 +60,7 @@ workflow {
  // start()
   rhog_files_rest = Channel.fromPath(params.inputs_rest,  type:'any' ,checkIfExists:true)
   qfhogrs(rhog_files_rest)
-  rhog_files_big = Channel.fromPath(params.inputs_big,  type:'any' ,checkIfExists:true)
-  qfhogbg(rhog_files_big)
+  //rhog_files_big = Channel.fromPath(params.inputs_big,  type:'any' ,checkIfExists:true)
+  //qfhogbg(rhog_files_big)
   //collect_ortho()
 }

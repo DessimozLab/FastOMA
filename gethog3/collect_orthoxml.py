@@ -7,10 +7,13 @@ from xml.dom import minidom
 print("started ")
 
 
-qfo_bird = "bird_hog"  #  qfo3 bird_hog
+qfo_bird = "qfo3"  #  qfo3 bird_hog
 
 
-working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/"+qfo_bird+"/working_nf/"
+#working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/"+qfo_bird+"/working_nf/"
+
+working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/working_nf/"
+
 
 if qfo_bird == "bird_hog":
     protein_format_qfo_dataset = False
@@ -29,7 +32,7 @@ else:
 # species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
 pickle_folder = working_folder + "pi_rest_rhog/" #"/pickle_b_0.5_3000/" pickles_rhog
 # add warning when pickle folder is not empty
-output_xml_name = "hog_22dec_1.orthoxml"
+output_xml_name = "hog__3.orthoxml"
     #"pickle_0.5_3000_17nov_ts.xml"
 gene_id_pickle_file = working_folder + "gene_id_dic_xml.pickle" #"gene_id_v2_bird.pickle"
 

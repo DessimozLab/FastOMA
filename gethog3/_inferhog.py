@@ -374,8 +374,14 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
         logger_hog.debug("Gene tree is inferred with length of " + str(len(gene_tree)) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
                 node_species_tree.name))
 
-        R_outgroup = gene_tree.get_midpoint_outgroup()
-        gene_tree.set_outgroup(R_outgroup)  # print("Midpoint rooting is done for gene tree.")
+        if _config.rooting_method == "midpoint":
+
+            R_outgroup = gene_tree.get_midpoint_outgroup()
+            gene_tree.set_outgroup(R_outgroup)  # print("Midpoint rooting is done for gene tree.")
+        elif _config.rooting_method == "mad":
+            gene_tree = _wrappers.mad_rooting(gene_tree_file_addr)
+
+
         #gene_tree = PhyloTree(gene_tree_raw + ";", format=0)
         # outliers = find_outlier_leaves(gene_tree)
         # R = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
@@ -389,6 +395,12 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
             gene_tree_nwk_string = gene_tree.write(format=1)
             gene_tree_PhyloTree = PhyloTree(gene_tree_nwk_string, format=1)
             gene_tree = _utils.lable_SD_internal_nodes_reconcilation(gene_tree_PhyloTree, node_species_tree_PhyloTree)
+
+        if _config.gene_trees_write:
+            tree_nwk_SD_labeled = str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;"
+            file_gene_tree = open(gene_tree_file_addr+"_SD_labeled", "w")
+            file_gene_tree.write(tree_nwk_SD_labeled)
+            file_gene_tree.close()
 
         # print("Overlap speciation is done for internal nodes of gene tree, as following:")
         # print(str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;")

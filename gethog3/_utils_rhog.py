@@ -22,7 +22,7 @@ def parse_oma_db(oma_database_address):
     return oma_db, list_oma_species
 
 
-def parse_proteome(list_oma_species):
+def parse_proteome(): # list_oma_species
     """
     orthoxml_to_newick.py function for parsing fasta files of proteins located in /omamer_search/proteome/
     using Bio.SeqIO.parse
@@ -44,11 +44,11 @@ def parse_proteome(list_oma_species):
     query_species_num = len(query_species_names)
     logger_hog.info("The are "+str(query_species_num)+" species in the proteome folder.")
     # for development
-    for species_i in range(query_species_num):
-        species_name_i = query_species_names[species_i]
-        if species_name_i in list_oma_species:
-            logger_hog.error("The species"+species_name_i+" already exists in the oma database, remove/rename it first.")
-            exit()
+    # for species_i in range(query_species_num):
+    #    species_name_i = query_species_names[species_i]
+    #    if species_name_i in list_oma_species:
+    #        logger_hog.error("The species"+species_name_i+" already exists in the oma database, remove/rename it first.")
+    #        exit()
     # The proteins are parsed using  Bio.SeqIO.parse
     # the first part of the header line before space
     # >tr|A0A2I3FYY2|A0A2I3FYY2_NOMLE Uncharacterized protein OS=Nomascus leucogenys OX=61853 GN=CLPTM1L PE=3 SV=1
@@ -212,6 +212,9 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, que
             rhogid_prot_idx = rhogid_prot_idx_dic[rhogid]
             for (species_idx, prots_hogmap_idx) in rhogid_prot_idx:
                 prot_record = query_prot_recs_filt[species_idx][prots_hogmap_idx]
+                """
+                Keep prot seq in hog class. We can write species idx and prot idx to  improve speed of code for omamaer tresholidng 
+                """
                 rhogid_prot_records.append(prot_record)
                 species_idx_rhogid.append(species_idx)
             rhogids_prot_records_query.append(rhogid_prot_records)
@@ -269,3 +272,79 @@ def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, m
     logger_hog.info("Writing Sequences of roothogs finished." )
 
     return rhogid_num_list
+
+
+
+def list_rhog_fastas(address_rhogs_folder):
+    """
+     create orthoxml_to_newick.py list of rootHOG IDs  stored in the folder of rHOG .
+     input: folder address
+     output: list of rhog Id (integer)
+    """
+    rhog_files = listdir(address_rhogs_folder)
+    rhogid_num_list= []
+    for rhog_file in rhog_files:
+        if rhog_file.split(".")[-1] == "fa":
+            rhogid_num = int(rhog_file.split(".")[0].split("_")[1][1:])
+            rhogid_num_list.append(rhogid_num)
+
+    return rhogid_num_list
+
+from Bio import SeqIO
+import os
+from os import makedirs
+import shutil
+from os import  listdir
+
+def folder_1h_rhog(working_folder):
+
+    # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/working_nfp/"
+    address_rhogs_folder = working_folder + "rhogs_all/"
+    work_fldor_out = working_folder
+
+    rhogid_num_list = list_rhog_fastas(address_rhogs_folder)
+    len(rhogid_num_list)
+    dic_rhognum_size = {}
+    for rhogid_num in rhogid_num_list:
+        rhog_i_prot_address = address_rhogs_folder + "/HOG_B" + str(rhogid_num).zfill(7) + ".fa"
+        # rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
+        rhog_i_size = os.path.getsize(rhog_i_prot_address)
+        dic_rhognum_size[rhogid_num] = rhog_i_size
+    len(dic_rhognum_size)
+
+    list_list_rest_rhog = [[]]  # each insid list should take 1h to
+    list_list_rest_size = [[]]
+    list_list_big = []
+
+    big_rhog_filesize_thresh = 600 * 1000  # 600 would be better
+    sum_list_rhogs_filesize_thresh = 2 * 1e6
+
+    for rhognum, size in dic_rhognum_size.items():
+        # print(rhognum, size)
+        if size > big_rhog_filesize_thresh:
+            list_list_big.append(rhognum)
+        else:
+            if sum(list_list_rest_size[-1]) < sum_list_rhogs_filesize_thresh:
+                list_list_rest_rhog[-1].append(rhognum)
+                list_list_rest_size[-1].append(size)
+            else:
+                list_list_rest_rhog.append([rhognum])
+                list_list_rest_size.append([size])
+
+    # makedirs(work_fldor_out+"rhogs_rest")
+    for folder_id, list_rhog in enumerate(list_list_rest_rhog):
+        # print(folder_id)
+        makedirs(work_fldor_out + "/rhogs_rest/" + str(folder_id))
+        for rhogid_num in list_rhog:
+            name = "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
+            folder_rest = work_fldor_out + "rhogs_rest/" + str(folder_id) + "/"
+            shutil.copy(address_rhogs_folder + name, folder_rest + name)
+
+    # makedirs(work_fldor_out+"rhogs_big")
+    for folder_id, rhogid_num in enumerate(list_list_big):
+        name = "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
+        folder_big = work_fldor_out + "rhogs_big/b" + str(folder_id) + "/"
+        makedirs(folder_big)
+        shutil.copy(address_rhogs_folder + name, folder_big + name)
+
+    return 1
