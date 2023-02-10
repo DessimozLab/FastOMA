@@ -1,0 +1,50 @@
+
+from _utils import logger_hog
+import _utils_rhog
+import os
+import _config
+
+
+"""
+Structure of folders in working_folder
+Put proteomes of species as fasta files in /omamer_search/proteome/
+Run omamer and put the output of omamer in /omamer_search/hogmap/
+oma_database_address = the address to the oma databases
+hog and HOG are used interchangeably here. 
+rHOG=rootHOG.  A subHOG itself is orthoxml_to_newick.py HOG.
+"""
+
+if not os.path.exists(_config.working_folder):
+    os.mkdir(_config.working_folder)
+
+# working_folder+"omamer_database/oma_path/OmaServer.h5"
+logger_hog.info("rHOG inferece has started. The oma database address is in " + _config.oma_database_address)
+# (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(_config.oma_database_address)
+# (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species)
+
+(query_species_names, query_prot_recs) = _utils_rhog.parse_proteome()
+query_prot_recs = _utils_rhog.add_species_name_gene_id(query_prot_recs, query_species_names)
+hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names)
+
+(query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_overlp_allspecies,
+ prots_hogmap_fscore_allspecies, prots_hogmap_seqlen_allspecies,
+ prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
+
+query_prot_recs_filt = _utils_rhog.filter_prot_mapped(query_species_names, query_prot_recs, query_prot_names_species_mapped)
+
+logger_hog.info("size of query_prot_recs_filt is " + str(len(query_prot_recs_filt)) + " " + str(
+    len(query_prot_recs_filt[0])))
+
+rhogids_list, rhogids_prot_records_query = _utils_rhog.group_prots_roothogs(prots_hogmap_hogid_allspecies,
+                                                                            query_species_names,
+                                                                            query_prot_recs_filt)
+
+# rhogid_num_list_raw=utils_rhog.write_rhog(rhogids_list,rhogids_prot_records_query, _config.working_folder+"rhogs/". "rhogs_raw",2)
+
+rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rhogids_list,
+                                                                             rhogids_prot_records_query,
+                                                                             prots_hogmap_fscore_allspecies,
+                                                                             query_species_names,
+                                                                             query_prot_names_species_mapped)
+
+rhogid_num_list_filt1 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, _config.working_folder + "rhogs_all/", 2)  # min_rhog_size, max_rhog_size

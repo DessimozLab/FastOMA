@@ -22,14 +22,14 @@ def parse_oma_db(oma_database_address):
     return oma_db, list_oma_species
 
 
-def parse_proteome(): # list_oma_species
+def parse_proteome():  # list_oma_species
     """
-    orthoxml_to_newick.py function for parsing fasta files of proteins located in /omamer_search/proteome/
+    orthoxml_to_newick.py function for parsing fasta files of proteins located in /proteome/
     using Bio.SeqIO.parse
     Each fasta file is for one species.  The file name is the species name.
     output: query_species_names: list of species name, query_prot_recs: list of Biopython record of species
     """
-    project_files = listdir(_config.working_folder_root + "/omamer_search/proteome/")
+    project_files = listdir(_config.working_folder_root + "/proteome/")
     query_species_names = []
     for file in project_files:
         if file.split(".")[-1] == "fa" or file.split(".")[-1] == "fasta":
@@ -37,7 +37,7 @@ def parse_proteome(): # list_oma_species
             query_species_names.append('.'.join(file_name_split))
     query_prot_recs = []
     for query_species_names_idx, query_species_name in enumerate(query_species_names):
-        prot_address = _config.working_folder_root + "omamer_search/proteome/" + query_species_name + ".fa"
+        prot_address = _config.working_folder_root + "/proteome/" + query_species_name + ".fa"
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
         query_prot_recs.append(prots_record)
 
@@ -89,7 +89,7 @@ def add_species_name_gene_id(query_prot_recs, query_species_names, ):
 
 def parse_hogmap_omamer(query_species_names):
     """
-    orthoxml_to_newick.py function for parsing output of omamer (hogmap files) located in /omamer_search/hogmap/
+    orthoxml_to_newick.py function for parsing output of omamer (hogmap files) located in /hogmap/
     Each hogmap file correspond to one fasta file of species, with the same name.
     Note that some records of fasta may removed in hogmap, becuase of being so short.
     hogmap file example:
@@ -108,7 +108,7 @@ def parse_hogmap_omamer(query_species_names):
     prots_hogmap_seqlen_allspecies = []
     prots_hogmap_subfmedseqlen_allspecies = []
     for query_species_name in query_species_names:
-        omamer_output_address = _config.working_folder_root + "omamer_search/hogmap/" + query_species_name + ".hogmap"
+        omamer_output_address = _config.working_folder_root + "/hogmap/" + query_species_name + ".hogmap"
         omamer_output_file = open(omamer_output_address, 'r')
         prots_hogmap_name = []
         prots_hogmap_hogid = []

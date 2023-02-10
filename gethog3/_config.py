@@ -1,7 +1,7 @@
 
 
 #oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/archive/OmaServer.h5"
-oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/archive/OmaServer.h5"
+# oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/archive/OmaServer.h5"
 
 # bird
 # working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"  # bird_hog
@@ -10,9 +10,10 @@ oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_euka
 # protein_format_qfo_dataset = False
 
 # qfo
+
 working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/"  # bird_hog
 #species_tree_address = working_folder_root + "lineage_tree_qfo_2.phyloxml" #phyloxml"
-species_tree_address = working_folder_root + "tree_fastaname.nwk" # no space or special charcter in internal node,
+species_tree_address = working_folder_root + "tree_fastaname.nwk"  # no space or special charcter in internal node,
 
 working_id = "working_nf/"
 protein_format_qfo_dataset = True
