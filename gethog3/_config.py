@@ -11,11 +11,14 @@
 
 # qfo
 
-working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/"  # bird_hog
+working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/" # "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/"  # bird_hog
+
+
+
 #species_tree_address = working_folder_root + "lineage_tree_qfo_2.phyloxml" #phyloxml"
 species_tree_address = working_folder_root + "tree_fastaname.nwk"  # no space or special charcter in internal node,
 
-working_id = "working_nf/"
+working_id =  "./"  # "working_nf/"
 protein_format_qfo_dataset = True
 
 working_folder = working_folder_root + working_id

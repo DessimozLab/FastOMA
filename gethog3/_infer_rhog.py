@@ -4,25 +4,25 @@ import _utils_rhog
 import os
 import _config
 
-
 """
-Structure of folders in working_folder
-Put proteomes of species as fasta files in /omamer_search/proteome/
-Run omamer and put the output of omamer in /omamer_search/hogmap/
-oma_database_address = the address to the oma databases
+proteomes of species as fasta files in /proteome/
+omamer's output of  in /hogmap/
 hog and HOG are used interchangeably here. 
-rHOG=rootHOG.  A subHOG itself is orthoxml_to_newick.py HOG.
 """
 
-if not os.path.exists(_config.working_folder):
-    os.mkdir(_config.working_folder)
+# if not os.path.exists(_config.working_folder):
+#    os.mkdir(_config.working_folder)
 
 # working_folder+"omamer_database/oma_path/OmaServer.h5"
-logger_hog.info("rHOG inferece has started. The oma database address is in " + _config.oma_database_address)
+# logger_hog.info("rHOG inferece has started. The oma database address is in " + _config.oma_database_address)
 # (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(_config.oma_database_address)
 # (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species)
 
 (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome()
+
+print("query_species_names ", len(query_prot_recs))
+
+
 query_prot_recs = _utils_rhog.add_species_name_gene_id(query_prot_recs, query_species_names)
 hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names)
 

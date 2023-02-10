@@ -2,7 +2,6 @@
 import zoo.wrappers.aligners.mafft as mafft
 import zoo.wrappers.treebuilders.fasttree as fasttree
 import zoo.wrappers.treebuilders.iqtree as iqtree
-
 from zoo.wrappers.trimmers.trimal import TrimAl
 
 

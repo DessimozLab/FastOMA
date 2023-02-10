@@ -1,5 +1,5 @@
 
-import pyoma.browser.db as db
+#import pyoma.browser.db as db
 from Bio import SeqIO
 import pickle
 from os import listdir
@@ -8,18 +8,18 @@ import os
 from _utils import logger_hog
 import _config
 
-
-def parse_oma_db(oma_database_address):
-    """
-    orthoxml_to_newick.py function for loading an oma database in hdf5 format using pyoma.browser.db.
-    output: oma_db, list_oma_species
-    """
-    oma_db = db.Database(oma_database_address)
-    logger_hog.info("OMA data is parsed and its release name is:" + oma_db.get_release_name())
-
-    list_oma_species = [z.uniprot_species_code for z in oma_db.tax.genomes.values()]
-    logger_hog.info("There are "+str(len(list_oma_species))+" species in the OMA database.")
-    return oma_db, list_oma_species
+#
+# def parse_oma_db(oma_database_address):
+#     """
+#     orthoxml_to_newick.py function for loading an oma database in hdf5 format using pyoma.browser.db.
+#     output: oma_db, list_oma_species
+#     """
+#     oma_db = db.Database(oma_database_address)
+#     logger_hog.info("OMA data is parsed and its release name is:" + oma_db.get_release_name())
+#
+#     list_oma_species = [z.uniprot_species_code for z in oma_db.tax.genomes.values()]
+#     logger_hog.info("There are "+str(len(list_oma_species))+" species in the OMA database.")
+#     return oma_db, list_oma_species
 
 
 def parse_proteome():  # list_oma_species
@@ -108,7 +108,7 @@ def parse_hogmap_omamer(query_species_names):
     prots_hogmap_seqlen_allspecies = []
     prots_hogmap_subfmedseqlen_allspecies = []
     for query_species_name in query_species_names:
-        omamer_output_address = _config.working_folder_root + "/hogmap/" + query_species_name + ".hogmap"
+        omamer_output_address = _config.working_folder_root + "/hogmap/" + query_species_name + ".fa.hogmap"
         omamer_output_file = open(omamer_output_address, 'r')
         prots_hogmap_name = []
         prots_hogmap_hogid = []
