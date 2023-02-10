@@ -37,3 +37,8 @@ GETHOG3 is based on nextflow. You can run it through
 ```
 nextflow gethog3_script.nf
 ```
+
+# TO DO
+copy wrapper codes! 
+
+
