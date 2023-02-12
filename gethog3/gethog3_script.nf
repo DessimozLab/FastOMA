@@ -24,13 +24,29 @@ process inferrhog{
 
   input:
   path hogmap
-  //output:
-  // path "*.fa"
+  output:
+  path "HOG_*.fa"
 
   script:
   """
-   python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/gethog3/gethog3/_infer_rhog.py
+   python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/gethog3/gethog3/infer_rhog.py
   """
+}
+
+rhog_distributor{
+  // publishDir "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/rhogs_all/"
+
+  input:
+  path rhogs_all
+  output:
+  path "HOG_*.fa"
+
+  script:
+  """
+   python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/gethog3/gethog3/infer_rhog.py
+  """
+
+
 }
 
 
@@ -42,7 +58,10 @@ workflow {
   hogmap.view{ "${it}"}
   // hogmap = Channel.fromPath("/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/hogmap/*")
 
-  inferrhog(hogmap.collect())
-  //rhogs = inferrhog(hogmap)
-  //rhogs.view{ "${it}"}
+  rhogs = inferrhog(hogmap.collect())
+  rhogs.view{ "${it}"}
+
+  rhog_chuks= rhog_dist(rhogs)
+
+
 }
