@@ -22,7 +22,6 @@ hog and HOG are used interchangeably here.
 
 print("query_species_names ", len(query_prot_recs))
 
-
 query_prot_recs = _utils_rhog.add_species_name_gene_id(query_prot_recs, query_species_names)
 hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names)
 
@@ -46,5 +45,8 @@ rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rho
                                                                              prots_hogmap_fscore_allspecies,
                                                                              query_species_names,
                                                                              query_prot_names_species_mapped)
-
-rhogid_num_list_filt1 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, _config.working_folder + "rhogs_all/", 2)  # min_rhog_size, max_rhog_size
+# for pure usage of this python file, you can set the output folder
+# output_folder_rhog = _config.working_folder + "rhogs_all/"
+# using nextflow
+output_folder_rhog = "./"
+rhogid_num_list_filt1 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, output_folder_rhog, 2)  # min_rhog_size, max_rhog_size

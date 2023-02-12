@@ -25,11 +25,11 @@ def list_rhog_fastas(address_rhogs_folder):
 
 
 
-def folder_1h_rhog(working_folder):
+def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
 
     # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/working_nfp/"
-    address_rhogs_folder = working_folder + "rhogs_all/"
-    work_fldor_out = working_folder
+
+    #work_fldor_out = working_folder
 
     rhogid_num_list = list_rhog_fastas(address_rhogs_folder)
     len(rhogid_num_list)
@@ -45,8 +45,11 @@ def folder_1h_rhog(working_folder):
     list_list_rest_size = [[]]
     list_list_big = []
 
-    big_rhog_filesize_thresh = 600 * 1000  # 600 would be better
-    sum_list_rhogs_filesize_thresh = 2 * 1e6
+    # big_rhog_filesize_thresh = 600 * 1000  # 600 would be better
+    # sum_list_rhogs_filesize_thresh = 2 * 1e6
+    big_rhog_filesize_thresh = 1.6 * 1000  # 600 would be better
+    sum_list_rhogs_filesize_thresh = 5 * 1e3
+
 
     for rhognum, size in dic_rhognum_size.items():
         # print(rhognum, size)
@@ -63,22 +66,27 @@ def folder_1h_rhog(working_folder):
     # makedirs(work_fldor_out+"rhogs_rest")
     for folder_id, list_rhog in enumerate(list_list_rest_rhog):
         # print(folder_id)
-        makedirs(work_fldor_out + "/rhogs_rest/" + str(folder_id))
+        # output_folder_rest = work_fldor_out + "/rhogs_rest/"
+        makedirs( output_folder_rest + str(folder_id))
         for rhogid_num in list_rhog:
             name = "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
-            folder_rest = work_fldor_out + "rhogs_rest/" + str(folder_id) + "/"
+            folder_rest =output_folder_rest + str(folder_id) + "/"
             shutil.copy(address_rhogs_folder + name, folder_rest + name)
 
     # makedirs(work_fldor_out+"rhogs_big")
+    #  output_folder_big = work_fldor_out + "rhogs_big/"
     for folder_id, rhogid_num in enumerate(list_list_big):
         name = "HOG_B" + str(rhogid_num).zfill(7) + ".fa"
-        folder_big = work_fldor_out + "rhogs_big/b" + str(folder_id) + "/"
+        folder_big = output_folder_big + "b" + str(folder_id) + "/"
         makedirs(folder_big)
         shutil.copy(address_rhogs_folder + name, folder_big + name)
 
     return 1
 
+working_folder =  "./" # _config.working_folder
+address_rhogs_folder = working_folder # + "rhogs_all/"
+output_folder_big =  "rhogs_big/"
+output_folder_rest = "rhogs_rest/"
+folder_1h_rhog(working_folder, output_folder_big, output_folder_rest)
 
-
-
-folder_1h_rhog(_config.working_folder)
+# folder_1h_rhog(_config.working_folder)
