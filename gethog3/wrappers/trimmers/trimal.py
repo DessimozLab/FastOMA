@@ -4,16 +4,14 @@ import os
 import time
 
 from Bio import SeqIO, AlignIO
-from pyparsing import ParseException
 import tempfile
 
 from .base_trimmer import MSATrimmer
-from ..aligners.base_aligner import AlignmentInput
+from gethog3.wrappers.aligners.base_aligner import AlignmentInput
 from ...wrappers import WrapperError
-from ..abstract_cli import AbstractCLI
+from gethog3.wrappers.abstract_cli import AbstractCLI
 from ..options import OptionSet, StringOption, IntegerOption, FlagOption, FloatOption
 from ...seq_utils.utils import iter_seqrecs_from_any
-from ...file_utils import TempFile, TempDir
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())

@@ -2,9 +2,9 @@ import time
 from Bio import AlignIO, SeqIO
 import tempfile
 from six import StringIO
-from ..abstract_cli import AbstractCLI
-from .base_aligner import Aligner, AlignmentInput, DataType
-from ..options import StringOption, FlagOption, IntegerOption, FloatOption, MultiOption, OptionSet
+from wrappers.abstract_cli import AbstractCLI
+from wrappers.aligners.base_aligner import Aligner, AlignmentInput, DataType
+from wrappers.options import StringOption, FlagOption, OptionSet
 
 
 class ProGraphMSACLI(AbstractCLI):

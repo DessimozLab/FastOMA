@@ -12,9 +12,8 @@ import tempfile
 from .base_treebuilder import TreeBuilder, AlignmentInput, DataType
 from .parsers import FasttreeParser
 
-from ..abstract_cli import AbstractCLI
+from gethog3.wrappers.abstract_cli import AbstractCLI
 from ..options import OptionSet, StringOption, IntegerOption
-from ...file_utils import TempFile, TempDir
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())

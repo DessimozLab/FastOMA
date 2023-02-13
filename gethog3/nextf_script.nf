@@ -73,6 +73,7 @@ workflow {
   rhog_files_big = Channel.fromPath(params.inputs_big,  type:'any' ,checkIfExists:true)
   qfhogbg(rhog_files_big)
   collect_ortho()
+
 }
 
 

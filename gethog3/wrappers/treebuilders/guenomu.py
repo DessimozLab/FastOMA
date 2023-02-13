@@ -1,20 +1,15 @@
 import os
 import time
-import random
-from pyparsing import ParseException
-import shutil
-from Bio import AlignIO, SeqIO
-import dendropy
 from zoo.wrappers import WrapperError
 import logging
 
 from .parsers import GuenomuParser
-from .base_treebuilder import TreeBuilder, AlignmentInput, DataType
+from .base_treebuilder import TreeBuilder
 
-from ..abstract_cli import AbstractCLI
-from ..options import StringOption, FlagOption, IntegerOption, FloatOption, MultiOption, OptionSet
+from gethog3.wrappers.abstract_cli import AbstractCLI
+from ..options import StringOption, IntegerOption, FloatOption, OptionSet
 
-from ...file_utils import TempFile, TempDir
+from ...file_utils import TempDir
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())

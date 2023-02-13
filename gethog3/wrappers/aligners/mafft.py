@@ -3,13 +3,12 @@ import time
 import os
 from Bio import AlignIO, SeqIO
 from six import StringIO
-from ..abstract_cli import AbstractCLI
+from wrappers.abstract_cli import AbstractCLI
+from wrappers.aligners.base_aligner import Aligner, AlignmentInput, DataType
 
-
-from .base_aligner import Aligner, AlignmentInput, DataType
-from ...seq_utils.utils import iter_seqrecs_from_any
-from ...wrappers import WrapperError
-from ..options import StringOption, FlagOption, IntegerOption, FloatOption, MultiOption, OptionSet
+from wrappers.utils import iter_seqrecs_from_any
+from wrappers import WrapperError
+from wrappers.options import StringOption, FlagOption, IntegerOption, FloatOption, MultiOption, OptionSet
 import tempfile
 import logging
 

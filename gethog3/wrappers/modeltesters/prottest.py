@@ -4,12 +4,12 @@ import tempfile
 import logging
 
 from pyparsing import ParseException
-from Bio import AlignIO, SeqIO
+from Bio import SeqIO
 
 from .parsers import ProtTestParser
 from .base_modeltester import ModelTester, AlignmentInput, DataType
 
-from ..abstract_cli import AbstractCLI
+from gethog3.wrappers.abstract_cli import AbstractCLI
 from ..options import StringOption, FlagOption, OptionSet
 
 logger = logging.getLogger(__name__)

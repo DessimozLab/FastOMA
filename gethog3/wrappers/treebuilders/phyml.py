@@ -3,13 +3,13 @@ import time
 import tempfile
 import logging
 from pyparsing import ParseException
-from Bio import AlignIO, SeqIO
+from Bio import SeqIO
 
 from .base_treebuilder import TreeBuilder, AlignmentInput, DataType
 from .parsers import PhymlParser
 
-from ..abstract_cli import AbstractCLI
-from ..options import StringOption, FlagOption, IntegerOption, FloatOption, MultiOption, OptionSet
+from gethog3.wrappers.abstract_cli import AbstractCLI
+from ..options import StringOption, FlagOption, IntegerOption, OptionSet
 
 
 logger = logging.getLogger(__name__)

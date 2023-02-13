@@ -3,8 +3,8 @@ from abc import ABCMeta, abstractmethod
 from enum import Enum
 from Bio import AlignIO, SeqIO
 
-from ...seq_utils import is_dna, identify_input, AlignmentInput
-from .. import WrapperError
+from wrappers.utils import is_dna, identify_input, AlignmentInput
+from wrappers import WrapperError
 
 
 DataType = Enum('DataType', 'DNA PROTEIN UNKNOWN')
