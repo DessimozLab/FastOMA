@@ -1,9 +1,13 @@
 
-import zoo.wrappers.aligners.mafft as mafft
-import zoo.wrappers.treebuilders.fasttree as fasttree
-import zoo.wrappers.treebuilders.iqtree as iqtree
-from zoo.wrappers.trimmers.trimal import TrimAl
+# import zoo.wrappers.aligners.mafft as mafft
+# import zoo.wrappers.treebuilders.fasttree as fasttree
+# import zoo.wrappers.treebuilders.iqtree as iqtree
+# from zoo.wrappers.trimmers.trimal import TrimAl
 
+import wrappers.aligners.mafft as mafft
+import wrappers.treebuilders.fasttree as fasttree
+import wrappers.treebuilders.iqtree as iqtree
+from wrappers.trimmers.trimal import TrimAl
 
 
 from _utils import logger_hog

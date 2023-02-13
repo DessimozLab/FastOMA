@@ -1,0 +1,1 @@
+from .trimal import TrimAl
