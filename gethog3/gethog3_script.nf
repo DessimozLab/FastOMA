@@ -4,7 +4,7 @@ params.species_tree= "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukary
 params.num_threads_omamer= 2
 
 process omamer{
-  publishDir "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/hogmap/"  // , mode: 'copy'
+  publishDir "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/hogmap/"   // , mode: 'copy'
   input:
   path proteomes
   val omamer_db
@@ -31,11 +31,12 @@ process inferrhog{
 
 process rhog_distributor{
   publishDir "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/"
+
   input:
   path rhogs
   output:
-  path rhogs_rest
-  path rhogs_big
+  path "rhogs_rest/*"
+  path "rhogs_big/*" //"${rhogs_big}/*.fa"
   script:
   """
    python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/gethog3/gethog3/rhog_distributor.py
@@ -45,20 +46,18 @@ process rhog_distributor{
 
 process hog_big{
   publishDir "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/"
-  //publishDir "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/rhogs_big/"
-
   input:
-  path "$rhogs_big/*.fa"
+  path hogs_big_i //"$rhogs_big/*.fa"
   output:
-  path pi_rhogs_big
+  path "pi_big_rhog/*"
+  path "pi_big_subhog/*"
 
   script:
   """
-   python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/gethog3/gethog3/infer_folder.py  $rhogs_big True pi_big rhogs_big
+   python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/gethog3/gethog3/infer_folder.py  $rhogs_big_i False pi_big rhogs_big
   """
-
-
 }
+
 
 
 workflow {
@@ -66,26 +65,25 @@ workflow {
   omamer_db = Channel.value(params.omamer_db)
   num_threads_omamer = Channel.value(params.num_threads_omamer)
   hogmap = omamer(proteomes, omamer_db, num_threads_omamer)
-  hogmap.view{ "${it}"}
-  // hogmap = Channel.fromPath("/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/hogmap/*")
+  // hogmap = Channel.fromPath("./hogmap/*")
+  // hogmap.view{ "${it}"}
 
-  rhogs = inferrhog(hogmap.collect())
-  //rhogs.view{ "${it}"}
 
-  (rhog_rest, rhog_big)= rhog_distributor(rhogs)
-  rhog_rest.view{ "${it}"}
-  rhog_big.view{ "${it}"}
+  inferrhog(hogmap.collect())
+  rhogs = Channel.fromPath("./rhogs_all/*")
+  rhogs.view{rhogs "${it}"}
 
-  hog_big(rhog_big)
+  //(rhogs_rest, rhogs_big)= rhog_distributor(rhogs)
+  rhog_distributor(rhogs)
+  rhogs_rest = Channel.fromPath("./rhogs_rest/*")
+  rhogs_rest.view{rhogsrest "${it}"}
+
+  rhogs_big = Channel.fromPath("./rhogs_big/*")
+  rhogs_big.view{rhogsbig "${it}"}
+
+  hog_big(rhogs_big)
 
 
 
 }
-
-
-
-// [] process > omamer (1)       [  0%] 0 of 3=number of species
-// [b6/8a71e5] process > inferrhog        [100%] 1 of 1 ✔
-// [55/de889e] process > rhog_distributor [100%] 1 of 1 ✔
-
 
