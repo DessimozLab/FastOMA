@@ -1,7 +1,7 @@
 
 from Bio import SeqIO
 from wrappers.aligners import mafft
-from wrappers.treebuilders import iqtree
+from wrappers.treebuilders import fasttree
 # from trimmers.trimal import TrimAl
 
 from _utils import logger_hog
