@@ -16,7 +16,8 @@ working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/" 
 
 
 #species_tree_address = working_folder_root + "lineage_tree_qfo_2.phyloxml" #phyloxml"
-species_tree_address = working_folder_root + "tree_fastaname.nwk"  # no space or special charcter in internal node,
+species_tree_address = working_folder_root + "lineage_tree_qfo_2.phyloxml"
+                       # "tree_fastaname.nwk"  # no space or special charcter in internal node,
 
 working_id =  "./"  # "working_nf/"
 protein_format_qfo_dataset = True

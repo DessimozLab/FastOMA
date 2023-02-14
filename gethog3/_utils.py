@@ -12,7 +12,7 @@ import pickle
 from os import listdir
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
-
+import sys
 import _config
 
 logging.basicConfig(
@@ -85,10 +85,14 @@ def read_species_tree_add_internal(species_tree_address):
             try:
                 species_tree = Tree(species_tree_address)
             except:
-                print("format of species tree is not known")
+                logger_hog.error("format of species tree is not known or the file doesn't exist" )
+                sys.exit()
+
 
     else:
-        print("for now we accept phyloxml or nwk format for input species tree.")
+        logger_hog.error("for now we accept phyloxml or nwk format for input species tree.or the file doesn't exist")
+        sys.exit()
+
 
     # add name for the internal or leaf, if no name is provided
     num_leaves_no_name = 0

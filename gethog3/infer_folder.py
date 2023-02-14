@@ -12,8 +12,10 @@ from os import listdir
 import _config
 
 
-#address_rhogs_folder = sys.argv[1]
-address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/working_nf/rhogs_rest/122/"  # bb1
+address_rhogs_folder = sys.argv[1]
+# address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/working_nf/rhogs_rest/122/"  # bb1
+
+
 inferhog_concurrent_on_string = "False"  # "False"  # sys.argv[2]  sys.argv[2]  #
 
 # mkdir pi_big_rhog pi_big_subhog pi_rest_rhog  pi_rest_subhog genetrees

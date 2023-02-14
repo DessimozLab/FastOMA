@@ -1,18 +1,10 @@
 
-# import zoo.wrappers.aligners.mafft as mafft
-# import zoo.wrappers.treebuilders.fasttree as fasttree
-# import zoo.wrappers.treebuilders.iqtree as iqtree
-# from zoo.wrappers.trimmers.trimal import TrimAl
-
-import wrappers.aligners.mafft as mafft
-import wrappers.treebuilders.fasttree as fasttree
-import wrappers.treebuilders.iqtree as iqtree
-from wrappers.trimmers.trimal import TrimAl
-
+from Bio import SeqIO
+from wrappers.aligners import mafft
+from wrappers.treebuilders import iqtree
+# from trimmers.trimal import TrimAl
 
 from _utils import logger_hog
-from Bio import SeqIO
-
 import _config
 
 
@@ -106,7 +98,6 @@ def trim_msa(msa):
     return msa_out
 
 
-import os
 from ete3 import Tree
 
 def mad_rooting(input_tree_file_path: str, mad_executable_path: str = "./mad"):
