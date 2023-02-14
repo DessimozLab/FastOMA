@@ -45,12 +45,12 @@ process rhog_distributor{
 
 
 process hog_big{
-  publishDir "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/"
+  publishDir "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/pi_big_rhog/"
   input:
-  path hogs_big_i //"$rhogs_big/*.fa"
+  path rhogs_big_i //"$rhogs_big/*.fa"
   output:
-  path "pi_big_rhog/*"
-  path "pi_big_subhog/*"
+  path "*.pickle"
+  //path "pi_big_subhog/*"
 
   script:
   """
@@ -59,31 +59,48 @@ process hog_big{
 }
 
 
+process hog_rest{
+  publishDir "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/pi_rest_rhog/"
+  input:
+  path rhogs_rest_i //"$rhogs_big/*.fa"
+  output:
+  path "*.pickle"
+
+  script:
+  """
+   python /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/gethog3/gethog3/infer_folder.py  $rhogs_rest_i False pi_rest rhogs_rest
+  """
+}
+
+
+
 
 workflow {
   proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
   omamer_db = Channel.value(params.omamer_db)
   num_threads_omamer = Channel.value(params.num_threads_omamer)
   hogmap = omamer(proteomes, omamer_db, num_threads_omamer)
-  // hogmap = Channel.fromPath("./hogmap/*")
+  // hogmap = Channel.fromPath("./hogmap/*", type: 'any')
   // hogmap.view{ "${it}"}
 
+  rhogs = inferrhog(hogmap.collect())
+  //rhogs_check = Channel.fromPath("./rhogs_all/*", type: 'any')
+  // rhogs_check.view{"rhogs ${it}"}
 
-  inferrhog(hogmap.collect())
-  rhogs = Channel.fromPath("./rhogs_all/*")
-  rhogs.view{rhogs "${it}"}
-
-  //(rhogs_rest, rhogs_big)= rhog_distributor(rhogs)
-  rhog_distributor(rhogs)
-  rhogs_rest = Channel.fromPath("./rhogs_rest/*")
-  rhogs_rest.view{rhogsrest "${it}"}
-
-  rhogs_big = Channel.fromPath("./rhogs_big/*")
-  rhogs_big.view{rhogsbig "${it}"}
-
-  hog_big(rhogs_big)
+  println "rhog_distributor started"
+  (rhogs_rest_, rhogs_big_) = rhog_distributor(rhogs)
+  rhogs_rest = Channel.fromPath("./rhogs_rest/*", type: 'any')
+  rhogs_rest.view{"rhogsrest ${it}"}
+  pi_rest_rhog = hog_rest(rhogs_rest)
+  pi_rest_rhog.view{"pi_rest_rhog ${it}"}
 
 
+  rhogs_big = Channel.fromPath("./rhogs_big/*", type: 'any')
+  rhogs_big.view{"rhogsbig ${it}"}
+  pi_big_rhog = hog_big(rhogs_big)
+  pi_big_rhog.view{"pi_big_rhog ${it}"}
+
+// collector
 
 }
 
