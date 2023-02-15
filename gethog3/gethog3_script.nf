@@ -3,7 +3,7 @@
 
 params.proteomes = params.working_folder+ "proteome/*"
 params.omamer_db= params.working_folder+"Primates.h5"    // LUCA.h5"
-params.species_tree= params.working_folder+"species_tree.phyloxml"  // or nwk format
+// params.species_tree= params.working_folder+"species_tree.nwk"  // or nwk format
 params.num_threads_omamer= 2
 params.omamer = "omamer" // if installed, otherwise address to the executable
 params.outputdir = params.working_folder
@@ -19,6 +19,7 @@ process omamer_run{
   val outputdir
   output:
   path "*.hogmap"
+
   script:
   """
    ${omamer} search --db $omamer_db  --query $proteomes --nthreads $num_threads_omamer  --out ${proteomes}.hogmap
@@ -108,12 +109,12 @@ process collect_orthoxml{
 workflow {
 
     proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
-    omamer_db = Channel.value(params.omamer_db)
+    omamer_db = Channel.fromPath(params.omamer_db)
     num_threads_omamer = Channel.value(params.num_threads_omamer)
-    species_tree = Channel.value(params.species_tree)
+    // species_tree = Channel.fromPath(params.species_tree)
     gethog3 = Channel.value(params.gethog3)
     omamer = Channel.value(params.omamer)
-    outputdir = Channel.value(params.outputdir)
+    outputdir = Channel.fromPath(params.outputdir)
 
     hogmap = omamer_run(proteomes, omamer_db, num_threads_omamer,omamer,outputdir)
     // hogmap = Channel.fromPath("./hogmap/*", type: 'any')

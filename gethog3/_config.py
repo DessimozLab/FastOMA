@@ -1,10 +1,9 @@
 
-
-working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/"
+# global path
+working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog2/gethog3/testdata/working_folder"+ "/"
 
 species_tree_address = working_folder + "species_tree.phyloxml"
                        # no space or special charcter in internal node.
-
 protein_format_qfo_dataset = True
 
 ## output writing files

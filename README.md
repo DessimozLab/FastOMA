@@ -46,15 +46,25 @@ or clone it
 ```
 git clone git@github.com:sinamajidian/gethog3.git
 ```
-Then, cd to the `testdata` folder and download the omamer database, finally run the package using nextflow as below:
+Then, cd to the `testdata` folder and download the omamer database.
 ```
 cd gethog3/testdata
 wget https://omabrowser.org/All/Primates.h5    # 352MB
+mv Primates.h5  working_folder 
+```
+Please set the path to working_folder  as global path in two places `gethog3/gethog3/_config.py` and `gethog3/gethog3/nextflow.config` :
+
+1- The variable `working_folder` in the file `_config.py`
+
+2- The variable `params.working_folder` in the file `nextflow.config` (the same as item 1).
+
+Finally run the package using nextflow as below:
+```
 nextflow ../gethog3/gethog3_script.nf
 ```
+
 Now following files should appear in the `gethog3/testdata`.
 ```
-
 
 ```
 
@@ -72,10 +82,9 @@ $ ls working_folder
 Primates.h5  proteome  species_tree.phyloxml
 ```
 After running the package, the outputs will appear in this working folder.  
+
 Please set the working_folder in two places `gethog3/gethog3/_config.py` and `gethog3/gethog3/nextflow.config` :
-
 1- The variable `working_folder` in the file `_config.py`
-
 2- The variable `params.working_folder` in the file `nextflow.config` (the same as item 1).
 
 Then, provide the address of the gethog3 code as `params.gethog3` in the file `nextflow.config`.
