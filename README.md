@@ -33,8 +33,9 @@ The reason is that gethog3 write some files whose names contains the internal no
 Orthology information  as HOG structre in [OrthoXML](https://orthoxml.org/) format.
 
 
-# How to config and run GETHOG3
 
+
+# How to run GETHOG3 the test data
 First, download the GETHOG3 package:
 ```
 wget https://github.com/sinamajidian/gethog3/archive/refs/heads/master.zip
@@ -45,11 +46,27 @@ or clone it
 ```
 git clone git@github.com:sinamajidian/gethog3.git
 ```
+Then, cd to the `testdata` folder and download the omamer database, finally run the package using nextflow as below:
+```
+cd gethog3/testdata
+wget https://omabrowser.org/All/Primates.h5    # 352MB
+nextflow ../gethog3/gethog3_script.nf
+```
+Now following files should appear in the `gethog3/testdata`.
+```
 
+
+```
+
+
+
+
+# How to config and run GETHOG3
+Please first try the test data. Now you should have the GETHOG3 package.
 
 GETHOG3 is based on nextflow. We consider a working folder which contains the omamer database `Primates.h5`,
 the proteome folder of the species of interst `proteome` (of fa files inside),
-and the speceis tree `species_tree.phyloxml`.
+and the speceis tree `species_tree.phyloxml` (or nwk).
 ```
 $ ls working_folder
 Primates.h5  proteome  species_tree.phyloxml
@@ -65,10 +82,8 @@ Then, provide the address of the gethog3 code as `params.gethog3` in the file `n
 
 Finally you can run:
 ```
-nextflow gethog3_script.nf
+nextflow gethog3/gethog3/gethog3_script.nf
 ```
 
-# TO DO
-- unit test
-- 
+
 

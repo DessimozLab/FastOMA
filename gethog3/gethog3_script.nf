@@ -94,7 +94,7 @@ process collect_orthoxml{
   // path gene_id_dic_xml
   val gethog3
   output:
-  path "hog__3.orthoxml"
+  path "output_hog_.orthoxml"
 
   script:
   """
