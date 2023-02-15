@@ -9,13 +9,18 @@ GETHOG3 needs following software packages:  [omamer](https://github.com/Dessimoz
 [Biopython](https://github.com/biopython/biopython),  [ete3](http://etetoolkit.org), [fasttree](http://www.microbesonline.org/fasttree/)
 and [mafft](http://mafft.cbrc.jp/alignment/software/) (multiple sequence aligner).
 
-For installing omamer check its [github page]( [omamer](https://github.com/DessimozLab/omamer). 
-For the rest, you can install them using [conda](https://docs.conda.io/en/latest/miniconda.html).
+You can start with [conda](https://docs.conda.io/en/latest/miniconda.html).
+```
+conda create --name gethog3 python=3.9
+conda activate gethog3
+```
+For installing omamer, please check its page [github page](https://github.com/DessimozLab/omamer). (You may need to install omamer with `scipy==1.4.1 numpy==1.20.0 pytables==3.6.1`)
+
+You can install the rest using [conda](https://docs.conda.io/en/latest/miniconda.html).
 ```
 conda install -c conda-forge biopython ete3 
 conda install -c bioconda mafft iqtree fasttree nextflow
 ```
-
 
 
 # Input and Output: 
@@ -24,13 +29,13 @@ conda install -c bioconda mafft iqtree fasttree nextflow
 1- Sets of protein sequences in FASTA format (with `.fa` extension) in the folder `proteome`. The name of each fasta file is the name of species.
 
 2- The omamer database which you can download from [here](https://omabrowser.org/oma/current/) which is this [link](https://omabrowser.org/All/LUCA.h5). 
-This file is `13 Gb` containing all the gene families of the Tree of Life. 
+This file is `13 Gb` containing all the gene families of the Tree of Life or a subset of them, e.g. Primates (352MB). 
 
 3- Sepecies tree in nwk or phyloxml format. Note that the internal node should not contain any special character (e.g. `\`  `/` or space). 
 The reason is that gethog3 write some files whose names contains the internal node's name. 
 
 ### Output:
-Orthology information  as HOG structre in [OrthoXML](https://orthoxml.org/) format.
+Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format.
 
 
 
@@ -52,11 +57,19 @@ cd gethog3/testdata
 wget https://omabrowser.org/All/Primates.h5    # 352MB
 mv Primates.h5  working_folder 
 ```
-Please set the path to working_folder  as global path in two places `gethog3/gethog3/_config.py` and `gethog3/gethog3/nextflow.config` :
+If you are using omamer database of different name, please change `params.omamer_db` in `gethog3/gethog3/nextflow.config`. 
+
+
+Next, set the path to working_folder (as a global path) in two places `gethog3/gethog3/_config.py` and `gethog3/gethog3/nextflow.config` :
 
 1- The variable `working_folder` in the file `_config.py`
-
+```
+params.working_folder= "/work/folder/gethog3/testdata/working_folder"+ "/"
+params.gethog3= "/work/folder/gethog3/gethog3/"
+```
 2- The variable `params.working_folder` in the file `nextflow.config` (the same as item 1).
+```
+```
 
 Finally run the package using nextflow as below:
 ```

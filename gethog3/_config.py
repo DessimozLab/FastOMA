@@ -1,6 +1,6 @@
 
 # global path
-working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog2/gethog3/testdata/working_folder"+ "/"
+working_folder = "/work/folder/gethog3/testdata/working_folder"+ "/"
 
 species_tree_address = working_folder + "species_tree.nwk"
                        # no space or special charcter in internal node.

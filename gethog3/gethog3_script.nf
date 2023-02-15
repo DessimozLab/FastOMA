@@ -2,7 +2,7 @@
 
 
 params.proteomes = params.working_folder+ "proteome/*"
-params.omamer_db= params.working_folder+"Primates.h5"    // LUCA.h5"
+
 // params.species_tree= params.working_folder+"species_tree.nwk"  // or nwk format
 params.num_threads_omamer= 2
 params.omamer = "omamer" // if installed, otherwise address to the executable
