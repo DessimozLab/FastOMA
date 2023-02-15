@@ -48,5 +48,7 @@ rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rho
 # for pure usage of this python file, you can set the output folder
 # output_folder_rhog = _config.working_folder + "rhogs_all/"
 # using nextflow
-output_folder_rhog = "./"
+
+# import sys
+output_folder_rhog = "./" #  sys.argv[1]  #
 rhogid_num_list_filt1 = _utils_rhog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, output_folder_rhog, 2)  # min_rhog_size, max_rhog_size

@@ -34,7 +34,7 @@ process inferrhog{
   // path "gene_id_dic_xml.pickle"
   script:
   """
-   python ${gethog3}/infer_rhog.py
+   python ${gethog3}/infer_rhog.py ./
   """
 }
 
@@ -117,33 +117,38 @@ workflow {
     // hogmap = Channel.fromPath("./hogmap/*", type: 'any')
     // hogmap.view{ "${it}"}
 
-    (rhogs, gene_id_dic_xml)= inferrhog(hogmap.collect(), gethog3)
+    rhogs = inferrhog(hogmap.collect(), gethog3)
+    // rhogs.flatten().view{" rhogs ${it}"}
+
     //rhogs_check = Channel.fromPath("./rhogs_all/*", type: 'any')
     // rhogs_check.view{"rhogs ${it}"}
 
-    (rhogs_rest_, rhogs_big_) = rhog_distributor(rhogs, gethog3)
+    (rhogs_rest, rhogs_big) = rhog_distributor(rhogs, gethog3)
+
+    rhogs_rest.flatten().view{" rhogs rest ${it}"}
+    rhogs_big.flatten().view{" rhogs big ${it}"}
+
+
+    //rhogs_batch = rhog_distributor(rhogs, gethog3)
+    //rhogs_batch.view{"rhogs_batch ${it}"}
+
+
     //rhogs_rest_collect = rhogs_rest_.collect()
    // if ( rhogs_rest_collect.ifEmpty()){
-    rhogs_rest = Channel.fromPath("./rhogs_rest/*", type: 'any')
-    rhogs_rest.view{"rhogsrest ${it}"}
+    //rhogs_rest = Channel.fromPath("./rhogs_rest/*", type: 'any')
+    //rhogs_rest.view{"rhogsrest ${it}"}
     pickle_rest_rhog = hog_rest(rhogs_rest, gethog3)
+    pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
+
+    pickle_big_rhog = hog_big(rhogs_big, gethog3)
+    pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}
     // pickle_rest_rhog.view{"pi_rest_rhog ${it}"}
 
 
-//     rhogs_big_collect = rhogs_big_.collect()
-//     if (rhogs_big_collect.ifEmpty() ){ // rhogs_big_collect.size()>1
-//     rhogs_big = Channel.fromPath("./rhogs_big/*", type: 'any')
-//     rhogs_big.view{"rhogsbig ${it}"}
-//     pickle_big_rhog = hog_big(rhogs_big, gethog3)
-//     // pickle_big_rhog.view{"pi_big_rhog ${it}"}
-//     }
-//     prb = pickle_big_rhog.collect()
-//     prr = pickle_rest_rhog.collect()
-//
-//     all_pickles = prb.mix(prr)
-//     all_pickles_ =all_pickles.collect()
-//
-//     ortho = collect_orthoxml(all_pickles_, gethog3)
+    prb = pickle_big_rhog.collect()
+    prr = pickle_rest_rhog.collect()
+    all_pickles = prb.mix(prr)
+    ortho = collect_orthoxml(all_pickles.collect(), gethog3)
 
 }
 

@@ -256,6 +256,7 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
 
 
 def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, min_rhog_size=1, max_rhog_size=1e100):
+
     logger_hog.info("Writing Sequences of roothogs are fasta file in " + address_rhogs_folder)
     if not os.path.exists(address_rhogs_folder):
         os.mkdir(address_rhogs_folder)
@@ -268,7 +269,7 @@ def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, m
         rhogid_num_list.append(rhogid_num)
 
         if min_rhog_size <= len(rhogid_prot_rec_query) <= max_rhog_size:
-            SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder +"HOG_B"+ str(rhogid_num).zfill(7)+".fa", "fasta")
+            SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder +"/HOG_B"+ str(rhogid_num).zfill(7)+".fa", "fasta")
 
     logger_hog.info("Writing Sequences of roothogs finished." )
 
