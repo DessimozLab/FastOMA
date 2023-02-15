@@ -60,17 +60,19 @@ Please set the path to working_folder  as global path in two places `gethog3/get
 
 Finally run the package using nextflow as below:
 ```
+cd gethog3/testdata
 nextflow ../gethog3/gethog3_script.nf
 ```
 
-Now following files should appear in the `gethog3/testdata`.
+Now following files and folders should appear in the `gethog3/testdata`.
 ```
+gene_id_dic_xml.pickle  hogmap  output_hog_.orthoxml  pickle_rhogs 
+ Primates.h5  proteome  rhogs_all  rhogs_big  rhogs_rest  species_tree.nwk
 
 ```
+among which `output_hog_.orthoxml` is the output and its content looks like this
 
-The output looks like this
 ```
-
 <?xml version="1.0" ?>
 <orthoXML xmlns="http://orthoXML.org/2011/" origin="OMA" originVersion="Nov 2021" version="0.3">
    <species name="MYCGE" NCBITaxId="1">
@@ -88,7 +90,6 @@ The output looks like this
       </orthologGroup>
    </groups>
 </orthoXML>
-
 ```
 
 
@@ -117,4 +118,7 @@ nextflow gethog3/gethog3/gethog3_script.nf
 ```
 
 
+## log changes
 
+
+prelease v.0.0.1  (Feb 15 2022)

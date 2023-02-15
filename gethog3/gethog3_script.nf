@@ -128,26 +128,18 @@ workflow {
     rhogs_big=rhogs_big_list.flatten()
     rhogs_big.view{" rhogs big ${it}"}
 
-    //rhogs_batch = rhog_distributor(rhogs, gethog3)
-    //rhogs_batch.view{"rhogs_batch ${it}"}
-
-
-    //rhogs_rest_collect = rhogs_rest_.collect()
-   // if ( rhogs_rest_collect.ifEmpty()){
-    //rhogs_rest = Channel.fromPath("./rhogs_rest/*", type: 'any')
-    //rhogs_rest.view{"rhogsrest ${it}"}
     pickle_rest_rhog = hog_rest(rhogs_rest, gethog3)
     pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
 
     pickle_big_rhog = hog_big(rhogs_big, gethog3)
     pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}
-    // pickle_rest_rhog.view{"pi_rest_rhog ${it}"}
 
 
     prb = pickle_big_rhog.collect()
     prr = pickle_rest_rhog.collect()
     all_pickles = prb.mix(prr)
     ortho = collect_orthoxml(all_pickles.collect(), gethog3)
+    ortho.view{" output orthoxml file ${it}"}
 
 }
 
