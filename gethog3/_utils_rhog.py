@@ -39,7 +39,7 @@ def parse_proteome():  # list_oma_species
 
     query_prot_recs = []
     for query_species_names_idx, query_species_name in enumerate(query_species_names):
-        prot_address = _config.working_folder + "/proteome/" + query_species_name + fasta_format
+        prot_address = _config.working_folder + "/proteome/" + query_species_name + "."+fasta_format
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
         query_prot_recs.append(prots_record)
 

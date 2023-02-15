@@ -6,7 +6,7 @@ GetHOG v3. (Under development)
 ## prerequisites
 
 GETHOG3 needs following software packages:  [omamer](https://github.com/DessimozLab/omamer),  [Nextflow](https://nextflow.io/),
-[Biopython](https://github.com/biopython/biopython),  [ete3](http://etetoolkit.org), [fasttree](http://www.microbesonline.org/fasttree/)
+[Biopython](https://github.com/biopython/biopython),[dendropy](https://dendropy.org/) , [ete3](http://etetoolkit.org), [fasttree](http://www.microbesonline.org/fasttree/)
 and [mafft](http://mafft.cbrc.jp/alignment/software/) (multiple sequence aligner).
 
 You can start with [conda](https://docs.conda.io/en/latest/miniconda.html).
@@ -18,8 +18,13 @@ For installing omamer, please check its page [github page](https://github.com/De
 
 You can install the rest using [conda](https://docs.conda.io/en/latest/miniconda.html).
 ```
-conda install -c conda-forge biopython ete3 
+conda install -c conda-forge biopython ete3  
 conda install -c bioconda mafft iqtree fasttree nextflow
+```
+And for wrappers, we need
+``` 
+conda install -c biopython dendropy
+conda install -c conda-forge pyparsing
 ```
 
 
@@ -57,33 +62,34 @@ cd gethog3/testdata
 wget https://omabrowser.org/All/Primates.h5    # 352MB
 mv Primates.h5  working_folder 
 ```
-If you are using omamer database of different name, please change `params.omamer_db` in `gethog3/gethog3/nextflow.config`. 
+If you are using omamer database of different name (e.g. LUCA.h5), please change `params.omamer_db` in `gethog3/gethog3/nextflow.config`. 
 
 
 Next, set the path to working_folder (as a global path) in two places `gethog3/gethog3/_config.py` and `gethog3/gethog3/nextflow.config` :
 
 1- The variable `working_folder` in the file `_config.py`
 ```
-params.working_folder= "/work/folder/gethog3/testdata/working_folder"+ "/"
-params.gethog3= "/work/folder/gethog3/gethog3/"
+working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/test/gethog3/testdata/working_folder"+ "/"
 ```
 2- The variable `params.working_folder` in the file `nextflow.config` (the same as item 1).
 ```
+params.working_folder= "/work/folder/gethog3/testdata/working_folder"+"/"
+params.gethog3= "/work/folder/gethog3/gethog3"+"/"
 ```
+Make sure that it ends with `"/"`.
 
-Finally run the package using nextflow as below:
+Finally, run the package using nextflow as below:
 ```
 cd gethog3/testdata
 nextflow ../gethog3/gethog3_script.nf
 ```
 
-Now following files and folders should appear in the `gethog3/testdata`.
+After few minutes, the run for test data finishes. Then, following files and folders should appear in the folder `gethog3/testdata`.
 ```
 gene_id_dic_xml.pickle  hogmap  output_hog_.orthoxml  pickle_rhogs 
  Primates.h5  proteome  rhogs_all  rhogs_big  rhogs_rest  species_tree.nwk
-
 ```
-among which `output_hog_.orthoxml` is the output and its content looks like this
+among which `output_hog_.orthoxml` is the final output. Its content looks like this
 
 ```
 <?xml version="1.0" ?>
@@ -132,6 +138,5 @@ nextflow gethog3/gethog3/gethog3_script.nf
 
 
 ## log changes
-
 
 prelease v.0.0.1  (Feb 15 2022)
