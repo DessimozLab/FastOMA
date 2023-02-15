@@ -1,5 +1,10 @@
 
 
+working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/" # "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/"  # bird_hog
+
+
+
+
 #oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/archive/OmaServer.h5"
 # oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/archive/OmaServer.h5"
 
@@ -11,7 +16,6 @@
 
 # qfo
 
-working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/" # "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/"  # bird_hog
 
 
 

@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 import pickle
 from os import listdir
 from xml.dom import minidom
+import _config
 
 print("started ")
 
@@ -12,7 +13,9 @@ qfo_bird = "qfo3"  #  qfo3 bird_hog
 
 #working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/"+qfo_bird+"/working_nf/"
 
-working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/working_nf/"
+working_folder = _config.working_folder_root  # "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/"
+
+# python ${gethog3} / collect_orthoxml.py ${pickle_rhogs} ${gene_id_dic_xml}
 
 
 if qfo_bird == "bird_hog":
@@ -30,9 +33,10 @@ else:
 
 # address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
 # species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-pickle_folder = working_folder + "pi_rest_rhog/" #"/pickle_b_0.5_3000/" pickles_rhog
+pickle_folder = working_folder + "pickle_rhogs/"   #  "pi_rest_rhog/" #"/pickle_b_0.5_3000/" pickles_rhog
 # add warning when pickle folder is not empty
-output_xml_name = "hog__3.orthoxml"
+#output_xml_name = working_folder+ "hog__3.orthoxml"
+output_xml_name = "./hog__3.orthoxml"
     #"pickle_0.5_3000_17nov_ts.xml"
 gene_id_pickle_file = working_folder + "gene_id_dic_xml.pickle" #"gene_id_v2_bird.pickle"
 
@@ -90,10 +94,10 @@ print("convert to string")
 xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
 # print(xml_str[:-1000])
 print("writing")
-with open(working_folder +output_xml_name, "w") as file_xml:
+with open(output_xml_name, "w") as file_xml:
     file_xml.write(xml_str)
 file_xml.close()
 
-print("orthoxml is written in  "+ working_folder +output_xml_name)
+print("orthoxml is written in  "+ output_xml_name)
 
 

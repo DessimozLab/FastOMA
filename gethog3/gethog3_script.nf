@@ -27,9 +27,11 @@ process inferrhog{
   publishDir "${params.outputdir}/rhogs_all/"
   input:
   path hogmap
+  // path proteomes
   val gethog3
   output:
   path "*.fa"
+  // path "gene_id_dic_xml.pickle"
   script:
   """
    python ${gethog3}/infer_rhog.py
@@ -43,8 +45,8 @@ process rhog_distributor{
   path rhogs
   val gethog3
   output:
-  path "rhogs_rest/*"
-  path "rhogs_big/*" //"${rhogs_big}/*.fa"
+  path "rhogs_rest/*", optional: true
+  path "rhogs_big/*" , optional: true
   script:
   """
    python ${gethog3}/rhog_distributor.py
@@ -87,9 +89,10 @@ process collect_orthoxml{
   publishDir "${params.outputdir}"
   input:
   path pickle_rhogs
+  // path gene_id_dic_xml
   val gethog3
   output:
-  path "orthoxml_1.orthoxml"
+  path "hog__3.orthoxml"
 
   script:
   """
@@ -114,29 +117,33 @@ workflow {
     // hogmap = Channel.fromPath("./hogmap/*", type: 'any')
     // hogmap.view{ "${it}"}
 
-    rhogs = inferrhog(hogmap.collect(), gethog3)
+    (rhogs, gene_id_dic_xml)= inferrhog(hogmap.collect(), gethog3)
     //rhogs_check = Channel.fromPath("./rhogs_all/*", type: 'any')
     // rhogs_check.view{"rhogs ${it}"}
 
     (rhogs_rest_, rhogs_big_) = rhog_distributor(rhogs, gethog3)
+    //rhogs_rest_collect = rhogs_rest_.collect()
+   // if ( rhogs_rest_collect.ifEmpty()){
     rhogs_rest = Channel.fromPath("./rhogs_rest/*", type: 'any')
     rhogs_rest.view{"rhogsrest ${it}"}
     pickle_rest_rhog = hog_rest(rhogs_rest, gethog3)
     // pickle_rest_rhog.view{"pi_rest_rhog ${it}"}
 
 
-    rhogs_big = Channel.fromPath("./rhogs_big/*", type: 'any')
-    rhogs_big.view{"rhogsbig ${it}"}
-    pickle_big_rhog = hog_big(rhogs_big, gethog3)
-    // pickle_big_rhog.view{"pi_big_rhog ${it}"}
-
-    prb = pickle_big_rhog.collect()
-    prr = pickle_rest_rhog.collect()
-
-    ortho = collect_orthoxml(prb.mix(prr), gethog3)
-    ortho.view{ "ortho ${it}"}
-
-// collector
+//     rhogs_big_collect = rhogs_big_.collect()
+//     if (rhogs_big_collect.ifEmpty() ){ // rhogs_big_collect.size()>1
+//     rhogs_big = Channel.fromPath("./rhogs_big/*", type: 'any')
+//     rhogs_big.view{"rhogsbig ${it}"}
+//     pickle_big_rhog = hog_big(rhogs_big, gethog3)
+//     // pickle_big_rhog.view{"pi_big_rhog ${it}"}
+//     }
+//     prb = pickle_big_rhog.collect()
+//     prr = pickle_rest_rhog.collect()
+//
+//     all_pickles = prb.mix(prr)
+//     all_pickles_ =all_pickles.collect()
+//
+//     ortho = collect_orthoxml(all_pickles_, gethog3)
 
 }
 

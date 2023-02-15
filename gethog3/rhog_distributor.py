@@ -85,8 +85,8 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
 
 working_folder =  "./" # _config.working_folder
 address_rhogs_folder = working_folder  # + "rhogs_all/"
-output_folder_big =  "rhogs_big/"
-output_folder_rest = "rhogs_rest/"
+output_folder_big =  "rhogs_batch/"
+output_folder_rest = "rhogs_batch/"
 folder_1h_rhog(working_folder, output_folder_big, output_folder_rest)
 
 # folder_1h_rhog(_config.working_folder)

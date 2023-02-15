@@ -64,6 +64,7 @@ def add_species_name_gene_id(query_prot_recs, query_species_names, ):
     adding gene id number, integer imposed by xml format
     output: updated version of input
     """
+
     gene_id_pickle_file = _config.working_folder + "gene_id_dic_xml.pickle"
     max_num_prot = int(1e9)
     max_num_prot_per_sp = int(1e6)
