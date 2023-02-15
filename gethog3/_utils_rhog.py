@@ -1,5 +1,4 @@
 
-#import pyoma.browser.db as db
 from Bio import SeqIO
 import pickle
 from os import listdir
@@ -8,7 +7,7 @@ import os
 from _utils import logger_hog
 import _config
 
-#
+# import pyoma.browser.db as db
 # def parse_oma_db(oma_database_address):
 #     """
 #     orthoxml_to_newick.py function for loading an oma database in hdf5 format using pyoma.browser.db.

@@ -1,11 +1,11 @@
 
 
-from Bio import SeqIO
+# from Bio import SeqIO
 import os
 from os import makedirs
 import shutil
 from os import listdir
-import _config
+# import _config
 
 
 def list_rhog_fastas(address_rhogs_folder):
@@ -89,4 +89,3 @@ output_folder_big =  "rhogs_big/"
 output_folder_rest = "rhogs_rest/"
 folder_1h_rhog(working_folder, output_folder_big, output_folder_rest)
 
-# folder_1h_rhog(_config.working_folder)

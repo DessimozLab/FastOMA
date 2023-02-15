@@ -1,13 +1,10 @@
 
-# from dask.distributed import rejoin, secede
 from ete3 import Tree
 from Bio import SeqIO
-# from distributed import get_client
 import concurrent.futures
 import time
 import os
 import shutil
-
 import pickle
 import gc
 
@@ -21,9 +18,7 @@ import _config
 from ete3 import PhyloTree
 
 
-
 def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, rhogs_fa_folder):
-
 
     # for now each contain one rhog
     hogs_rhog_xml_batch = []

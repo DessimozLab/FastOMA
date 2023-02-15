@@ -1,18 +1,18 @@
 
 
-from os import listdir
+
 from Bio import SeqIO
 from ete3 import Phyloxml
 from ete3 import Tree
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq  # , UnknownSeq
 import logging
-
-import pickle
-from os import listdir
-from xml.dom import minidom
-import xml.etree.ElementTree as ET
 import sys
+from os import listdir
+# import pickle
+# from xml.dom import minidom
+# import xml.etree.ElementTree as ET
+
 import _config
 
 logging.basicConfig(
@@ -25,16 +25,7 @@ if _config.logger_level == "INFO":
     logger_hog.setLevel(logging.INFO)  # DEBUG WARN  INFO
 if _config.logger_level == "DEBUG" :
     logger_hog.setLevel(logging.DEBUG)  # DEBUG WARN  INFO
-
-
-
-#
-# TRACE
-# DEBUG
-# INFO
-# WARN
-# ERROR
-# FATAL
+# TRACE  DEBUG INFO  WARN  ERROR  FATAL
 
 
 def list_rhog_fastas(address_rhogs_folder):

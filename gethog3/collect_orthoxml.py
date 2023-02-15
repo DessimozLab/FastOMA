@@ -7,11 +7,13 @@ import _config
 
 print("started ")
 
-
-qfo_bird = "qfo3"  #  qfo3 bird_hog
-
-
-#working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/"+qfo_bird+"/working_nf/"
+qfo_analysis = False
+if qfo_analysis:
+    qfo_bird = "qfo3"
+    # in benchamrk dataset the output prot names should be short
+    # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ   for qfo benchamrk, the middle should be wirtten in the file
+else:
+    qfo_bird = "bird_hog" # for bird dataset
 
 working_folder = _config.working_folder  # "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/"
 
@@ -23,24 +25,10 @@ if qfo_bird == "bird_hog":
 else:
     protein_format_qfo_dataset = True
 
-# /work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf/rhogs/bb1
-# "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"
-# gene_trees_folder = ""  # working_folder + "/gene_trees_/"
-# check gene_trees_folder exist otherwise mkdir this
-
-
-
-
-# address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
-# species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
 pickle_folder = working_folder + "pickle_rhogs/"   #  "pi_rest_rhog/" #"/pickle_b_0.5_3000/" pickles_rhog
 # add warning when pickle folder is not empty
-#output_xml_name = working_folder+ "hog__3.orthoxml"
-output_xml_name = "./hog__3.orthoxml"
-    #"pickle_0.5_3000_17nov_ts.xml"
-gene_id_pickle_file = working_folder + "gene_id_dic_xml.pickle" #"gene_id_v2_bird.pickle"
-
-
+output_xml_name = "./output_hog_.orthoxml"
+gene_id_pickle_file = working_folder + "gene_id_dic_xml.pickle"
 
 
 
