@@ -139,4 +139,4 @@ nextflow gethog3/gethog3/gethog3_script.nf
 
 ## log changes
 
-prelease v.0.0.1  (Feb 15 2022)
+prelease v.0.0.4  (Feb 15 2022)
