@@ -76,7 +76,7 @@ process hog_big{
 process hog_rest{
   publishDir "${params.outputdir}/pickle_rhogs/"
   input:
-  path rhogs_rest_i //"$rhogs_big/*.fa"
+  path rhogs_rest_i   //"$rhogs_big/*.fa"
   val gethog3
   output:
   path "*.pickle"
@@ -109,28 +109,24 @@ process collect_orthoxml{
 workflow {
 
     proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
-    omamer_db = Channel.fromPath(params.omamer_db)
+    omamer_db = Channel.value(params.omamer_db)
     num_threads_omamer = Channel.value(params.num_threads_omamer)
     // species_tree = Channel.fromPath(params.species_tree)
     gethog3 = Channel.value(params.gethog3)
     omamer = Channel.value(params.omamer)
-    outputdir = Channel.fromPath(params.outputdir)
+    outputdir = Channel.value(params.outputdir)
 
     hogmap = omamer_run(proteomes, omamer_db, num_threads_omamer,omamer,outputdir)
-    // hogmap = Channel.fromPath("./hogmap/*", type: 'any')
-    // hogmap.view{ "${it}"}
 
     rhogs = inferrhog(hogmap.collect(), gethog3)
-    // rhogs.flatten().view{" rhogs ${it}"}
+    rhogs.flatten().view{"rhogs ${it}"}
 
-    //rhogs_check = Channel.fromPath("./rhogs_all/*", type: 'any')
-    // rhogs_check.view{"rhogs ${it}"}
+    (rhogs_rest_list, rhogs_big_list) = rhog_distributor(rhogs, gethog3)
+    rhogs_rest=rhogs_rest_list.flatten()
+    rhogs_rest.view{" rhogs rest ${it}"}
 
-    (rhogs_rest, rhogs_big) = rhog_distributor(rhogs, gethog3)
-
-    rhogs_rest.flatten().view{" rhogs rest ${it}"}
-    rhogs_big.flatten().view{" rhogs big ${it}"}
-
+    rhogs_big=rhogs_big_list.flatten()
+    rhogs_big.view{" rhogs big ${it}"}
 
     //rhogs_batch = rhog_distributor(rhogs, gethog3)
     //rhogs_batch.view{"rhogs_batch ${it}"}

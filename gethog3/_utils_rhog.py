@@ -31,12 +31,15 @@ def parse_proteome():  # list_oma_species
     project_files = listdir(_config.working_folder + "/proteome/")
     query_species_names = []
     for file in project_files:
-        if file.split(".")[-1] == "fa" or file.split(".")[-1] == "fasta":
+        fasta_format = file.split(".")[-1]
+        if fasta_format == "fa" or fasta_format == "fasta":
             file_name_split = file.split(".")[:-1]
             query_species_names.append('.'.join(file_name_split))
+            fasta_format = file.split(".")[-1]
+
     query_prot_recs = []
     for query_species_names_idx, query_species_name in enumerate(query_species_names):
-        prot_address = _config.working_folder + "/proteome/" + query_species_name + ".fa"
+        prot_address = _config.working_folder + "/proteome/" + query_species_name + fasta_format
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
         query_prot_recs.append(prots_record)
 

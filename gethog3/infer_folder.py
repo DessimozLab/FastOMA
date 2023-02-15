@@ -64,6 +64,10 @@ add eception to show , whn this happens for which taxnomic level and rhog
 precuaitions
 genetrees     is not with prefix
 there shouldnt be any space in the tree name internal node name as well"
+
+
+- internal node _0 ,  the root name disapears , beacause of ete3 behaviour 
+
 """
 
 

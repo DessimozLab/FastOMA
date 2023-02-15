@@ -68,6 +68,28 @@ Now following files should appear in the `gethog3/testdata`.
 
 ```
 
+The output looks like this
+```
+
+<?xml version="1.0" ?>
+<orthoXML xmlns="http://orthoXML.org/2011/" origin="OMA" originVersion="Nov 2021" version="0.3">
+   <species name="MYCGE" NCBITaxId="1">
+      <database name="QFO database " version="2020">
+         <genes>
+            <gene id="1000000000" protId="sp|P47500|RF1_MYCGE"/>
+            <gene id="1000000001" protId="sp|P13927|EFTU_MYCGE"/>
+            <gene id="1000000002" protId="sp|P47639|ATPB_MYCGE"/>
+            
+ ...
+      <orthologGroup id="HOG:B0885011_sub10003">
+         <property name="TaxRange" value="inter1"/>
+         <geneRef id="1002000004"/>
+         <geneRef id="1001000004"/>
+      </orthologGroup>
+   </groups>
+</orthoXML>
+
+```
 
 
 
