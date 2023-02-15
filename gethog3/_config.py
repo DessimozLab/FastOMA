@@ -1,6 +1,6 @@
 
 
-working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/" # "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/"  # bird_hog
+working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/" # "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/"  # bird_hog
 
 
 
@@ -20,13 +20,13 @@ working_folder_root = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/" 
 
 
 #species_tree_address = working_folder_root + "lineage_tree_qfo_2.phyloxml" #phyloxml"
-species_tree_address = working_folder_root + "lineage_tree_qfo_2.phyloxml"
+species_tree_address = working_folder + "species_tree.phyloxml" # "lineage_tree_qfo_2.phyloxml"
                        # "tree_fastaname.nwk"  # no space or special charcter in internal node,
 
-working_id =  "./"  # "working_nf/"
+# working_id =  "./"  # "working_nf/"
 protein_format_qfo_dataset = True
 
-working_folder = working_folder_root + working_id
+# working_folder = working_folder_root + working_id
 
 
 ## output writing files
@@ -74,10 +74,8 @@ logger_level = "DEBUG"  # DEBUG INFO
 
 
 """
-hardcoded folder names
-omamer_search in folder working_folder_root
+
 gene_id_pickle_file = working_folder + "gene_id_dic_xml.pickle"
-address_rhogs_folder_raw = working_folder + "rhogs_raw/"
 pickles_subhog_folder_all = in the nextflow file
 gene_trees_folder =  working_folder+"genetrees"
 """

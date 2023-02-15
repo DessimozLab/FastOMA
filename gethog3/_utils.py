@@ -85,12 +85,12 @@ def read_species_tree_add_internal(species_tree_address):
             try:
                 species_tree = Tree(species_tree_address)
             except:
-                logger_hog.error("format of species tree is not known or the file doesn't exist" )
+                logger_hog.error("format of species tree is not known or the file doesn't exist"+species_tree_address )
                 sys.exit()
 
 
     else:
-        logger_hog.error("for now we accept phyloxml or nwk format for input species tree.or the file doesn't exist")
+        logger_hog.error("for now we accept phyloxml or nwk format for input species tree.or the file doesn't exist "+species_tree_address)
         sys.exit()
 
 

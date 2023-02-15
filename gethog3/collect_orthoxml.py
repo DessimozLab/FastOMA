@@ -13,7 +13,7 @@ qfo_bird = "qfo3"  #  qfo3 bird_hog
 
 #working_folder ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/"+qfo_bird+"/working_nf/"
 
-working_folder = _config.working_folder_root  # "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/"
+working_folder = _config.working_folder  # "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/"
 
 # python ${gethog3} / collect_orthoxml.py ${pickle_rhogs} ${gene_id_dic_xml}
 

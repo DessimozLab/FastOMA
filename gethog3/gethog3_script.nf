@@ -1,10 +1,12 @@
-params.proteomes = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/proteome/*"
-params.omamer_db= "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/archive/Primates.h5" // LUCA.h5"
-params.species_tree= "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/tree.nwk"
+
+
+
+params.proteomes = params.working_folder+ "proteome/*"
+params.omamer_db= params.working_folder+"Primates.h5"    // LUCA.h5"
+params.species_tree= params.working_folder+"species_tree.phyloxml"  // or nwk format
 params.num_threads_omamer= 2
-params.gethog3= "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/gethog3/gethog3/"
 params.omamer = "omamer" // if installed, otherwise address to the executable
-params.outputdir = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/"
+params.outputdir = params.working_folder
 
 
 process omamer_run{

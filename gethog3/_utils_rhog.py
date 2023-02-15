@@ -29,7 +29,7 @@ def parse_proteome():  # list_oma_species
     Each fasta file is for one species.  The file name is the species name.
     output: query_species_names: list of species name, query_prot_recs: list of Biopython record of species
     """
-    project_files = listdir(_config.working_folder_root + "/proteome/")
+    project_files = listdir(_config.working_folder + "/proteome/")
     query_species_names = []
     for file in project_files:
         if file.split(".")[-1] == "fa" or file.split(".")[-1] == "fasta":
@@ -37,7 +37,7 @@ def parse_proteome():  # list_oma_species
             query_species_names.append('.'.join(file_name_split))
     query_prot_recs = []
     for query_species_names_idx, query_species_name in enumerate(query_species_names):
-        prot_address = _config.working_folder_root + "/proteome/" + query_species_name + ".fa"
+        prot_address = _config.working_folder + "/proteome/" + query_species_name + ".fa"
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
         query_prot_recs.append(prots_record)
 
@@ -109,7 +109,7 @@ def parse_hogmap_omamer(query_species_names):
     prots_hogmap_seqlen_allspecies = []
     prots_hogmap_subfmedseqlen_allspecies = []
     for query_species_name in query_species_names:
-        omamer_output_address = _config.working_folder_root + "/hogmap/" + query_species_name + ".fa.hogmap"
+        omamer_output_address = _config.working_folder + "/hogmap/" + query_species_name + ".fa.hogmap"
         omamer_output_file = open(omamer_output_address, 'r')
         prots_hogmap_name = []
         prots_hogmap_hogid = []
