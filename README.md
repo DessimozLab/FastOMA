@@ -138,6 +138,8 @@ nextflow gethog3/gethog3/gethog3_script.nf
 ```
 
 
-## log changes
+## Change log
 
-prelease v.0.0.4  (Feb 15 2022)
+
+- prelease v.0.0.4  (Feb 15 2022)
+- prelease v.0.0.3  with dask
