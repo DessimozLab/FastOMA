@@ -1,5 +1,6 @@
-GetHOG v3. (Under development)
+GetHOG v3.0
 ======
+
 
 
 
