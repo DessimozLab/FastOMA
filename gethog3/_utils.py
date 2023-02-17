@@ -1,11 +1,9 @@
 
-
-
-from Bio import SeqIO
-from ete3 import Phyloxml
-from ete3 import Tree
-from Bio.SeqRecord import SeqRecord
-from Bio.Seq import Seq  # , UnknownSeq
+# from Bio import SeqIO
+# from ete3 import Phyloxml
+# from ete3 import Tree
+# from Bio.SeqRecord import SeqRecord
+# from Bio.Seq import Seq  # , UnknownSeq
 import logging
 import sys
 from os import listdir
@@ -13,7 +11,7 @@ from os import listdir
 # from xml.dom import minidom
 # import xml.etree.ElementTree as ET
 
-import _config
+from . import _config
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -23,7 +21,7 @@ logger_hog = logging.getLogger("hog")
 
 if _config.logger_level == "INFO":
     logger_hog.setLevel(logging.INFO)  # DEBUG WARN  INFO
-if _config.logger_level == "DEBUG" :
+if _config.logger_level == "DEBUG":
     logger_hog.setLevel(logging.DEBUG)  # DEBUG WARN  INFO
 # TRACE  DEBUG INFO  WARN  ERROR  FATAL
 
@@ -410,8 +408,10 @@ import random
 from itertools import combinations
 
 import numpy as np
-from ete3 import PhyloTree
+# from ete3 import PhyloTree
 
+class PhyloTree:
+    pass
 
 def get_farthest_leaf(tree: PhyloTree, target_leaf: PhyloTree, leaves_list: List[PhyloTree]) -> Tuple[float, PhyloTree]:
     """

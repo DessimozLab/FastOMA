@@ -1,5 +1,8 @@
 
 # global path
+import argparse
+import sys
+
 working_folder = "/work/folder/gethog3/testdata/working_folder"+ "/"
 
 species_tree_address = working_folder + "species_tree.nwk"
@@ -44,4 +47,13 @@ inferhog_max_workers_num = 8
 inferhog_min_hog_size_xml = 2  # by setting this as 1, pyham won't work on xml output.
 
 logger_level = "DEBUG"  # DEBUG INFO
+
+
+def set_configs():
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument('--folder', help="inputfolder")
+    parser.add_argument('--log-level')
+    config = parser.parse_args()
+    print(config)
+    setattr(sys.modules[__name__], 'logger_level', config.log_level)
 
