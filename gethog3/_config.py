@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-working_folder = "/work/folder/gethog3/testdata/working_folder"+ "/"
+working_folder = "./working_folder"+ "/"
 
 species_tree_address = working_folder + "species_tree.nwk"
                        # no space or special charcter in internal node.
@@ -51,9 +51,10 @@ logger_level = "DEBUG"  # DEBUG INFO
 
 def set_configs():
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument('--folder', help="inputfolder")
-    parser.add_argument('--log-level')
+    parser.add_argument('--working-folder', help="working_folder")
+    parser.add_argument('--logger-level')
     config = parser.parse_args()
     print(config)
-    setattr(sys.modules[__name__], 'logger_level', config.log_level)
+    setattr(sys.modules[__name__], 'logger_level', config.logger_level)
+    setattr(sys.modules[__name__], 'working_folder', config.working_folder)
 

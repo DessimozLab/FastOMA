@@ -121,25 +121,28 @@ workflow {
     rhogs = inferrhog(hogmap.collect(), gethog3)
     rhogs.flatten().view{"rhogs ${it}"}
 
-    (rhogs_rest_list, rhogs_big_list) = rhog_distributor(rhogs, gethog3)
-    rhogs_rest=rhogs_rest_list.flatten()
-    rhogs_rest.view{" rhogs rest ${it}"}
-
-    rhogs_big=rhogs_big_list.flatten()
-    rhogs_big.view{" rhogs big ${it}"}
-
-    pickle_rest_rhog = hog_rest(rhogs_rest, gethog3)
-    pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
-
-    pickle_big_rhog = hog_big(rhogs_big, gethog3)
-    pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}
 
 
-    prb = pickle_big_rhog.collect()
-    prr = pickle_rest_rhog.collect()
-    all_pickles = prb.mix(prr)
-    ortho = collect_orthoxml(all_pickles.collect(), gethog3)
-    ortho.view{" output orthoxml file ${it}"}
+
+//     (rhogs_rest_list, rhogs_big_list) = rhog_distributor(rhogs, gethog3)
+//     rhogs_rest=rhogs_rest_list.flatten()
+//     rhogs_rest.view{" rhogs rest ${it}"}
+//
+//     rhogs_big=rhogs_big_list.flatten()
+//     rhogs_big.view{" rhogs big ${it}"}
+//
+//     pickle_rest_rhog = hog_rest(rhogs_rest, gethog3)
+//     pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
+//
+//     pickle_big_rhog = hog_big(rhogs_big, gethog3)
+//     pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}
+//
+//
+//     prb = pickle_big_rhog.collect()
+//     prr = pickle_rest_rhog.collect()
+//     all_pickles = prb.mix(prr)
+//     ortho = collect_orthoxml(all_pickles.collect(), gethog3)
+//     ortho.view{" output orthoxml file ${it}"}
 
 }
 

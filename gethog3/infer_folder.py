@@ -3,13 +3,14 @@
 import _utils
 import _inferhog
 import os
-# from _utils import logger_hog
-# import _utils_rhog
 # from os import listdir
 # import os
 import sys
 # from os import listdir
 # import _config
+
+# from ._utils import logger_hog
+# import ._utils_rhog
 
 
 address_rhogs_folder = sys.argv[1]

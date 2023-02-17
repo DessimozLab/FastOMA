@@ -1,3 +1,5 @@
+
+
 from setuptools import setup, find_packages
 
 
@@ -22,11 +24,11 @@ setup(
     description=desc,
     packages=find_packages(),
     install_requires=requirements,
-    python_requires=">=3.8",
+    python_requires=">=3.6",
     license='MIT',
     entry_points={
         'console_scripts': [
-            "infer-roothogs=gethog3.infer_rhog:infer_roothogs",
+            "infer-roothogs=gethog3.infer_roothog:infer_roothogs",
             #"infer-folder=gethogs.infer_folder:infer_folder",
         ]
     },
