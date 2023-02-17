@@ -20,6 +20,7 @@ hog and HOG are used interchangeably here.
 # (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species)
 
 
+
 def infer_roothogs():
     _config.set_configs()
 

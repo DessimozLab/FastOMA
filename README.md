@@ -57,13 +57,13 @@ or clone it
 ```
 git clone git@github.com:sinamajidian/gethog3.git
 ```
-Then, cd to the `testdata` folder and download the omamer database.
+Then, cd to the `testdata` folder and download the omamer database and change its name to `omamerdb.h5`.
 ```
 cd gethog3/testdata
 wget https://omabrowser.org/All/Primates.h5    # 352MB
-mv Primates.h5  working_folder 
+mv Primates.h5  working_folder/omamerdb.h5 
 ```
-If you are using omamer database of different name (e.g. LUCA.h5), please change `params.omamer_db` in `gethog3/gethog3/nextflow.config`. 
+ 
 
 
 Next, set the path to working_folder (as a global path) in two places `gethog3/gethog3/_config.py` and `gethog3/gethog3/nextflow.config` :
