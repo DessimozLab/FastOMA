@@ -1,6 +1,4 @@
 
-
-
 from Bio import SeqIO
 from ete3 import Phyloxml
 from ete3 import Tree
@@ -23,7 +21,7 @@ logger_hog = logging.getLogger("hog")
 
 if _config.logger_level == "INFO":
     logger_hog.setLevel(logging.INFO)  # DEBUG WARN  INFO
-if _config.logger_level == "DEBUG" :
+if _config.logger_level == "DEBUG":
     logger_hog.setLevel(logging.DEBUG)  # DEBUG WARN  INFO
 # TRACE  DEBUG INFO  WARN  ERROR  FATAL
 
