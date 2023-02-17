@@ -1,17 +1,28 @@
 
-# from Bio import SeqIO
-# from ete3 import Phyloxml
-# from ete3 import Tree
-# from Bio.SeqRecord import SeqRecord
-# from Bio.Seq import Seq  # , UnknownSeq
+from Bio import SeqIO
+from ete3 import Phyloxml
+from ete3 import Tree
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq  # , UnknownSeq
+from collections import defaultdict
+from typing import List, Tuple
+import random
+from itertools import combinations
+import numpy as np
 import logging
 import sys
+
+
 from os import listdir
 # import pickle
 # from xml.dom import minidom
 # import xml.etree.ElementTree as ET
 
 from . import _config
+
+
+
+
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -144,7 +155,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     #             # node.name = '_'.join(list_children_names)
     #
     #             # ?? to imrpove, if the species tree has internal node name, keep it,
-    #             # then checn condition in  _inferhog.py, where logger_hog.info("Finding hogs for rhogid_num: "+str(rh
+    #             # then checn condition in  _infer_subhog.py, where logger_hog.info("Finding hogs for rhogid_num: "+str(rh
     #
     #             node.name = "internal_" + str(counter_internal)  #  +"_rhg"+str(rhogid_num)  #  for debuging
     #             counter_internal += 1
@@ -400,15 +411,6 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
 #
 
 
-
-
-from collections import defaultdict
-from typing import List, Tuple
-import random
-from itertools import combinations
-
-import numpy as np
-# from ete3 import PhyloTree
 
 class PhyloTree:
     pass

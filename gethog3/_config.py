@@ -37,7 +37,7 @@ inferhog_min_cols_msa_to_filter = 100  # used for msa before gene tree inference
 inferhog_filter_all_msas_row = True
 
 inferhog_resume_rhog  = True      # main.py False
-inferhog_resume_subhog = True      # read pickle_subhog  # _inferhog.py
+inferhog_resume_subhog = True      # read pickle_subhog  # _infer_subhog.py
 
 # inferhog_concurrent_on = True now as an argument
 inferhog_max_workers_num = 8

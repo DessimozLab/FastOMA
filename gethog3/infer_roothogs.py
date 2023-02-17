@@ -1,5 +1,5 @@
 
-from ._utils import logger_hog
+from ._utils_subhog import logger_hog
 from . import _utils_rhog
 import os
 from . import _config
@@ -58,6 +58,8 @@ def infer_roothogs():
     # for pure usage of this python file, you can set the output folder
     # output_folder_rhog = _config.working_folder + "rhogs_all/"
     # using nextflow
+
+
 
     # import sys
     output_folder_rhog = "./" #  sys.argv[1]  #

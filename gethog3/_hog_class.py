@@ -5,9 +5,9 @@ from Bio.Align import MultipleSeqAlignment
 from random import sample
 import itertools
 
-import _utils
-from _utils import logger_hog
-import _config
+from . import _utils_subhog
+from ._utils_subhog import logger_hog
+from . import _config
 
 
 class HOG:

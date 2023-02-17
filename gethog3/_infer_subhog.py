@@ -1,5 +1,6 @@
 
 from ete3 import Tree
+from ete3 import PhyloTree
 from Bio import SeqIO
 import concurrent.futures
 import time
@@ -7,15 +8,17 @@ import os
 import shutil
 import pickle
 import gc
+import random
 
-import _wrappers
-import _utils
-from _hog_class import HOG
-from _utils import logger_hog
-import _config
 # import networkx as nx
 # import matplotlib.pyplot as plt
-from ete3 import PhyloTree
+
+from . import _wrappers
+from . import _utils_subhog
+from ._hog_class import HOG
+from ._utils_subhog import logger_hog
+from . import _config
+
 
 
 def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, rhogs_fa_folder):
@@ -293,7 +296,6 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
         node_species_tree.name) + ".nwk"
     if len(gene_tree_file_addr) > 245:
         # there is a limitation on length of file name. I want to  keep it consistent ,msa and gene tree names.
-        import random
         rand_num = random.randint(1, 10000)
         gene_tree_file_addr = gene_tree_file_addr[:245] + str(rand_num)+".nwk"
     logger_hog.debug("Merging "+str(len(sub_msa_list_lowerLevel_ready))+" MSAs for rhogid_num: "+
@@ -522,7 +524,6 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     # # nx.draw(G, pos,, edge_color="r", font_size=16, with_labels=True)
     # labels = {e: hoggraph.edges[e]['weight'] for e in hoggraph.edges}
     # nx.draw_networkx_edge_labels(hoggraph, pos, edge_labels=labels, font_size=16)
-    # import random
     # num = random.randint(3, 1000000)
     # plt.savefig("/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/hoggraph/" + hogs_children_level_list[0]._hogid[4:] + "file_rndm"+str(num)+".jpg")
     # # plt.show()

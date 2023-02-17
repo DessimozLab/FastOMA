@@ -4,7 +4,7 @@ import pickle
 from os import listdir
 import os
 
-from ._utils import logger_hog
+from ._utils_subhog import logger_hog
 from . import _config
 
 # import pyoma.browser.db as db

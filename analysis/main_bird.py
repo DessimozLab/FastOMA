@@ -1,8 +1,8 @@
 from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
 
-from gethog3 import _utils, _inferhog, _utils_rhog
-from gethog3._utils import logger_hog
+from gethog3 import _utils_subhog, _infer_subhog, _utils_rhog
+from gethog3._utils_subhog import logger_hog
 
 if __name__ == '__main__':
 
@@ -108,7 +108,7 @@ if __name__ == '__main__':
             # vars_input_future = client.scatter(vars_input)
             vars_input_future = vars_input
             # read_infer_xml_rhogs(rhogid_batch_list, vars_input)
-            dask_out = client.submit(_inferhog.read_infer_xml_rhogs, rhogid_batch, vars_input_future)
+            dask_out = client.submit(_infer_subhog.read_infer_xml_rhogs, rhogid_batch, vars_input_future)
             dask_out_list.append(dask_out)
 
             # dask_out = client.submit(_inferhog.read_infer_xml_rhog, rhogid_num, vars_input)
@@ -133,7 +133,7 @@ if __name__ == '__main__':
                 gene_id_name, address_rhogs_folder, species_tree_address, gene_trees_folder, pickle_address,
                 dask_future, dask_future_taxon, format_prot_name)
 
-            out = _inferhog.read_infer_xml_rhogs(rhogid_batch, vars_input)
+            out = _infer_subhog.read_infer_xml_rhogs(rhogid_batch, vars_input)
     print("working ")
     if dask_future:
         for dask_out in dask_out_list:

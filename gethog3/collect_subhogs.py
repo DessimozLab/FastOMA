@@ -17,7 +17,7 @@ else:
 
 working_folder = _config.working_folder  # "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/testgethog/"
 
-# python ${gethog3} / collect_orthoxml.py ${pickle_rhogs} ${gene_id_dic_xml}
+# python ${gethog3} / collect_subhogs.py ${pickle_rhogs} ${gene_id_dic_xml}
 
 
 if qfo_bird == "bird_hog":

@@ -1,10 +1,12 @@
 
 from Bio import SeqIO
-from wrappers.aligners import mafft
-from wrappers.treebuilders import fasttree
+from zoo.wrappers.aligners import mafft
+from zoo.wrappers.treebuilders import fasttree
 # from trimmers.trimal import TrimAl
+from ete3 import Tree
 
-from _utils import logger_hog
+
+from _utils_subhog import logger_hog
 import _config
 
 
@@ -97,8 +99,6 @@ def trim_msa(msa):
 
     return msa_out
 
-
-from ete3 import Tree
 
 def mad_rooting(input_tree_file_path: str, mad_executable_path: str = "./mad"):
     """
