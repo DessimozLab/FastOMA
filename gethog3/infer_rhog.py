@@ -1,8 +1,8 @@
 
-from _utils import logger_hog
-import _utils_rhog
+from ._utils import logger_hog
+from . import _utils_rhog
 import os
-import _config
+from . import _config
 
 """
 proteomes of species as fasta files in /proteome/

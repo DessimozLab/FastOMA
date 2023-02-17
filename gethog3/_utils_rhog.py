@@ -4,8 +4,8 @@ import pickle
 from os import listdir
 import os
 
-from _utils import logger_hog
-import _config
+from ._utils import logger_hog
+from . import _config
 
 # import pyoma.browser.db as db
 # def parse_oma_db(oma_database_address):

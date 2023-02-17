@@ -1,6 +1,7 @@
 
 # global path
 import argparse
+import sys
 
 working_folder = "/work/folder/gethog3/testdata/working_folder"+ "/"
 
@@ -53,5 +54,6 @@ def set_configs():
     parser.add_argument('--folder', help="inputfolder")
     parser.add_argument('--log-level')
     config = parser.parse_args()
-    logger_level = config.log_level
+    print(config)
+    setattr(sys.modules[__name__], 'logger_level', config.log_level)
 
