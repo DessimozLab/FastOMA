@@ -10,23 +10,36 @@ GETHOG3 needs following software packages:  [omamer](https://github.com/Dessimoz
 [Biopython](https://github.com/biopython/biopython),[dendropy](https://dendropy.org/) , [ete3](http://etetoolkit.org), [fasttree](http://www.microbesonline.org/fasttree/)
 and [mafft](http://mafft.cbrc.jp/alignment/software/) (multiple sequence aligner).
 
-You can start with [conda](https://docs.conda.io/en/latest/miniconda.html).
+To do so, you can start with [conda](https://docs.conda.io/en/latest/miniconda.html).
 ```
 conda create --name gethog3 python=3.9
 conda activate gethog3
 ```
-For installing omamer, please check its page [github page](https://github.com/DessimozLab/omamer). (You may need to install omamer with `scipy==1.4.1 numpy==1.20.0 pytables==3.6.1`)
-
-You can install the rest using [conda](https://docs.conda.io/en/latest/miniconda.html).
-```
-conda install -c conda-forge biopython ete3  
-conda install -c bioconda mafft iqtree fasttree nextflow
-```
-And for wrappers, we need
+You can install the packages using [pip](https://pypi.org/).
+You can always make sure whether you are using the python that you intended to use with `which python`  and `which python3`.
 ``` 
-conda install -c biopython dendropy
-conda install -c conda-forge pyparsing
+python -m pip install --upgrade pip
+python -m pip install biopython
+python -m pip install omamer
+# python -m pip install pytables==3.6.1 # if you had trouble with pytables.
+python -m pip install ete3  
+python -m pip install nextflow
+python -m pip install  pyparsing
+python -m pip install DendroPy 
 ```
+
+You may want to install mafft and fasttree using conda. 
+```  
+conda install -c bioconda mafft fasttree
+```
+
+Note that for Nextflow you need Java (11< version <17), you can download [openjdk](https://jdk.java.net/java-se-ri/17). You may also need the following for nextflow to work.
+```
+JAVA_HOME="/path/to/jdk-17"
+NXF_JAVA_HOME="/path/to/jdk-17"
+export PATH="/path/to/jdk-17/bin:$PATH"
+```
+
 
 
 # Input and Output: 
@@ -57,29 +70,33 @@ or clone it
 ```
 git clone git@github.com:sinamajidian/gethog3.git
 ```
+Then install it
+```
+cd gethog3
+ls setup.py
+python -m pip install . 
+```
+
+
 Then, cd to the `testdata` folder and download the omamer database and change its name to `omamerdb.h5`.
 ```
 cd gethog3/testdata
 wget https://omabrowser.org/All/Primates.h5    # 352MB
 mv Primates.h5  working_folder/omamerdb.h5 
 ```
- 
 
 
-Next, set the path to working_folder (as a global path) in two places `gethog3/gethog3/_config.py` and `gethog3/gethog3/nextflow.config` :
 
-1- The variable `working_folder` in the file `_config.py`
-```
-working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/test/gethog3/testdata/working_folder"+ "/"
-```
-2- The variable `params.working_folder` in the file `nextflow.config` (the same as item 1).
-```
-params.working_folder= "/work/folder/gethog3/testdata/working_folder"+"/"
-params.gethog3= "/work/folder/gethog3/gethog3"+"/"
-```
 Make sure that it ends with `"/"`.
 
-Finally, run the package using nextflow as below:
+Finally, run the package using nextflow as below: ??? 
+
+
+
+?
+
+
+
 ```
 cd gethog3/testdata
 nextflow ../gethog3/gethog3_script.nf
@@ -115,6 +132,7 @@ among which `output_hog_.orthoxml` is the final output. Its content looks like t
 
 
 # How to config and run GETHOG3
+
 Please first try the test data. Now you should have the GETHOG3 package.
 
 GETHOG3 is based on nextflow. We consider a working folder which contains the omamer database `Primates.h5`,

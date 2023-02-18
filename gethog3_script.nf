@@ -27,6 +27,8 @@ process infer_roothogs{
   path proteome_folder
   output:
   path "*.fa"
+  path "gene_id_dic_xml.pickle"
+
   script:
   """
    infer-roothogs  --logger-level DEBUG
@@ -34,7 +36,7 @@ process infer_roothogs{
 }
 
 process batch_roothogs{
-
+  publishDir "./"
   input:
   path rhogs
   path "rhogs_all"
@@ -50,8 +52,11 @@ process batch_roothogs{
 
 process hog_big{
   publishDir "pickle_rhogs"
+
   input:
-  path rhogs_big_i  //"$rhogs_big/*.fa"
+  path rhogsbig_tree // = rhogsbig.combine(species_tree)
+  // rhogs_big_i  //"$rhogs_big/*.fa"
+  // path "species_tree.nwk"
 
   output:
   path "*.pickle"
@@ -59,9 +64,44 @@ process hog_big{
   // pi_big rhogs_big
   script:
   """
-  infer-subhogs  --input-rhog-folder $rhogs_big_i --parrallel False
+  infer-subhogs  --input-rhog-folder ${rhogsbig_tree[0]} --parrallel False
   """
 }
+
+
+
+process hog_rest{
+  publishDir "pickle_rhogs"
+
+  input:
+  path rhogsrest_tree // = rhogsrest.combine(species_tree)
+
+  output:
+  path "*.pickle"
+  script:
+  """
+  infer-subhogs  --input-rhog-folder ${rhogsrest_tree[0]} --parrallel False
+  """
+}
+
+
+
+process collect_subhogs{
+  publishDir "./", mode: 'copy'
+  input:
+  path pickle_rhogs   // this is for depenedcy
+  path "pickle_rhogs" // this is the folder includes pickles_rhogs
+  path "gene_id_dic_xml.pickle"
+
+  output:
+  path "output_hog_.orthoxml"
+
+  script:
+  """
+   collect-subhogs
+  """
+}
+
 
 
 workflow {
@@ -72,80 +112,52 @@ workflow {
     rhogs_folder = Channel.fromPath(params.rhogs_folder)
 
     omamerdb = Channel.fromPath("omamerdb.h5")
-    proteomes.view{"prot ${it}"}
+    // proteomes.view{"prot ${it}"}
     proteomes_omamerdb = proteomes.combine(omamerdb)
     proteomes_omamerdb.view{"proteomes_omamerdb ${it}"}
 
     hogmap = omamer_run(proteomes_omamerdb)
     hogmaps = hogmap.collect()
-    hogmaps.view{"hogmap ${it}"}
+    // hogmaps.view{"hogmap ${it}"}
 
     proteome_folder.view{"proteome_folder ${it} "}
-    rhogs = infer_roothogs(hogmaps, hogmap_folder, proteome_folder)
+    (rhogs, gene_id_dic_xml) = infer_roothogs(hogmaps, hogmap_folder, proteome_folder)
     rhogs.view{"rhogs ${it}"}
 
     (rhogs_rest_list, rhogs_big_list) = batch_roothogs(rhogs, rhogs_folder)
     // rhogs_rest_list.view{"rhogs_rest_list ${it}"}
 
-    rhogs_rest=rhogs_rest_list.flatten()
-    rhogs_rest.view{" rhogs rest ${it}"}
+    rhogsrest=rhogs_rest_list.flatten()
+    rhogsrest.view{" rhogs rest ${it}"}
 
-    rhogs_big=rhogs_big_list.flatten()
-    rhogs_big.view{" rhogs big ${it}"}
+    rhogsbig = rhogs_big_list.flatten()
+    rhogsbig.view{" rhogs big ${it}"}
 
-    hog_big(rhogs_big)
+    species_tree = Channel.fromPath("species_tree.nwk")
+    rhogsbig_tree =  rhogsbig.combine(species_tree)
+    rhogsbig_tree.view{"rhogsbig_tree ${it}"}
 
+    rhogsrest_tree =  rhogsrest.combine(species_tree)
+    rhogsrest_tree.view{"rhogsrest_tree ${it}"}
+
+    pickle_big_rhog = hog_big(rhogsbig_tree)
+    pickle_rest_rhog = hog_rest(rhogsrest_tree)
+
+    pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
+    pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}
+
+    prb = pickle_big_rhog.collect()
+    prr = pickle_rest_rhog.collect()
+    all_pickles = prb.mix(prr)
+
+    // gene_id_dic_xml = Channel.fromPath("gene_id_dic_xml.pickle")
+
+    pickle_rhogs_folder = Channel.fromPath("pickle_rhogs")
+    orthoxml_file = collect_subhogs(all_pickles.collect(), pickle_rhogs_folder, gene_id_dic_xml)
+    orthoxml_file.view{" output orthoxml file ${it}"}
 
 }
 
 
-
-//
-//
-
-// process hog_rest{
-//   publishDir "${params.outputdir}/pickle_rhogs/"
-//   input:
-//   path rhogs_rest_i   //"$rhogs_big/*.fa"
-//   val gethog3
-//   output:
-//   path "*.pickle"
-//
-//   script:
-//   """
-//    python ${gethog3}//infer_folder.py  $rhogs_rest_i False pi_rest rhogs_rest
-//   """
-// }
-// process collect_orthoxml{
-//   publishDir "${params.outputdir}"
-//   input:
-//   path pickle_rhogs
-//   // path gene_id_dic_xml
-//   val gethog3
-//   output:
-//   path "output_hog_.orthoxml"
-//
-//   script:
-//   """
-//    python ${gethog3}/collect_orthoxml.py
-//   """
-// }
-//
-//     hogmap = omamer_run(proteomes, omamer_db, num_threads_omamer,omamer,outputdir)
-//     rhogs = inferrhog(hogmap.collect(), gethog3)
-//     rhogs.flatten().view{"rhogs ${it}"}
-
-//     pickle_rest_rhog = hog_rest(rhogs_rest, gethog3)
-//     pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
-//
-//     pickle_big_rhog = hog_big(rhogs_big, gethog3)
-//     pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}
-//
-//
-//     prb = pickle_big_rhog.collect()
-//     prr = pickle_rest_rhog.collect()
-//     all_pickles = prb.mix(prr)
-//     ortho = collect_orthoxml(all_pickles.collect(), gethog3)
-//     ortho.view{" output orthoxml file ${it}"}
 
 
