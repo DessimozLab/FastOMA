@@ -83,9 +83,12 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
 
     return 1
 
-working_folder =  "./" # _config.working_folder
-address_rhogs_folder = working_folder  # + "rhogs_all/"
-output_folder_big =  "rhogs_big/"
-output_folder_rest = "rhogs_rest/"
-folder_1h_rhog(working_folder, output_folder_big, output_folder_rest)
+
+
+def batch_roothogs():
+
+    input_rhog = "./rhogs_all/"
+    output_folder_big = "./rhogs_big/"
+    output_folder_rest = "./rhogs_rest/"
+    folder_1h_rhog(input_rhog, output_folder_big, output_folder_rest)
 

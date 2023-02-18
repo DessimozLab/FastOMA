@@ -28,7 +28,9 @@ setup(
     license='MIT',
     entry_points={
         'console_scripts': [
-            "infer-roothogs=gethog3.infer_roothog:infer_roothogs",
+            "infer-roothogs=gethog3.infer_roothogs:infer_roothogs",
+            "batch-roothogs=gethog3.batch_roothogs:batch_roothogs",
+            "infer-subhogs=gethog3.infer_subhogs:infer_subhogs",
             #"infer-folder=gethogs.infer_folder:infer_folder",
         ]
     },

@@ -45,8 +45,8 @@ def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_fold
     rhog_i_prot_address = rhogs_fa_folder + "/HOG_B" + str(rhogid_num).zfill(7) + ".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
     logger_hog.debug("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
-    (species_tree) = _utils.read_species_tree_add_internal(_config.species_tree_address)
-    (species_tree, species_names_rhog, prot_names_rhog) = _utils.prepare_species_tree(rhog_i, species_tree, rhogid_num)
+    (species_tree) = _utils_subhog.read_species_tree_add_internal(_config.species_tree_address)
+    (species_tree, species_names_rhog, prot_names_rhog) = _utils_subhog.prepare_species_tree(rhog_i, species_tree, rhogid_num)
     species_names_rhog = list(set(species_names_rhog))
     logger_hog.debug(
         "The number of unique species in the rHOG " + str(rhogid_num) + "is " + str(len(species_names_rhog)) + ".")
@@ -292,7 +292,7 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
     # hogs_children_level_list = hogs_children_level_list_flatten
 
     sub_msa_list_lowerLevel_ready = [hog._msa for hog in hogs_children_level_list]
-    gene_tree_file_addr = _config.working_folder + "/genetrees/tree_" + str(rhogid_num) + "_" + str(
+    gene_tree_file_addr = "./genetrees/tree_" + str(rhogid_num) + "_" + str(
         node_species_tree.name) + ".nwk"
     if len(gene_tree_file_addr) > 245:
         # there is a limitation on length of file name. I want to  keep it consistent ,msa and gene tree names.
@@ -320,7 +320,7 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
         # 893*4839, 10 mins
         msa_filt_row_1 = merged_msa  #
         # if _config.inferhog_filter_all_msas_row:
-        #    msa_filt_row_1 = _utils.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
+        #    msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
 
         #if   msa_filt_row_1 and len(msa_filt_row_1[0]) >=
         if len(msa_filt_row_1[0]) >= _config.inferhog_min_cols_msa_to_filter:
@@ -333,9 +333,9 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
                 msa_filt_col = msa_filt_row_1
                 msa_filt_row_col = _wrappers.trim_msa(msa_filt_row_1)
             else:
-                msa_filt_col = _utils.msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr)
+                msa_filt_col = _utils_subhog.msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr)
                 if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
-                    msa_filt_row_col = _utils.msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
+                    msa_filt_row_col = _utils_subhog.msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
 
             # compare msa_filt_row_col and msa_filt_col,
             if len(msa_filt_row_col) != len(msa_filt_col): # some sequences are removed
@@ -385,13 +385,13 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
         # gene_tree.set_outgroup(R)
         #
         if _config.lable_SD_internal == "species_overlap":
-            gene_tree = _utils.lable_sd_internal_nodes(gene_tree)
+            gene_tree = _utils_subhog.lable_sd_internal_nodes(gene_tree)
         elif _config.lable_SD_internal == "reconcilation":
             node_species_tree_nwk_string = node_species_tree.write(format=1)
             node_species_tree_PhyloTree = PhyloTree(node_species_tree_nwk_string, format=1)
             gene_tree_nwk_string = gene_tree.write(format=1)
             gene_tree_PhyloTree = PhyloTree(gene_tree_nwk_string, format=1)
-            gene_tree = _utils.lable_SD_internal_nodes_reconcilation(gene_tree_PhyloTree, node_species_tree_PhyloTree)
+            gene_tree = _utils_subhog.lable_SD_internal_nodes_reconcilation(gene_tree_PhyloTree, node_species_tree_PhyloTree)
 
         if _config.gene_trees_write:
             tree_nwk_SD_labeled = str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;"

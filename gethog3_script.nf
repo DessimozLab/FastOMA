@@ -1,112 +1,108 @@
 
-params.proteomes = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/test/testdata/working_folder/proteome/*"
-
+params.input_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/test/testdata/working_folder/"
+params.proteome_folder = params.input_folder + "proteome"
+params.hogmap_folder = params.input_folder + "hogmap"
+params.rhogs_folder = params.input_folder + "rhogs_all"
+params.proteomes = params.proteome_folder+"/*"
+// params.rhogs_big_folder = params.input_folder + "rhogs_big"
 
 process omamer_run{
-  publishDir "hogmap"
-
+  publishDir params.hogmap_folder
   input:
   path proteomes_omamerdb
-
   output:
   path "*.hogmap"
-
-
   script:
   """
   omamer search --db ${proteomes_omamerdb[1]} --query ${proteomes_omamerdb[0]} --nthreads 2  --out ${proteomes_omamerdb[0]}.hogmap
-
   """
 }
+
+
+process infer_roothogs{
+  publishDir "rhogs_all"
+  input:
+  path hogmaps
+  path hogmap_folder
+  path proteome_folder
+  output:
+  path "*.fa"
+  script:
+  """
+   infer-roothogs  --logger-level DEBUG
+  """
+}
+
+process batch_roothogs{
+
+  input:
+  path rhogs
+  path "rhogs_all"
+
+  output:
+  path "rhogs_rest/*", optional: true
+  path "rhogs_big/*" , optional: true
+  script:
+  """
+   batch-roothogs
+  """
+}
+
+process hog_big{
+  publishDir "pickle_rhogs"
+  input:
+  path rhogs_big_i  //"$rhogs_big/*.fa"
+
+  output:
+  path "*.pickle"
+  // path "pi_big_subhog/*"
+  // pi_big rhogs_big
+  script:
+  """
+  infer-subhogs  --input-rhog-folder $rhogs_big_i --parrallel False
+  """
+}
+
 
 workflow {
 
     proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
+    proteome_folder = Channel.fromPath(params.proteome_folder)
+    hogmap_folder = Channel.fromPath(params.hogmap_folder)
+    rhogs_folder = Channel.fromPath(params.rhogs_folder)
+
     omamerdb = Channel.fromPath("omamerdb.h5")
     proteomes.view{"prot ${it}"}
     proteomes_omamerdb = proteomes.combine(omamerdb)
-    proteomes_omamerdb.view{"hogmap ${it}"}
+    proteomes_omamerdb.view{"proteomes_omamerdb ${it}"}
 
     hogmap = omamer_run(proteomes_omamerdb)
-    hogmap.view{"hogmap ${it}"}
+    hogmaps = hogmap.collect()
+    hogmaps.view{"hogmap ${it}"}
+
+    proteome_folder.view{"proteome_folder ${it} "}
+    rhogs = infer_roothogs(hogmaps, hogmap_folder, proteome_folder)
+    rhogs.view{"rhogs ${it}"}
+
+    (rhogs_rest_list, rhogs_big_list) = batch_roothogs(rhogs, rhogs_folder)
+    // rhogs_rest_list.view{"rhogs_rest_list ${it}"}
+
+    rhogs_rest=rhogs_rest_list.flatten()
+    rhogs_rest.view{" rhogs rest ${it}"}
+
+    rhogs_big=rhogs_big_list.flatten()
+    rhogs_big.view{" rhogs big ${it}"}
+
+    hog_big(rhogs_big)
 
 
 }
+
+
+
 //
 //
-//
-// params.proteomes = params.working_folder+ "proteome/*"
-//
-// // params.species_tree= params.working_folder+"species_tree.nwk"  // or nwk format
-// params.num_threads_omamer= 2
-// params.omamer = "omamer" // if installed, otherwise address to the executable
-// params.outputdir = params.working_folder
-//
-//
-// process omamer_run{
-//   publishDir "${params.outputdir}/hogmap/"
-//   input:
-//   path proteomes
-//   val omamer_db
-//   val num_threads_omamer
-//   val omamer
-//   val outputdir
-//   output:
-//   path "*.hogmap"
-//
-//   script:
-//   """
-//    ${omamer} search --db $omamer_db  --query $proteomes --nthreads $num_threads_omamer  --out ${proteomes}.hogmap
-//   """
-// }
-//
-// process inferrhog{
-//   publishDir "${params.outputdir}/rhogs_all/"
-//   input:
-//   path hogmap
-//   // path proteomes
-//   val gethog3
-//   output:
-//   path "*.fa"
-//   // path "gene_id_dic_xml.pickle"
-//   script:
-//   """
-//    python ${gethog3}/infer_rhog.py ./
-//   """
-// }
-//
-// process rhog_distributor{
-//   publishDir "${params.outputdir}/"
-//
-//   input:
-//   path rhogs
-//   val gethog3
-//   output:
-//   path "rhogs_rest/*", optional: true
-//   path "rhogs_big/*" , optional: true
-//   script:
-//   """
-//    python ${gethog3}/rhog_distributor.py
-//   """
-// }
-//
-//
-// process hog_big{
-//   publishDir "${params.outputdir}/pickle_rhogs/"
-//   input:
-//   path rhogs_big_i //"$rhogs_big/*.fa"
-//   val gethog3
-//   output:
-//   path "*.pickle"
-//   //path "pi_big_subhog/*"
-//
-//   script:
-//   """
-//    python ${gethog3}//infer_folder.py  $rhogs_big_i False pi_big rhogs_big
-//   """
-// }
-//
-//
+
 // process hog_rest{
 //   publishDir "${params.outputdir}/pickle_rhogs/"
 //   input:
@@ -120,8 +116,6 @@ workflow {
 //    python ${gethog3}//infer_folder.py  $rhogs_rest_i False pi_rest rhogs_rest
 //   """
 // }
-//
-//
 // process collect_orthoxml{
 //   publishDir "${params.outputdir}"
 //   input:
@@ -137,34 +131,10 @@ workflow {
 //   """
 // }
 //
-//
-//
-//
-// workflow {
-//
-//     proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
-//     omamer_db = Channel.value(params.omamer_db)
-//     num_threads_omamer = Channel.value(params.num_threads_omamer)
-//     // species_tree = Channel.fromPath(params.species_tree)
-//     gethog3 = Channel.value(params.gethog3)
-//     omamer = Channel.value(params.omamer)
-//     outputdir = Channel.value(params.outputdir)
-//
 //     hogmap = omamer_run(proteomes, omamer_db, num_threads_omamer,omamer,outputdir)
-//
 //     rhogs = inferrhog(hogmap.collect(), gethog3)
 //     rhogs.flatten().view{"rhogs ${it}"}
-//
 
-
-
-//     (rhogs_rest_list, rhogs_big_list) = rhog_distributor(rhogs, gethog3)
-//     rhogs_rest=rhogs_rest_list.flatten()
-//     rhogs_rest.view{" rhogs rest ${it}"}
-//
-//     rhogs_big=rhogs_big_list.flatten()
-//     rhogs_big.view{" rhogs big ${it}"}
-//
 //     pickle_rest_rhog = hog_rest(rhogs_rest, gethog3)
 //     pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
 //
@@ -178,5 +148,4 @@ workflow {
 //     ortho = collect_orthoxml(all_pickles.collect(), gethog3)
 //     ortho.view{" output orthoxml file ${it}"}
 
-}
 

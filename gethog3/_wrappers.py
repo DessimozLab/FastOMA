@@ -1,13 +1,13 @@
 
 from Bio import SeqIO
-from zoo.wrappers.aligners import mafft
-from zoo.wrappers.treebuilders import fasttree
+from .zoo.wrappers.aligners import mafft
+from .zoo.wrappers.treebuilders import fasttree
 # from trimmers.trimal import TrimAl
 from ete3 import Tree
 
 
-from _utils_subhog import logger_hog
-import _config
+from ._utils_subhog import logger_hog
+from . import _config
 
 
 def merge_msa(list_msas, gene_tree_file_addr):

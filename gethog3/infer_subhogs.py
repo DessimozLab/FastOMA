@@ -1,8 +1,9 @@
 # from xml.dom import minidom
 # import xml.etree.ElementTree as ET
-import _utils_subhog
-import _infer_subhog
-import os
+from . import _utils_subhog
+from . import _infer_subhog
+from . import _config
+# import os
 # from os import listdir
 # import os
 import sys
@@ -12,11 +13,19 @@ import sys
 # from ._utils import logger_hog
 # import ._utils_rhog
 
-def infer_subhog():
+def infer_subhogs():
+    _config.set_configs()
+    print(_config.logger_level)
+    print(_config.input_rhog_folder)
+    print(_config.parrallel)
 
-    address_rhogs_folder = sys.argv[1]
+    # --input - rhog - folder $rhogs_big_i - -parrallel
+    # False
 
-    inferhog_concurrent_on_string = sys.argv[2]   # "False"  # "False"  #
+
+    address_rhogs_folder = _config.input_rhog_folder
+    inferhog_concurrent_on_string = _config.parrallel #  sys.argv[2]   # "False"  # "False"  #
+
     pickles_rhog_folder = "./"
     pickles_subhog_folder_all = "./"
 
@@ -24,16 +33,16 @@ def infer_subhog():
 
     print("input is", address_rhogs_folder)
 
-    list_rhog_fastas_files = _utils.list_rhog_fastas(address_rhogs_folder)
+    list_rhog_fastas_files = _utils_subhog.list_rhog_fastas(address_rhogs_folder)
     print("there are ", len(list_rhog_fastas_files), "rhogs in the input folder")
 
     rhogs_fa_folder = address_rhogs_folder
 
 
-    list_rhog_fastas_files_rem = _utils.list_rhog_fastas(address_rhogs_folder)
+    list_rhog_fastas_files_rem = _utils_subhog.list_rhog_fastas(address_rhogs_folder)
     print("there are ", len(list_rhog_fastas_files_rem), "rhogs remained in the input folder", list_rhog_fastas_files_rem[:5] )
 
-    hogs_rhog_xml_batch = _inferhog.read_infer_xml_rhogs_batch(list_rhog_fastas_files_rem, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, rhogs_fa_folder)
+    hogs_rhog_xml_batch = _infer_subhog.read_infer_xml_rhogs_batch(list_rhog_fastas_files_rem, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, rhogs_fa_folder)
 
     print("finsihed ", address_rhogs_folder)
 
