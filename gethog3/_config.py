@@ -46,7 +46,7 @@ inferhog_resume_rhog = True  # main.py False
 inferhog_resume_subhog = True  # read pickle_subhog  # _infer_subhog.py
 
 # inferhog_concurrent_on = True now as an argument
-inferhog_max_workers_num = 8
+inferhog_max_workers_num = 3
 
 ## xml
 # write_all_prots_in_header = False  # if false writes only those in the hog group

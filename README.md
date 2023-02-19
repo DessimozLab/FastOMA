@@ -29,7 +29,7 @@ and 3) run GETHOG3 using the nextflow recipe `gethog3_script.nf`.
 python -m pip install ./gethog3 
 nextflow  gethog3_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder
 ```
-For a detailed instruction start from prerequisites and continue to [How to run GETHOG3 on the test data (details)](https://github.com/sinamajidian/gethog3#how-to-run-gethog3-on-the-test-data-details).
+For a detailed instruction start from prerequisites and continue to the section [How to run GETHOG3 on the test data (details)](https://github.com/sinamajidian/gethog3#how-to-run-gethog3-on-the-test-data-details).
 
 
 ## prerequisites
@@ -112,7 +112,7 @@ infer-roothogs --version
 
 Then, cd to the `testdata` folder and download the omamer database and change its name to `omamerdb.h5`.
 ```
-cd testdata
+cd gethog3/testdata
 wget https://omabrowser.org/All/Primates.h5    # 352MB
 mv Primates.h5  in_folder/omamerdb.h5 
 ```
@@ -146,7 +146,7 @@ After few minutes, the run for test data finishes.
 [fe/bbb9c8] process > hog_rest (2)        [100%] 3 of 3 ✔
 [7a/4dcbc5] process > collect_subhogs (1) [100%] 1 of 1 ✔
 ```
-By adding `-resume` to the nextflow line, you can continue your previous nextflow job. 
+If the run interrupted, by adding `-resume` to the nextflow commond line, you can continue your previous nextflow job. 
 
 Then, following files and folders should appear in the folder `out_folder` which was the argument.
 ```
@@ -181,6 +181,15 @@ among which `output_hog_.orthoxml` is the final output. Its content looks like t
 ```
 
 
+# Run on cluster 
+For running on a SLURM cluster, you need to uncomment the section in `nextflow.confing`
+by removing `/*` and `*/`.
+
+```
+# cd gethog3/testdata
+# rm -r out_folder work        #You may remove stuff from previous run
+nextflow ../gethog3_script_slurm.nf  --input_folder in_folder   --output_folder out_folder
+```
 
 
 ## Change log
