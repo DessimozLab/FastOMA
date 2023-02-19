@@ -12,7 +12,7 @@ The name of each fasta file is the name of species.
 which is from [OMA browser](https://omabrowser.org/oma/current/). 
 This file is `13 Gb` containing all the gene families of the Tree of Life or you can download it for a subset of them, e.g. Primates (352MB). 
 
-3- Sepecies tree in nwk or phyloxml format.
+3- Sepecies tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
 Note that the leaves should corrospond to the name of fasta files (item 1). 
 Besides, the internal node should not contain any special character (e.g. `\`  `/` or space). 
 The reason is that gethog3 write some files whose names contains the internal node's name. 
@@ -181,7 +181,7 @@ among which `output_hog_.orthoxml` is the final output. Its content looks like t
 ```
 
 
-# Run on a cluster 
+## Run on a cluster 
 For running on a SLURM cluster you can add `-c ../nextflow_slurm.config`  to the commond line.
 
 ```

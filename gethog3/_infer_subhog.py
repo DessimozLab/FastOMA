@@ -35,6 +35,9 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, pickle
 def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,  pickles_subhog_folder_all, rhogs_fa_folder):
                 #(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, batch_folder, big_rest):
 
+    # _config.set_configs() # this set the species_tree_address from input
+    # print("here 234",_config.species_tree_address)
+
     prots_to_remove = set()
 
     pickles_subhog_folder = pickles_subhog_folder_all + "/rhog_" + str(rhogid_num) + "/"

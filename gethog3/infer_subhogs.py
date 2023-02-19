@@ -18,6 +18,8 @@ def infer_subhogs():
     print(_config.logger_level)
     print(_config.input_rhog_folder)
     print(_config.parrallel)
+    print(_config.species_tree_address)
+
 
     # --input - rhog - folder $rhogs_big_i - -parrallel
     # False
@@ -25,6 +27,7 @@ def infer_subhogs():
 
     address_rhogs_folder = _config.input_rhog_folder
     inferhog_concurrent_on_string = _config.parrallel #  sys.argv[2]   # "False"  # "False"  #
+
 
     pickles_rhog_folder = "./"
     pickles_subhog_folder_all = "./"

@@ -11,7 +11,7 @@ import sys
 # )
 
 # in_folder = "./in_folder"+ "/"
-species_tree_address = "species_tree.nwk"
+species_tree_address = "species_tree_2.nwk"
 # no space or special charcter in internal node.
 protein_format_qfo_dataset = True
 
@@ -65,13 +65,22 @@ def set_configs():
     parser.add_argument("--version", action="version", help="Show version and exit.",
         version="0.0.5",) # version=__version__
 
-    parser.add_argument('--input-rhog-folder')
+    parser.add_argument('--species-tree-address', default="species_tree_test.nwk")
+    parser.add_argument('--input-rhog-folder') # , default="./rhog"
     parser.add_argument('--parrallel', default=False)
 
     config_parser = parser.parse_args()
-    print("config_parser",config_parser)
+
     # Namespace(logger_level=None, in_folder=None)
     setattr(sys.modules[__name__], 'logger_level', config_parser.logger_level)
-
     setattr(sys.modules[__name__], 'input_rhog_folder', config_parser.input_rhog_folder)
     setattr(sys.modules[__name__], 'parrallel', config_parser.parrallel)
+    setattr(sys.modules[__name__], 'species_tree_address', config_parser.species_tree_address)
+
+    print("config_parser 3 ", config_parser)
+
+'''
+
+TODO
+ default doesnt work
+'''

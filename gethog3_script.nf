@@ -8,6 +8,8 @@ params.proteomes = params.proteome_folder + "/*"
 
 params.hogmap_folder = params.output_folder + "/hogmap"
 params.rhogs_folder = params.output_folder + "/rhogs_all"
+params.species_tree = params.input_folder + "/species_tree_.nwk"
+
 
 // params.rhogs_big_folder = params.input_folder + "rhogs_big"
 
@@ -75,9 +77,12 @@ process hog_big{
   path "*.pickle"
   // path "pi_big_subhog/*"
   // pi_big rhogs_big
+
+  // params.species_tree
+
   script:
   """
-  infer-subhogs  --input-rhog-folder ${rhogsbig_tree[0]} --parrallel True
+  infer-subhogs  --input-rhog-folder ${rhogsbig_tree[0]} --parrallel True  --species-tree ${rhogsbig_tree[1]}
   """
 }
 
@@ -92,7 +97,7 @@ process hog_rest{
   path "*.pickle"
   script:
   """
-  infer-subhogs  --input-rhog-folder ${rhogsrest_tree[0]} --parrallel False
+  infer-subhogs  --input-rhog-folder ${rhogsrest_tree[0]} --parrallel False --species-tree ${rhogsrest_tree[1]}
   """
 }
 
@@ -151,7 +156,7 @@ workflow {
     rhogsbig = rhogs_big_list.flatten()
     rhogsbig.view{" rhogs big ${it}"}
 
-    species_tree = Channel.fromPath(params.input_folder + "/species_tree.nwk")
+    species_tree = Channel.fromPath(params.species_tree)
     rhogsbig_tree =  rhogsbig.combine(species_tree)
     rhogsbig_tree.view{"rhogsbig_tree ${it}"}
 
