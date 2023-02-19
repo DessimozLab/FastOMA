@@ -98,6 +98,7 @@ process hog_rest{
 
 
 
+
 process collect_subhogs{
   publishDir params.output_folder, mode: 'copy'
   input:
