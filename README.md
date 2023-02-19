@@ -1,7 +1,29 @@
 GetHOG v3.0
 ======
+GetHOG is a scalable software package for inferring orthology relationship.  
+
+# Input and Output: 
+
+### Input: 
+1- Sets of protein sequences in FASTA format (with `.fa` extension) in the folder `proteome`. The name of each fasta file is the name of species.
+
+2- The omamer database which you can download from [here](https://omabrowser.org/oma/current/) which is this [link](https://omabrowser.org/All/LUCA.h5). 
+This file is `13 Gb` containing all the gene families of the Tree of Life or a subset of them, e.g. Primates (352MB). 
+
+3- Sepecies tree in nwk or phyloxml format. Note that the internal node should not contain any special character (e.g. `\`  `/` or space). 
+The reason is that gethog3 write some files whose names contains the internal node's name. 
+
+### Output:
+Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format.
 
 
+# How to run GETHOG3
+In summary, you need to 1) install GETHOG3 using pip, and  2) put the input files in the folder `in_folder` 
+and 3) run GETHOG3 using the nextflow recipe `gethog3_script.nf`. 
+```
+python -m pip install ./gethog3 
+nextflow  gethog3_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder
+```
 
 
 ## prerequisites
@@ -45,30 +67,7 @@ omamer -h
 ```
 
 
-# Input and Output: 
-
-### Input: 
-1- Sets of protein sequences in FASTA format (with `.fa` extension) in the folder `proteome`. The name of each fasta file is the name of species.
-
-2- The omamer database which you can download from [here](https://omabrowser.org/oma/current/) which is this [link](https://omabrowser.org/All/LUCA.h5). 
-This file is `13 Gb` containing all the gene families of the Tree of Life or a subset of them, e.g. Primates (352MB). 
-
-3- Sepecies tree in nwk or phyloxml format. Note that the internal node should not contain any special character (e.g. `\`  `/` or space). 
-The reason is that gethog3 write some files whose names contains the internal node's name. 
-
-### Output:
-Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format.
-
-
-
-# How to run GETHOG3 (summary)
-```
-nextflow  gethog3_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder
-```
-
-
-
-# How to run GETHOG3 on the test data (details)
+## How to run GETHOG3 on the test data (details)
 First, download the GETHOG3 package:
 ```
 wget https://github.com/sinamajidian/gethog3/archive/refs/heads/master.zip
