@@ -182,14 +182,15 @@ among which `output_hog_.orthoxml` is the final output. Its content looks like t
 
 
 # Run on cluster 
-For running on a SLURM cluster, you need to uncomment the section in `nextflow.confing`
-by removing `/*` and `*/`.
+For running on a SLURM cluster you can use the provided recipe `gethog3_script_slurm.nf`.
 
 ```
 # cd gethog3/testdata
 # rm -r out_folder work        #You may remove stuff from previous run
 nextflow ../gethog3_script_slurm.nf  --input_folder in_folder   --output_folder out_folder
 ```
+You may need to re-run using `-resume` if the allocated time is not enough for your dataset. 
+Alternatively, 
 
 
 ## Change log
