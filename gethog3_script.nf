@@ -15,6 +15,7 @@ params.species_tree = params.input_folder + "/species_tree.nwk"
 
 process omamer_run{
 
+  time {2.h}
   memory {50.GB}
 
   publishDir params.hogmap_folder

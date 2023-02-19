@@ -45,10 +45,10 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
     list_list_rest_size = [[]]
     list_list_big = []
 
-    # big_rhog_filesize_thresh = 600 * 1000  # 600 would be better
-    # sum_list_rhogs_filesize_thresh = 2 * 1e6
-    big_rhog_filesize_thresh = 1.6 * 1000  # 600 would be better
-    sum_list_rhogs_filesize_thresh = 5 * 1e3
+    big_rhog_filesize_thresh = 600 * 1000  # 600 would be better
+    sum_list_rhogs_filesize_thresh = 2 * 1e6
+    # big_rhog_filesize_thresh = 1.6 * 1000  # 600 would be better
+    # sum_list_rhogs_filesize_thresh = 5 * 1e3
 
 
     for rhognum, size in dic_rhognum_size.items():
