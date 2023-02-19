@@ -5,34 +5,41 @@ GetHOG is a scalable software package for inferring orthology relationship.
 # Input and Output: 
 
 ### Input: 
-1- Sets of protein sequences in FASTA format (with `.fa` extension) in the folder `proteome`. The name of each fasta file is the name of species.
+1- Sets of protein sequences in FASTA format (with `.fa` extension) in the folder `proteome`.
+The name of each fasta file is the name of species.
 
-2- The omamer database which you can download from [here](https://omabrowser.org/oma/current/) which is this [link](https://omabrowser.org/All/LUCA.h5). 
-This file is `13 Gb` containing all the gene families of the Tree of Life or a subset of them, e.g. Primates (352MB). 
+2- The omamer database which you can download [this](https://omabrowser.org/All/LUCA.h5) 
+which is from [OMA browser](https://omabrowser.org/oma/current/). 
+This file is `13 Gb` containing all the gene families of the Tree of Life or you can download it for a subset of them, e.g. Primates (352MB). 
 
-3- Sepecies tree in nwk or phyloxml format. Note that the internal node should not contain any special character (e.g. `\`  `/` or space). 
+3- Sepecies tree in nwk or phyloxml format.
+Note that the leaves should corrospond to the name of fasta files (item 1). 
+Besides, the internal node should not contain any special character (e.g. `\`  `/` or space). 
 The reason is that gethog3 write some files whose names contains the internal node's name. 
 
 ### Output:
-Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format.
+Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format
+which can be used with [PyHAM](https://github.com/DessimozLab/pyham)
 
 
 # How to run GETHOG3
-In summary, you need to 1) install GETHOG3 using pip, and  2) put the input files in the folder `in_folder` 
+In summary, you need to 1) install GETHOG3 using pip after its prerequisites (below), and  2) put the input files in the folder `in_folder` 
 and 3) run GETHOG3 using the nextflow recipe `gethog3_script.nf`. 
 ```
 python -m pip install ./gethog3 
 nextflow  gethog3_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder
 ```
+For a detailed instruction start from prerequisites and continue to [How to run GETHOG3 on the test data (details)](https://github.com/sinamajidian/gethog3#how-to-run-gethog3-on-the-test-data-details).
 
 
 ## prerequisites
 
 GETHOG3 needs following software packages:  [omamer](https://github.com/DessimozLab/omamer),  [Nextflow](https://nextflow.io/),
-[Biopython](https://github.com/biopython/biopython),[dendropy](https://dendropy.org/) , [ete3](http://etetoolkit.org), [fasttree](http://www.microbesonline.org/fasttree/)
-and [mafft](http://mafft.cbrc.jp/alignment/software/) (multiple sequence aligner).
+[Biopython](https://github.com/biopython/biopython), [dendropy](https://dendropy.org/),
+[pyparsing](https://github.com/pyparsing/pyparsing/) , [ete3](http://etetoolkit.org), [fasttree](http://www.microbesonline.org/fasttree/)
+and [mafft](http://mafft.cbrc.jp/alignment/software/).
 
-To do so, you can start with [conda](https://docs.conda.io/en/latest/miniconda.html).
+To do so, you can start with a fresh [conda](https://docs.conda.io/en/latest/miniconda.html) environment.
 ```
 conda create --name gethog3 python=3.9
 conda activate gethog3
@@ -43,27 +50,28 @@ You can always make sure whether you are using the python that you intended to u
 python -m pip install --upgrade pip
 python -m pip install biopython
 python -m pip install omamer
-# python -m pip install pytables==3.6.1 # if you had trouble with pytables.
+# python -m pip install pytables==3.6.1 # if you had trouble with pytables for omamer.
 python -m pip install ete3  
 python -m pip install nextflow
 python -m pip install pyparsing
 python -m pip install DendroPy 
 ```
-You may want to install mafft and fasttree using conda. 
+You may want to install mafft and fasttree using conda as well. 
 ```  
 conda install -c bioconda mafft fasttree
 ```
 
-Note that for Nextflow you need Java (11< version <17), you can download [openjdk](https://jdk.java.net/java-se-ri/17). You may also need the following for nextflow to work.
+Note that for Nextflow you need Java (11< version <17), and you can download [openjdk](https://jdk.java.net/java-se-ri/17) instead.
+You may also need to have the following for nextflow to work.
 ```
 JAVA_HOME="/path/to/jdk-17"
 NXF_JAVA_HOME="/path/to/jdk-17"
 export PATH="/path/to/jdk-17/bin:$PATH"
 ```
 
-You can make sure with your installation with 
+You can make sure that omamer is installed with running  
 ``` 
-omamer -h
+omamer
 ```
 
 
