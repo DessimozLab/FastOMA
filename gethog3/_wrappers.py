@@ -1,7 +1,7 @@
 
 from Bio import SeqIO
-from .zoo.wrappers.aligners import mafft
-from .zoo.wrappers.treebuilders import fasttree
+from gethog3.zoo.wrappers.aligners import mafft
+from gethog3.zoo.wrappers.treebuilders import fasttree
 # from trimmers.trimal import TrimAl
 from ete3 import Tree
 

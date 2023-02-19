@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 import pickle
 from os import listdir
 from xml.dom import minidom
-from . import _config
+# from . import _config
 
 
 def collect_subhogs():

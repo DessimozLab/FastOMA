@@ -5,7 +5,7 @@ import os
 from os import makedirs
 import shutil
 from os import listdir
-from . import _config
+# from . import _config
 
 
 def list_rhog_fastas(address_rhogs_folder):

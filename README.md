@@ -24,10 +24,9 @@ python -m pip install omamer
 # python -m pip install pytables==3.6.1 # if you had trouble with pytables.
 python -m pip install ete3  
 python -m pip install nextflow
-python -m pip install  pyparsing
+python -m pip install pyparsing
 python -m pip install DendroPy 
 ```
-
 You may want to install mafft and fasttree using conda. 
 ```  
 conda install -c bioconda mafft fasttree
@@ -40,6 +39,10 @@ NXF_JAVA_HOME="/path/to/jdk-17"
 export PATH="/path/to/jdk-17/bin:$PATH"
 ```
 
+You can make sure with your installation with 
+``` 
+omamer -h
+```
 
 
 # Input and Output: 
@@ -58,8 +61,14 @@ Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) forma
 
 
 
+# How to run GETHOG3 (summary)
+```
+nextflow  gethog3_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder
+```
 
-# How to run GETHOG3 the test data
+
+
+# How to run GETHOG3 on the test data (details)
 First, download the GETHOG3 package:
 ```
 wget https://github.com/sinamajidian/gethog3/archive/refs/heads/master.zip
@@ -72,39 +81,75 @@ git clone git@github.com:sinamajidian/gethog3.git
 ```
 Then install it
 ```
-cd gethog3
-ls setup.py
-python -m pip install . 
+ls gethog3/setup.py
+python -m pip install -e gethog3 
 ```
+
+The output would be 
+```
+  Preparing metadata (setup.py) ... done
+Building wheels for collected packages: gethog3
+  Building wheel for gethog3 (setup.py) ... done
+  Created wheel for gethog3: filename=gethog3-0.0.5-py3-none-any.whl size=29386 sh
+Successfully built gethog3
+Installing collected packages: gethog3
+Successfully installed gethog3-0.0.5
+```
+
+You can check your installation with 
+``` 
+infer-roothogs --version
+```
+
 
 
 Then, cd to the `testdata` folder and download the omamer database and change its name to `omamerdb.h5`.
 ```
-cd gethog3/testdata
+cd testdata
 wget https://omabrowser.org/All/Primates.h5    # 352MB
-mv Primates.h5  working_folder/omamerdb.h5 
+mv Primates.h5  in_folder/omamerdb.h5 
 ```
 
-
+Now we have such a structre in our  testdata folder.
+``` 
+$ tree ../testdata/
+├── in_folder
+│   ├── omamerdb.h5
+│   ├── proteome
+│   │   ├── AQUAE.fa
+│   │   ├── CHLTR.fa
+│   │   └── MYCGE.fa
+│   └── species_tree.nwk
+└── README.md
+```
 
 
 Finally, run the package using nextflow as below:
-``
-cd gethog3/testdata
+```
+# cd gethog3/testdata
 nextflow ../gethog3_script.nf  --input_folder in_folder   --output_folder out_folder
 ```
 
-After few minutes, the run for test data finishes. Then, following files and folders should appear in the folder `gethog3/testdata`.
-
-
-A folder work will be created in yhe folder that you run commonad line.
-
-
-
-
+After few minutes, the run for test data finishes. 
 ```
-gene_id_dic_xml.pickle  hogmap  output_hog_.orthoxml  pickle_rhogs 
- Primates.h5  proteome  rhogs_all  rhogs_big  rhogs_rest  species_tree.nwk
+[ae/ac23e1] process > omamer_run (3)      [100%] 3 of 3 ✔
+[32/71f48b] process > infer_roothogs (1)  [100%] 1 of 1 ✔
+[e7/0b5d67] process > batch_roothogs (1)  [100%] 1 of 1 ✔
+[ff/19a4cb] process > hog_big (1)         [100%] 1 of 1 ✔
+[fe/bbb9c8] process > hog_rest (2)        [100%] 3 of 3 ✔
+[7a/4dcbc5] process > collect_subhogs (1) [100%] 1 of 1 ✔
+```
+By adding `-resume` to the nextflow line, you can continue your previous nextflow job. 
+
+Then, following files and folders should appear in the folder `out_folder` which was the argument.
+```
+$ tree -L 1  out_folder
+├── hogmap
+├── output_hog.orthoxml
+├── pickle_rhogs
+├── rhogs_all
+├── rhogs_big
+└── rhogs_rest
 ```
 among which `output_hog_.orthoxml` is the final output. Its content looks like this
 
@@ -130,33 +175,9 @@ among which `output_hog_.orthoxml` is the final output. Its content looks like t
 
 
 
-# How to config and run GETHOG3
-
-Please first try the test data. Now you should have the GETHOG3 package.
-
-GETHOG3 is based on nextflow. We consider a working folder which contains the omamer database `Primates.h5`,
-the proteome folder of the species of interst `proteome` (of fa files inside),
-and the speceis tree `species_tree.phyloxml` (or nwk).
-```
-$ ls working_folder
-Primates.h5  proteome  species_tree.phyloxml
-```
-After running the package, the outputs will appear in this working folder.  
-
-Please set the working_folder in two places `gethog3/gethog3/_config.py` and `gethog3/gethog3/nextflow.config` :
-1- The variable `working_folder` in the file `_config.py`
-2- The variable `params.working_folder` in the file `nextflow.config` (the same as item 1).
-
-Then, provide the address of the gethog3 code as `params.gethog3` in the file `nextflow.config`.
-
-Finally you can run:
-```
-nextflow gethog3/gethog3/gethog3_script.nf
-```
-
 
 ## Change log
 
-
-- prelease v.0.0.4  (Feb 15 2022)
-- prelease v.0.0.3  with dask
+- prelease v.0.0.5: adding pip setup.py 
+- prelease v.0.0.4: simple nextflow
+- prelease v.0.0.3: with dask

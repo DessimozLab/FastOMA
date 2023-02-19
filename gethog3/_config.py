@@ -62,6 +62,9 @@ def set_configs():
     parser.add_argument('--logger-level', default="DEBUG")
     #  $rhogs_big_i - -parrallel
 
+    parser.add_argument("--version", action="version", help="Show version and exit.",
+        version="0.0.5",) # version=__version__
+
     parser.add_argument('--input-rhog-folder')
     parser.add_argument('--parrallel', default=False)
 
