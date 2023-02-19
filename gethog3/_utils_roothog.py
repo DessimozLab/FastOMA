@@ -28,7 +28,7 @@ def parse_proteome():  # list_oma_species
     Each fasta file is for one species.  The file name is the species name.
     output: query_species_names: list of species name, query_prot_recs: list of Biopython record of species
     """
-    # project_files = listdir(_config.working_folder + "/proteome/")
+    # project_files = listdir(_config.in_folder + "/proteome/")
     project_files = listdir("./proteome/")
     query_species_names = []
     for file in project_files:
@@ -67,7 +67,7 @@ def add_species_name_gene_id(query_prot_recs, query_species_names, ):
     adding gene id number, integer imposed by xml format
     output: updated version of input
     """
-    #  _config.working_folder +
+    #  _config.in_folder +
     gene_id_pickle_file = "./gene_id_dic_xml.pickle"
     max_num_prot = int(1e9)
     max_num_prot_per_sp = int(1e6)

@@ -149,15 +149,15 @@ def infer_hogs_concurrent(species_tree, rhogid_num, folder ="" ):
 #
 # def read_infer_xml_rhog(rhogid_num):
 #
-#     pickles_subhog_folder_all = _config.working_folder + "/pickles_subhog/"
+#     pickles_subhog_folder_all = _config.in_folder + "/pickles_subhog/"
 #
-#     pickles_subhog_folder = _config.working_folder + "/pickles_subhog/rhog_" + str(rhogid_num)+"/"
+#     pickles_subhog_folder = _config.in_folder + "/pickles_subhog/rhog_" + str(rhogid_num)+"/"
 #     if not os.path.exists(pickles_subhog_folder):
 #         os.makedirs(pickles_subhog_folder)
 #
 #
 #     logger_hog.debug("\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")
-#     rhog_i_prot_address = _config.working_folder + "rhogs/" +"HOG_B"+str(rhogid_num).zfill(7)+".fa"
+#     rhog_i_prot_address = _config.in_folder + "rhogs/" +"HOG_B"+str(rhogid_num).zfill(7)+".fa"
 #     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
 #     logger_hog.debug("number of proteins in the rHOG is "+str(len(rhog_i))+".")
 #     (species_tree) = _utils.read_species_tree(_config.species_tree_address)
@@ -211,7 +211,7 @@ def infer_hogs_concurrent(species_tree, rhogid_num, folder ="" ):
 #             hogs_rhogs_xml.append(hogs_a_rhog_xml)
 #     logger_hog.debug("we are not reporting single tone hogs in the output xml.")
 #     # how to handle empty hogs !? why happening and if not save pickle, file not exist error from rhog id list
-#     pickles_rhog_folder = _config.working_folder + "/pickles_rhog/"
+#     pickles_rhog_folder = _config.in_folder + "/pickles_rhog/"
 #     pickles_rhog_file = pickles_rhog_folder + '/file_' + str(rhogid_num) + '.pickle'
 #     with open(pickles_rhog_file, 'wb') as handle:
 #         #dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)

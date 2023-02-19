@@ -72,12 +72,12 @@ for node_species_tree in sub_species_tree.traverse(strategy="postorder"):
 # import os
 #
 # print("started ")
-# working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# pickle_folder = working_folder + "/pickle_folder_3sep10pm_allv3_new/"
+# in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# pickle_folder = in_folder + "/pickle_folder_3sep10pm_allv3_new/"
 #
 #
 # output_xml_name = "out_3sep_all_new_6.xml"
-# gene_id_pickle_file = working_folder + "gene_id_28aug.pickle"
+# gene_id_pickle_file = in_folder + "gene_id_28aug.pickle"
 #
 #
 # if os.path.getsize(gene_id_pickle_file) > 0:
@@ -126,11 +126,11 @@ for node_species_tree in sub_species_tree.traverse(strategy="postorder"):
 # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
 #
 #
-# with open(working_folder +output_xml_name, "w") as file_xml:
+# with open(in_folder +output_xml_name, "w") as file_xml:
 #     file_xml.write(xml_str)
 # file_xml.close()
 #
-# print("orthoxml is written in  "+ working_folder +output_xml_name)
+# print("orthoxml is written in  "+ in_folder +output_xml_name)
 #
 #
 #
@@ -149,20 +149,20 @@ for node_species_tree in sub_species_tree.traverse(strategy="postorder"):
 # # # from dask.distributed import rejoin, secede
 # #
 # # if __name__ == '__main__':
-# #     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# #     gene_trees_folder = "" # working_folder + "/gene_trees_/"
+# #     in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# #     gene_trees_folder = "" # in_folder + "/gene_trees_/"
 # #     # check gene_trees_folder exist otherwise mkdir this
 # #
-# #     address_rhogs_folder = working_folder + "/rhog_g10k/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
+# #     address_rhogs_folder = in_folder + "/rhog_g10k/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
 # #     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 # #
 # #
 # #     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastoma/archive/OmaServer.h5"
-# #     # working_folder+"omamer_database/oma_path/OmaServer.h5"
+# #     # in_folder+"omamer_database/oma_path/OmaServer.h5"
 # #     print("rHOG inferece has started. The oma database address is in ", oma_database_address)
 # #     (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
-# #     (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
-# #     hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
+# #     (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, in_folder)
+# #     hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, in_folder)
 # #
 # #     (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_subfscore_allspecies,
 # #     prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements

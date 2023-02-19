@@ -87,19 +87,10 @@ mv Primates.h5  working_folder/omamerdb.h5
 
 
 
-Make sure that it ends with `"/"`.
-
-Finally, run the package using nextflow as below: ??? 
-
-
-
-?
-
-
-
-```
+Finally, run the package using nextflow as below:
+``
 cd gethog3/testdata
-nextflow ../gethog3/gethog3_script.nf
+nextflow ../gethog3_script.nf  --input_folder in_folder   --output_folder out_folder
 ```
 
 After few minutes, the run for test data finishes. Then, following files and folders should appear in the folder `gethog3/testdata`.

@@ -19,7 +19,7 @@ def collect_subhogs():
     else:
         qfo_bird = "bird_hog" # for bird dataset
 
-    # working_folder = _config.working_folder
+    # in_folder = _config.in_folder
 
     # python ${gethog3} / collect_subhogs.py ${pickle_rhogs} ${gene_id_dic_xml}
 

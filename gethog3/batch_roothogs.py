@@ -27,9 +27,9 @@ def list_rhog_fastas(address_rhogs_folder):
 
 def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
 
-    # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/working_nfp/"
+    # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/working_nfp/"
 
-    #work_fldor_out = working_folder
+    #work_fldor_out = in_folder
 
     rhogid_num_list = list_rhog_fastas(address_rhogs_folder)
     len(rhogid_num_list)

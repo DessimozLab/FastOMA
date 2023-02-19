@@ -57,13 +57,13 @@ print(222)
 # #
 # #
 # #
-# # working_folder="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"
-# # nwk_path = working_folder+"concatanted_363.fasta.contree_edited.nwk"
+# # in_folder="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird_hog/"
+# # nwk_path = in_folder+"concatanted_363.fasta.contree_edited.nwk"
 # #
 # # tree_str = pyham.utils.get_newick_string(nwk_path, type="nwk")
 # # tree_str[:20]
 # # # Then you select your favorite orthoXML file
-# # orthoxml_path =  working_folder+ "pickle_0.5_3000_6Nov_.xml"
+# # orthoxml_path =  in_folder+ "pickle_0.5_3000_6Nov_.xml"
 # # # removing from tree internal node    <property name="TaxRange" value="internal_247_rhg602692"/>
 # # #
 # # # with open(orthoxml_path + "_ed.xml", 'w') as orthoxml_file_edited:
@@ -117,16 +117,16 @@ print(222)
 # #
 # # #
 # # # print("started ")
-# # # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/ali_code_31aug/"
-# # # # gene_trees_folder = ""  # working_folder + "/gene_trees_/"
+# # # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/ali_code_31aug/"
+# # # # gene_trees_folder = ""  # in_folder + "/gene_trees_/"
 # # # # check gene_trees_folder exist otherwise mkdir this
 # # #
-# # # #address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
-# # # #species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-# # # pickle_folder = working_folder + "/pickle_2sep5pm/"
+# # # #address_rhogs_folder = in_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
+# # # #species_tree_address = in_folder + "/archive/lineage_tree_qfo.phyloxml"
+# # # pickle_folder = in_folder + "/pickle_2sep5pm/"
 # # # # add warning when pickle folder is not empty
 # # # output_xml_name = "out_ali_2sep5pm_test.xml"
-# # # gene_id_pickle_file = working_folder + "group_xml_ortho_adjusted_family_40_2sep5pm.pickle"
+# # # gene_id_pickle_file = in_folder + "group_xml_ortho_adjusted_family_40_2sep5pm.pickle"
 # # #
 # # # #
 # # # # orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
@@ -178,11 +178,11 @@ print(222)
 # # # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
 # # # # print(xml_str[:-1000])
 # # #
-# # # with open(working_folder +output_xml_name, "w") as file_xml:
+# # # with open(in_folder +output_xml_name, "w") as file_xml:
 # # #     file_xml.write(xml_str)
 # # # file_xml.close()
 # # #
-# # # print("orthoxml is written in  "+ working_folder +output_xml_name)
+# # # print("orthoxml is written in  "+ in_folder +output_xml_name)
 # # #
 # # #
 # # # a=232
@@ -278,10 +278,10 @@ print(222)
 # # #
 # # #
 # # # print("started ")
-# # # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # # address_rhogs_folder = working_folder + "rhog_all_v3_s500/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
-# # # pickl_out_folder = working_folder + "pickle_folder_g2_s500/"  # rhog_all_v3_g2_s500
-# # # pickle_folder = working_folder + "pickle_folder_30aug3pm/"
+# # # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # # address_rhogs_folder = in_folder + "rhog_all_v3_s500/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
+# # # pickl_out_folder = in_folder + "pickle_folder_g2_s500/"  # rhog_all_v3_g2_s500
+# # # pickle_folder = in_folder + "pickle_folder_30aug3pm/"
 # # #
 # # # not_c = 0
 # # # rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
@@ -299,8 +299,8 @@ print(222)
 # #     # import dill as dill_pickle
 # # # import os
 # # # from os import listdir
-# # # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # # pickle_folder = working_folder + "/pickle_folder_29aug/"
+# # # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # # pickle_folder = in_folder + "/pickle_folder_29aug/"
 # # #
 # # #
 # # # orthoxml_to_newick.py=2
@@ -333,24 +333,24 @@ print(222)
 # # #
 # # #
 # # # if __name__ == '__main__':
-# # #     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # #     gene_trees_folder = "" # working_folder + "/gene_trees_/"
+# # #     in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # #     gene_trees_folder = "" # in_folder + "/gene_trees_/"
 # # #     # check gene_trees_folder exist otherwise mkdir this
 # # #     pickle_folder = ""
 # # #     species_tree_address = ""
 # # #
 # # #
-# # #     address_rhogs_folder = working_folder + "/rhog_all_v2_filbig/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
-# # #     address_rhogs_folder_fil = working_folder + "/"
+# # #     address_rhogs_folder = in_folder + "/rhog_all_v2_filbig/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
+# # #     address_rhogs_folder_fil = in_folder + "/"
 # # #     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 # # #
 # # #
 # # #     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastoma/archive/OmaServer.h5"
-# # #     # working_folder+"omamer_database/oma_path/OmaServer.h5"
+# # #     # in_folder+"omamer_database/oma_path/OmaServer.h5"
 # # #     print("rHOG inferece has started. The oma database address is in ", oma_database_address)
 # # #     (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
-# # #     (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
-# # #     hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
+# # #     (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, in_folder)
+# # #     hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, in_folder)
 # # #
 # # #     (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_fscore_allspecies,
 # # #     prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements

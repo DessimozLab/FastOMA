@@ -9,7 +9,7 @@ from Bio import SeqIO
 
 if __name__ == '__main__':
     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-    gene_trees_folder = "" # working_folder + "/gene_trees_/"
+    gene_trees_folder = "" # in_folder + "/gene_trees_/"
     # check gene_trees_folder exist otherwise mkdir this
     pickle_folder = ""
     species_tree_address = ""
@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
 
     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastoma/archive/OmaServer.h5"
-    # working_folder+"omamer_database/oma_path/OmaServer.h5"
+    # in_folder+"omamer_database/oma_path/OmaServer.h5"
     print("rHOG inferece has started. The oma database address is in ", oma_database_address)
     (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
     (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, working_folder)

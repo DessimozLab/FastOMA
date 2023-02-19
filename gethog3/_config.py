@@ -3,14 +3,14 @@
 import argparse
 import sys
 
-# setattr(sys.modules[__name__], 'working_folder', config_parser.working_folder)
+# setattr(sys.modules[__name__], 'in_folder', config_parser.in_folder)
 
 # mkdb_parser.add_argument(
 #     "--min_fam_size", default=6, help="Only root-HOGs with a protein count passing this threshold are used.",
 #     type=int
 # )
 
-# working_folder = "./working_folder"+ "/"
+# in_folder = "./in_folder"+ "/"
 species_tree_address = "species_tree.nwk"
 # no space or special charcter in internal node.
 protein_format_qfo_dataset = True
@@ -58,7 +58,7 @@ logger_level = "DEBUG"  # DEBUG INFO
 
 def set_configs():
     parser = argparse.ArgumentParser(description="This is GETHOG3 ")
-    # parser.add_argument('--working-folder', help="working_folder")
+    # parser.add_argument('--working-folder', help="in_folder")
     parser.add_argument('--logger-level', default="DEBUG")
     #  $rhogs_big_i - -parrallel
 
@@ -67,7 +67,7 @@ def set_configs():
 
     config_parser = parser.parse_args()
     print("config_parser",config_parser)
-    # Namespace(logger_level=None, working_folder=None)
+    # Namespace(logger_level=None, in_folder=None)
     setattr(sys.modules[__name__], 'logger_level', config_parser.logger_level)
 
     setattr(sys.modules[__name__], 'input_rhog_folder', config_parser.input_rhog_folder)

@@ -52,7 +52,7 @@ TODO
 
 print as debug
 # [_config.oma_database_address, _config.working_folder_root , _config.species_tree_address , _config.working_id ,
- _config.protein_format_qfo_dataset, _config.working_folder, _config.omamer_fscore_treshold_big_rhog, _config.treshold_big_rhog_szie, _config.gene_trees_write, _config.keep_subhog_each_pickle, _config.hogclass_max_num_seq, _config.hogclass_min_cols_msa_to_filter, _config.hogclass_tresh_ratio_gap_col, _config.automated_trimAL, _config.lable_SD_internal , _config.rooting_method, _config.rooting_mad_executable_path , _config.inferhog_tresh_ratio_gap_row , _config.inferhog_tresh_ratio_gap_col , _config.inferhog_min_cols_msa_to_filter , _config.inferhog_filter_all_msas_row , _config.inferhog_resume_rhog  , _config.inferhog_resume_subhog , _config.inferhog_max_workers_num , _config.inferhog_min_hog_size_xml, _config.logger_level]
+ _config.protein_format_qfo_dataset, _config.in_folder, _config.omamer_fscore_treshold_big_rhog, _config.treshold_big_rhog_szie, _config.gene_trees_write, _config.keep_subhog_each_pickle, _config.hogclass_max_num_seq, _config.hogclass_min_cols_msa_to_filter, _config.hogclass_tresh_ratio_gap_col, _config.automated_trimAL, _config.lable_SD_internal , _config.rooting_method, _config.rooting_mad_executable_path , _config.inferhog_tresh_ratio_gap_row , _config.inferhog_tresh_ratio_gap_col , _config.inferhog_min_cols_msa_to_filter , _config.inferhog_filter_all_msas_row , _config.inferhog_resume_rhog  , _config.inferhog_resume_subhog , _config.inferhog_max_workers_num , _config.inferhog_min_hog_size_xml, _config.logger_level]
 
 species_tree_address = working_folder_root + "tree_fastaname.nwk" # no space or special charcter in internal node, 
 arise error or solve it
@@ -87,8 +87,8 @@ there shouldnt be any space in the tree name internal node name as well"
 # # mkdir pi_big_rhog pi_big_subhog pi_rest_rhog  pi_rest_subhog genetrees
 # prefix_pickle = sys.argv[3]  # "pi_big"
 # rhogs_fa_folder_pure = sys.argv[4]   # "rhogs_rest"  # or  "rhogs_big" # sys.argv[4] #
-# pickles_rhog_folder = _config.working_folder + "/" + prefix_pickle + "_rhog/"
-# pickles_subhog_folder_all = _config.working_folder + "/" + prefix_pickle + "_subhog/"
+# pickles_rhog_folder = _config.in_folder + "/" + prefix_pickle + "_rhog/"
+# pickles_subhog_folder_all = _config.in_folder + "/" + prefix_pickle + "_subhog/"
 # pickles_rhog_folder  should be created in nextflow, or previous step of parralell infer subhog,
 # workers may conflict of creating folders
 # # pickles_subhog_folder = pickles_subhog_folder_all+"/rhog_" + str(rhogid_num) + "/"
@@ -108,7 +108,7 @@ there shouldnt be any space in the tree name internal node name as well"
 #
 # print("rhogs in the input folder", batch_folder)
 #
-# rhogs_fa_folder = _config.working_folder + rhogs_fa_folder_pure + "/" + batch_folder + "/"
+# rhogs_fa_folder = _config.in_folder + rhogs_fa_folder_pure + "/" + batch_folder + "/"
 #
 # list_done_rhogid = []
 # if _config.inferhog_resume_rhog:

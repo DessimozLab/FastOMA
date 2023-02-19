@@ -488,13 +488,13 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # from os import listdir
 # from xml.dom import minidom
 #
-# working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # gene_trees_folder = ""  # working_folder + "/gene_trees_/"
+# in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # gene_trees_folder = ""  # in_folder + "/gene_trees_/"
 # # check gene_trees_folder exist otherwise mkdir this
 #
-# #address_rhogs_folder = working_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
-# #species_tree_address = working_folder + "/archive/lineage_tree_qfo.phyloxml"
-# pickle_folder = working_folder + "/pickle_folder_all_collect/"
+# #address_rhogs_folder = in_folder + "/rhog_g501_done/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
+# #species_tree_address = in_folder + "/archive/lineage_tree_qfo.phyloxml"
+# pickle_folder = in_folder + "/pickle_folder_all_collect/"
 # # add warning when pickle folder is not empty
 # output_xml_name = "out_27aug_6pm.xml"
 #
@@ -502,7 +502,7 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
 #                                                "originVersion": "Nov 2021", "version": "0.3"})  #
 #
-# with open(working_folder + '/file_gene_id_name.pickle', 'rb') as handle:
+# with open(in_folder + '/file_gene_id_name.pickle', 'rb') as handle:
 #     gene_id_name = dill_pickle.load(handle)
 #     # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
 #
@@ -535,11 +535,11 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
 # # print(xml_str[:-1000])
 #
-# with open(working_folder +output_xml_name, "w") as file_xml:
+# with open(in_folder +output_xml_name, "w") as file_xml:
 #     file_xml.write(xml_str)
 # file_xml.close()
 #
-# print("orthoxml is written in  "+ working_folder +output_xml_name)
+# print("orthoxml is written in  "+ in_folder +output_xml_name)
 #
 
 
@@ -556,20 +556,20 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # from dask.distributed import rejoin, secede
 #
 # if __name__ == '__main__':
-#     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-#     gene_trees_folder = "" # working_folder + "/gene_trees_/"
+#     in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+#     gene_trees_folder = "" # in_folder + "/gene_trees_/"
 #     # check gene_trees_folder exist otherwise mkdir this
 #
-#     address_rhogs_folder = working_folder + "/rhog_g10k/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
+#     address_rhogs_folder = in_folder + "/rhog_g10k/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
 #     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 #
 #
 #     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastoma/archive/OmaServer.h5"
-#     # working_folder+"omamer_database/oma_path/OmaServer.h5"
+#     # in_folder+"omamer_database/oma_path/OmaServer.h5"
 #     print("rHOG inferece has started. The oma database address is in ", oma_database_address)
 #     (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
-#     (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
-#     hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
+#     (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, in_folder)
+#     hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, in_folder)
 #
 #     (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_subfscore_allspecies,
 #     prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
@@ -625,12 +625,12 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #
 # # from xml.dom import minidom
 # #
-# # def collect_write_xml(working_folder, pickle_folder, output_xml_name):
+# # def collect_write_xml(in_folder, pickle_folder, output_xml_name):
 # #
 # #     orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
 # #                                                    "originVersion": "Nov 2021", "version": "0.3"})  #
 # #
-# #     with open(working_folder + '/file_gene_id_name.pickle', 'rb') as handle:
+# #     with open(in_folder + '/file_gene_id_name.pickle', 'rb') as handle:
 # #         gene_id_name = dill_pickle.load(handle)
 # #         # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
 # #
@@ -664,20 +664,20 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #     xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
 # #     print(xml_str)
 # #
-# #     with open(working_folder+output_xml_name, "w") as file_xml:
+# #     with open(in_folder+output_xml_name, "w") as file_xml:
 # #         file_xml.write(xml_str)
 # #     file_xml.close()
 # #
-# #     print("orthoxml is written in "+ working_folder+output_xml_name)
+# #     print("orthoxml is written in "+ in_folder+output_xml_name)
 # #     return 1
 # #
 # #
 # #
 # # output_xml_name = "out12a.xml"
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # pickle_folder = working_folder + "/pickle_folder/"
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # pickle_folder = in_folder + "/pickle_folder/"
 # #
-# # collect_write_xml(working_folder, pickle_folder, output_xml_name)
+# # collect_write_xml(in_folder, pickle_folder, output_xml_name)
 #
 #
 # # rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
@@ -765,8 +765,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # from Bio import SeqIO
 # # import os
 # #
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # prot_folder = working_folder + "/omamer_search_old/proteome/"
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # prot_folder = in_folder + "/omamer_search_old/proteome/"
 # # project_files = listdir(prot_folder)
 # # query_species_names_old = []
 # # query_species_names_new = []
@@ -783,20 +783,20 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #         query_species_names_old.append(query_species_name_old)
 # #         query_species_names_new.append(query_species_name_new)
 # #
-# # os.mkdir(working_folder+"/omamer_search")
-# # os.mkdir(working_folder+"/omamer_search/proteome/")
-# # os.mkdir(working_folder+"/omamer_search/hogmap")
+# # os.mkdir(in_folder+"/omamer_search")
+# # os.mkdir(in_folder+"/omamer_search/proteome/")
+# # os.mkdir(in_folder+"/omamer_search/hogmap")
 # #
 # #
 # # for idx, query_species_name_old in enumerate(query_species_names_old):
 # #     query_species_name_new = query_species_names_new[idx]
 # #
-# #     prot_address_old = working_folder + "omamer_search_old/proteome/" + query_species_name_old + ".fa"
-# #     prot_address_new = working_folder + "omamer_search/proteome/" + query_species_name_new + "_.fa"
+# #     prot_address_old = in_folder + "omamer_search_old/proteome/" + query_species_name_old + ".fa"
+# #     prot_address_new = in_folder + "omamer_search/proteome/" + query_species_name_new + "_.fa"
 # #     os.system('cp ' + prot_address_old + ' ' + prot_address_new)
 # #
-# #     hogmap_address_old = working_folder + "omamer_search_old/hogmap/" + query_species_name_old + ".hogmap"
-# #     hogmap_address_new = working_folder + "omamer_search/hogmap/" + query_species_name_new + "_.hogmap"
+# #     hogmap_address_old = in_folder + "omamer_search_old/hogmap/" + query_species_name_old + ".hogmap"
+# #     hogmap_address_new = in_folder + "omamer_search/hogmap/" + query_species_name_new + "_.hogmap"
 # #     os.system('cp ' + hogmap_address_old + ' ' + hogmap_address_new)
 # #
 # #
@@ -819,8 +819,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # from Bio import SeqIO
 # # import os
 # #
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # prot_folder = working_folder + "/omamer_search_old/proteome/"
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # prot_folder = in_folder + "/omamer_search_old/proteome/"
 # # project_files = listdir(prot_folder)
 # # query_species_names_old = []
 # # query_species_names_new = []
@@ -837,20 +837,20 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #         query_species_names_old.append(query_species_name_old)
 # #         query_species_names_new.append(query_species_name_new)
 # #
-# # os.mkdir(working_folder+"/omamer_search")
-# # os.mkdir(working_folder+"/omamer_search/proteome/")
-# # os.mkdir(working_folder+"/omamer_search/hogmap")
+# # os.mkdir(in_folder+"/omamer_search")
+# # os.mkdir(in_folder+"/omamer_search/proteome/")
+# # os.mkdir(in_folder+"/omamer_search/hogmap")
 # #
 # #
 # # for idx, query_species_name_old in enumerate(query_species_names_old):
 # #     query_species_name_new = query_species_names_new[idx]
 # #
-# #     prot_address_old = working_folder + "omamer_search_old/proteome/" + query_species_name_old + ".fa"
-# #     prot_address_new = working_folder + "omamer_search/proteome/" + query_species_name_new + ".fa"
+# #     prot_address_old = in_folder + "omamer_search_old/proteome/" + query_species_name_old + ".fa"
+# #     prot_address_new = in_folder + "omamer_search/proteome/" + query_species_name_new + ".fa"
 # #     os.system('cp ' + prot_address_old + ' ' + prot_address_new)
 # #
-# #     hogmap_address_old = working_folder + "omamer_search_old/hogmap/" + query_species_name_old + ".hogmap"
-# #     hogmap_address_new = working_folder + "omamer_search/hogmap/" + query_species_name_new + ".hogmap"
+# #     hogmap_address_old = in_folder + "omamer_search_old/hogmap/" + query_species_name_old + ".hogmap"
+# #     hogmap_address_new = in_folder + "omamer_search/hogmap/" + query_species_name_new + ".hogmap"
 # #     os.system('cp ' + hogmap_address_old + ' ' + hogmap_address_new)
 # #
 # #
@@ -980,8 +980,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # # import _utils
 #
 # #
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # address_rhogs_folder = in_folder + "/rhog_size_g2_s500/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
 # #
 # #
 # # # rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
@@ -998,8 +998,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # #
 # #
 # #
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # address_rhogs_folder = working_folder + "/old3/rhog_all/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # address_rhogs_folder = in_folder + "/old3/rhog_all/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
 # # file = open(address_rhogs_folder+"size.txt")
 # # rhogid_len_list =[]
 # # for f in file:
@@ -1015,8 +1015,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #
 # #
 # #
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/"
-# # address_rhogs_folder = working_folder + "/rhogs_all/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/"
+# # address_rhogs_folder = in_folder + "/rhogs_all/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
 # # file = open(address_rhogs_folder+"size.txt")
 # # rhogid_len_list =[]
 # # for f in file:
@@ -1167,20 +1167,20 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # from dask.distributed import rejoin, secede
 #
 # if __name__ == '__main__':
-#     working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-#     gene_trees_folder = "" # working_folder + "/gene_trees_/"
+#     in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+#     gene_trees_folder = "" # in_folder + "/gene_trees_/"
 #     # check gene_trees_folder exist otherwise mkdir this
 #
-#     address_rhogs_folder = working_folder + "/rhog_g10k/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
+#     address_rhogs_folder = in_folder + "/rhog_g10k/"  # old3/rhog_all/ /rhog_size_g2_s500/" sample_rootHOG
 #     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 #
 #
 #     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastoma/archive/OmaServer.h5"
-#     # working_folder+"omamer_database/oma_path/OmaServer.h5"
+#     # in_folder+"omamer_database/oma_path/OmaServer.h5"
 #     print("rHOG inferece has started. The oma database address is in ", oma_database_address)
 #     (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
-#     (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, working_folder)
-#     hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, working_folder)
+#     (query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species, in_folder)
+#     hogmap_allspecies_elements = _utils_rhog.parse_hogmap_omamer(query_species_names, in_folder)
 #
 #     (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_subfscore_allspecies,
 #     prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
@@ -1236,12 +1236,12 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #
 # # from xml.dom import minidom
 # #
-# # def collect_write_xml(working_folder, pickle_folder, output_xml_name):
+# # def collect_write_xml(in_folder, pickle_folder, output_xml_name):
 # #
 # #     orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
 # #                                                    "originVersion": "Nov 2021", "version": "0.3"})  #
 # #
-# #     with open(working_folder + '/file_gene_id_name.pickle', 'rb') as handle:
+# #     with open(in_folder + '/file_gene_id_name.pickle', 'rb') as handle:
 # #         gene_id_name = dill_pickle.load(handle)
 # #         # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
 # #
@@ -1275,20 +1275,20 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #     xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
 # #     print(xml_str)
 # #
-# #     with open(working_folder+output_xml_name, "w") as file_xml:
+# #     with open(in_folder+output_xml_name, "w") as file_xml:
 # #         file_xml.write(xml_str)
 # #     file_xml.close()
 # #
-# #     print("orthoxml is written in "+ working_folder+output_xml_name)
+# #     print("orthoxml is written in "+ in_folder+output_xml_name)
 # #     return 1
 # #
 # #
 # #
 # # output_xml_name = "out12a.xml"
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # pickle_folder = working_folder + "/pickle_folder/"
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # pickle_folder = in_folder + "/pickle_folder/"
 # #
-# # collect_write_xml(working_folder, pickle_folder, output_xml_name)
+# # collect_write_xml(in_folder, pickle_folder, output_xml_name)
 #
 #
 # # rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
@@ -1376,8 +1376,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # from Bio import SeqIO
 # # import os
 # #
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # prot_folder = working_folder + "/omamer_search_old/proteome/"
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # prot_folder = in_folder + "/omamer_search_old/proteome/"
 # # project_files = listdir(prot_folder)
 # # query_species_names_old = []
 # # query_species_names_new = []
@@ -1394,20 +1394,20 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #         query_species_names_old.append(query_species_name_old)
 # #         query_species_names_new.append(query_species_name_new)
 # #
-# # os.mkdir(working_folder+"/omamer_search")
-# # os.mkdir(working_folder+"/omamer_search/proteome/")
-# # os.mkdir(working_folder+"/omamer_search/hogmap")
+# # os.mkdir(in_folder+"/omamer_search")
+# # os.mkdir(in_folder+"/omamer_search/proteome/")
+# # os.mkdir(in_folder+"/omamer_search/hogmap")
 # #
 # #
 # # for idx, query_species_name_old in enumerate(query_species_names_old):
 # #     query_species_name_new = query_species_names_new[idx]
 # #
-# #     prot_address_old = working_folder + "omamer_search_old/proteome/" + query_species_name_old + ".fa"
-# #     prot_address_new = working_folder + "omamer_search/proteome/" + query_species_name_new + "_.fa"
+# #     prot_address_old = in_folder + "omamer_search_old/proteome/" + query_species_name_old + ".fa"
+# #     prot_address_new = in_folder + "omamer_search/proteome/" + query_species_name_new + "_.fa"
 # #     os.system('cp ' + prot_address_old + ' ' + prot_address_new)
 # #
-# #     hogmap_address_old = working_folder + "omamer_search_old/hogmap/" + query_species_name_old + ".hogmap"
-# #     hogmap_address_new = working_folder + "omamer_search/hogmap/" + query_species_name_new + "_.hogmap"
+# #     hogmap_address_old = in_folder + "omamer_search_old/hogmap/" + query_species_name_old + ".hogmap"
+# #     hogmap_address_new = in_folder + "omamer_search/hogmap/" + query_species_name_new + "_.hogmap"
 # #     os.system('cp ' + hogmap_address_old + ' ' + hogmap_address_new)
 # #
 # #
@@ -1430,8 +1430,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # from Bio import SeqIO
 # # import os
 # #
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # prot_folder = working_folder + "/omamer_search_old/proteome/"
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # prot_folder = in_folder + "/omamer_search_old/proteome/"
 # # project_files = listdir(prot_folder)
 # # query_species_names_old = []
 # # query_species_names_new = []
@@ -1448,20 +1448,20 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #         query_species_names_old.append(query_species_name_old)
 # #         query_species_names_new.append(query_species_name_new)
 # #
-# # os.mkdir(working_folder+"/omamer_search")
-# # os.mkdir(working_folder+"/omamer_search/proteome/")
-# # os.mkdir(working_folder+"/omamer_search/hogmap")
+# # os.mkdir(in_folder+"/omamer_search")
+# # os.mkdir(in_folder+"/omamer_search/proteome/")
+# # os.mkdir(in_folder+"/omamer_search/hogmap")
 # #
 # #
 # # for idx, query_species_name_old in enumerate(query_species_names_old):
 # #     query_species_name_new = query_species_names_new[idx]
 # #
-# #     prot_address_old = working_folder + "omamer_search_old/proteome/" + query_species_name_old + ".fa"
-# #     prot_address_new = working_folder + "omamer_search/proteome/" + query_species_name_new + ".fa"
+# #     prot_address_old = in_folder + "omamer_search_old/proteome/" + query_species_name_old + ".fa"
+# #     prot_address_new = in_folder + "omamer_search/proteome/" + query_species_name_new + ".fa"
 # #     os.system('cp ' + prot_address_old + ' ' + prot_address_new)
 # #
-# #     hogmap_address_old = working_folder + "omamer_search_old/hogmap/" + query_species_name_old + ".hogmap"
-# #     hogmap_address_new = working_folder + "omamer_search/hogmap/" + query_species_name_new + ".hogmap"
+# #     hogmap_address_old = in_folder + "omamer_search_old/hogmap/" + query_species_name_old + ".hogmap"
+# #     hogmap_address_new = in_folder + "omamer_search/hogmap/" + query_species_name_new + ".hogmap"
 # #     os.system('cp ' + hogmap_address_old + ' ' + hogmap_address_new)
 # #
 # #
@@ -1591,8 +1591,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # # import _utils
 #
 # #
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # address_rhogs_folder = working_folder + "/rhog_size_g2_s500/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # address_rhogs_folder = in_folder + "/rhog_size_g2_s500/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
 # #
 # #
 # # # rhogid_num_list = _utils.list_rhog_fastas(address_rhogs_folder)
@@ -1609,8 +1609,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # # #
 # #
 # #
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# # address_rhogs_folder = working_folder + "/old3/rhog_all/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# # address_rhogs_folder = in_folder + "/old3/rhog_all/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
 # # file = open(address_rhogs_folder+"size.txt")
 # # rhogid_len_list =[]
 # # for f in file:
@@ -1626,8 +1626,8 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # #
 # #
 # #
-# # working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/"
-# # address_rhogs_folder = working_folder + "/rhogs_all/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
+# # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/bird/"
+# # address_rhogs_folder = in_folder + "/rhogs_all/"  # rhogs "/rhog_size_g2_s500/" sample_rootHOG
 # # file = open(address_rhogs_folder+"size.txt")
 # # rhogid_len_list =[]
 # # for f in file:

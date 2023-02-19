@@ -355,9 +355,9 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
 #
 # def collect_write_xml():
 #
-#     gene_id_pickle_file = _config.working_folder + "gene_id_dic_xml.pickle"
-#     pickles_rhog_folder = _config.working_folder + "pickles_rhog/"
-#     output_xml_file = _config.working_folder + "hogs.orthoxml"
+#     gene_id_pickle_file = _config.in_folder + "gene_id_dic_xml.pickle"
+#     pickles_rhog_folder = _config.in_folder + "pickles_rhog/"
+#     output_xml_file = _config.in_folder + "hogs.orthoxml"
 #
 #     orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
 #                                                    "originVersion": "Nov 2021", "version": "0.3"})  #

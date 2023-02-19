@@ -19,8 +19,8 @@ import pickle
 #
 #
 #
-# working_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
-# gene_id_pickle_file = working_folder + "gene_id_30aug_s500.pickle"
+# in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/"
+# gene_id_pickle_file = in_folder + "gene_id_30aug_s500.pickle"
 #
 #
 #

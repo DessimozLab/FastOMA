@@ -47,7 +47,7 @@ if __name__ == '__main__':
     if step == "find_rhog":
 
         """
-        Structure of folders in working_folder
+        Structure of folders in in_folder
         Put proteomes of species as fasta files in /omamer_search/proteome/
         Run omamer and put the output of omamer in /omamer_search/hogmap/
         oma_database_address = the address to the oma databases
@@ -58,7 +58,7 @@ if __name__ == '__main__':
         if not os.path.exists(_config.working_folder):
             os.mkdir(_config.working_folder)
 
-        # working_folder+"omamer_database/oma_path/OmaServer.h5"
+        # in_folder+"omamer_database/oma_path/OmaServer.h5"
         logger_hog.info("rHOG inferece has started. The oma database address is in "+_config.oma_database_address)
         # (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(_config.oma_database_address)
         #(query_species_names, query_prot_recs) = _utils_rhog.parse_proteome(list_oma_species)
@@ -75,7 +75,7 @@ if __name__ == '__main__':
         logger_hog.info("size of query_prot_recs_filt is "+str(len(query_prot_recs_filt))+" "+str(len(query_prot_recs_filt[0])))
 
         rhogids_list, rhogids_prot_records_query = _utils_rhog.group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, query_prot_recs_filt)
-        # rhogid_num_list_raw=utils_rhog.write_rhog(rhogids_list,rhogids_prot_records_query, _config.working_folder+"rhogs/". "rhogs_raw",2)
+        # rhogid_num_list_raw=utils_rhog.write_rhog(rhogids_list,rhogids_prot_records_query, _config.in_folder+"rhogs/". "rhogs_raw",2)
 
         rhogids_list_filt, rhogids_prot_records_query_filt = _utils_rhog.filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  query_prot_names_species_mapped)
 
@@ -85,15 +85,15 @@ if __name__ == '__main__':
     #     #step = "find_subhog"
     # if step == "find_subhog":
     #
-    #     pickle_folder = _config.working_folder + "pickles_rhog"
+    #     pickle_folder = _config.in_folder + "pickles_rhog"
     #     if _config.gene_trees_write:
-    #         gene_trees_folder = _config.working_folder + "genetrees/"
+    #         gene_trees_folder = _config.in_folder + "genetrees/"
     #         if not os.path.exists(gene_trees_folder):
     #             os.mkdir(gene_trees_folder)
     #     if not os.path.exists(pickle_folder):
     #         os.mkdir(pickle_folder)
     #
-    #     address_rhogs_folder_filt = _config.working_folder + "rhogs/"
+    #     address_rhogs_folder_filt = _config.in_folder + "rhogs/"
     #     rhogid_num_list_raw = _utils.list_rhog_fastas(address_rhogs_folder_filt)
     #     logger_hog.info("Number of root hogs is " + str(len(rhogid_num_list_raw)) + ".")
     #
@@ -168,7 +168,7 @@ if __name__ == '__main__':
     #             hogs_rhogs_xml_all.extend(hogs_rhog_xml_batch)
     #
     #         logger_hog.info("Dask out gathered")
-    #         client_dask.profile(filename=_config.working_folder+"dask-profile.html")
+    #         client_dask.profile(filename=_config.in_folder+"dask-profile.html")
     #         client_dask.close()
     #         client_dask.shutdown()
     #         logger_hog.info("Client dask closed and shut down.")
