@@ -176,6 +176,3 @@ workflow {
 
 }
 
-
-
-includeConfig "nextflow_slurm.config"
