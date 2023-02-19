@@ -181,16 +181,19 @@ among which `output_hog_.orthoxml` is the final output. Its content looks like t
 ```
 
 
-# Run on cluster 
-For running on a SLURM cluster you can use the provided recipe `gethog3_script_slurm.nf`.
+# Run on a cluster 
+For running on a SLURM cluster you can add `-c ../nextflow_slurm.config`  to the commond line.
 
 ```
 # cd gethog3/testdata
-# rm -r out_folder work        #You may remove stuff from previous run
-nextflow ../gethog3_script_slurm.nf  --input_folder in_folder   --output_folder out_folder
+# rm -r out_folder work          # You may remove stuff from previous run
+# ls ../gethog3_script_slurm.nf 
+
+nextflow ../gethog3_script.nf  -c ../nextflow_slurm.config   --input_folder in_folder   --output_folder out_folder
 ```
-You may need to re-run using `-resume` if the allocated time is not enough for your dataset. 
-Alternatively, 
+
+
+You may need to re-run nextflow command line by adding `-resume`, if the allocated time is not enough for your dataset.
 
 
 ## Change log

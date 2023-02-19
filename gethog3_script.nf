@@ -12,6 +12,9 @@ params.rhogs_folder = params.output_folder + "/rhogs_all"
 // params.rhogs_big_folder = params.input_folder + "rhogs_big"
 
 process omamer_run{
+
+  memory {50.GB}
+
   publishDir params.hogmap_folder
   input:
   path proteomes_omamerdb
@@ -19,12 +22,13 @@ process omamer_run{
   path "*.hogmap"
   script:
   """
-  omamer search --db ${proteomes_omamerdb[1]} --query ${proteomes_omamerdb[0]} --nthreads 2  --out ${proteomes_omamerdb[0]}.hogmap
+  omamer search --db ${proteomes_omamerdb[1]} --query ${proteomes_omamerdb[0]} --nthreads 1  --out ${proteomes_omamerdb[0]}.hogmap
   """
 }
 
 
 process infer_roothogs{
+
   publishDir  params.rhogs_folder // "${params.output_folder}/rhogs_all"
   input:
   path hogmaps
@@ -56,23 +60,26 @@ process batch_roothogs{
 }
 
 process hog_big{
+
+  cpus  8
+  time {10.h}    // for very big rhog it might need more, or you could re-run and add `-resume`
+  memory {50.GB}
+
   publishDir params.output_folder+"/pickle_rhogs"
 
   input:
   path rhogsbig_tree // = rhogsbig.combine(species_tree)
   // rhogs_big_i  //"$rhogs_big/*.fa"
   // path "species_tree.nwk"
-
   output:
   path "*.pickle"
   // path "pi_big_subhog/*"
   // pi_big rhogs_big
   script:
   """
-  infer-subhogs  --input-rhog-folder ${rhogsbig_tree[0]} --parrallel False
+  infer-subhogs  --input-rhog-folder ${rhogsbig_tree[0]} --parrallel True
   """
 }
-
 
 
 process hog_rest{
@@ -88,6 +95,7 @@ process hog_rest{
   infer-subhogs  --input-rhog-folder ${rhogsrest_tree[0]} --parrallel False
   """
 }
+
 
 
 
@@ -110,6 +118,8 @@ process collect_subhogs{
 
 
 workflow {
+
+
 
     proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
     proteome_folder = Channel.fromPath(params.proteome_folder)
@@ -168,4 +178,4 @@ workflow {
 
 
 
-
+includeConfig "nextflow_slurm.config"
