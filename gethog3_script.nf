@@ -1,9 +1,14 @@
 
+// nextflow /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/gethog3/gethog3_script.nf  --input_folder test2/   --output_folder t5/  -resume
+
 params.input_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/test/testdata/working_folder/"
-params.proteome_folder = params.input_folder + "proteome"
-params.hogmap_folder = params.input_folder + "hogmap"
-params.rhogs_folder = params.input_folder + "rhogs_all"
-params.proteomes = params.proteome_folder+"/*"
+params.output_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/test/testdata/"
+params.proteome_folder = params.input_folder + "/proteome"
+params.proteomes = params.proteome_folder + "/*"
+
+params.hogmap_folder = params.output_folder + "/hogmap"
+params.rhogs_folder = params.output_folder + "/rhogs_all"
+
 // params.rhogs_big_folder = params.input_folder + "rhogs_big"
 
 process omamer_run{
@@ -20,7 +25,7 @@ process omamer_run{
 
 
 process infer_roothogs{
-  publishDir "rhogs_all"
+  publishDir  params.rhogs_folder // "${params.output_folder}/rhogs_all"
   input:
   path hogmaps
   path hogmap_folder
@@ -36,10 +41,10 @@ process infer_roothogs{
 }
 
 process batch_roothogs{
-  publishDir "./"
+  publishDir params.output_folder
   input:
   path rhogs
-  path "rhogs_all"
+  path rhogs_folder //"${params.output_folder}/rhogs_all"
 
   output:
   path "rhogs_rest/*", optional: true
@@ -51,7 +56,7 @@ process batch_roothogs{
 }
 
 process hog_big{
-  publishDir "pickle_rhogs"
+  publishDir params.output_folder+"/pickle_rhogs"
 
   input:
   path rhogsbig_tree // = rhogsbig.combine(species_tree)
@@ -71,7 +76,7 @@ process hog_big{
 
 
 process hog_rest{
-  publishDir "pickle_rhogs"
+  publishDir params.output_folder+"/pickle_rhogs"
 
   input:
   path rhogsrest_tree // = rhogsrest.combine(species_tree)
@@ -87,7 +92,7 @@ process hog_rest{
 
 
 process collect_subhogs{
-  publishDir "./", mode: 'copy'
+  publishDir params.output_folder, mode: 'copy'
   input:
   path pickle_rhogs   // this is for depenedcy
   path "pickle_rhogs" // this is the folder includes pickles_rhogs
@@ -111,21 +116,24 @@ workflow {
     hogmap_folder = Channel.fromPath(params.hogmap_folder)
     rhogs_folder = Channel.fromPath(params.rhogs_folder)
 
-    omamerdb = Channel.fromPath("omamerdb.h5")
+    // hogmap_folder.view{"hogmap_folder ${it}"}  // using provided argument
+
+    omamerdb = Channel.fromPath(params.input_folder+"/omamerdb.h5")
     // proteomes.view{"prot ${it}"}
     proteomes_omamerdb = proteomes.combine(omamerdb)
-    proteomes_omamerdb.view{"proteomes_omamerdb ${it}"}
+    // proteomes_omamerdb.view{"proteomes_omamerdb ${it}"}
 
     hogmap = omamer_run(proteomes_omamerdb)
     hogmaps = hogmap.collect()
-    // hogmaps.view{"hogmap ${it}"}
+//     hogmaps.view{"hogmap ${it}"}
 
-    proteome_folder.view{"proteome_folder ${it} "}
+    // proteome_folder.view{"proteome_folder ${it} "}
     (rhogs, gene_id_dic_xml) = infer_roothogs(hogmaps, hogmap_folder, proteome_folder)
     rhogs.view{"rhogs ${it}"}
+    // rhogs_folder.view{"rhogs_folder xx ${it}"}
 
     (rhogs_rest_list, rhogs_big_list) = batch_roothogs(rhogs, rhogs_folder)
-    // rhogs_rest_list.view{"rhogs_rest_list ${it}"}
+    rhogs_rest_list.view{"rhogs_rest_list ${it}"}
 
     rhogsrest=rhogs_rest_list.flatten()
     rhogsrest.view{" rhogs rest ${it}"}
@@ -133,7 +141,7 @@ workflow {
     rhogsbig = rhogs_big_list.flatten()
     rhogsbig.view{" rhogs big ${it}"}
 
-    species_tree = Channel.fromPath("species_tree.nwk")
+    species_tree = Channel.fromPath(params.input_folder + "/species_tree.nwk")
     rhogsbig_tree =  rhogsbig.combine(species_tree)
     rhogsbig_tree.view{"rhogsbig_tree ${it}"}
 
@@ -152,7 +160,7 @@ workflow {
 
     // gene_id_dic_xml = Channel.fromPath("gene_id_dic_xml.pickle")
 
-    pickle_rhogs_folder = Channel.fromPath("pickle_rhogs")
+    pickle_rhogs_folder = Channel.fromPath(params.output_folder+"/pickle_rhogs")
     orthoxml_file = collect_subhogs(all_pickles.collect(), pickle_rhogs_folder, gene_id_dic_xml)
     orthoxml_file.view{" output orthoxml file ${it}"}
 

@@ -103,6 +103,13 @@ nextflow ../gethog3/gethog3_script.nf
 ```
 
 After few minutes, the run for test data finishes. Then, following files and folders should appear in the folder `gethog3/testdata`.
+
+
+A folder work will be created in yhe folder that you run commonad line.
+
+
+
+
 ```
 gene_id_dic_xml.pickle  hogmap  output_hog_.orthoxml  pickle_rhogs 
  Primates.h5  proteome  rhogs_all  rhogs_big  rhogs_rest  species_tree.nwk
