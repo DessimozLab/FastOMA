@@ -8,7 +8,7 @@ params.proteomes = params.proteome_folder + "/*"
 
 params.hogmap_folder = params.output_folder + "/hogmap"
 params.rhogs_folder = params.output_folder + "/rhogs_all"
-params.species_tree = params.input_folder + "/species_tree_.nwk"
+params.species_tree = params.input_folder + "/species_tree.nwk"
 
 
 // params.rhogs_big_folder = params.input_folder + "rhogs_big"
