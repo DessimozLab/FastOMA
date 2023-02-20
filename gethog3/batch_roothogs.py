@@ -5,7 +5,7 @@ import os
 from os import makedirs
 import shutil
 from os import listdir
-# from . import _config
+from . import _config
 
 
 def list_rhog_fastas(address_rhogs_folder):
@@ -45,18 +45,14 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
     list_list_rest_size = [[]]
     list_list_big = []
 
-    big_rhog_filesize_thresh = 600 * 1000  # 600 would be better
-    sum_list_rhogs_filesize_thresh = 2 * 1e6
-    # big_rhog_filesize_thresh = 1.6 * 1000  # 600 would be better
-    # sum_list_rhogs_filesize_thresh = 5 * 1e3
 
 
     for rhognum, size in dic_rhognum_size.items():
         # print(rhognum, size)
-        if size > big_rhog_filesize_thresh:
+        if size > _config.big_rhog_filesize_thresh:
             list_list_big.append(rhognum)
         else:
-            if sum(list_list_rest_size[-1]) < sum_list_rhogs_filesize_thresh:
+            if sum(list_list_rest_size[-1]) < _config.sum_list_rhogs_filesize_thresh:
                 list_list_rest_rhog[-1].append(rhognum)
                 list_list_rest_size[-1].append(size)
             else:

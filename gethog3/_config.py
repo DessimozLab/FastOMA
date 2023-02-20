@@ -50,10 +50,15 @@ inferhog_max_workers_num = 8
 
 ## xml
 # write_all_prots_in_header = False  # if false writes only those in the hog group
-inferhog_min_hog_size_xml = 2  # by setting this as 1, pyham won't work on xml output.
+inferhog_min_hog_size_xml = 2     # by setting this as 1, pyham won't work on xml output.
+logger_level = "DEBUG"            # DEBUG INFO
 
+# batch_roothogs
+# big_rhog_filesize_thresh = 600 * 1000  # 600 would be better
+# sum_list_rhogs_filesize_thresh = 2 * 1e6
 
-logger_level = "DEBUG"  # DEBUG INFO
+big_rhog_filesize_thresh = 1.6 * 1000  # 600 would be better
+sum_list_rhogs_filesize_thresh = 5 * 1e3
 
 
 def set_configs():
