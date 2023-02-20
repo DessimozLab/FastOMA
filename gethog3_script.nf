@@ -19,10 +19,13 @@ process omamer_run{
   memory {50.GB}
 
   publishDir params.hogmap_folder
+  // publishDir params.output_folder
+
   input:
   path proteomes_omamerdb
   output:
   path "*.hogmap"
+  val true
   script:
   """
   omamer search --db ${proteomes_omamerdb[1]} --query ${proteomes_omamerdb[0]} --nthreads 1  --out ${proteomes_omamerdb[0]}.hogmap
@@ -34,7 +37,8 @@ process infer_roothogs{
 
   publishDir  params.rhogs_folder // "${params.output_folder}/rhogs_all"
   input:
-  path hogmaps
+  // path hogmaps
+  val ready
   path hogmap_folder
   path proteome_folder
   output:
@@ -48,8 +52,9 @@ process infer_roothogs{
 }
 
 process batch_roothogs{
-  publishDir params.output_folder
+  // publishDir params.output_folder
   input:
+
   path rhogs
   path rhogs_folder //"${params.output_folder}/rhogs_all"
 
@@ -68,7 +73,7 @@ process hog_big{
   time {10.h}    // for very big rhog it might need more, or you could re-run and add `-resume`
   memory {50.GB}
 
-  publishDir params.output_folder+"/pickle_rhogs"
+  // publishDir params.output_folder+"/pickle_rhogs"
 
   input:
   path rhogsbig_tree // = rhogsbig.combine(species_tree)
@@ -89,7 +94,7 @@ process hog_big{
 
 
 process hog_rest{
-  publishDir params.output_folder+"/pickle_rhogs"
+  // publishDir params.output_folder+"/pickle_rhogs"
 
   input:
   path rhogsrest_tree // = rhogsrest.combine(species_tree)
@@ -139,46 +144,55 @@ workflow {
     proteomes_omamerdb = proteomes.combine(omamerdb)
     // proteomes_omamerdb.view{"proteomes_omamerdb ${it}"}
 
-    hogmap = omamer_run(proteomes_omamerdb)
-    hogmaps = hogmap.collect()
+//     hogmap = omamer_run(proteomes_omamerdb)
+//     hogmaps = hogmap.collect()
 //     hogmaps.view{"hogmap ${it}"}
 
-    // proteome_folder.view{"proteome_folder ${it} "}
-    (rhogs, gene_id_dic_xml) = infer_roothogs(hogmaps, hogmap_folder, proteome_folder)
+
+   (hogmap, ready_ )= omamer_run(proteomes_omamerdb)
+    hogmaps = hogmap.collect()
+   hogmaps.view{"hogmap ${it}"}
+   ready_.view{"ready_ ${it}"}
+
+
+
+    proteome_folder.view{"proteome_folder ${it} "}
+    // (rhogs, gene_id_dic_xml) = infer_roothogs(hogmaps, hogmap_folder, proteome_folder)
+    (rhogs, gene_id_dic_xml) = infer_roothogs(ready_, hogmap_folder, proteome_folder)
     rhogs.view{"rhogs ${it}"}
-    // rhogs_folder.view{"rhogs_folder xx ${it}"}
+    rhogs_folder.view{"rhogs_folder xx ${it}"}
 
-    (rhogs_rest_list, rhogs_big_list) = batch_roothogs(rhogs, rhogs_folder)
-    rhogs_rest_list.view{"rhogs_rest_list ${it}"}
+//     (rhogs_rest_list, rhogs_big_list) = batch_roothogs(rhogs, rhogs_folder)
+//     rhogs_rest_list.view{"rhogs_rest_list ${it}"}
+//
+//     rhogsrest=rhogs_rest_list.flatten()
+//     rhogsrest.view{" rhogs rest ${it}"}
+//
+//     rhogsbig = rhogs_big_list.flatten()
+//     rhogsbig.view{" rhogs big ${it}"}
+//
+//     species_tree = Channel.fromPath(params.species_tree)
+//     rhogsbig_tree =  rhogsbig.combine(species_tree)
+//     rhogsbig_tree.view{"rhogsbig_tree ${it}"}
 
-    rhogsrest=rhogs_rest_list.flatten()
-    rhogsrest.view{" rhogs rest ${it}"}
-
-    rhogsbig = rhogs_big_list.flatten()
-    rhogsbig.view{" rhogs big ${it}"}
-
-    species_tree = Channel.fromPath(params.species_tree)
-    rhogsbig_tree =  rhogsbig.combine(species_tree)
-    rhogsbig_tree.view{"rhogsbig_tree ${it}"}
-
-    rhogsrest_tree =  rhogsrest.combine(species_tree)
-    rhogsrest_tree.view{"rhogsrest_tree ${it}"}
-
-    pickle_big_rhog = hog_big(rhogsbig_tree)
-    pickle_rest_rhog = hog_rest(rhogsrest_tree)
-
-    pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
-    pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}
-
-    prb = pickle_big_rhog.collect()
-    prr = pickle_rest_rhog.collect()
-    all_pickles = prb.mix(prr)
-
-    // gene_id_dic_xml = Channel.fromPath("gene_id_dic_xml.pickle")
-
-    pickle_rhogs_folder = Channel.fromPath(params.output_folder+"/pickle_rhogs")
-    orthoxml_file = collect_subhogs(all_pickles.collect(), pickle_rhogs_folder, gene_id_dic_xml)
-    orthoxml_file.view{" output orthoxml file ${it}"}
+//     rhogsrest_tree =  rhogsrest.combine(species_tree)
+//     rhogsrest_tree.view{"rhogsrest_tree ${it}"}
+//
+//     pickle_big_rhog = hog_big(rhogsbig_tree)
+//     pickle_rest_rhog = hog_rest(rhogsrest_tree)
+//
+//     pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
+//     pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}
+//
+//     prb = pickle_big_rhog.collect()
+//     prr = pickle_rest_rhog.collect()
+//     all_pickles = prb.mix(prr)
+//
+//     // gene_id_dic_xml = Channel.fromPath("gene_id_dic_xml.pickle")
+//
+//     pickle_rhogs_folder = Channel.fromPath(params.output_folder+"/pickle_rhogs")
+//     orthoxml_file = collect_subhogs(all_pickles.collect(), pickle_rhogs_folder, gene_id_dic_xml)
+//     orthoxml_file.view{" output orthoxml file ${it}"}
 
 }
 
