@@ -65,10 +65,11 @@ process hog_big{
   memory {50.GB}
   publishDir params.pickles_rhogs_folder
   input:
-  val ready_batch_roothogs
-  path rhogsbig_tree // = rhogsbig.combine(species_tree)
+  // val ready_batch_roothogs
+  // path rhogsbig_tree // = rhogsbig.combine(species_tree)
   // rhogs_big_i  //"$rhogs_big/*.fa"
   // path "species_tree.nwk"
+  val rhogsbig_tree_ready
   output:
   path "*.pickle"
   val true
@@ -79,7 +80,7 @@ process hog_big{
 
   script:
   """
-  infer-subhogs  --input-rhog-folder ${rhogsbig_tree[0]} --parrallel True  --species-tree ${rhogsbig_tree[1]}
+  infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --parrallel True  --species-tree ${rhogsbig_tree_ready[1]}
   """
 }
 
@@ -88,15 +89,16 @@ process hog_rest{
   publishDir params.pickles_rhogs_folder
 
   input:
-  val ready_batch_roothogs
-  path rhogsrest_tree // = rhogsrest.combine(species_tree)
+  // val ready_batch_roothogs
+  //path rhogsrest_tree // = rhogsrest.combine(species_tree)
+  val rhogsrest_tree_ready
 
   output:
   path "*.pickle"
   val true
   script:
   """
-  infer-subhogs  --input-rhog-folder ${rhogsrest_tree[0]} --parrallel False --species-tree ${rhogsrest_tree[1]}
+  infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]} --parrallel False --species-tree ${rhogsrest_tree_ready[1]}
   """
 }
 
@@ -133,36 +135,41 @@ workflow {
     proteomes_omamerdb = proteomes.combine(omamerdb)
     // proteomes_omamerdb.view{"proteomes_omamerdb ${it}"}
    (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb)
-   hogmaps = hogmap.collect()
+   ready_omamer_run_c = ready_omamer_run.collect()
    // hogmaps.view{"hogmap ${it}"}
 
     proteome_folder.view{"proteome_folder ${it} "}
     // (rhogs, gene_id_dic_xml) = infer_roothogs(hogmaps, hogmap_folder, proteome_folder)
-    (rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run, hogmap_folder, proteome_folder)
+    (rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder)
     rhogs.view{"rhogs ${it}"}
     // rhogs_folder.view{"rhogs_folder xx ${it}"}
 
     (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs, rhogs_folder)
+    ready_batch_roothogs_c = ready_batch_roothogs.collect()
+
     rhogs_rest_list.view{" rhogs_rest22_list ${it}"}
     rhogs_big_list.view{" rhogs_big_list ${it}"}
 
     species_tree = Channel.fromPath(params.species_tree)
     rhogsbig = rhogs_big_list.flatten()
-    rhogsbig.view{" rhogsbig ${it}"}
+    // rhogsbig.view{" rhogsbig ${it}"}
     rhogsbig_tree =  rhogsbig.combine(species_tree)
-    // rhogsbig_tree.view{"rhogsbig_tree ${it}"}
-    (pickle_big_rhog, ready_hog_big) = hog_big(ready_batch_roothogs, rhogsbig_tree)
+    rhogsbig_tree_ready = rhogsbig_tree.combine(ready_batch_roothogs_c)
+    rhogsbig_tree_ready.view{"rhogsbig_tree_ready ${it}"}
+    (pickle_big_rhog, ready_hog_big) = hog_big(rhogsbig_tree_ready)
 
     rhogsrest = rhogs_rest_list.flatten()
     rhogsrest.view{" rhogs rest ${it}"}
     rhogsrest_tree =  rhogsrest.combine(species_tree)
-    rhogsrest_tree.view{"rhogsrest_tree ${it}"}
 
-    (pickle_rest_rhog, ready_hog_rest) = hog_rest(ready_batch_roothogs, rhogsrest_tree)
+    rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
+    rhogsrest_tree_ready.view{"rhogsrest_tree_ready ${it}"}
+
+    (pickle_rest_rhog, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
 
     pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
     pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}
-
+//
 //     prb = pickle_big_rhog.collect()
 //     prr = pickle_rest_rhog.collect()
 //     all_pickles = prb.mix(prr)
