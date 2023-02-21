@@ -116,6 +116,8 @@ cd gethog3/testdata
 wget https://omabrowser.org/All/Primates.h5    # 352MB
 mv Primates.h5  in_folder/omamerdb.h5 
 ```
+(This is for the test however, I would suggest downloading the `LUCA.h5` instead of `Primates.h5` for your real analysis.)
+
 
 Now we have such a structre in our  testdata folder.
 ``` 
