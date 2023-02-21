@@ -27,6 +27,7 @@ process omamer_run{
   """
   omamer search --db ${proteomes_omamerdb[1]} --query ${proteomes_omamerdb[0]} --nthreads 1  --out ${proteomes_omamerdb[0]}.hogmap
   """
+
 }
 
 

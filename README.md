@@ -139,12 +139,12 @@ nextflow ../gethog3_script.nf  --input_folder in_folder   --output_folder out_fo
 
 After few minutes, the run for test data finishes. 
 ```
-[ae/ac23e1] process > omamer_run (3)      [100%] 3 of 3 ✔
-[32/71f48b] process > infer_roothogs (1)  [100%] 1 of 1 ✔
-[e7/0b5d67] process > batch_roothogs (1)  [100%] 1 of 1 ✔
-[-        ] process > hog_big             -
-[c9/dcc49a] process > hog_rest (1)        [100%] 1 of 1 ✔
-[7a/4dcbc5] process > collect_subhogs (1) [100%] 1 of 1 ✔
+[] process > omamer_run (2)      [100%] 3 of 3 ✔
+[] process > infer_roothogs (1)  [100%] 1 of 1 ✔
+[] process > batch_roothogs (1)  [100%] 1 of 1 ✔
+[] process > hog_big (1)         [100%] 1 of 1 ✔
+[] process > hog_rest (2)        [100%] 2 of 2 ✔
+[] process > collect_subhogs (1) [100%] 1 of 1 ✔
 ```
 If the run interrupted, by adding `-resume` to the nextflow commond line, you can continue your previous nextflow job. 
 
