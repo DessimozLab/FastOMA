@@ -155,7 +155,7 @@ workflow {
     rhogsbig_tree =  rhogsbig.combine(species_tree)
     rhogsbig_tree_ready = rhogsbig_tree.combine(ready_batch_roothogs)
     rhogsbig_tree_ready.view{"rhogsbig_tree_ready ${it}"}
-    (pickle_big_rhog, ready_hog_big) = hog_big(rhogsbig_tree_ready.collect())
+    (pickle_big_rhog, ready_hog_big) = hog_big(rhogsbig_tree_ready)
 
     rhogsrest = rhogs_rest_list.flatten()
 //     rhogsrest.view{" rhogs rest ${it}"}
@@ -166,7 +166,7 @@ workflow {
     rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
 //     rhogsrest_tree_ready.view{"rhogsrest_tree_ready ${it}"}
 
-    (pickle_rest_rhog, ready_hog_rest) = hog_rest(rhogsrest_tree_ready.collect())
+    (pickle_rest_rhog, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
 
 //     pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
 //     pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}

@@ -187,7 +187,7 @@ For running on a SLURM cluster you can add `-c ../nextflow_slurm.config`  to the
 ```
 # cd gethog3/testdata
 # rm -r out_folder work          # You may remove stuff from previous run
-# ls ../gethog3_script_slurm.nf 
+# ls ../gethog3_script.nf 
 
 nextflow ../gethog3_script.nf  -c ../nextflow_slurm.config   --input_folder in_folder   --output_folder out_folder
 ```

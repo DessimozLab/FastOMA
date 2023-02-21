@@ -24,7 +24,8 @@ def merge_msa(list_msas, gene_tree_file_addr):
 
     wrapper_mafft_merge = mafft.Mafft(list_msas, datatype="PROTEIN")
     wrapper_mafft_merge.options['--merge'].active = True
-    wrapper_mafft_merge.options['--anysymbol'].active = True
+    # wrapper_mafft_merge.options['--anysymbol'].active = True
+    wrapper_mafft_merge.options['--anysymbol'].set_value(True)
     merged = wrapper_mafft_merge()
     time_duration = wrapper_mafft_merge.elapsed_time
     # print(time_duration)
@@ -47,7 +48,7 @@ def infer_gene_tree(msa, gene_tree_file_addr):
 
     if len(msa) <= 2:
         wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
-        wrapper_tree.options.options['-fastest'].active = True
+        wrapper_tree.options.options['-fastest'].active = True   # .set_value(True)  is wrong.
 
     elif _config.tree_tool == "fasttree":
         wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
