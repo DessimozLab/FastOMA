@@ -34,16 +34,24 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
     rhogid_num_list = list_rhog_fastas(address_rhogs_folder)
     len(rhogid_num_list)
     dic_rhognum_size = {}
-    for rhogid_num in rhogid_num_list:
+    for rhogid_num in rhogid_num_list[2:]:
         rhog_i_prot_address = address_rhogs_folder + "/HOG_B" + str(rhogid_num).zfill(7) + ".fa"
         # rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
         rhog_i_size = os.path.getsize(rhog_i_prot_address)
         dic_rhognum_size[rhogid_num] = rhog_i_size
     len(dic_rhognum_size)
 
-    list_list_rest_rhog = [[]]  # each insid list should take 1h to
+
+    #list_list_rest_rhog = [[]]
     list_list_rest_size = [[]]
-    list_list_big = []
+    #list_list_big = []
+
+    # to have at least one big and one rest rhog, this makes nextflow pipline easier,
+    # otherwise we need if condition  collect_subhogs won't satisfy if one of them is empty
+
+    list_list_rest_rhog = [[rhogid_num_list[0]],[]]  # each insid list should take 1h to
+    list_list_rest_size = [[],[]]
+    list_list_big = [rhogid_num_list[1]]
 
 
 
