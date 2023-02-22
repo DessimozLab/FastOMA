@@ -131,7 +131,7 @@ Finally, run the package using nextflow as below:
 # cd gethog3/testdata
 nextflow ../gethog3_script.nf  --input_folder in_folder   --output_folder out_folder
 ```
-Note that to have a comprehensive test, we set the default value of needed cpus as 8.
+Note that to have a comprehensive test, we set the default value of needed cpus as 10.
 
 After few minutes, the run for test data finishes. 
 ```
