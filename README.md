@@ -61,8 +61,14 @@ You may use conda to install mafft, fasttree and [openjdk](https://jdk.java.net/
 conda install -c bioconda mafft fasttree
 conda install -c conda-forge openjdk
 ```
+You may also need to have the following for nextflow to work.
+```
+JAVA_HOME="/path/to/jdk-17"
+NXF_JAVA_HOME="/path/to/jdk-17"
+export PATH="/path/to/jdk-17/bin:$PATH"
+```
 
-You can make sure that omamer is installed with running  
+You can make sure that omamer and nextflow is installed with running  
 ``` 
 omamer
 ```
