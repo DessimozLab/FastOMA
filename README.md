@@ -56,17 +56,10 @@ python -m pip install nextflow
 python -m pip install pyparsing
 python -m pip install DendroPy 
 ```
-You may want to install mafft and fasttree using conda as well. 
+You may use conda to install mafft, fasttree and [openjdk](https://jdk.java.net/java-se-ri/17) (the alternative for Java 11< version <17 which is needed for nextflow). 
 ```  
 conda install -c bioconda mafft fasttree
-```
-
-Note that for Nextflow you need Java (11< version <17), and you can download [openjdk](https://jdk.java.net/java-se-ri/17) instead.
-You may also need to have the following for nextflow to work.
-```
-JAVA_HOME="/path/to/jdk-17"
-NXF_JAVA_HOME="/path/to/jdk-17"
-export PATH="/path/to/jdk-17/bin:$PATH"
+conda install -c conda-forge openjdk
 ```
 
 You can make sure that omamer is installed with running  
@@ -138,6 +131,7 @@ Finally, run the package using nextflow as below:
 # cd gethog3/testdata
 nextflow ../gethog3_script.nf  --input_folder in_folder   --output_folder out_folder
 ```
+Note that to have a comprehensive test, we set the default value of needed cpus as 8.
 
 After few minutes, the run for test data finishes. 
 ```
