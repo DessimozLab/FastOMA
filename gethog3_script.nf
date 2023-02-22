@@ -1,8 +1,7 @@
 
-// nextflow /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/gethog3/gethog3_script.nf  --input_folder test2/   --output_folder t5/  -resume
 
-params.input_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/test/testdata/working_folder/"
-params.output_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/test/testdata/"
+params.input_folder = "./in_folder/"
+params.output_folder = "./out_folder/"
 params.proteome_folder = params.input_folder + "/proteome"
 params.proteomes = params.proteome_folder + "/*"
 

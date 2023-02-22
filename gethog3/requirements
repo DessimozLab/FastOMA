@@ -1,0 +1,95 @@
+$ conda list
+# packages in environment at /Users/sina/Installers/miniconda3/envs/gethog3:
+#
+# Name                    Version                   Build  Channel
+biopython                 1.81                     pypi_0    pypi
+blosc2                    2.0.0                    pypi_0    pypi
+ca-certificates           2022.12.7            h033912b_0    conda-forge
+certifi                   2022.12.7          pyhd8ed1ab_0    conda-forge
+cython                    0.29.33                  pypi_0    pypi
+dendropy                  4.5.2                    pypi_0    pypi
+ete3                      3.1.2                    pypi_0    pypi
+fasttree                  2.1.11               hdcdfbac_1    bioconda
+gethog3                   0.0.5                     dev_0    <develop>
+humanfriendly             10.0                     pypi_0    pypi
+libcxx                    14.0.6               h9765a3e_0
+libffi                    3.4.2                hecd8cb5_6
+llvm-openmp               14.0.6               h0dcd299_0
+llvmlite                  0.39.1                   pypi_0    pypi
+mafft                     7.515                h1e3017b_0    bioconda
+msgpack                   1.0.4                    pypi_0    pypi
+ncurses                   6.4                  hcec6c5f_0
+nextflow                  22.10.7                  pypi_0    pypi
+numba                     0.56.4                   pypi_0    pypi
+numexpr                   2.8.4                    pypi_0    pypi
+numpy                     1.23.5                   pypi_0    pypi
+omamer                    0.2.3                    pypi_0    pypi
+openjdk                   11.0.9.1             hcf210ce_1    conda-forge
+openssl                   1.1.1t               hfd90126_0    conda-forge
+packaging                 23.0                     pypi_0    pypi
+pandas                    1.5.3                    pypi_0    pypi
+pip                       23.0.1                   pypi_0    pypi
+property-manager          3.0                      pypi_0    pypi
+py-cpuinfo                9.0.0                    pypi_0    pypi
+pyparsing                 3.0.9                    pypi_0    pypi
+pysais                    1.0.8                    pypi_0    pypi
+python                    3.9.16               h218abb5_0
+python-dateutil           2.8.2                    pypi_0    pypi
+pytz                      2022.7.1                 pypi_0    pypi
+readline                  8.2                  hca72f7f_0
+scipy                     1.10.1                   pypi_0    pypi
+setuptools                65.6.3           py39hecd8cb5_0
+six                       1.16.0                   pypi_0    pypi
+sqlite                    3.40.1               h880c91c_0
+tables                    3.8.0                    pypi_0    pypi
+tk                        8.6.12               h5d9f67b_0
+tqdm                      4.64.1                   pypi_0    pypi
+tzdata                    2022g                h04d1e81_0
+verboselogs               1.7                      pypi_0    pypi
+wheel                     0.38.4           py39hecd8cb5_0
+xz                        5.2.10               h6c40b1e_1
+zlib                      1.2.13               h4dc903c_0
+
+
+
+
+
+
+% python -m pip list
+Package          Version   Editable project location
+---------------- --------- -------------------------
+biopython        1.81
+blosc2           2.0.0
+certifi          2022.12.7
+Cython           0.29.33
+DendroPy         4.5.2
+ete3             3.1.2
+gethog3          0.0.5     /Volumes/work/a/gethog3
+humanfriendly    10.0
+llvmlite         0.39.1
+msgpack          1.0.4
+nextflow         22.10.7
+numba            0.56.4
+numexpr          2.8.4
+numpy            1.23.5
+omamer           0.2.3
+packaging        23.0
+pandas           1.5.3
+pip              23.0.1
+property-manager 3.0
+py-cpuinfo       9.0.0
+pyparsing        3.0.9
+PySAIS           1.0.8
+python-dateutil  2.8.2
+pytz             2022.7.1
+scipy            1.10.1
+setuptools       65.6.3
+six              1.16.0
+tables           3.8.0
+tqdm             4.64.1
+verboselogs      1.7
+wheel            0.38.4
+
+
+
+
