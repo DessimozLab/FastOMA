@@ -71,6 +71,7 @@ export PATH="/path/to/jdk-17/bin:$PATH"
 You can make sure that omamer and nextflow is installed with running  
 ``` 
 omamer
+nextflow -h
 ```
 
 
