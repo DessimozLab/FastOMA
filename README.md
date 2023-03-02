@@ -14,16 +14,17 @@ This file is `13 Gb` containing all the gene families of the Tree of Life or you
 
 3- Sepecies tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
 Note that the name of leaves of the tree (species name) should be the same as the file name of fastas (without `.fa` extension) (item 1). 
-You can see an example in the [testdate](https://github.com/sinamajidian/gethog3/tree/master/testdata/in_folder).
+You can see an example in the [testdata](https://github.com/sinamajidian/gethog3/tree/master/testdata/in_folder) folder.
 ```
-$ ls proteome/
+$ ls proteome
 AQUAE.fa  CHLTR.fa  MYCGE.fa
 $ cat species_tree.nwk
 ((AQUAE,CHLTR)inter1,MYCGE)inter2;
 ```
 
-Besides, the internal node should not contain any special character (e.g. `\`  `/` or space). 
+Besides, the internal node should not contain any special character (e.g. `\`  `/` or space).
 The reason is that gethog3 write some files whose names contains the internal node's name. 
+If the species tree does not have label for some/all internal nodes, GetHOG labels them sequentially.  
 
 ### Output:
 Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format
