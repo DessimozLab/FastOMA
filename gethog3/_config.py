@@ -10,13 +10,16 @@ import sys
 #     type=int
 # )
 
+input_rhog_folder = "./bb/"
+
 # in_folder = "./in_folder"+ "/"
 species_tree_address = "species_tree_2.nwk"
 # no space or special charcter in internal node.
 protein_format_qfo_dataset = True
 
 ## output writing files
-gene_trees_write = False  # this also goes for writing msas
+gene_trees_write = True
+msa_write = False
 keep_subhog_each_pickle = False
 
 # filtering omamer
@@ -42,8 +45,12 @@ inferhog_min_cols_msa_to_filter = 100  # used for msa before gene tree inference
 
 inferhog_filter_all_msas_row = True
 
+
 inferhog_resume_rhog = True  # main.py False
-inferhog_resume_subhog = True  # read pickle_subhog  # _infer_subhog.py
+# The intermediate files, internal node  pickle files is not working with nextflow
+# the reason is that the pickles_subhog_folder_all is relative and stored in nextflow_work folder
+# this folder can not be used for  the re-submitting
+inferhog_resume_subhog = False  # read pickle_subhog  # _infer_subhog.py
 
 # inferhog_concurrent_on = True now as an argument
 inferhog_max_workers_num = 8

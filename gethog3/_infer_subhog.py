@@ -306,9 +306,8 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
     sub_msa_list_lowerLevel_ready_raw = sub_msa_list_lowerLevel_ready
     sub_msa_list_lowerLevel_ready = [ii for ii in sub_msa_list_lowerLevel_ready_raw if len(ii)>0]
 
-
     if sub_msa_list_lowerLevel_ready:
-
+        logger_hog.debug("here")
         if len(sub_msa_list_lowerLevel_ready) > 1:
             merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, gene_tree_file_addr)
         else:
@@ -398,7 +397,7 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
 
         if _config.gene_trees_write:
             tree_nwk_SD_labeled = str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;"
-            file_gene_tree = open(gene_tree_file_addr+"_SD_labeled", "w")
+            file_gene_tree = open(gene_tree_file_addr+"_SD_labeled.nwk", "w")
             file_gene_tree.write(tree_nwk_SD_labeled)
             file_gene_tree.close()
 
@@ -437,6 +436,8 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
         # logger_hog.debug(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
         #     [str(i) for i in prot_list_sbuhog_short]))
     else:
+        logger_hog.debug("hogs_this_level_list is empty. msa_filt_row_col:"+str(len(msa_filt_row_col))+" *"+str(len(msa_filt_row_col[0]))+" !!")
+
         hogs_this_level_list = hogs_children_level_list    #  []
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+ ".pickle"
     with open(pickle_subhog_file, 'wb') as handle:

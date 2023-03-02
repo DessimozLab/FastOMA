@@ -16,14 +16,12 @@ import sys
 def infer_subhogs():
     _config.set_configs()
     print(_config.logger_level)
-    print(_config.input_rhog_folder)
+    print("_config.input_rhog_folder)", _config.input_rhog_folder)
     print(_config.parrallel)
     print(_config.species_tree_address)
 
-
     # --input - rhog - folder $rhogs_big_i - -parrallel
     # False
-
 
     address_rhogs_folder = _config.input_rhog_folder
     inferhog_concurrent_on_string = _config.parrallel #  sys.argv[2]   # "False"  # "False"  #
@@ -52,6 +50,20 @@ def infer_subhogs():
 
 """
 TODO
+
+- add python code for validate the input make sure the file is there and decent
+- check input tree 
+_utils_subhog line 92 add check for spaces or chars in 
+
+
+Other output :Orthogroup Sequences 
+- https://davidemms.github.io/orthofinder_tutorials/exploring-orthofinders-results.html 
+- extract and write og for the user 
+- Find universal genes for each clade that are not universal in its superset  10 Clades like  plants fungi
+- Loft format
+
+- provide the user with roothog, mode copy  
+
 
 print as debug
 # [_config.oma_database_address, _config.working_folder_root , _config.species_tree_address , _config.working_id ,

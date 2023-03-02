@@ -89,6 +89,8 @@ def read_species_tree_add_internal(species_tree_address):
                 sys.exit()
 
 
+##
+
     else:
         logger_hog.error("for now we accept phyloxml or nwk format for input species tree.or the file doesn't exist "+species_tree_address)
         sys.exit()
@@ -166,6 +168,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     return (species_tree, species_names_rhog, prot_names_rhog)
 
 
+
 def lable_sd_internal_nodes(tree_out):
     """
     for the input gene tree, run the species overlap method
@@ -195,11 +198,12 @@ def lable_sd_internal_nodes(tree_out):
             node_children = node.children  # print(node_children)
             node_children_species_list = [species_name_dic[node_child] for node_child in node_children]  # list of sets
             # print("node_children_species_list", node_children_species_list)
-            node_children_species_intersection = set.intersection(*node_children_species_list)
+            node_children_species_intersection = set.intersection(*node_children_species_list)  # * is for handling list of sets
+            node_children_species_union = set.union(*node_children_species_list)
 
             if node_children_species_intersection:  # print("node_children_species_list",node_children_species_list)
                 counter_D += 1
-                node.name = "D" + str(counter_D)
+                node.name = "D" + str(counter_D) + "_"+str(len(node_children_species_intersection))+"_"+str(len(node_children_species_union))
             else:
                 counter_S += 1
                 node.name = "S" + str(counter_S)
@@ -322,7 +326,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
         record_edited= SeqRecord(Seq(record_seq_edited), record.id, '', '')
         msa_filtered_col.append(record_edited)
 
-    if _config.gene_trees_write and gene_tree_file_addr:
+    if _config.msa_write and gene_tree_file_addr:
         out_name_msa=gene_tree_file_addr+"filtered_"+"_col_"+str(tresh_ratio_gap_col)+".msa.fa"
         handle_msa_fasta = open(out_name_msa,"w")
         SeqIO.write(msa_filtered_col, handle_msa_fasta,"fasta")
@@ -345,7 +349,7 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
                 msa_filtered_row.append(record)
         else:
             print("issue 12788 : error , seq len is zero when msa_filter_row")
-    if _config.gene_trees_write and gene_tree_file_addr:
+    if _config.msa_write and gene_tree_file_addr:
         out_name_msa = gene_tree_file_addr +"filtered_row_"+str(tresh_ratio_gap_row)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")

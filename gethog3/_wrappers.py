@@ -1,6 +1,7 @@
 
 from Bio import SeqIO
 from gethog3.zoo.wrappers.aligners import mafft
+# iqtree
 from gethog3.zoo.wrappers.treebuilders import fasttree
 # from trimmers.trimal import TrimAl
 from ete3 import Tree
@@ -31,8 +32,8 @@ def merge_msa(list_msas, gene_tree_file_addr):
     # print(time_duration)
     #logger_hog.info \
     #    (str(len(list_msas)) + " msas are merged with length of "+ str(len(merged)) + "  " + str (len(merged[0])))
-    if _config.gene_trees_write:
-        SeqIO.write(merged, gene_tree_file_addr + "msa.fa", "fasta")
+    if _config.msa_write:
+        SeqIO.write(merged, gene_tree_file_addr + "_msa.fa", "fasta")
 
     return merged
 

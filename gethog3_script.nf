@@ -170,7 +170,6 @@ workflow {
 
 //     pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
 //     pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}
-
     prb = pickle_big_rhog.collect()
     prr = pickle_rest_rhog.collect()
     all_pickles = prb.mix(prr)
@@ -185,3 +184,9 @@ workflow {
 
 }
 
+// memory {12.GB * (2*task.attempt - 1)}
+//    time {24.hour}
+//    errorStrategy {
+//      task.exitStatus in [1,99,143,137,104,134,139,145,140] ? ‘retry’ : ‘terminate’
+//    }
+//    maxRetries 4
