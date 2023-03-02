@@ -51,6 +51,10 @@ def infer_subhogs():
 """
 TODO
 
+- use same seed for hog sampling and fasttree/mafft if they have 
+
+
+
 - add python code for validate the input make sure the file is there and decent
 - check input tree 
 _utils_subhog line 92 add check for spaces or chars in 

@@ -6,14 +6,22 @@ GetHOG is a scalable software package for inferring orthology relationship.
 
 ### Input: 
 1- Sets of protein sequences in FASTA format (with `.fa` extension) in the folder `proteome`.
-The name of each fasta file is the name of species.
+The name of each fasta file is the name of species .
 
 2- The omamer database which you can download [this](https://omabrowser.org/All/LUCA.h5) 
 which is from [OMA browser](https://omabrowser.org/oma/current/). 
 This file is `13 Gb` containing all the gene families of the Tree of Life or you can download it for a subset of them, e.g. Primates (352MB). 
 
 3- Sepecies tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
-Note that the leaves should corrospond to the name of fasta files (item 1). 
+Note that the name of leaves of the tree (species name) should be the same as the file name of fastas (without `.fa` extension) (item 1). 
+You can see an example in the [testdate](https://github.com/sinamajidian/gethog3/tree/master/testdata/in_folder).
+```
+$ ls proteome/
+AQUAE.fa  CHLTR.fa  MYCGE.fa
+$ cat species_tree.nwk
+((AQUAE,CHLTR)inter1,MYCGE)inter2;
+```
+
 Besides, the internal node should not contain any special character (e.g. `\`  `/` or space). 
 The reason is that gethog3 write some files whose names contains the internal node's name. 
 
@@ -116,7 +124,7 @@ cd gethog3/testdata
 wget https://omabrowser.org/All/Primates.h5    # 352MB
 mv Primates.h5  in_folder/omamerdb.h5 
 ```
-(This is for the test however, I would suggest downloading the `LUCA.h5` instead of `Primates.h5` for your real analysis.)
+(This is for the test however, I would suggest downloading the `LUCA.h5` instead of `Primates.h5` for your real analysis.). Check the item 2 in the [input section](https://github.com/sinamajidian/gethog3#input) for details.
 
 
 Now we have such a structre in our  testdata folder.
