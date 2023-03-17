@@ -36,7 +36,7 @@ In summary, you need to 1) install GETHOG3 using pip after its prerequisites (be
 and 3) run GETHOG3 using the nextflow recipe `gethog3_script.nf`. 
 ```
 python -m pip install ./gethog3 
-nextflow  gethog3_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder
+nextflow  gethog3_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
 ```
 For a detailed instruction start from prerequisites and continue to the section [How to run GETHOG3 on the test data (details)](https://github.com/sinamajidian/gethog3#how-to-run-gethog3-on-the-test-data-details).
 
@@ -145,17 +145,17 @@ $ tree ../testdata/
 Finally, run the package using nextflow as below:
 ```
 # cd gethog3/testdata
-nextflow ../gethog3_script.nf  --input_folder in_folder   --output_folder out_folder
+nextflow ../gethog3_script.nf  --input_folder in_folder   --output_folder out_folder  -with-report
 ```
 Note that to have a comprehensive test, we set the default value of needed cpus as 10.
 
 After few minutes, the run for test data finishes. 
 ```
-[] process > omamer_run (2)      [100%] 3 of 3 ✔
+[] process > omamer_run (3)      [100%] 3 of 3 ✔
 [] process > infer_roothogs (1)  [100%] 1 of 1 ✔
 [] process > batch_roothogs (1)  [100%] 1 of 1 ✔
 [] process > hog_big (1)         [100%] 1 of 1 ✔
-[] process > hog_rest (2)        [100%] 2 of 2 ✔
+[] process > hog_rest ( )        [100%] 2 of 2 ✔
 [] process > collect_subhogs (1) [100%] 1 of 1 ✔
 ```
 If the run interrupted, by adding `-resume` to the nextflow commond line, you can continue your previous nextflow job. 

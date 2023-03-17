@@ -21,7 +21,7 @@ class HOG:
         self._rhogid_num = rhogid_num
         self.__class__._hogid_iter += 1
         # 0070124
-        self._hogid = "HOG:B" + str(self._rhogid_num).zfill(7) + "_sub" + str(self.__class__._hogid_iter)
+        self._hogid = "HOG_" + str(self._rhogid_num).zfill(7) + "_sub" + str(self.__class__._hogid_iter)
         self._taxnomic_range = taxnomic_range  # print("**** orthoxml_to_newick.py new HOG is instantiated with id", self._hogid)
 
         if isinstance(input_instantiate, SeqRecord):  # if len(sub_hogs)==1:

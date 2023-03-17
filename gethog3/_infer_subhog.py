@@ -45,7 +45,7 @@ def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_fold
         os.makedirs(pickles_subhog_folder)
 
     logger_hog.debug("\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")
-    rhog_i_prot_address = rhogs_fa_folder + "/HOG_B" + str(rhogid_num).zfill(7) + ".fa"
+    rhog_i_prot_address = rhogs_fa_folder + "/HOG_" + str(rhogid_num).zfill(7) + ".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
     logger_hog.debug("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
     (species_tree) = _utils_subhog.read_species_tree_add_internal(_config.species_tree_address)
@@ -222,7 +222,7 @@ def singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rh
                         return len(hogs_children_level_list)
 
     logger_hog.debug("* reading prot address  " + str(this_level_node_name))
-    rhog_i_prot_address = rhogs_fa_folder +"/HOG_B"+str(rhogid_num).zfill(7)+".fa"
+    rhog_i_prot_address = rhogs_fa_folder +"/HOG_"+str(rhogid_num).zfill(7)+".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
     species_names_rhog_nonuniq = [seq.id.split("||")[1] for seq in rhog_i]
     prot_idx_interest_in_rhog = [idx for idx in range(len(species_names_rhog_nonuniq)) if
@@ -436,12 +436,16 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
         # logger_hog.debug(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
         #     [str(i) for i in prot_list_sbuhog_short]))
     else:
-        logger_hog.debug("hogs_this_level_list is empty. msa_filt_row_col:"+str(len(msa_filt_row_col))+" *"+str(len(msa_filt_row_col[0]))+" !!")
+        if msa_filt_row_col:
+            logger_hog.debug("hogs_this_level_list is empty. msa_filt_row_col:"+str(len(msa_filt_row_col))+" *"+str(len(msa_filt_row_col[0]))+" !!")
+        else:
+            logger_hog.debug("hogs_this_level_list is empty. msa_filt_row_col:" + str(len(msa_filt_row_col)) +"! .")
 
         hogs_this_level_list = hogs_children_level_list    #  []
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+ ".pickle"
     with open(pickle_subhog_file, 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
 
     return len(hogs_children_level_list)
 

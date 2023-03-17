@@ -98,6 +98,13 @@ there shouldnt be any space in the tree name internal node name as well"
 
 - internal node _0 ,  the root name disapears , beacause of ete3 behaviour 
 
+
+
+check if all files in proteome are represented in the newick tree.
+throw a warning wit few  proteins 
+proteins were associated with known HOGs, and warn if less than ~80 % of proteins are associated with known HOGs.
+
+
 """
 
 

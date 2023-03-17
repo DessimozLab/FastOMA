@@ -6,7 +6,9 @@ params.proteome_folder = params.input_folder + "/proteome"
 params.proteomes = params.proteome_folder + "/*"
 
 params.hogmap_folder = params.output_folder + "/hogmap"
-params.rhogs_folder = params.output_folder + "/rhogs_all"
+
+params.rhogs_folder = params.input_folder + "/rhogs_all"
+
 params.species_tree = params.input_folder + "/species_tree.nwk"
 params.pickles_rhogs_folder = params.output_folder + "/pickle_rhogs"
 
@@ -127,26 +129,27 @@ process collect_subhogs{
 
 
 workflow {
-    proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
-    proteome_folder = Channel.fromPath(params.proteome_folder)
-    hogmap_folder = Channel.fromPath(params.hogmap_folder)
+    //proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
+    //proteome_folder = Channel.fromPath(params.proteome_folder)
+    //hogmap_folder = Channel.fromPath(params.hogmap_folder)
     rhogs_folder = Channel.fromPath(params.rhogs_folder)
     pickles_rhogs_folder =  Channel.fromPath(params.pickles_rhogs_folder)
-    omamerdb = Channel.fromPath(params.input_folder+"/omamerdb.h5")
+    //omamerdb = Channel.fromPath(params.input_folder+"/omamerdb.h5")
     // proteomes.view{"prot ${it}"}
-    proteomes_omamerdb = proteomes.combine(omamerdb)
+    //proteomes_omamerdb = proteomes.combine(omamerdb)
     // proteomes_omamerdb.view{"proteomes_omamerdb ${it}"}
-    (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb)
-    ready_omamer_run_c = ready_omamer_run.collect()
+    //(hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb)
+    //ready_omamer_run_c = ready_omamer_run.collect()
     // hogmaps.view{"hogmap ${it}"}
 
     // proteome_folder.view{"proteome_folder ${it} "}
     // (rhogs, gene_id_dic_xml) = infer_roothogs(hogmaps, hogmap_folder, proteome_folder)
-    (rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder)
+    //(rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder)
     // rhogs.view{"rhogs ${it}"}
     // rhogs_folder.view{"rhogs_folder xx ${it}"}
 
-    ready_infer_roothogs_c = ready_infer_roothogs.collect()
+    //ready_infer_roothogs_c = ready_infer_roothogs.collect()
+    ready_infer_roothogs_c = true
     (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, rhogs_folder)
     ready_batch_roothogs_c = ready_batch_roothogs.collect()
 
@@ -176,7 +179,8 @@ workflow {
     prb = pickle_big_rhog.collect()
     prr = pickle_rest_rhog.collect()
     all_pickles = prb.mix(prr)
-//     gene_id_dic_xml = Channel.fromPath("gene_id_dic_xml.pickle")
+
+    gene_id_dic_xml = Channel.fromPath("in_folder/gene_id_dic_xml.pickle")
     pickle_rhogs_folder = Channel.fromPath(params.output_folder+"/pickle_rhogs")
 //     orthoxml_file = collect_subhogs(all_pickles.collect(), pickle_rhogs_folder, gene_id_dic_xml)
 

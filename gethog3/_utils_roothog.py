@@ -60,7 +60,7 @@ def parse_proteome():  # list_oma_species
     return query_species_names, query_prot_recs
 
 
-def add_species_name_gene_id(query_prot_recs, query_species_names, ):
+def add_species_name_gene_id(query_prot_recs, query_species_names, ):  # TODO what's the last item?
     """
     adding the name of species to each protein record
         - based on file name
@@ -272,7 +272,7 @@ def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, m
         rhogid_num_list.append(rhogid_num)
 
         if min_rhog_size <= len(rhogid_prot_rec_query) <= max_rhog_size:
-            SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder +"/HOG_B"+ str(rhogid_num).zfill(7)+".fa", "fasta")
+            SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder +"/HOG_"+ str(rhogid_num).zfill(7)+".fa", "fasta")
 
     logger_hog.info("Writing Sequences of roothogs finished." )
 

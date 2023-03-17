@@ -10,7 +10,13 @@ import sys
 #     type=int
 # )
 
-input_rhog_folder = "./bb/"
+#  to have more proteins in the ortho groups
+#  omamer_fscore_treshold_big_rhog = 0.05
+#  inferhog_tresh_ratio_gap_row = 0.1
+
+
+
+input_rhog_folder = "./"
 
 # in_folder = "./in_folder"+ "/"
 species_tree_address = "species_tree_2.nwk"
@@ -18,16 +24,17 @@ species_tree_address = "species_tree_2.nwk"
 protein_format_qfo_dataset = True
 
 ## output writing files
-gene_trees_write = True
+gene_trees_write = False
 msa_write = False
 keep_subhog_each_pickle = False
 
+
 # filtering omamer
-omamer_fscore_treshold_big_rhog = 0.5  # 0.2
+omamer_fscore_treshold_big_rhog = 0.5  #  to have more proteins in the ortho groups 0.05
 treshold_big_rhog_szie = 10
 
 ## hogclass configs
-hogclass_max_num_seq = 5  # subsampling in msa
+hogclass_max_num_seq = 30  # subsampling in msa
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 500
 hogclass_tresh_ratio_gap_col = 0.2
 
@@ -36,10 +43,10 @@ lable_SD_internal = "species_overlap"  # "reconcilation" "species_overlap"
 tree_tool = "fasttree"  # "fasttree"  "iqtree"  # for  gene tree with two, we use
 
 rooting_method = "midpoint"  # "midpoint" "mad"
-rooting_mad_executable_path = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/installers/mad/mad"
+rooting_mad_executable_path = "mad" # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/installers/mad/
 
 ##inferhog
-inferhog_tresh_ratio_gap_row = 0.4
+inferhog_tresh_ratio_gap_row = 0.1   # to have more proteins in the ortho groups 0.1
 inferhog_tresh_ratio_gap_col = 0.4
 inferhog_min_cols_msa_to_filter = 100  # used for msa before gene tree inference and  saving msa in hog class
 

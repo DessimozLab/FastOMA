@@ -148,7 +148,7 @@ def concatenate(alignments):
         # if any are missing, create unknown data of the right length,
         # stuff the string representation into the tmp dict
         for label in missing:
-            new_seq =  unknown_char*length  # UnknownSeq(length, character=unknown_char) # deprecate fro biopython
+            new_seq = unknown_char*length  # UnknownSeq(length, character=unknown_char) # deprecate fro biopython
             tmp[label].append(str(new_seq))
 
         # else stuff the string representation into the tmp dict
