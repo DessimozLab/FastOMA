@@ -1,6 +1,6 @@
-GetHOG v3.0
+FastOMA
 ======
-GetHOG is a scalable software package for inferring orthology relationship.  
+FastOMA is a scalable software package for inferring orthology relationship.  
 
 # Input and Output: 
 
@@ -14,7 +14,7 @@ This file is `13 Gb` containing all the gene families of the Tree of Life or you
 
 3- Sepecies tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
 Note that the name of leaves of the tree (species name) should be the same as the file name of fastas (without `.fa` extension) (item 1). 
-You can see an example in the [testdata](https://github.com/sinamajidian/gethog3/tree/master/testdata/in_folder) folder.
+You can see an example in the [testdata](https://github.com/sinamajidian/FastOMA/tree/master/testdata/in_folder) folder.
 ```
 $ ls proteome
 AQUAE.fa  CHLTR.fa  MYCGE.fa
@@ -23,35 +23,35 @@ $ cat species_tree.nwk
 ```
 
 Besides, the internal node should not contain any special character (e.g. `\`  `/` or space).
-The reason is that gethog3 write some files whose names contains the internal node's name. 
-If the species tree does not have label for some/all internal nodes, GetHOG labels them sequentially.  
+The reason is that FastOMA write some files whose names contains the internal node's name. 
+If the species tree does not have label for some/all internal nodes, FastOMA labels them sequentially.  
 
 ### Output:
 Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format
 which can be used with [PyHAM](https://github.com/DessimozLab/pyham)
 
 
-# How to run GETHOG3
-In summary, you need to 1) install GETHOG3 using pip after its prerequisites (below), and  2) put the input files in the folder `in_folder` 
-and 3) run GETHOG3 using the nextflow recipe `gethog3_script.nf`. 
+# How to run FastOMA
+In summary, you need to 1) install FastOMA using pip after its prerequisites (below), and  2) put the input files in the folder `in_folder` 
+and 3) run FastOMA using the nextflow recipe `FastOMA_script.nf`. 
 ```
-python -m pip install ./gethog3 
-nextflow  gethog3_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
+python -m pip install ./FastOMA 
+nextflow  FastOMA_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
 ```
-For a detailed instruction start from prerequisites and continue to the section [How to run GETHOG3 on the test data (details)](https://github.com/sinamajidian/gethog3#how-to-run-gethog3-on-the-test-data-details).
+For a detailed instruction start from prerequisites and continue to the section [How to run FastOMA on the test data (details)](https://github.com/sinamajidian/gethog3#how-to-run-gethog3-on-the-test-data-details).
 
 
 ## prerequisites
 
-GETHOG3 needs following software packages:  [omamer](https://github.com/DessimozLab/omamer),  [Nextflow](https://nextflow.io/),
+FastOMA needs following software packages:  [omamer](https://github.com/DessimozLab/omamer),  [Nextflow](https://nextflow.io/),
 [Biopython](https://github.com/biopython/biopython), [dendropy](https://dendropy.org/),
 [pyparsing](https://github.com/pyparsing/pyparsing/) , [ete3](http://etetoolkit.org), [fasttree](http://www.microbesonline.org/fasttree/)
 and [mafft](http://mafft.cbrc.jp/alignment/software/).
 
 To do so, you can start with a fresh [conda](https://docs.conda.io/en/latest/miniconda.html) environment.
 ```
-conda create --name gethog3 python=3.9
-conda activate gethog3
+conda create --name FastOMA python=3.9
+conda activate FastOMA
 ```
 You can install the packages using [pip](https://pypi.org/).
 You can always make sure whether you are using the python that you intended to use with `which python`  and `which python3`.
@@ -84,32 +84,32 @@ nextflow -h
 ```
 
 
-## How to run GETHOG3 on the test data (details)
-First, download the GETHOG3 package:
+## How to run FastOMA on the test data (details)
+First, download the FastOMA package:
 ```
-wget https://github.com/sinamajidian/gethog3/archive/refs/heads/master.zip
+wget https://github.com/sinamajidian/FastOMA/archive/refs/heads/master.zip
 unzip master.zip
-mv gethog3-master gethog3
+mv FastOMA-master FastOMA
 ```
 or clone it 
 ```
-git clone git@github.com:sinamajidian/gethog3.git
+git clone git@github.com:sinamajidian/FastOMA.git
 ```
 Then install it
 ```
-ls gethog3/setup.py
-python -m pip install -e gethog3 
+ls FastOMA/setup.py
+python -m pip install -e FastOMA 
 ```
 
 The output would be 
 ```
   Preparing metadata (setup.py) ... done
-Building wheels for collected packages: gethog3
-  Building wheel for gethog3 (setup.py) ... done
-  Created wheel for gethog3: filename=gethog3-0.0.5-py3-none-any.whl size=29386 sh
-Successfully built gethog3
-Installing collected packages: gethog3
-Successfully installed gethog3-0.0.5
+Building wheels for collected packages: FastOMA
+  Building wheel for FastOMA (setup.py) ... done
+  Created wheel for FastOMA: filename=FastOMA-0.0.5-py3-none-any.whl size=29386 sh
+Successfully built FastOMA
+Installing collected packages: FastOMA
+Successfully installed FastOMA-0.0.5
 ```
 
 You can check your installation with 
@@ -121,11 +121,11 @@ infer-roothogs --version
 
 Then, cd to the `testdata` folder and download the omamer database and change its name to `omamerdb.h5`.
 ```
-cd gethog3/testdata
+cd FastOMA/testdata
 wget https://omabrowser.org/All/Primates.h5    # 352MB
 mv Primates.h5  in_folder/omamerdb.h5 
 ```
-(This is for the test however, I would suggest downloading the `LUCA.h5` instead of `Primates.h5` for your real analysis.). Check the item 2 in the [input section](https://github.com/sinamajidian/gethog3#input) for details.
+(This is for the test however, I would suggest downloading the `LUCA.h5` instead of `Primates.h5` for your real analysis.). Check the item 2 in the [input section](https://github.com/sinamajidian/FastOMA#input) for details.
 
 
 Now we have such a structre in our  testdata folder.
@@ -144,8 +144,8 @@ $ tree ../testdata/
 
 Finally, run the package using nextflow as below:
 ```
-# cd gethog3/testdata
-nextflow ../gethog3_script.nf  --input_folder in_folder   --output_folder out_folder  -with-report
+# cd FastOMA/testdata
+nextflow ../FastOMA_script.nf  --input_folder in_folder   --output_folder out_folder  -with-report
 ```
 Note that to have a comprehensive test, we set the default value of needed cpus as 10.
 
@@ -197,11 +197,11 @@ among which `output_hog_.orthoxml` is the final output. Its content looks like t
 For running on a SLURM cluster you can add `-c ../nextflow_slurm.config`  to the commond line.
 
 ```
-# cd gethog3/testdata
+# cd FastOMA/testdata
 # rm -r out_folder work          # You may remove stuff from previous run
-# ls ../gethog3_script.nf 
+# ls ../FastOMA_script.nf 
 
-nextflow ../gethog3_script.nf  -c ../nextflow_slurm.config   --input_folder in_folder   --output_folder out_folder
+nextflow ../FastOMA_script.nf  -c ../nextflow_slurm.config   --input_folder in_folder   --output_folder out_folder
 ```
 
 
