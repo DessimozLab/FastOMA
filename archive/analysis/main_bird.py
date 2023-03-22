@@ -1,8 +1,8 @@
 from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
 
-from gethog3 import _utils_subhog, _infer_subhog, _utils_roothog
-from gethog3._utils_subhog import logger_hog
+from fastoma import _utils_subhog, _infer_subhog, _utils_roothog
+from fastoma._utils_subhog import logger_hog
 
 if __name__ == '__main__':
 

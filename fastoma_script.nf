@@ -166,6 +166,7 @@ workflow {
 
 
 
+
     rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
 //     rhogsrest_tree_ready.view{"rhogsrest_tree_ready ${it}"}
 

@@ -550,7 +550,7 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # import _inferhog
 #
 # # from _utils import logger_hog
-# import gethog3._utils_rhog as _utils_rhog
+# import fastoma._utils_rhog as _utils_rhog
 #
 # # from distributed import get_client
 # # from dask.distributed import rejoin, secede
@@ -1161,7 +1161,7 @@ def gene_num_convertor_old(rhogid_num_list_input, address_rhogs_folder, format_p
 # import _inferhog
 #
 # # from _utils import logger_hog
-# import gethog3._utils_rhog as _utils_rhog
+# import fastoma._utils_rhog as _utils_rhog
 #
 # # from distributed import get_client
 # # from dask.distributed import rejoin, secede

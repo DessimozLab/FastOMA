@@ -1,8 +1,8 @@
 
 from Bio import SeqIO
-from gethog3.zoo.wrappers.aligners import mafft
+from fastoma.zoo.wrappers.aligners import mafft
 # iqtree
-from gethog3.zoo.wrappers.treebuilders import fasttree
+from fastoma.zoo.wrappers.treebuilders import fasttree
 # from trimmers.trimal import TrimAl
 from ete3 import Tree
 

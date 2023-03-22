@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 
-name = 'gethog3'
+name = 'fastoma'
 __version__ = None
 with open('{:s}/__init__.py'.format(name), 'rt') as fp:
     for line in fp:
@@ -28,10 +28,10 @@ setup(
     license='MIT',
     entry_points={
         'console_scripts': [
-            "infer-roothogs=gethog3.infer_roothogs:infer_roothogs",
-            "batch-roothogs=gethog3.batch_roothogs:batch_roothogs",
-            "infer-subhogs=gethog3.infer_subhogs:infer_subhogs",
-            "collect-subhogs=gethog3.collect_subhogs:collect_subhogs",
+            "infer-roothogs=fastoma.infer_roothogs:infer_roothogs",
+            "batch-roothogs=fastoma.batch_roothogs:batch_roothogs",
+            "infer-subhogs=fastoma.infer_subhogs:infer_subhogs",
+            "collect-subhogs=fastoma.collect_subhogs:collect_subhogs",
         ]
     },
 )

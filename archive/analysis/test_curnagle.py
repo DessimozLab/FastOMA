@@ -143,7 +143,7 @@ for node_species_tree in sub_species_tree.traverse(strategy="postorder"):
 # # import _inferhog
 # #
 # # # from _utils import logger_hog
-# # import gethog3._utils_rhog as _utils_rhog
+# # import fastoma._utils_rhog as _utils_rhog
 # #
 # # # from distributed import get_client
 # # # from dask.distributed import rejoin, secede
