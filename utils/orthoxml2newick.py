@@ -3,19 +3,23 @@
 
 
 
-# copy to zoo folder
-#
+from fastoma.zoo.hog.convert import orthoxml_to_newick
+
+input_orthoxml = "folder/my_hogs.orthoxml"
+output_folder = "output_folder"
 
 
-import sys
-sys.path.insert(1, '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/gits/zoo/zoo/hog/')
+trees = orthoxml_to_newick(input_orthoxml)
 
-from convert import orthoxml_to_newick
-
-
-folder= "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/run28jan/working_nf/"
-file= folder+"hog_euk_28jan_all.orthoxml"
-trees = orthoxml_to_newick(file)
 print(len(trees))
 
+
 # write them as files
+
+for tree_idx, tree_i in enumerate(trees):
+
+    tree_file_i = output_folder+"tree_"+str(tree_idx)+".nwk"
+    tree_i.write(format=1, outfile=tree_file_i)
+
+
+

@@ -2,25 +2,25 @@
 
 # to convert orthoxml to rootHOG (gene familes)
 #
+from Bio import SeqIO
+
+from fastoma.zoo.hog.convert import extract_flat_groups_at_level
 
 
-from zoo.hog import extract_flat_groups_at_level
-folder= "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/run28jan/working_nf/"
-file= folder+"hog_euk_28jan_all.orthoxml"
-file
+input_orthoxml = "folder/my_hogs.orthoxml"
+output_folder = "output_folder"
+
 
 #oxml = #os.path.join(file, "coverage_test_files", simpleEx.orthoxml")
 toplevel_groups = []
-for grp in extract_flat_groups_at_level(file):
+for grp in extract_flat_groups_at_level(input_orthoxml):
     toplevel_groups.append(set(g.xref for g in grp))
 
 print(len(toplevel_groups))
-toplevel_groups[0]
 
+for toplevel_group_idx , toplevel_group in enumerate(toplevel_groups):
+    SeqIO.write(toplevel_group, output_folder+"family_"+str(toplevel_group_idx)+".fasta", "fasta")
 
-#
-
-write them as fasta files
 
 
 #  unversial genes
