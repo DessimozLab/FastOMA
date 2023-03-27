@@ -3,6 +3,7 @@ import collections
 import re
 
 
+
 __all__ = ['tail', 'fall_back_tail', 'grep']
 
 

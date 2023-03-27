@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractmethod
 from enum import Enum
 from Bio import AlignIO, SeqIO
 
+
 from ...seq_utils import is_dna, identify_input, AlignmentInput
 from .. import WrapperError
 

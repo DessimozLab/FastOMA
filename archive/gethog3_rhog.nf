@@ -1,5 +1,6 @@
 
 
+
 params.input_folder = "./in_folder/"
 params.output_folder = "./out_folder/"
 params.proteome_folder = params.input_folder + "/proteome"

@@ -7,6 +7,7 @@ from locale import getpreferredencoding
 from subprocess import PIPE, Popen
 import logging
 
+
 IS_PY3 = sys.version_info[0] == 3
 POSIX = 'posix' in sys.builtin_module_names
 DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"

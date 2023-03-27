@@ -102,6 +102,7 @@ def get_size_all_HOGs(XML_root):
         OGs[OG_etree.get("id")]= len(OG_genes)
     return OGs
 
+
 def get_speciesTree(fn_orthoxml):
     '''
     Extract from a orthoxml the species tree based on the internal topology

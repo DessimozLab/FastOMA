@@ -6,6 +6,7 @@ from pyparsing import ParseException
 import shutil
 from Bio import SeqIO
 
+
 from .parsers import IqtreeParser
 from .base_treebuilder import TreeBuilder, AlignmentInput, DataType
 

@@ -21,6 +21,7 @@ from . import _config
 
 
 
+
 def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, rhogs_fa_folder):
 
     # for now each contain one rhog

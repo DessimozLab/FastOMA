@@ -7,6 +7,7 @@ from Bio import SeqIO
 from fastoma.zoo.hog.convert import extract_flat_groups_at_level
 
 
+
 input_orthoxml = "folder/my_hogs.orthoxml"
 output_folder = "output_folder"
 

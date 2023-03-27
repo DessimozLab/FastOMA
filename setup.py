@@ -2,7 +2,6 @@
 
 from setuptools import setup, find_packages
 
-
 name = 'fastoma'
 __version__ = None
 with open('{:s}/__init__.py'.format(name), 'rt') as fp:

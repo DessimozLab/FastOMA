@@ -1,6 +1,7 @@
 GetHOG test data
 ======
 
+
 This repo contains a small dataset as the test example.
 
 1- The proteome folder includign three fasta files `AQUAE.fa`, `CHLTR.fa`  and  `MYCGE.fa` correspoding to three species.

@@ -10,6 +10,7 @@ from ._utils_subhog import logger_hog
 from . import _config
 
 
+
 class HOG:
     _hogid_iter = 10000
 

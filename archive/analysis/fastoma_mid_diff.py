@@ -1,5 +1,6 @@
 
 
+
 def prepare_species_tree(rhog_i, species_tree):
     for rec in rhog_i:
         prot_name = rec.name  # 'tr|E3JPS4|E3JPS4_PUCGT

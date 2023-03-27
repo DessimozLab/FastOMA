@@ -3,6 +3,7 @@ from typing import List, Iterable
 from random import randint
 
 
+
 class GeneRefManager:
     def __init__(self):
         self.xrefs = {}

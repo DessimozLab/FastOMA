@@ -8,6 +8,7 @@ from ..options import StringOption, FlagOption, IntegerOption, FloatOption, Mult
 
 
 
+
 class ProGraphMSACLI(AbstractCLI):
     """
     PrographMSA low-level command line interface

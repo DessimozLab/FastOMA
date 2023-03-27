@@ -77,6 +77,7 @@ class OrthoxmlToNewick:
         return self.trees
 
 
+
 def orthoxml_to_newick(filename, xref_tag="protId"):
     """function to convert all HOGs from an orthoxml file into newick trees
 

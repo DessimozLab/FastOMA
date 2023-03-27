@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
 
+
 class TrimAlCLI(AbstractCLI):
     """
        TrimAl low-level command line interface

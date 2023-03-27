@@ -3,6 +3,7 @@ from ._utils_subhog import logger_hog
 from . import _utils_roothog
 from . import _config
 
+
 """
 proteomes of species as fasta files in /proteome/
 omamer's output of  in /hogmap/

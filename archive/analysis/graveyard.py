@@ -1,4 +1,5 @@
 
+
 # if format_prot_name == 1:  # qfo dataset
 #     prot_name = prot_i.name  # 'tr|E3JPS4|E3JPS4_PUCGT
 #     species_i = prot_name.split("|")[-1].split("_")[-1].strip()

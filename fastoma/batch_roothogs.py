@@ -7,7 +7,6 @@ import shutil
 from os import listdir
 from . import _config
 
-
 def list_rhog_fastas(address_rhogs_folder):
     """
      create orthoxml_to_newick.py list of rootHOG IDs  stored in the folder of rHOG .

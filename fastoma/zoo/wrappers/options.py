@@ -3,6 +3,7 @@ from six import string_types
 from abc import ABCMeta, abstractproperty
 from dendropy import Tree
 
+
 class Option(object):
     """Abstract base class for an option.
 

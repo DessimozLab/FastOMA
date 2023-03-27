@@ -9,6 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+
 class MSATrimmer:
     """
     Base class for wrappers of msa trimming software
