@@ -144,7 +144,7 @@ for node_species_tree in sub_species_tree.traverse(strategy="postorder"):
 # # import _inferhog
 # #
 # # # from _utils import logger_hog
-# # import fastoma._utils_rhog as _utils_rhog
+# # import FastOMA._utils_rhog as _utils_rhog
 # #
 # # # from distributed import get_client
 # # # from dask.distributed import rejoin, secede
@@ -158,7 +158,7 @@ for node_species_tree in sub_species_tree.traverse(strategy="postorder"):
 # #     file_folders = (address_rhogs_folder, gene_trees_folder, pickle_folder, species_tree_address)
 # #
 # #
-# #     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastoma/archive/OmaServer.h5"
+# #     oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/FastOMA/archive/OmaServer.h5"
 # #     # in_folder+"omamer_database/oma_path/OmaServer.h5"
 # #     print("rHOG inferece has started. The oma database address is in ", oma_database_address)
 # #     (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)

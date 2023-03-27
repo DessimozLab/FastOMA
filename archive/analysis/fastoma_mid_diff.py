@@ -1,5 +1,5 @@
 
-
+import pickle
 
 def prepare_species_tree(rhog_i, species_tree):
     for rec in rhog_i:
@@ -250,7 +250,7 @@ if __name__ == "__main__":
     logger_hog = logging.getLogger("hog")
     logger_hog.setLevel(logging.INFO)  # WARN
     # make sure addresses end with "/"
-    address_working_folder = "/work/FAC/FBM/DBC/cdessim2/default/ayazdiza/fastoma-dask/"
+    address_working_folder = "/work/FAC/FBM/DBC/cdessim2/default/ayazdiza/FastOMA-dask/"
     address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/ayazdiza/family-score-adjusted/AdjustedFamilyScore_All_rHOGs/"
     address_pickles_folder = "/work/FAC/FBM/DBC/cdessim2/default/ayazdiza/fastoma_repo/temp_results/pickles/mid_adjustedfamily_40_1/"
     species_tree_address = address_working_folder + "lineage_tree_qfo.phyloxml"
@@ -266,6 +266,7 @@ if __name__ == "__main__":
     ## create orthoxml_to_newick.py list of rootHOG IDs  stored in the folder of rHOG .
     rhog_files = listdir(address_rhogs_folder)[:]
     print("#", rhog_files, len(rhog_files))
+
 
     file_sizes = [os.path.getsize(f'{address_rhogs_folder}{i}') for i in rhog_files]
     file_name_size_dict = dict(zip(rhog_files, file_sizes))

@@ -5,7 +5,7 @@ from pyparsing import ParseException
 import shutil
 from Bio import AlignIO, SeqIO
 import dendropy
-from fastoma.zoo.wrappers import WrapperError
+from FastOMA.zoo.wrappers import WrapperError
 import logging
 
 

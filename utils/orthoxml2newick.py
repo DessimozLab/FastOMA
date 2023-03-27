@@ -2,7 +2,7 @@
 
 
 
-from fastoma.zoo.hog.convert import orthoxml_to_newick
+from FastOMA.zoo.hog.convert import orthoxml_to_newick
 
 input_orthoxml = "folder/my_hogs.orthoxml"
 output_folder = "output_folder"

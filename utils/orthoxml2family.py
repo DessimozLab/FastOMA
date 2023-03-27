@@ -4,7 +4,7 @@
 #
 from Bio import SeqIO
 
-from fastoma.zoo.hog.convert import extract_flat_groups_at_level
+from FastOMA.zoo.hog.convert import extract_flat_groups_at_level
 
 
 

@@ -1,10 +1,11 @@
 
 from Bio import SeqIO
-from fastoma.zoo.wrappers.aligners import mafft
+from FastOMA.zoo.wrappers.aligners import mafft
 # iqtree
-from fastoma.zoo.wrappers.treebuilders import fasttree
+from FastOMA.zoo.wrappers.treebuilders import fasttree
 # from trimmers.trimal import TrimAl
 from ete3 import Tree
+
 
 
 from ._utils_subhog import logger_hog

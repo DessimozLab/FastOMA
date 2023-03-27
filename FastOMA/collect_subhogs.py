@@ -22,7 +22,7 @@ def collect_subhogs():
 
     # in_folder = _config.in_folder
 
-    # python ${fastoma} / collect_subhogs.py ${pickle_rhogs} ${gene_id_dic_xml}
+    # python ${FastOMA} / collect_subhogs.py ${pickle_rhogs} ${gene_id_dic_xml}
 
 
     if qfo_bird == "bird_hog":

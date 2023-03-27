@@ -5,7 +5,7 @@ from os import listdir
 import os
 
 
-# use this python code to convert gethog2 rhogs to fastoma
+# use this python code to convert gethog2 rhogs to FastOMA
 # check the following folder address
 # put the followings in  in in_folder
 # 1- gene_id_dic_xml.pickle
@@ -14,7 +14,7 @@ import os
 
 
 # then run nextfolow pypilei
-# nextflow /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/fastoma/archive/gethog3_rhog.nf --input_folder in_folder   --output_folder out_folder -c  /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/fastoma/nextflow_slurm.config
+# nextflow /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/FastOMA/archive/gethog3_rhog.nf --input_folder in_folder   --output_folder out_folder -c  /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/FastOMA/nextflow_slurm.config
 
 
 

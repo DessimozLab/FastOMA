@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-name = 'fastoma'
+name = 'FastOMA'
 __version__ = None
 with open('{:s}/__init__.py'.format(name), 'rt') as fp:
     for line in fp:
@@ -27,10 +27,10 @@ setup(
     license='MIT',
     entry_points={
         'console_scripts': [
-            "infer-roothogs=fastoma.infer_roothogs:infer_roothogs",
-            "batch-roothogs=fastoma.batch_roothogs:batch_roothogs",
-            "infer-subhogs=fastoma.infer_subhogs:infer_subhogs",
-            "collect-subhogs=fastoma.collect_subhogs:collect_subhogs",
+            "infer-roothogs=FastOMA.infer_roothogs:infer_roothogs",
+            "batch-roothogs=FastOMA.batch_roothogs:batch_roothogs",
+            "infer-subhogs=FastOMA.infer_subhogs:infer_subhogs",
+            "collect-subhogs=FastOMA.collect_subhogs:collect_subhogs",
         ]
     },
 )

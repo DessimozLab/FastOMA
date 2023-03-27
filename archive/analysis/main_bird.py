@@ -2,8 +2,8 @@
 from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
 
-from fastoma import _utils_subhog, _infer_subhog, _utils_roothog
-from fastoma._utils_subhog import logger_hog
+from FastOMA import _utils_subhog, _infer_subhog, _utils_roothog
+from FastOMA._utils_subhog import logger_hog
 
 if __name__ == '__main__':
 
@@ -26,7 +26,7 @@ if __name__ == '__main__':
         rHOG=rootHOG.  A subHOG itself is orthoxml_to_newick.py HOG.
         """
 
-        oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastoma/archive/OmaServer.h5"
+        oma_database_address = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/FastOMA/archive/OmaServer.h5"
         # in_folder+"omamer_database/oma_path/OmaServer.h5"
         print("rHOG inferece has started. The oma database address is in ", oma_database_address)
         (oma_db, list_oma_species) = _utils_rhog.parse_oma_db(oma_database_address)
