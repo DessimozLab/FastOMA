@@ -5,8 +5,6 @@ from Bio import AlignIO, SeqIO
 from Bio.Align import MultipleSeqAlignment
 from ...seq_utils import is_dna
 
-
-
 from FastOMA.zoo.wrappers import WrapperError
 from FastOMA.zoo.wrappers.aligners.base_aligner import identify_input
 

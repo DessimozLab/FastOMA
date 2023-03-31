@@ -9,8 +9,6 @@ from Bio import AlignIO, SeqIO
 from .base_treebuilder import TreeBuilder, AlignmentInput, DataType
 from .parsers import RaxmlParser
 
-
-
 from ..abstract_cli import AbstractCLI
 from ..options import StringOption, FlagOption, IntegerOption, FloatOption, MultiOption, OptionSet
 

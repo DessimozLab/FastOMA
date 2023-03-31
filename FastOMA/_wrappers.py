@@ -8,7 +8,7 @@ from ete3 import Tree
 
 
 
-from ._utils_subhog import logger_hog
+from ._config import logger_hog
 from . import _config
 
 

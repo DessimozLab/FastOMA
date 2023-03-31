@@ -107,6 +107,11 @@ throw a warning wit few  proteins
 proteins were associated with known HOGs, and warn if less than ~80 % of proteins are associated with known HOGs.
 
 
+double check 
+     prots_to_remove
+     it seems that it always an input argument! 
+     
+
 """
 
 

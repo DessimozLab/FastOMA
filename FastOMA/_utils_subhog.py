@@ -9,9 +9,10 @@ from typing import List, Tuple
 import random
 from itertools import combinations
 import numpy as np
-import logging
+
 import sys
 
+from ._config import logger_hog
 
 from os import listdir
 # import pickle
@@ -19,20 +20,8 @@ from os import listdir
 # import xml.etree.ElementTree as ET
 
 from . import _config
+from . import _wrappers
 
-
-
-logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
-logger_hog = logging.getLogger("hog")
-
-if _config.logger_level == "INFO":
-    logger_hog.setLevel(logging.INFO)  # DEBUG WARN  INFO
-if _config.logger_level == "DEBUG":
-    logger_hog.setLevel(logging.DEBUG)  # DEBUG WARN  INFO
-# TRACE  DEBUG INFO  WARN  ERROR  FATAL
 
 
 def list_rhog_fastas(address_rhogs_folder):
@@ -177,19 +166,20 @@ def lable_sd_internal_nodes(tree_out):
     species_name_dic = {}
     counter_S = 0
     counter_D = 0
-
+    #suspicious_overlap = False
+    species_suspicious_list = []
     for node in tree_out.traverse(strategy="postorder"):
         # print("** now working on node ",node.name) # node_children
         if node.is_leaf():
             prot_i = node.name
             # species_name_dic[node] = {str(prot_i).split("|")[-1].split("_")[-1]}
             #print(prot_i)
-            species_name_dic[node] = {str(prot_i).split("||")[1][:-1]}
+            species_name_dic[node] = {str(prot_i).split("||")[1]}
         else:
             node.name = "S/D"
             leaves_list = node.get_leaves()  # print("leaves_list", leaves_list)
             # species_name_set = set([str(prot_i).split("|")[-1].split("_")[-1] for prot_i in leaves_list])
-            species_name_set = set([str(prot_i).split("||")[1][:-1] for prot_i in leaves_list])
+            species_name_set = set([str(prot_i).split("||")[1] for prot_i in leaves_list])
             # print("species_name_set", species_name_set)
             species_name_dic[node] = species_name_set
 
@@ -202,10 +192,47 @@ def lable_sd_internal_nodes(tree_out):
             if node_children_species_intersection:  # print("node_children_species_list",node_children_species_list)
                 counter_D += 1
                 node.name = "D" + str(counter_D) + "_"+str(len(node_children_species_intersection))+"_"+str(len(node_children_species_union))
+
+                if len(node_children_species_intersection)/ len(node_children_species_union) < _config.threshold_sd_suspicious:
+                    suspicious_overlap = True
+                    species_suspicious_list += list(node_children_species_intersection)
             else:
                 counter_S += 1
                 node.name = "S" + str(counter_S)
-    return tree_out
+    return (tree_out, species_suspicious_list)
+
+
+def remove_susp_prt_tree(tree_out, merged_msa,species_suspicious_list):
+    # threshold_sd_suspicious_fragment_ratio = 1/3
+
+    for species_suspicious in species_suspicious_list:
+        seq_id_list = []
+        seq_len_per_spe = []
+        for seq in merged_msa:
+            species_name = seq.id.split("||")[1]
+            # print(species_name)
+            if species_name == species_suspicious:
+                seq_len_per_spe.append(len(str(seq.seq).replace('-', '')))
+                seq_id_list.append(seq.id)
+                # print(seq.seq)
+
+        idx_seq = seq_len_per_spe.index(min(seq_len_per_spe))
+        seq_id_susp = seq_id_list[idx_seq]
+        print(seq_len_per_spe, seq_id_list, seq_id_susp)
+
+    # node_susp = [i for i in tree_out.get_leaves() if i.name ==seq_id_susp][0]
+    node_susp = tree_out.search_nodes(name=seq_id_susp)[0]
+    node_susp.delete()
+
+    R_outgroup = tree_out.get_midpoint_outgroup()
+    tree_out.set_outgroup(R_outgroup)  # print("Midpoint rooting is done for gene tree.")
+
+    print(len(tree_out))
+    (tree_out, node_children_species_intersection_suspicious_list) = lable_sd_internal_nodes(tree_out)
+
+    removed_prot = seq_id_susp
+
+    return (removed_prot, tree_out)
 
 
 def lable_SD_internal_nodes_reconcilation(gene_tree, species_tree):
@@ -354,7 +381,59 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
         handle_msa_fasta.close()
     return msa_filtered_row
 
-#
+
+
+def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, prots_to_remove):
+    msa_filt_row_1 = merged_msa  #
+    # if _config.inferhog_filter_all_msas_row:
+    #    msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
+    # if   msa_filt_row_1 and len(msa_filt_row_1[0]) >=
+    if len(msa_filt_row_1[0]) >= _config.inferhog_min_cols_msa_to_filter:
+        # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
+        # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
+        # logger_hog.debug( "We are doing MSA trimming " + str(rhogid_num) + ", for taxonomic level:" + str(node_species_tree.name))
+        # print(len(merged_msa), len(merged_msa[0]))
+
+        if _config.automated_trimAL:
+            msa_filt_col = msa_filt_row_1
+            msa_filt_row_col = _wrappers.trim_msa(msa_filt_row_1)
+        else:
+            msa_filt_col = msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col,
+                                                        gene_tree_file_addr)
+            if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
+                msa_filt_row_col = msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row,
+                                                                gene_tree_file_addr)
+
+        # compare msa_filt_row_col and msa_filt_col,
+        if len(msa_filt_row_col) != len(msa_filt_col):  # some sequences are removed
+            set_prot_before = set([i.id for i in msa_filt_col])
+            set_prot_after = set([i.id for i in msa_filt_row_col])
+            prots_to_remove_level = set_prot_before - set_prot_after
+            assert len(prots_to_remove_level), "issue 31235"
+            prots_to_remove |= prots_to_remove_level
+            # remove prot from all subhogs
+            hogs_children_level_list_raw = hogs_children_level_list
+            hogs_children_level_list = []
+            for hog_i in hogs_children_level_list_raw:
+                result_removal = hog_i.remove_prots_from_hog(prots_to_remove)
+                if result_removal != 0:
+                    hogs_children_level_list.append(hog_i)
+
+        else:
+            msa_filt_row_col = msa_filt_col
+        merged_msa_filt = msa_filt_row_col
+    else:
+        msa_filt_row_col = msa_filt_row_1
+        msa_filt_col = msa_filt_row_1
+        # the msa may be empty
+    # if len(msa_filt_row_col) < 2:
+    #    msa_filt_row_col = msa_filt_col[:2]
+
+    return (msa_filt_row_col, msa_filt_col, hogs_children_level_list)
+
+
+
+
 # def collect_write_xml():
 #
 #     gene_id_pickle_file = _config.in_folder + "gene_id_dic_xml.pickle"

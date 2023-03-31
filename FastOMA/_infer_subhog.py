@@ -315,55 +315,16 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
             merged_msa = sub_msa_list_lowerLevel_ready
             #  when only on  child, the rest msa is empty ?? this could be improved
 
-
         logger_hog.debug("All sub-hogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
         len(merged_msa[0])) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
                 node_species_tree.name))
+
         # merged_msa_filt = merged_msa
         # 893*4839, 10 mins
-        msa_filt_row_1 = merged_msa  #
-        # if _config.inferhog_filter_all_msas_row:
-        #    msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
 
-        #if   msa_filt_row_1 and len(msa_filt_row_1[0]) >=
-        if len(msa_filt_row_1[0]) >= _config.inferhog_min_cols_msa_to_filter:
-            # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
-            # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
-            logger_hog.debug("We are doing MSA trimming "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
-            # print(len(merged_msa), len(merged_msa[0]))
 
-            if _config.automated_trimAL:
-                msa_filt_col = msa_filt_row_1
-                msa_filt_row_col = _wrappers.trim_msa(msa_filt_row_1)
-            else:
-                msa_filt_col = _utils_subhog.msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr)
-                if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
-                    msa_filt_row_col = _utils_subhog.msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
+        (msa_filt_row_col, msa_filt_col, hogs_children_level_list) = _utils_subhog.filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list,prots_to_remove)
 
-            # compare msa_filt_row_col and msa_filt_col,
-            if len(msa_filt_row_col) != len(msa_filt_col): # some sequences are removed
-                set_prot_before = set([i.id for i in msa_filt_col])
-                set_prot_after = set([i.id for i in msa_filt_row_col])
-                prots_to_remove_level = set_prot_before - set_prot_after
-                assert len(prots_to_remove_level), "issue 31235"
-                prots_to_remove |= prots_to_remove_level
-                # remove prot from all subhogs
-                hogs_children_level_list_raw = hogs_children_level_list
-                hogs_children_level_list = []
-                for hog_i in hogs_children_level_list_raw:
-                    result_removal = hog_i.remove_prots_from_hog(prots_to_remove)
-                    if result_removal != 0:
-                        hogs_children_level_list.append(hog_i)
-
-            else:
-                msa_filt_row_col = msa_filt_col
-            merged_msa_filt = msa_filt_row_col
-        else:
-            msa_filt_row_col = msa_filt_row_1
-            msa_filt_col = msa_filt_row_1
-            # the msa may be empty
-        # if len(msa_filt_row_col) < 2:
-        #    msa_filt_row_col = msa_filt_col[:2]
     else:
         logger_hog.info("Issue 1455, merged_msa is empty " + str(rhogid_num) + ", for taxonomic level:" + str(node_species_tree.name))
 
@@ -375,7 +336,6 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
                 node_species_tree.name))
 
         if _config.rooting_method == "midpoint":
-
             R_outgroup = gene_tree.get_midpoint_outgroup()
             gene_tree.set_outgroup(R_outgroup)  # print("Midpoint rooting is done for gene tree.")
         elif _config.rooting_method == "mad":
@@ -388,7 +348,23 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
         # gene_tree.set_outgroup(R)
         #
         if _config.lable_SD_internal == "species_overlap":
-            gene_tree = _utils_subhog.lable_sd_internal_nodes(gene_tree)
+            (gene_tree, species_suspicious_list) = _utils_subhog.lable_sd_internal_nodes(gene_tree)
+
+            if species_suspicious_list:
+                if _config.gene_trees_write:
+                    tree_nwk_SD_labeled = str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;"
+                    file_gene_tree = open(gene_tree_file_addr + "_SD_labeled_befrSuspicousRmv.nwk", "w")
+                    file_gene_tree.write(tree_nwk_SD_labeled)
+                    file_gene_tree.close()
+                (removed_prot, gene_tree) = _utils_subhog.remove_susp_prt_tree(gene_tree, merged_msa, species_suspicious_list)
+
+                prots_to_remove |= set(removed_prot)
+                (msa_filt_row_col, msa_filt_col, hogs_children_level_list)= _utils_subhog.filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, prots_to_remove)
+                logger_hog.debug("We noticed extreme species overlap, and we remove the protein:" + " ".join(removed_prot) )
+
+                #find the seq responsible
+                #check it's sequence merged_msa
+
         elif _config.lable_SD_internal == "reconcilation":
             node_species_tree_nwk_string = node_species_tree.write(format=1)
             node_species_tree_PhyloTree = PhyloTree(node_species_tree_nwk_string, format=1)

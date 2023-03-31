@@ -211,8 +211,19 @@ You may need to re-run nextflow command line by adding `-resume`, if the allocat
 You may need to increase the number of opoened files in your system with `ulimit -n 131072`.
 
 
+If you have the omamer mappings, you can put them in hogmap folder  and run the following
+```
+$ ls
+hogmap  in_folder  genetrees
+$ nextflow   FastOMA/archive/FastOMA_script_after_omamer.nf   --input_folder in_folder   --output_folder out_folder
+
+for i in $(ls .); do mv $i `basename $i`.fa.hogmap; done 
+```
+
+
 ## Change log
 
 - prelease v.0.0.5: adding pip setup.py 
 - prelease v.0.0.4: simple nextflow
 - prelease v.0.0.3: with dask
+
