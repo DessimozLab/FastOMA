@@ -219,6 +219,8 @@ def remove_susp_prt_tree(tree_out, merged_msa,species_suspicious_list):
         idx_seq = seq_len_per_spe.index(min(seq_len_per_spe))
         seq_id_susp = seq_id_list[idx_seq]
         print(seq_len_per_spe, seq_id_list, seq_id_susp)
+        if min(seq_len_per_spe) > 1/3 * max(seq_len_per_spe):
+            print("***** issue 3476, these two fargments are quite similar length")
 
     # node_susp = [i for i in tree_out.get_leaves() if i.name ==seq_id_susp][0]
     node_susp = tree_out.search_nodes(name=seq_id_susp)[0]
@@ -230,7 +232,24 @@ def remove_susp_prt_tree(tree_out, merged_msa,species_suspicious_list):
     print(len(tree_out))
     (tree_out, node_children_species_intersection_suspicious_list) = lable_sd_internal_nodes(tree_out)
 
-    removed_prot = seq_id_susp
+    removed_prot = [seq_id_susp]
+
+
+    # detecting pairs/fragments based on msa
+    # I can remove them first
+
+    # option 1 :
+    # create a small hog at leave level but then won't apper any more
+    # should it affect species overlap after wards?
+
+
+    # option 2 :
+    # alwyas edit newick tree, and put these two seq near each other
+    # how about one of them is subsampled ? I should tag it and won't appear again
+    #
+
+
+
 
     return (removed_prot, tree_out)
 

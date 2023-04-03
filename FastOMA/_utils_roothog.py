@@ -37,11 +37,11 @@ def parse_proteome():  # list_oma_species
         if fasta_format == "fa" or fasta_format == "fasta":
             file_name_split = file.split(".")[:-1]
             query_species_names.append('.'.join(file_name_split))
-            fasta_format = file.split(".")[-1]
+            fasta_format_keep = fasta_format
 
     query_prot_recs = []
     for query_species_names_idx, query_species_name in enumerate(query_species_names):
-        prot_address = "./proteome/" + query_species_name + "."+fasta_format
+        prot_address = "./proteome/" + query_species_name + "."+fasta_format_keep
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
         query_prot_recs.append(prots_record)
 

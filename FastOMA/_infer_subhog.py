@@ -32,6 +32,16 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, pickle
 
     return hogs_rhog_xml_batch  # orthoxml_to_newick.py list of hog object
 
+def remove_prots_from_hog_hierarchy(hog_ii, prots_to_remove):
+    for subhog in hog_ii._subhogs:
+        remove_prots_from_hog_hierarchy(subhog, prots_to_remove)
+    hog_ii.remove_prots_from_hog(prots_to_remove)
+    # remove inside subhog if
+    hog_ii._subhogs = [i for i in hog_ii._subhogs if len(i._members) > 0]
+    # print(hog._taxnomic_range)
+    #if list(prots_to_remove)[0] in hog._members:
+    #    print(hog._members, hog._taxnomic_range)
+    return 1
 
 def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,  pickles_subhog_folder_all, rhogs_fa_folder):
                 #(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, batch_folder, big_rest):
@@ -73,17 +83,7 @@ def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_fold
     if not _config.keep_subhog_each_pickle:
         shutil.rmtree(pickles_subhog_folder)
 
-    def remove_prots_from_hog_hierarchy(hog_ii, prots_to_remove):
-        for subhog in hog_ii._subhogs:
-            remove_prots_from_hog_hierarchy(subhog, prots_to_remove)
-        hog_ii.remove_prots_from_hog(prots_to_remove)
-        # remove inside subhog if
-        hog_ii._subhogs = [i for i in hog_ii._subhogs if len(i._members) > 0]
-        # print(hog._taxnomic_range)
-        #if list(prots_to_remove)[0] in hog._members:
-        #    print(hog._members, hog._taxnomic_range)
-        return 1
-
+    logger_hog.debug(" we are removing these protiens "+ " ".join(list(prots_to_remove)) )
     for hog_i in hogs_a_rhog:
         remove_prots_from_hog_hierarchy(hog_i, prots_to_remove)
         # It may result in empty hog
@@ -385,8 +385,14 @@ def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_al
         # we may use this merged_msa here
         hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, msa_filt_col)
 
+        for hog_i in hogs_this_level_list:
+            # I recently added this part in 31 march, how did work it before ?
+            remove_prots_from_hog_hierarchy(hog_i, prots_to_remove)
+
         for hog_j in hogs_this_level_list:
             hog_j._taxnomic_range = node_species_tree.name
+            # TODO we need to think how to report them , duplications for singleton genes
+
 
 
         # print(node_species_tree.name)   # ssh
