@@ -9,10 +9,8 @@ import shutil
 import pickle
 import gc
 import random
-
 # import networkx as nx
 # import matplotlib.pyplot as plt
-
 from . import _wrappers
 from . import _utils_subhog
 from ._hog_class import HOG
@@ -20,36 +18,24 @@ from ._utils_subhog import logger_hog
 from . import _config
 
 
-
-
 def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, rhogs_fa_folder):
-
-    # for now each contain one rhog
-    hogs_rhog_xml_batch = []
+    """
+    infer subHOGs for a list of rootHOGs
+    """
+    logger_hog.debug("Inferring subHOGs for  "+str(len(rhogid_batch_list))+"rootHOGs started.")
+    logger_hog.debug("we are not reporting single tone hogs in the output xml. You may check this _config.inferhog_min_hog_size_xml.")
+    hogs_rhog_xml_len_batch = []
     for rhogid_num in rhogid_batch_list:
-        hogs_rhogs_xml = read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,  pickles_subhog_folder_all, rhogs_fa_folder) # orthoxml_to_newick.py list of hog object
-        hogs_rhog_xml_batch.extend(hogs_rhogs_xml)
+        hogs_rhogs_xml_len = read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,  pickles_subhog_folder_all, rhogs_fa_folder)
+        hogs_rhog_xml_len_batch.extend(hogs_rhogs_xml_len)
 
-    return hogs_rhog_xml_batch  # orthoxml_to_newick.py list of hog object
+    return hogs_rhog_xml_len_batch
 
-def remove_prots_from_hog_hierarchy(hog_ii, prots_to_remove):
-    for subhog in hog_ii._subhogs:
-        remove_prots_from_hog_hierarchy(subhog, prots_to_remove)
-    hog_ii.remove_prots_from_hog(prots_to_remove)
-    # remove inside subhog if
-    hog_ii._subhogs = [i for i in hog_ii._subhogs if len(i._members) > 0]
-    # print(hog._taxnomic_range)
-    #if list(prots_to_remove)[0] in hog._members:
-    #    print(hog._members, hog._taxnomic_range)
-    return 1
 
-def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,  pickles_subhog_folder_all, rhogs_fa_folder):
-                #(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, batch_folder, big_rest):
-
-    # _config.set_configs() # this set the species_tree_address from input
-    # print("here 234",_config.species_tree_address)
-
-    prots_to_remove = set()
+def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,  pickles_subhog_folder_all, rhogs_fa_folder):
+    """
+    infer subHOGs for a  rootHOGs
+    """
 
     pickles_subhog_folder = pickles_subhog_folder_all + "/rhog_" + str(rhogid_num) + "/"
     if not os.path.exists(pickles_subhog_folder):
@@ -60,62 +46,52 @@ def read_infer_xml_rhog_v2(rhogid_num, inferhog_concurrent_on, pickles_rhog_fold
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
     logger_hog.debug("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
     (species_tree) = _utils_subhog.read_species_tree_add_internal(_config.species_tree_address)
+    # todo double check the issue with the root node name.
+    # todo check all the input and needed folders as a validation with nextflow
     (species_tree, species_names_rhog, prot_names_rhog) = _utils_subhog.prepare_species_tree(rhog_i, species_tree, rhogid_num)
     species_names_rhog = list(set(species_names_rhog))
-    logger_hog.debug(
-        "The number of unique species in the rHOG " + str(rhogid_num) + "is " + str(len(species_names_rhog)) + ".")
-    # species_tree.write();  print(species_tree.write())
+    logger_hog.debug("Number of unique species in rHOG " + str(rhogid_num) + "is " + str(len(species_names_rhog)) + ".")
 
-    logger_hog.debug("Dask future taxon is off for hogid " + str(rhogid_num) + " with length " + str(len(rhog_i)))
-
-    if inferhog_concurrent_on:  # _config.inferhog_concurrent_on:
-        hogs_a_rhog_1 = infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder, prots_to_remove)
+    if inferhog_concurrent_on:  # for big HOG we use paralelization at the level taxanomic level using concurrent
+        hogs_a_rhog_num = infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
     else:
-        hogs_a_rhog_1 = infer_hogs_for_rhog_levels_recursively(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder, prots_to_remove)
-    # hogs_a_rhog_1  is an integeer as the length
+        hogs_a_rhog_num = infer_hogs_for_rhog_levels_recursively(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
+    # Output value hogs_a_rhog_num  is an integer= length. We save the output as pickle file at each taxanomic level.
 
+    #####  Now read the final pickle file for this rootHOG
     root_node_name = species_tree.name
     pickle_subhog_file = pickles_subhog_folder + str(root_node_name) + ".pickle"
     with open(pickle_subhog_file, 'rb') as handle:
         hogs_a_rhog = pickle.load(handle)
-    # ?? logger_hog.debug("subhogs in this level are "+' '.join(["[" + str(i) + "]" for i in ?? ])+".") # hogs_a_rhog
-
     if not _config.keep_subhog_each_pickle:
         shutil.rmtree(pickles_subhog_folder)
 
-    logger_hog.debug(" we are removing these protiens "+ " ".join(list(prots_to_remove)) )
-    for hog_i in hogs_a_rhog:
-        remove_prots_from_hog_hierarchy(hog_i, prots_to_remove)
-        # It may result in empty hog
-        # an object of class HOG of hogID=HOG:B0594043_sub10008, length=0, taxonomy= HUMAN_]
-
     hogs_rhogs_xml = []
     for hog_i in hogs_a_rhog:
-        if len(hog_i._members) >= _config.inferhog_min_hog_size_xml:  # previously > 1
+        if len(hog_i._members) >= _config.inferhog_min_hog_size_xml:
             # could be improved   # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
             hogs_a_rhog_xml = hog_i.to_orthoxml()
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
-    logger_hog.debug("we are not reporting single tone hogs in the output xml.")
-    # how to handle empty hogs !? why happening and if not save pickle, file not exist error from rhog id list
 
     pickles_rhog_file = pickles_rhog_folder + '/file_' + str(rhogid_num) + '.pickle'
     with open(pickles_rhog_file, 'wb') as handle:
         # dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
         pickle.dump(hogs_rhogs_xml, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    logger_hog.debug("***** hogs are written as orthoxml_to_newick.py pickle " + pickles_rhog_file)
+    logger_hog.debug("All subHOGs for the rootHOG as orthoxml format is written in " + pickles_rhog_file)
 
-    del hogs_a_rhog
+    del hogs_a_rhog  # to be memory efficient
     gc.collect()
-    return hogs_rhogs_xml
+    hogs_rhogs_xml_len = len(hogs_rhogs_xml)
+    return hogs_rhogs_xml_len
 
-max_workers_num = 10  # config
 
-
-def infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder, prots_to_remove):
+def infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder):
+    """
+    infer subHOGs for a rootHOG using multi-threading (in parallel) on different taxanomic levels of species tree
+    """
 
     pending_futures = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=_config.inferhog_max_workers_num) as executor:
-
         for node in species_tree.traverse(strategy="preorder"):
             node.dependencies_fulfilled = set()  # a set
             # node.infer_submitted = False
@@ -123,91 +99,59 @@ def infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, r
                 future_id = executor.submit(singletone_hog_, node, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
                 # singletone_hog_(sub_species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
                 # {<Future at 0x7f1b48d9afa0 state=finished raised TypeError>: 'KORCO_'}
-                # singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
                 pending_futures[future_id] = node.name
                 # node.infer_submitted = True
         while len(pending_futures) > 0:
             time.sleep(0.01)
             future_id_list = list(pending_futures.keys())
             for future_id in future_id_list:
-
                 if future_id.done():
                     species_node_name = pending_futures[future_id]
                     del pending_futures[future_id]
                     species_node = species_tree.search_nodes(name=species_node_name)[0]
-
-                    # print(future_id)
                     parent_node = species_node.up
                     if not parent_node:  # we reach the root
                         # assert len(pending_futures) == 0, str(species_node_name)+" "+str(rhogid_num)
                         assert species_node.name == species_tree.name
                         break
-
                     parent_node.dependencies_fulfilled.add(species_node_name)  # a set
 
                     childrend_parent_nodes = set(node.name for node in parent_node.get_children())
                     if parent_node.dependencies_fulfilled == childrend_parent_nodes:
-                        # print("here", species_node_name)
-                        #if not parent_node.infer_submitted:
+                        #  if not parent_node.infer_submitted:
                         future_id_parent = executor.submit(infer_hogs_this_level, parent_node, rhogid_num, pickles_subhog_folder_all, prots_to_remove)
-                            # parent_node.infer_submitted = True
+                        # parent_node.infer_submitted = True
                         # future_id_parent= parent_node.name+"aaa"
                         pending_futures[future_id_parent] = parent_node.name
-                        #for future_id
-                        #    del pending_futures[future_id]
-                        # i need another dictionary the other way arround to removes this futures
-
-            # print(" ", pending_futures)
+                        # for future_id:  del pending_futures[future_id] i need another dictionary the other way arround to removes this futures
 
     return len(pending_futures) + 1
 
-# def infer_hogs_for_rhog_NOfuture_v2(sub_species_tree, recursive_4inputs):
-#     out_1 = 0
-#     species_leaves_names = [i.name for i in sub_species_tree.get_leaves()]
-#     if len(species_leaves_names) <= 10:
-#         out_1 = infer_hogs_for_rhog_subtree_v2(sub_species_tree, recursive_4inputs)
-#     for node_species_tree in sub_species_tree.traverse(strategy="postorder"):
-#         species_leaves_names = [i.name for i in node_species_tree.get_leaves()]
-#         if len(species_leaves_names) > 10:
-#             out_1 = infer_hogs_for_rhog_subtree_v2(node_species_tree, recursive_4inputs)
-#             for node in node_species_tree.traverse():
-#                 node.processed = True
-#     return out_1
 
-def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder, prots_to_remove):
+def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder):
+    """
+    infer subHOGs for a rootHOG using recursive function to traverse species tree (different taxanomic levels)
+    """
 
     if sub_species_tree.is_leaf():
-        # hogs_this_level_list = singletone_hog(sub_species_tree, rhog_i, species_names_rhog, rhogid_num)
         singletone_hog_out = singletone_hog_(sub_species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
-        # out 1 succesful
+        #  out 1 =  succesful
         return singletone_hog_out
     children_nodes = sub_species_tree.children
 
-    hogs_children_level_list = []
     for node_species_tree_child in children_nodes:
-        hogs_children_level_list_i = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder, prots_to_remove)
-        # hogs_children_level_list_i should be 1
-        # hogs_children_level_list.extend(hogs_children_level_list_i)
-    infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_all, prots_to_remove)  # ,hogs_children_level_list
+        hogs_chrdn = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
+        # hogs_chrdn should be 1 hogs_chrdn_list.extend(hogs_chrdn)
+    infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_all)
     # hogs_this_level_list should be one
     return infer_hogs_this_level_out
 
-# def infer_hogs_for_rhog_subtree_v2(sub_species_tree, species_names_rhog, rhogid_num):
-#     infer_hogs_this_level_out= 0
-#     if sub_species_tree.is_leaf():
-#         if not (hasattr(sub_species_tree, "processed") and sub_species_tree.processed == True):
-#             infer_hogs_this_level_out = singletone_hog_(sub_species_tree, species_names_rhog, rhogid_num)
-#         return infer_hogs_this_level_out
-#     children_nodes = sub_species_tree.children
-#     for node_species_tree_child in children_nodes:
-#         hogs_children_level_list_i = infer_hogs_for_rhog_subtree_v2(node_species_tree_child, species_names_rhog, rhogid_num)
-#     infer_hogs_this_level_out = 0
-#     if not (hasattr(sub_species_tree, "processed") and sub_species_tree.processed == True):
-#         infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, rhogid_num)  # output is an integer, which is the length
-#     return infer_hogs_this_level_out
-
 
 def singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder):
+    """
+    create subHOGs for leaves of tree (species level). Each protein is a subHOG.
+    """
+
     node_species_name = node_species_tree.name  # there is only one species (for the one protein)
     this_level_node_name = node_species_name
     pickles_subhog_folder = pickles_subhog_folder_all + "/rhog_" + str(rhogid_num) + "/"
@@ -218,11 +162,10 @@ def singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rh
             if os.path.getsize(pickle_subhog_file) > 3:  # 3 bytes
                 with open(pickle_subhog_file, 'rb') as handle:
                     # i don't even need to open this even
-                    hogs_children_level_list = pickle.load(handle)
-                    if hogs_children_level_list:  # hogs_children_level_list is sth like [an object of class HOG of hogID=HOG:B0574027_sub10001, length=1, taxonomy= PSETE_]
+                    hogs_children_level_list = pickle.load(handle) #[object class HOG HOG:4027_sub1,len=1,taxono=PSETE]
+                    if hogs_children_level_list:
                         return len(hogs_children_level_list)
-
-    logger_hog.debug("* reading prot address  " + str(this_level_node_name))
+    # logger_hog.debug("reading protien / singletone HOG of  " + str(this_level_node_name))
     rhog_i_prot_address = rhogs_fa_folder +"/HOG_"+str(rhogid_num).zfill(7)+".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
     species_names_rhog_nonuniq = [seq.id.split("||")[1] for seq in rhog_i]
@@ -233,7 +176,6 @@ def singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rh
     for prot in rhog_part:
         hog_leaf = HOG(prot, node_species_name, rhogid_num)  # node_species_tree.name
         hogs_this_level_list.append(hog_leaf)
-
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+".pickle"
     with open(pickle_subhog_file, 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -242,198 +184,131 @@ def singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rh
     return len(hogs_this_level_list)
 
 
-def infer_hogs_this_level(sub_species_tree, rhogid_num, pickles_subhog_folder_all, prots_to_remove):  # hogs_children_level_list
-
-    msa_filt_row_col = []
-    node_species_tree = sub_species_tree
+def read_children_hogs(node_species_tree, rhogid_num, pickles_subhog_folder_all):
     this_level_node_name = node_species_tree.name
-    if node_species_tree.is_leaf():
-        print(" issue 1235, single tone hogs are treated in another function, the code shouldn't reach here.", rhogid_num )
-        exit()
-        return 1
-
-    pickles_subhog_folder = pickles_subhog_folder_all+ "/rhog_" + str(rhogid_num) + "/"
-    pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+ ".pickle"
-    if _config.inferhog_resume_subhog:
-        # open already calculated subhogs , but not completed till root in previous run
-        if os.path.exists(pickle_subhog_file):
-            if os.path.getsize(pickle_subhog_file) > 3: # bytes
-                with open(pickle_subhog_file, 'rb') as handle:
-                    # i don't even need to open this even
-                    hogs_children_level_list = pickle.load(handle)
-                    if hogs_children_level_list:
-                        return len(hogs_children_level_list)
-
-    # print(this_level_node_name, rhogid_num)
+    pickles_subhog_folder = pickles_subhog_folder_all + "/rhog_" + str(rhogid_num) + "/"
+    pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name) + ".pickle"
+    # TODO arrage resume with nextflow
+    # if _config.inferhog_resume_subhog: # open already calculated subhogs , but not completed till root in previous run
+    #     if os.path.exists(pickle_subhog_file):
+    #         if os.path.getsize(pickle_subhog_file) > 3: # bytes
+    #             with open(pickle_subhog_file, 'rb') as handle:
+    #                 # i don't even need to open this even
+    #                 hogs_children_level_list = pickle.load(handle)
+    #                 if hogs_children_level_list:
+    #                     return len(hogs_children_level_list)
     children_name = [child.name for child in node_species_tree.children]
     hogs_children_level_list = []
-
     for child_name in children_name:
         pickle_subhog_file = pickles_subhog_folder + str(child_name) + ".pickle"
         with open(pickle_subhog_file, 'rb') as handle:
-            hogs_children_level_list.extend(pickle.load(handle))
-      # to do, check file doenst exist ? how to handle, if not
-    # if len(node_species_tree.name.split("_")) > 1:
-    logger_hog.debug("Finding hogs for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
-            node_species_tree.name)+"\n"+str(node_species_tree.write())+"\n")
+            hogs_children_level_list.extend(pickle.load(handle))  # todo, check file exist, how to handle if not
+    logger_hog.debug("Finding hogs for rhogid_num: " + str(rhogid_num) + ", for taxonomic level:" + str(
+        node_species_tree.name) + " for species sub-tree:\n  " + str(node_species_tree.write(format=1)) + "\n")
+    return hogs_children_level_list
+
+
+def genetree_SD_inference(node_species_tree, rhogid_num, msa_filt_row_col, genetree_msa_file_addr):
+
+    gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, genetree_msa_file_addr)
+    gene_tree = Tree(gene_tree_raw + ";", format=0)
+    logger_hog.debug("Gene tree is inferred len"+str(len(gene_tree))+" rhog:"+str(rhogid_num)+", level: "+str(node_species_tree.name))
+
+    if _config.rooting_method == "midpoint":
+        r_outgroup = gene_tree.get_midpoint_outgroup()
+        gene_tree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
+    elif _config.rooting_method == "mad":
+        gene_tree = _wrappers.mad_rooting(genetree_msa_file_addr)
+    # elif _config.rooting_method == "outlier":
+    #     gene_tree = PhyloTree(gene_tree_raw + ";", format=0)
+    #     outliers = find_outlier_leaves(gene_tree)
+    #     r_outgroup = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
+    #     gene_tree.set_outgroup(r_outgroup)
+
+    species_suspicious_sd_list = []
+    if _config.lable_SD_internal == "species_overlap":
+        (gene_tree, species_suspicious_sd_list) = _utils_subhog.lable_sd_internal_nodes(gene_tree)
+
+    elif _config.lable_SD_internal == "reconcilation":
+        node_species_tree_nwk_string = node_species_tree.write(format=1)
+        node_species_tree_PhyloTree = PhyloTree(node_species_tree_nwk_string, format=1)
+        gene_tree_nwk_string = gene_tree.write(format=1)
+        gene_tree_PhyloTree = PhyloTree(gene_tree_nwk_string, format=1)
+        gene_tree = _utils_subhog.lable_SD_internal_nodes_reconcilation(gene_tree_PhyloTree,node_species_tree_PhyloTree)
+
+    if _config.gene_trees_write:
+        tree_nwk_SD_labeled = str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;"
+        file_gene_tree = open(genetree_msa_file_addr + "_SD_labeled.nwk", "w")
+        file_gene_tree.write(tree_nwk_SD_labeled)
+        file_gene_tree.close()
+
+    return (gene_tree, species_suspicious_sd_list)
+
+
+
+def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_all):
+    """
+    infer subHOGs for a rootHOG at a taxanomic level
+    """
+
+    this_level_node_name = node_species_tree.name
+    pickles_subhog_folder = pickles_subhog_folder_all + "/rhog_" + str(rhogid_num) + "/"
+    assert not node_species_tree.is_leaf(), "issue 1235,singletone hogs are treated elsewhere"+ str(rhogid_num)
+    hogs_children_level_list = read_children_hogs(node_species_tree, rhogid_num, pickles_subhog_folder_all)
 
     if len(hogs_children_level_list) == 1:
-        # assert len(children_name) == 1
         hogs_this_level_list = hogs_children_level_list
-
         pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+".pickle"
         with open(pickle_subhog_file, 'wb') as handle:
             pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
         return len(hogs_children_level_list)
 
-    # hogs_children_level_list
-    # if isinstance(hogs_children_level_list[0], list):
-    #     hogs_children_level_list_flatten = []
-    #     for hogs_list in hogs_children_level_list:
-    #         for hog in hogs_list:
-    #         hogs_children_level_list_flatten.extend(hog)
-    #
-    # hogs_children_level_list = hogs_children_level_list_flatten
-
-    sub_msa_list_lowerLevel_ready = [hog._msa for hog in hogs_children_level_list]
-    gene_tree_file_addr = "./genetrees/tree_" + str(rhogid_num) + "_" + str(
-        node_species_tree.name) + ".nwk"
-    if len(gene_tree_file_addr) > 245:
+    genetree_msa_file_addr = "./genetrees/tree_"+str(rhogid_num)+"_"+str(node_species_tree.name) + ".nwk"
+    if len(genetree_msa_file_addr) > 245:
         # there is a limitation on length of file name. I want to  keep it consistent ,msa and gene tree names.
         rand_num = random.randint(1, 10000)
-        gene_tree_file_addr = gene_tree_file_addr[:245] + str(rand_num)+".nwk"
-    logger_hog.debug("Merging "+str(len(sub_msa_list_lowerLevel_ready))+" MSAs for rhogid_num: "+
-                     str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
-    sub_msa_list_lowerLevel_ready_raw = sub_msa_list_lowerLevel_ready
-    sub_msa_list_lowerLevel_ready = [ii for ii in sub_msa_list_lowerLevel_ready_raw if len(ii)>0]
+        genetree_msa_file_addr = genetree_msa_file_addr[:245] + str(rand_num)+".nwk"
 
+    sub_msa_list_lowerLevel_ready = [hog._msa for hog in hogs_children_level_list if len(hog._msa) > 0]
+    # sub_msa_list_lowerLevel_ready = [ii for ii in sub_msa_list_lowerLevel_ready_raw if len(ii) > 0]
+    logger_hog.debug("Merging "+str(len(sub_msa_list_lowerLevel_ready))+" MSAs for rhog:"+str(rhogid_num)+", level:"+str(node_species_tree.name))
+    msa_filt_row_col = []
     if sub_msa_list_lowerLevel_ready:
-        logger_hog.debug("here")
         if len(sub_msa_list_lowerLevel_ready) > 1:
-            merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, gene_tree_file_addr)
+            merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, genetree_msa_file_addr)
         else:
-            merged_msa = sub_msa_list_lowerLevel_ready
-            #  when only on  child, the rest msa is empty ?? this could be improved
-
+            merged_msa = sub_msa_list_lowerLevel_ready #???  when only on  child, the rest msa is empty ?? this could be improved
         logger_hog.debug("All sub-hogs are merged, merged msa is with length of " + str(len(merged_msa)) + " " + str(
-        len(merged_msa[0])) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
-                node_species_tree.name))
-
-        # merged_msa_filt = merged_msa
-        # 893*4839, 10 mins
-
-
-        (msa_filt_row_col, msa_filt_col, hogs_children_level_list) = _utils_subhog.filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list,prots_to_remove)
-
+        len(merged_msa[0])) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(node_species_tree.name))
+        (msa_filt_row_col, msa_filt_col, hogs_children_level_list) = _utils_subhog.filter_msa(merged_msa, genetree_msa_file_addr, hogs_children_level_list)
+        # msa_filt_col is used for parent level of HOG. msa_filt_row_col is used for gene tree inference.
     else:
         logger_hog.info("Issue 1455, merged_msa is empty " + str(rhogid_num) + ", for taxonomic level:" + str(node_species_tree.name))
 
     if len(msa_filt_row_col) > 1 and len(msa_filt_row_col[0]) > 1:
 
-        gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, gene_tree_file_addr)
-        gene_tree = Tree(gene_tree_raw + ";", format=0)
-        logger_hog.debug("Gene tree is inferred with length of " + str(len(gene_tree)) + " for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
-                node_species_tree.name))
+        (gene_tree, species_suspicious_sd_list) = genetree_SD_inference(node_species_tree, rhogid_num, msa_filt_row_col,genetree_msa_file_addr)
 
-        if _config.rooting_method == "midpoint":
-            R_outgroup = gene_tree.get_midpoint_outgroup()
-            gene_tree.set_outgroup(R_outgroup)  # print("Midpoint rooting is done for gene tree.")
-        elif _config.rooting_method == "mad":
-            gene_tree = _wrappers.mad_rooting(gene_tree_file_addr)
-
-
-        #gene_tree = PhyloTree(gene_tree_raw + ";", format=0)
-        # outliers = find_outlier_leaves(gene_tree)
-        # R = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
-        # gene_tree.set_outgroup(R)
-        #
-        if _config.lable_SD_internal == "species_overlap":
-            (gene_tree, species_suspicious_list) = _utils_subhog.lable_sd_internal_nodes(gene_tree)
-
-            if species_suspicious_list:
-                if _config.gene_trees_write:
-                    tree_nwk_SD_labeled = str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;"
-                    file_gene_tree = open(gene_tree_file_addr + "_SD_labeled_befrSuspicousRmv.nwk", "w")
-                    file_gene_tree.write(tree_nwk_SD_labeled)
-                    file_gene_tree.close()
-                (removed_prot, gene_tree) = _utils_subhog.remove_susp_prt_tree(gene_tree, merged_msa, species_suspicious_list)
-
-                prots_to_remove |= set(removed_prot)
-                (msa_filt_row_col, msa_filt_col, hogs_children_level_list)= _utils_subhog.filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, prots_to_remove)
-                logger_hog.debug("We noticed extreme species overlap, and we remove the protein:" + " ".join(removed_prot) )
-
-                #find the seq responsible
-                #check it's sequence merged_msa
-
-        elif _config.lable_SD_internal == "reconcilation":
-            node_species_tree_nwk_string = node_species_tree.write(format=1)
-            node_species_tree_PhyloTree = PhyloTree(node_species_tree_nwk_string, format=1)
-            gene_tree_nwk_string = gene_tree.write(format=1)
-            gene_tree_PhyloTree = PhyloTree(gene_tree_nwk_string, format=1)
-            gene_tree = _utils_subhog.lable_SD_internal_nodes_reconcilation(gene_tree_PhyloTree, node_species_tree_PhyloTree)
-
-        if _config.gene_trees_write:
-            tree_nwk_SD_labeled = str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;"
-            file_gene_tree = open(gene_tree_file_addr+"_SD_labeled.nwk", "w")
-            file_gene_tree.write(tree_nwk_SD_labeled)
-            file_gene_tree.close()
-
-        # print("Overlap speciation is done for internal nodes of gene tree, as following:")
-        # print(str(gene_tree.write(format=1))[:-1] + str(gene_tree.name) + ":0;")
-        logger_hog.debug("Merging sub-hogs of children started  for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(
-                node_species_tree.name))
-        # we may use this merged_msa here
+        logger_hog.debug("Merging sub-hogs for rhogid_num:"+str(rhogid_num)+", level:"+str(node_species_tree.name))
         hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, msa_filt_col)
-
-        for hog_i in hogs_this_level_list:
-            # I recently added this part in 31 march, how did work it before ?
-            remove_prots_from_hog_hierarchy(hog_i, prots_to_remove)
-
-        for hog_j in hogs_this_level_list:
-            hog_j._taxnomic_range = node_species_tree.name
-            # TODO we need to think how to report them , duplications for singleton genes
-
-
-
-        # print(node_species_tree.name)   # ssh
-        # logger_hog.warn(str(node_species_tree.name))
-
-        # for i in hogs_this_level_list:
-            # logger_hog.warn(str(i))
-            # logger_hog.warn(str(i))
-            # print(i)
-            # print(i.get_members())
-
+        # for i in hogs_this_level_list: print(i.get_members())
         logger_hog.debug("Hogs of this level is found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(this_level_node_name))
-        # check for conflicts in merging
-        #     for i in range(subHOG_to_be_merged_set_other_Snodes):  if
-        #         for i in range(subHOG_to_be_merged_set_other_Snodes):  print("*&*& ",node_species_tree.name)
-        # # dvelopmnet mode  logger info
-        # prot_list_sbuhog = [i._members for i in hogs_this_level_list]
-        # prot_list_sbuhog_short = []
-        # for prot_sub_list_sbuhog in prot_list_sbuhog:
-        #     if format_prot_name == 0:  # bird dataset TYTALB_R04643
-        #         prot_list_sbuhog_short = prot_sub_list_sbuhog
-        #     elif format_prot_name == 1:  # qfo dataset  'tr|E3JPS4|E3JPS4_PUCGT
-        #         prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
-        # logger_hog.debug(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
-        #     [str(i) for i in prot_list_sbuhog_short]))
+
     else:
         if msa_filt_row_col:
-            logger_hog.debug("hogs_this_level_list is empty. msa_filt_row_col:"+str(len(msa_filt_row_col))+" *"+str(len(msa_filt_row_col[0]))+" !!")
+            logger_hog.debug("** hogs_this_level_list is empty. msa_filt_row_col:"+str(len(msa_filt_row_col))+" *"+str(len(msa_filt_row_col[0]))+" !!")
         else:
-            logger_hog.debug("hogs_this_level_list is empty. msa_filt_row_col:" + str(len(msa_filt_row_col)) +"! .")
+            logger_hog.debug("** msa_filt_row_col is empty." + str(len(msa_filt_row_col)) +"! .")
 
-        hogs_this_level_list = hogs_children_level_list    #  []
+        hogs_this_level_list = hogs_children_level_list
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+ ".pickle"
     with open(pickle_subhog_file, 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-
     return len(hogs_children_level_list)
 
 
-def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa):
+def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa, dubious_list_list):
 
     """
     this function could be improved
@@ -494,8 +369,35 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
             if subHOG_to_be_merged:
                 subHOG_to_be_merged_set = set(subHOG_to_be_merged)
                 taxnomic_range = node_species_tree.name
+
                 HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid_num, msa=merged_msa)
+
+                for dubious_list in dubious_list_list:
+                    print("1")
+
+                # for fratgmetns_set in fragmnets_list:
+                #     find the subhog for  fratgmetns_set
+                #
+                #     move the fragments  into subhog 1
+                #             update the list of dubios  on the way back
+                #     update
+                #             fragmnets_list
+                #     methods for each subhog
+                #
+                #             1) add_fragmetns   add to the list dubious all the subhog
+                #
+                #             2) remove protin     from members hierarcyh  all subhogs excpet subhog
+                #
+                #             add as a new method
+                #             HOG_this_node.mark_prots_dubious(dubious_prots)
+                #             result_removal = HOG_this_node.remove_prots_from_hog(prots_to_remove)
+                #         if result_removal != 0:
+                #         hogs_children_level_list.append(hog_i)
+                #
                 hogs_this_level_list.append(HOG_this_node)
+
+                # taxnomic_range, rhogid_num, msa = None, fragment_list
+
                 subHOG_to_be_merged_set_other_Snodes.append([i._hogid for i in subHOG_to_be_merged_set])
                 subHOG_to_be_merged_set_other_Snodes_flattned_temp = [item for items in
                                                                       subHOG_to_be_merged_set_other_Snodes for
@@ -525,5 +427,28 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     # we expect to see orthoxml_to_newick.py list of list as ooutput
     # if len(hogs_this_level_list)==1:  hogs_this_level_list = [hogs_this_level_list]
 
+    for hog_i in hogs_this_level_list:
+        # I recently added this part in 31 march, how did work it before ?
+        _utils_subhog.remove_prots_from_hog_hierarchy(hog_i, prots_to_remove)
+
+    for hog_j in hogs_this_level_list:
+        hog_j._taxnomic_range = node_species_tree.name
+
+        # check for conflicts in merging
+        #     for i in range(subHOG_to_be_merged_set_other_Snodes):  if
+        #         for i in range(subHOG_to_be_merged_set_other_Snodes):  print("*&*& ",node_species_tree.name)
+        # # dvelopmnet mode  logger info
+        # prot_list_sbuhog = [i._members for i in hogs_this_level_list]
+        # prot_list_sbuhog_short = []
+        # for prot_sub_list_sbuhog in prot_list_sbuhog:
+        #     if format_prot_name == 0:  # bird dataset TYTALB_R04643
+        #         prot_list_sbuhog_short = prot_sub_list_sbuhog
+        #     elif format_prot_name == 1:  # qfo dataset  'tr|E3JPS4|E3JPS4_PUCGT
+        #         prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
+        # logger_hog.debug(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
+        #     [str(i) for i in prot_list_sbuhog_short]))
+
+
     return hogs_this_level_list
 
+#

@@ -166,7 +166,7 @@ def lable_sd_internal_nodes(tree_out):
     species_name_dic = {}
     counter_S = 0
     counter_D = 0
-    #suspicious_overlap = False
+
     species_suspicious_list = []
     for node in tree_out.traverse(strategy="postorder"):
         # print("** now working on node ",node.name) # node_children
@@ -202,7 +202,7 @@ def lable_sd_internal_nodes(tree_out):
     return (tree_out, species_suspicious_list)
 
 
-def remove_susp_prt_tree(tree_out, merged_msa,species_suspicious_list):
+def remove_susp_prt_tree(tree_out, merged_msa, species_suspicious_list):
     # threshold_sd_suspicious_fragment_ratio = 1/3
 
     for species_suspicious in species_suspicious_list:
@@ -220,16 +220,18 @@ def remove_susp_prt_tree(tree_out, merged_msa,species_suspicious_list):
         seq_id_susp = seq_id_list[idx_seq]
         print(seq_len_per_spe, seq_id_list, seq_id_susp)
         if min(seq_len_per_spe) > 1/3 * max(seq_len_per_spe):
-            print("***** issue 3476, these two fargments are quite similar length")
+            if min(seq_len_per_spe) < 1/3 * len(merged_msa[0]):
+                print("***** issue 3476, these two fargments are quite similar length")
 
-    # node_susp = [i for i in tree_out.get_leaves() if i.name ==seq_id_susp][0]
-    node_susp = tree_out.search_nodes(name=seq_id_susp)[0]
-    node_susp.delete()
+            # else:
+                ## node_susp = [i for i in tree_out.get_leaves() if i.name ==seq_id_susp][0]
+                # node_susp = tree_out.search_nodes(name=seq_id_susp)[0]
+                # node_susp.delete()
 
     R_outgroup = tree_out.get_midpoint_outgroup()
     tree_out.set_outgroup(R_outgroup)  # print("Midpoint rooting is done for gene tree.")
 
-    print(len(tree_out))
+    # print(len(tree_out))
     (tree_out, node_children_species_intersection_suspicious_list) = lable_sd_internal_nodes(tree_out)
 
     removed_prot = [seq_id_susp]
@@ -344,6 +346,20 @@ def get_reconciled_tree_zmasek(gtree, sptree, inplace=False):
     return gtree
 
 
+
+def remove_prots_from_hog_hierarchy(hog_ii, prots_to_remove):
+    for subhog in hog_ii._subhogs:
+        remove_prots_from_hog_hierarchy(subhog, prots_to_remove)
+    hog_ii.remove_prots_from_hog(prots_to_remove)
+    # remove inside subhog if
+    hog_ii._subhogs = [i for i in hog_ii._subhogs if len(i._members) > 0]
+    # print(hog._taxnomic_range)
+    #if list(prots_to_remove)[0] in hog._members:
+    #    print(hog._members, hog._taxnomic_range)
+    return 1
+
+
+
 def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
     # gene_tree_file_addr contains roothog numebr
     # note this is used in hog class as well
@@ -401,8 +417,58 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
     return msa_filtered_row
 
 
+# Fragment detection using MSA
+
+def fragment_detector_candidate(merged_msa):
+
+    rec_group_species = {}
+    for seq in merged_msa:
+        species = seq.id.split("||")[1]
+        if species in rec_group_species:
+            rec_group_species[species].append(seq)
+        else:
+            rec_group_species[species]= [seq]
+
+    rec_candidate = {}
+
+    len_aligned = len(seq)
+
+    for species, list_seq in rec_group_species.items():
+        if len(list_seq)>1:
+            num_nongap_list = []
+            for i in range(len(list_seq)):
+                seq_i= list_seq[i] # seq_i is biopython record
+                num_nongap_i= len_aligned - seq_i.count("-")
+                num_nongap_list.append(num_nongap_i)
+                if num_nongap_i > len_aligned *0.25 and  num_nongap_i < len_aligned *0.75:
+                    for j in range(i):
+                        seq_j= list_seq[j]
+                        num_nongap_j= num_nongap_list[j]
+                        if num_nongap_j > len_aligned *0.25 and  num_nongap_j < len_aligned *0.75:
+                            count_gap_aa = 0
+                            for (chr_i, chr_j) in zip(seq_i, seq_j):
+                                if (chr_i=='-' and chr_j!='-')  or (chr_i!='-' and chr_j=='-'):
+                                    count_gap_aa +=1
+                            print(count_gap_aa)
+                            if count_gap_aa  > len_aligned * 0.25: # two seq complment each other
+                                # TODO the downside is sth like this: seq1=-A-A seq2= A-A-  not fragments
+                                if species in rec_candidate:
+                                    seq_i_id = seq_i.id
+                                    seq_j_id = seq_j.id
+
+                                    if seq_i_id not in rec_candidate[species]:
+                                        rec_candidate[species] += seq_i_id
+                                    if seq_j_id not in rec_candidate[species]:
+                                        rec_candidate[species] += seq_j_id
+                                else:
+                                    rec_candidate[species] = [seq_i_id, seq_j_id]  # seq_i is biopython record
+
+    return rec_candidate
+
+
 
 def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, prots_to_remove):
+
     msa_filt_row_1 = merged_msa  #
     # if _config.inferhog_filter_all_msas_row:
     #    msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)

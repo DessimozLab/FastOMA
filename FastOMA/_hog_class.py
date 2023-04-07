@@ -15,6 +15,8 @@ class HOG:
     _hogid_iter = 10000
 
     def __init__(self, input_instantiate, taxnomic_range, rhogid_num, msa=None):  # _prot_names
+        # fragment_list list of  sets , each set contains protein ID of fragments
+
         # the input_instantiate could be either
         #     1) orthoxml_to_newick.py protein as the biopython seq record  SeqRecord(seq=Seq('MAPSSRSPSPRT. ]
         # or  2) orthoxml_to_newick.py set of intances of class HOG   wit orthoxml_to_newick.py big msa
@@ -30,10 +32,14 @@ class HOG:
             self._members = set([only_protein.id])
             self._msa = MultipleSeqAlignment([only_protein])
             self._subhogs = []
+            self._dubious_members = []
             # <<class 'Bio.Align.MultipleSeqAlignment'> instance (1 records of length 314) at 7f0e86c713d0>
 
         elif msa and all(isinstance(x, HOG) for x in input_instantiate):
             # here we want to merge few subhogs and creat orthoxml_to_newick.py new HOG.   #the n
+
+            # merge few subhogs   , fragment_list
+
             sub_hogs = input_instantiate
             hog_members = set()
             for sub_hog in sub_hogs:
@@ -41,12 +47,15 @@ class HOG:
             self._members = hog_members  # set.union(*tup)
             self._subhogs = list(input_instantiate)  # full members of subhog, children
 
-            records_full = [record for record in msa if record.id in self._members]
+            dubious_members = {}
+            for sub_hog in sub_hogs:
+                dubious_members |= sub_hog.get_dubious_members()  # union
+            self._dubious_members = dubious_members
 
+            records_full = [record for record in msa if  (record.id in self._members) and (record.id not in self._dubious_members) ]
             if len(records_full) > _config.hogclass_max_num_seq:
                 records_sub_sampled_raw = sample(records_full, _config.hogclass_max_num_seq)  # without replacement.
                 # to do in future:  select best seq
-
                 if len(records_sub_sampled_raw[0]) > _config.hogclass_min_cols_msa_to_filter:
                     records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, _config.hogclass_tresh_ratio_gap_col)
                 else:
@@ -70,9 +79,14 @@ class HOG:
     def get_members(self):
         return set(self._members)
 
+    def get_dubious_members(self):
+        return set(self._dubious_members)
+
+
+
+
     def remove_prots_from_hog(self, prots_to_remove):
         prot_members_hog_old = self._members
-
         if prot_members_hog_old & prots_to_remove:
             prot_members_hog_edited = prot_members_hog_old - prots_to_remove
             self._members = prot_members_hog_edited
@@ -82,8 +96,11 @@ class HOG:
 
             if len(prot_members_hog_edited) == 0:  # hog should be removed , no members is left
                 return 0
-
         return 1
+
+
+
+
 
     def to_orthoxml(self):
         hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})

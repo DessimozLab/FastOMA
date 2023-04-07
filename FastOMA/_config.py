@@ -58,6 +58,9 @@ species_tree_address = "species_tree.nwk"
 # no space or special charcter in internal node.
 protein_format_qfo_dataset = True
 
+
+fragment_detection = True
+
 ## output writing files
 gene_trees_write = True
 msa_write = True
@@ -75,7 +78,7 @@ hogclass_tresh_ratio_gap_col = 0.2
 
 automated_trimAL = False
 lable_SD_internal = "species_overlap"  # "reconcilation" "species_overlap"
-threshold_sd_suspicious= 1/5
+threshold_sd_suspicious = 1/3
 #threshold_sd_suspicious_fragment_ratio = 1/3
 tree_tool = "fasttree"  # "fasttree"  "iqtree"  # for  gene tree with two, we use
 

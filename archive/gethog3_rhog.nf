@@ -1,4 +1,5 @@
 
+// nextflow  /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/FastOMA/archive/gethog3_rhog.nf   --input_folder  in_folder   --output_folder  out_folder  -c /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/FastOMA/nextflow_slurm.config
 
 
 params.input_folder = "./in_folder/"

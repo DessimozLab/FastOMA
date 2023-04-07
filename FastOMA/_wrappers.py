@@ -63,7 +63,8 @@ def infer_gene_tree(msa, gene_tree_file_addr):
         wrapper_tree.options.options['-nt'].set_value(1)
 
     result_tree1 = wrapper_tree()
-    logger_hog.debug("iqtree stderr " + str(wrapper_tree.stderr))
+    if wrapper_tree.stderr:
+        logger_hog.debug("tree inference stderr " + str(wrapper_tree.stderr))
     time_taken_tree = wrapper_tree.elapsed_time
     result_tree2 = wrapper_tree.result
     tree_nwk = str(result_tree2["tree"])

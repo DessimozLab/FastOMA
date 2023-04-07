@@ -7,7 +7,8 @@ FastOMA is a scalable software package for inferring orthology relationship.
 
 ### Input: 
 1- Sets of protein sequences in FASTA format (with `.fa` extension) in the folder `proteome`.
-The name of each fasta file is the name of species .
+The name of each fasta file is the name of species. Please make sure that the name of fasta records do not contain `||`. 
+
 
 2- The omamer database which you can download [this](https://omabrowser.org/All/LUCA.h5) 
 which is from [OMA browser](https://omabrowser.org/oma/current/). 
