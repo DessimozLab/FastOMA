@@ -27,7 +27,7 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, pickle
     hogs_rhog_xml_len_batch = []
     for rhogid_num in rhogid_batch_list:
         hogs_rhogs_xml_len = read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,  pickles_subhog_folder_all, rhogs_fa_folder)
-        hogs_rhog_xml_len_batch.extend(hogs_rhogs_xml_len)
+        hogs_rhog_xml_len_batch.append(hogs_rhogs_xml_len)
 
     return hogs_rhog_xml_len_batch
 
@@ -119,7 +119,7 @@ def infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, r
                     childrend_parent_nodes = set(node.name for node in parent_node.get_children())
                     if parent_node.dependencies_fulfilled == childrend_parent_nodes:
                         #  if not parent_node.infer_submitted:
-                        future_id_parent = executor.submit(infer_hogs_this_level, parent_node, rhogid_num, pickles_subhog_folder_all, prots_to_remove)
+                        future_id_parent = executor.submit(infer_hogs_this_level, parent_node, rhogid_num, pickles_subhog_folder_all)
                         # parent_node.infer_submitted = True
                         # future_id_parent= parent_node.name+"aaa"
                         pending_futures[future_id_parent] = parent_node.name
@@ -308,7 +308,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
     return len(hogs_children_level_list)
 
 
-def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa, dubious_list_list):
+def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa):
     """
     merge subhogs based on the gene tree specieciaton node of gene tree by creating inter-HOG graph (implicitley )
     """

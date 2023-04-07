@@ -467,7 +467,7 @@ def fragment_detector_candidate(merged_msa):
 
 
 
-def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, prots_to_remove):
+def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
 
     msa_filt_row_1 = merged_msa  #
     # if _config.inferhog_filter_all_msas_row:
@@ -495,14 +495,14 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, prots_
             set_prot_after = set([i.id for i in msa_filt_row_col])
             prots_to_remove_level = set_prot_before - set_prot_after
             assert len(prots_to_remove_level), "issue 31235"
-            prots_to_remove |= prots_to_remove_level
+            #prots_to_remove |= prots_to_remove_level
             # remove prot from all subhogs
-            hogs_children_level_list_raw = hogs_children_level_list
-            hogs_children_level_list = []
-            for hog_i in hogs_children_level_list_raw:
-                result_removal = hog_i.remove_prots_from_hog(prots_to_remove)
-                if result_removal != 0:
-                    hogs_children_level_list.append(hog_i)
+            # hogs_children_level_list_raw = hogs_children_level_list
+            # hogs_children_level_list = []
+            # for hog_i in hogs_children_level_list_raw:
+            #     result_removal = hog_i.remove_prots_from_hog(prots_to_remove)
+            #     if result_removal != 0:
+            #         hogs_children_level_list.append(hog_i)
 
         else:
             msa_filt_row_col = msa_filt_col
