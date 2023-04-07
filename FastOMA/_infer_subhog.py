@@ -309,19 +309,15 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
 
 
 def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa, dubious_list_list):
+    """
+    merge subhogs based on the gene tree specieciaton node of gene tree by creating inter-HOG graph (implicitley )
+    """
 
-    """
-    this function could be improved
-    """
-    # hogs_children_level_list_flatten = []
-    # for hogs_list in hogs_children_level_list:
-    #     hogs_children_level_list_flatten += hogs_list
-    # hogs_children_level_list = hogs_children_level_list_flatten
     subhogs_id_children_assigned = []  # the same as  subHOG_to_be_merged_all_id
     hogs_this_level_list = []
     subHOG_to_be_merged_set_other_Snodes = []
     subHOG_to_be_merged_set_other_Snodes_flattned_temp = []
-
+    ##  the following if fore debugging and visualisation of connected component of inter-HOG graph
     # hoggraph_node_name = [i._hogid.split("_")[1][3:] for i in hogs_children_level_list]
     # hog_size_dic = {}
     # dic_hog = {}
@@ -338,13 +334,10 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     # hoggraph.add_nodes_from(hoggraph_node_name_len)
 
     for node in gene_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "processed") and n.processed==True):
-        # print("Leaves assigned to hog are ", assigned_leaves_to_hog)   #print("Traversing gene tree. Now at node", node.name)
         if node.is_leaf():
             continue
-        node_leaves_name = [i.name for i in node.get_leaves()]   # if node.name[0] == "D":  print(2)
-        # s_gene_tree_leaves = [i.name for i in node.get_leaves()]
-        #s_gene_tree_leaves_update = [i.split("_")[1][3:] for i in s_gene_tree_leaves]
-        if node.name[0] == "S":  # this is orthoxml_to_newick.py sub-hog.
+        node_leaves_name = [i.name for i in node.get_leaves()]
+        if node.name[0] == "S":
             # num_prot = len(s_gene_tree_leaves)
             # for i in range(num_prot):
             #     hog_i = dic_hog[s_gene_tree_leaves[i]]
@@ -369,34 +362,9 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
             if subHOG_to_be_merged:
                 subHOG_to_be_merged_set = set(subHOG_to_be_merged)
                 taxnomic_range = node_species_tree.name
-
                 HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid_num, msa=merged_msa)
 
-                for dubious_list in dubious_list_list:
-                    print("1")
-
-                # for fratgmetns_set in fragmnets_list:
-                #     find the subhog for  fratgmetns_set
-                #
-                #     move the fragments  into subhog 1
-                #             update the list of dubios  on the way back
-                #     update
-                #             fragmnets_list
-                #     methods for each subhog
-                #
-                #             1) add_fragmetns   add to the list dubious all the subhog
-                #
-                #             2) remove protin     from members hierarcyh  all subhogs excpet subhog
-                #
-                #             add as a new method
-                #             HOG_this_node.mark_prots_dubious(dubious_prots)
-                #             result_removal = HOG_this_node.remove_prots_from_hog(prots_to_remove)
-                #         if result_removal != 0:
-                #         hogs_children_level_list.append(hog_i)
-                #
                 hogs_this_level_list.append(HOG_this_node)
-
-                # taxnomic_range, rhogid_num, msa = None, fragment_list
 
                 subHOG_to_be_merged_set_other_Snodes.append([i._hogid for i in subHOG_to_be_merged_set])
                 subHOG_to_be_merged_set_other_Snodes_flattned_temp = [item for items in
@@ -404,13 +372,11 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                                                                       item in items]
                 #  I don't need to traverse deeper in this clade
             node.processed = True  # print("?*?*  ", node.name)
-
         subHOG_to_be_merged_set_other_Snodes_flattned = [item for items in subHOG_to_be_merged_set_other_Snodes for
                                                          item in items]
         if [i._hogid for i in hogs_children_level_list] == subHOG_to_be_merged_set_other_Snodes_flattned:
             break
-        # print("node name ", node.name)
-
+    ##  the following if fore debugging and visualisation of connected component of inter-HOG graph
     # fig = plt.figure(figsize=(300, 200), dpi=60)
     # pos = nx.spring_layout(hoggraph, k=0.25, iterations=30)  # For better example looking  # smaller k, biger space between
     # nx.draw(hoggraph, pos, with_labels=True, node_color='y', node_size=500, font_size=16) # , alpha=0.4
@@ -418,37 +384,27 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     # labels = {e: hoggraph.edges[e]['weight'] for e in hoggraph.edges}
     # nx.draw_networkx_edge_labels(hoggraph, pos, edge_labels=labels, font_size=16)
     # num = random.randint(3, 1000000)
-    # plt.savefig("/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo2/hoggraph/" + hogs_children_level_list[0]._hogid[4:] + "file_rndm"+str(num)+".jpg")
-    # # plt.show()
-    for subHOG in hogs_children_level_list:  # for the single branch  ( D include orthoxml_to_newick.py  subhog and orthoxml_to_newick.py S node. )
+    # plt.savefig("./hoggraph/" + hogs_children_level_list[0]._hogid[4:] + "file_rndm"+str(num)+".jpg")
+    # plt.show()
+    for subHOG in hogs_children_level_list:  # for the single branch  ( D include subhog and S node. )
         if subHOG._hogid not in subhogs_id_children_assigned:  # print("here", subHOG)
             hogs_this_level_list.append(subHOG)
-    # this could be improved
-    # we expect to see orthoxml_to_newick.py list of list as ooutput
     # if len(hogs_this_level_list)==1:  hogs_this_level_list = [hogs_this_level_list]
-
-    for hog_i in hogs_this_level_list:
-        # I recently added this part in 31 march, how did work it before ?
-        _utils_subhog.remove_prots_from_hog_hierarchy(hog_i, prots_to_remove)
 
     for hog_j in hogs_this_level_list:
         hog_j._taxnomic_range = node_species_tree.name
-
-        # check for conflicts in merging
-        #     for i in range(subHOG_to_be_merged_set_other_Snodes):  if
-        #         for i in range(subHOG_to_be_merged_set_other_Snodes):  print("*&*& ",node_species_tree.name)
-        # # dvelopmnet mode  logger info
-        # prot_list_sbuhog = [i._members for i in hogs_this_level_list]
-        # prot_list_sbuhog_short = []
-        # for prot_sub_list_sbuhog in prot_list_sbuhog:
-        #     if format_prot_name == 0:  # bird dataset TYTALB_R04643
-        #         prot_list_sbuhog_short = prot_sub_list_sbuhog
-        #     elif format_prot_name == 1:  # qfo dataset  'tr|E3JPS4|E3JPS4_PUCGT
-        #         prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
-        # logger_hog.debug(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
-        #     [str(i) for i in prot_list_sbuhog_short]))
-
+    ##  the following if fore debugging of connected component of inter-HOG graph
+    ## check for conflicts in merging
+    #     for i in range(subHOG_to_be_merged_set_other_Snodes):  if
+    #         for i in range(subHOG_to_be_merged_set_other_Snodes):  print("*&*& ",node_species_tree.name)
+    # prot_list_sbuhog = [i._members for i in hogs_this_level_list]
+    # prot_list_sbuhog_short = []
+    # for prot_sub_list_sbuhog in prot_list_sbuhog:
+    #     if format_prot_name == 0:  # bird dataset TYTALB_R04643
+    #         prot_list_sbuhog_short = prot_sub_list_sbuhog
+    #     elif format_prot_name == 1:  # qfo dataset  'tr|E3JPS4|E3JPS4_PUCGT
+    #         prot_list_sbuhog_short.append([prot.split('|')[2] for prot in prot_sub_list_sbuhog])
+    # logger_hog.debug(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
+    #     [str(i) for i in prot_list_sbuhog_short]))
 
     return hogs_this_level_list
-
-#
