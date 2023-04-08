@@ -13,6 +13,7 @@ params.rhogs_folder = params.input_folder + "/rhogs_all"
 
 params.species_tree = params.input_folder + "/species_tree.nwk"
 params.pickles_rhogs_folder = params.output_folder + "/pickle_rhogs"
+params.genetrees_folder = params.output_folder + "/genetrees"
 
 
 process omamer_run{
@@ -79,6 +80,9 @@ process hog_big{
   val rhogsbig_tree_ready
   output:
   path "*.pickle"
+  path "*.fa", optional: true   // msa         if write True
+  path "*.nwk", optional: true  // gene trees  if write True
+
   val true
   // path "pi_big_subhog/*"
   // pi_big rhogs_big
@@ -101,6 +105,9 @@ process hog_rest{
 
   output:
   path "*.pickle"
+  path "*.fa", optional: true   // msa         if write True
+  path "*.nwk", optional: true  // gene trees  if write True
+
   val true
   script:
   """
@@ -134,6 +141,7 @@ workflow {
     //proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
     //proteome_folder = Channel.fromPath(params.proteome_folder)
     //hogmap_folder = Channel.fromPath(params.hogmap_folder)
+    genetrees_folder = Channel.fromPath(params.genetrees_folder)
     rhogs_folder = Channel.fromPath(params.rhogs_folder)
     pickles_rhogs_folder =  Channel.fromPath(params.pickles_rhogs_folder)
     //omamerdb = Channel.fromPath(params.input_folder+"/omamerdb.h5")
@@ -163,7 +171,7 @@ workflow {
     rhogsbig_tree =  rhogsbig.combine(species_tree)
     rhogsbig_tree_ready = rhogsbig_tree.combine(ready_batch_roothogs)
    //  rhogsbig_tree_ready.view{"rhogsbig_tree_ready ${it}"}
-   (pickle_big_rhog, ready_hog_big) = hog_big(rhogsbig_tree_ready)
+   (pickle_big_rhog, msas_out, genetrees_out, ready_hog_big) = hog_big(rhogsbig_tree_ready)
     ready_hog_big =true
 
     rhogsrest = rhogs_rest_list.flatten()
@@ -175,7 +183,7 @@ workflow {
     rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
 //     rhogsrest_tree_ready.view{"rhogsrest_tree_ready ${it}"}
 
-    (pickle_rest_rhog, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
+    (pickle_rest_rhog, msas_out_rest, genetrees_out_rest,  ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
 
 //     pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
 //     pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}

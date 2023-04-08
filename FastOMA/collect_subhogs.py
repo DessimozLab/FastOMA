@@ -67,7 +67,9 @@ def collect_subhogs():
                                          attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
 
     print("gene_xml created ")
-    pickle_files_adress = listdir(pickle_folder)
+    pickle_files_adress_raw = listdir(pickle_folder)
+    pickle_files_adress = [i for i in  pickle_files_adress_raw if i.endswith(".pickle")]
+
     print(len(pickle_files_adress))
     hogs_a_rhog_xml_all = []
     for pickle_file_adress in pickle_files_adress:

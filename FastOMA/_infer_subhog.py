@@ -241,7 +241,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         return len(hogs_children_level_list)
 
 
-    genetree_msa_file_addr = "./genetrees/tree_"+str(rhogid_num)+"_"+str(node_species_tree.name) + ".nwk"
+    genetree_msa_file_addr = "tree_"+str(rhogid_num)+"_"+str(node_species_tree.name) + ".nwk" # genetrees
     if len(genetree_msa_file_addr) > 245:
         # there is a limitation on length of file name. I want to  keep it consistent ,msa and gene tree names.
         rand_num = random.randint(1, 10000)

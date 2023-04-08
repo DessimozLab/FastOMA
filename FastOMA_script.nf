@@ -68,14 +68,8 @@ process hog_big{
   cpus  8
   time {10.h}    // for very big rhog it might need more, or you could re-run and add `-resume`
   memory {80.GB}
-  publishDir(
-    path: {params.pickles_rhogs_folder},
-    pattern: {"*.pickle"}
-  )
-  publishDir(
-    path: {params.genetrees_folder},
-    pattern: {"*.nwk"}
-  )
+
+  publishDir params.pickles_rhogs_folder
 
   input:
   // val ready_batch_roothogs
@@ -86,8 +80,8 @@ process hog_big{
   output:
   path "*.pickle"
 
-  path "*.fa"  , optional: true   // msa         if write True
-  path "*.nwk" //, optional: true  // gene trees  if write True
+  path "*.fa", optional: true   // msa         if write True
+  path "*.nwk", optional: true  // gene trees  if write True
 
   val true
   // path "pi_big_subhog/*"
@@ -102,7 +96,16 @@ process hog_big{
 
 
 process hog_rest{
-  publishDir params.pickles_rhogs_folder
+
+    publishDir params.pickles_rhogs_folder
+//   publishDir(
+//     path: {params.pickles_rhogs_folder},
+//     pattern: {"*.pickle"}
+//   )
+//   publishDir(
+//     path: {params.genetrees_folder},
+//     pattern: {"*.nwk"}
+//   )
 
   input:
   // val ready_batch_roothogs
@@ -111,6 +114,10 @@ process hog_rest{
 
   output:
   path "*.pickle"
+
+  path "*.fa" , optional: true   // msa         if write True
+  path "*.nwk" , optional: true  // gene trees  if write True
+
   val true
   script:
   """
@@ -183,12 +190,10 @@ workflow {
     rhogsrest_tree =  rhogsrest.combine(species_tree)
 
 
-
-
     rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
 //     rhogsrest_tree_ready.view{"rhogsrest_tree_ready ${it}"}
 
-    (pickle_rest_rhog, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
+    (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
 
 //     pickle_rest_rhog.flatten().view{" pickle_rest_rhog rest ${it}"}
 //     pickle_big_rhog.flatten().view{" pickle_big_rhog rest ${it}"}

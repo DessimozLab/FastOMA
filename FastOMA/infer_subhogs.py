@@ -94,7 +94,6 @@ add eception to show , whn this happens for which taxnomic level and rhog
         we don't need tree for msa of 2 !
 
 precuaitions
-genetrees     is not with prefix
 there shouldnt be any space in the tree name internal node name as well"
 
 
@@ -117,7 +116,7 @@ double check
 
 # # address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/working_nf/rhogs_rest/122/"  # bb1
 # inferhog_concurrent_on_string = sys.argv[2]   # "False"  # "False"  #
-# # mkdir pi_big_rhog pi_big_subhog pi_rest_rhog  pi_rest_subhog genetrees
+# # mkdir pi_big_rhog pi_big_subhog pi_rest_rhog  pi_rest_subhog
 # prefix_pickle = sys.argv[3]  # "pi_big"
 # rhogs_fa_folder_pure = sys.argv[4]   # "rhogs_rest"  # or  "rhogs_big" # sys.argv[4] #
 # pickles_rhog_folder = _config.in_folder + "/" + prefix_pickle + "_rhog/"
