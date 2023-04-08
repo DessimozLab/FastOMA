@@ -42,6 +42,9 @@ def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,
     if not os.path.exists(pickles_subhog_folder):
         os.makedirs(pickles_subhog_folder)
 
+    # if (_config.gene_trees_write or _config.msa_write) and not os.path.exists("./genetrees"):
+    #     os.makedirs("./genetrees")
+
     logger_hog.debug("\n" + "==" * 10 + "\n Start working on root hog: " + str(rhogid_num) + ". \n")
     rhog_i_prot_address = rhogs_fa_folder + "/HOG_" + str(rhogid_num).zfill(7) + ".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))

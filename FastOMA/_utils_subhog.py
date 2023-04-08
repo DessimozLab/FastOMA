@@ -339,7 +339,8 @@ def check_prot_dubious_msa(prot_dubious_msa_list, gene_tree):
                 print("check_prot_dubious_msa dist_numNodes, dist_length ",dist_numNodes, dist_length)
                 if dist_numNodes < max(max_dist_numNodes * 1 / 5, 3) or dist_length < max(0.005, max_dist_length * 1 / 5) or (dist_length- 2*max_dist_length)< 0.001 :
                     fragments += [prot_dubious_msa_set[0], prot]
-        fragments_set_list.append(set(fragments))
+        if fragments:
+            fragments_set_list.append(set(fragments))
 
     return fragments_set_list
 

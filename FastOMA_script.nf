@@ -10,6 +10,7 @@ params.hogmap_folder = params.output_folder + "/hogmap"
 params.rhogs_folder = params.output_folder + "/rhogs_all"
 params.species_tree = params.input_folder + "/species_tree.nwk"
 params.pickles_rhogs_folder = params.output_folder + "/pickle_rhogs"
+params.genetrees_folder = params.output_folder + "/genetrees"
 
 
 process omamer_run{
@@ -67,7 +68,15 @@ process hog_big{
   cpus  8
   time {10.h}    // for very big rhog it might need more, or you could re-run and add `-resume`
   memory {80.GB}
-  publishDir params.pickles_rhogs_folder
+  publishDir(
+    path: {params.pickles_rhogs_folder},
+    pattern: {"*.pickle"}
+  )
+  publishDir(
+    path: {params.genetrees_folder},
+    pattern: {"*.nwk"}
+  )
+
   input:
   // val ready_batch_roothogs
   // path rhogsbig_tree // = rhogsbig.combine(species_tree)
@@ -77,8 +86,8 @@ process hog_big{
   output:
   path "*.pickle"
 
-  path "*.fa"   // msa         if write True
-  path "*.nwk"  // gene trees  if write True
+  path "*.fa"  , optional: true   // msa         if write True
+  path "*.nwk" //, optional: true  // gene trees  if write True
 
   val true
   // path "pi_big_subhog/*"
@@ -136,6 +145,10 @@ workflow {
     proteome_folder = Channel.fromPath(params.proteome_folder)
     hogmap_folder = Channel.fromPath(params.hogmap_folder)
     rhogs_folder = Channel.fromPath(params.rhogs_folder)
+
+    genetrees_folder = Channel.fromPath(params.genetrees_folder)
+
+
     pickles_rhogs_folder =  Channel.fromPath(params.pickles_rhogs_folder)
     omamerdb = Channel.fromPath(params.input_folder+"/omamerdb.h5")
     // proteomes.view{"prot ${it}"}
@@ -163,7 +176,7 @@ workflow {
     rhogsbig_tree =  rhogsbig.combine(species_tree)
     rhogsbig_tree_ready = rhogsbig_tree.combine(ready_batch_roothogs)
     rhogsbig_tree_ready.view{"rhogsbig_tree_ready ${it}"}
-    (pickle_big_rhog, msas, genetrees, ready_hog_big) = hog_big(rhogsbig_tree_ready)
+    (pickle_big_rhog, msas_out, genetrees_out, ready_hog_big) = hog_big(rhogsbig_tree_ready)
 
     rhogsrest = rhogs_rest_list.flatten()
 //     rhogsrest.view{" rhogs rest ${it}"}

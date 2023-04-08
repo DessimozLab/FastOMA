@@ -61,8 +61,10 @@ protein_format_qfo_dataset = True
 fragment_detection = True
 
 ## output writing files
-gene_trees_write = False
-msa_write = False
+gene_trees_write = True
+msa_write = True
+
+
 keep_subhog_each_pickle = False
 
 
@@ -93,11 +95,11 @@ inferhog_min_cols_msa_to_filter = 100  # used for msa before gene tree inference
 inferhog_filter_all_msas_row = True
 
 
-inferhog_resume_rhog = True  # main.py False
+inferhog_resume_rhog = False  # main.py False
 # The intermediate files, internal node  pickle files is not working with nextflow
 # the reason is that the pickles_subhog_folder_all is relative and stored in nextflow_work folder
 # this folder can not be used for  the re-submitting
-inferhog_resume_subhog = True  # read pickle_subhog  # _infer_subhog.py
+inferhog_resume_subhog = False  # read pickle_subhog  # _infer_subhog.py
 
 # inferhog_concurrent_on = True now as an argument
 inferhog_max_workers_num = 8
