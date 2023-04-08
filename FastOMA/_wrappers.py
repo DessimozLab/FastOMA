@@ -57,10 +57,10 @@ def infer_gene_tree(msa, gene_tree_file_addr):
         wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
         wrapper_tree.options.options['-fastest'].active = True
 
-    elif _config.tree_tool == "iqtree":
-        wrapper_tree = iqtree.Iqtree(msa, datatype="PROTEIN")
-        wrapper_tree.options.options['-m'].set_value("LG+I+G")
-        wrapper_tree.options.options['-nt'].set_value(1)
+    # elif _config.tree_tool == "iqtree": # very slow
+    #     wrapper_tree = iqtree.Iqtree(msa, datatype="PROTEIN")
+    #     wrapper_tree.options.options['-m'].set_value("LG+I+G")
+    #     wrapper_tree.options.options['-nt'].set_value(1)
 
     result_tree1 = wrapper_tree()
     if wrapper_tree.stderr:

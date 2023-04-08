@@ -98,6 +98,7 @@ process hog_rest{
 
   output:
   path "*.pickle"
+
   val true
   script:
   """

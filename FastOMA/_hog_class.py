@@ -4,19 +4,16 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Align import MultipleSeqAlignment
 from random import sample
 import itertools
-
-from . import _utils_subhog
+# from . import _utils_subhog
 from ._utils_subhog import logger_hog
 from . import _config
-
 
 
 class HOG:
     _hogid_iter = 10000
 
-    def __init__(self, input_instantiate, taxnomic_range, rhogid_num, msa=None):  # _prot_names
+    def __init__(self, input_instantiate, taxnomic_range, rhogid_num, msa=None):
         # fragment_list list of  sets , each set contains protein ID of fragments
-
         # the input_instantiate could be either
         #     1) orthoxml_to_newick.py protein as the biopython seq record  SeqRecord(seq=Seq('MAPSSRSPSPRT. ]
         # or  2) orthoxml_to_newick.py set of intances of class HOG   wit orthoxml_to_newick.py big msa
@@ -25,79 +22,94 @@ class HOG:
         self.__class__._hogid_iter += 1
         # 0070124
         self._hogid = "HOG_" + str(self._rhogid_num).zfill(7) + "_sub" + str(self.__class__._hogid_iter)
-        self._taxnomic_range = taxnomic_range  # print("**** orthoxml_to_newick.py new HOG is instantiated with id", self._hogid)
+        self._tax_least = taxnomic_range  #  least taxnomic level
+        self._tax_now = taxnomic_range    # the taxnomic level that we are considering now, checking for duplication
 
         if isinstance(input_instantiate, SeqRecord):  # if len(sub_hogs)==1:
             only_protein = input_instantiate  # only one seq, only on child, leaf
             self._members = set([only_protein.id])
             self._msa = MultipleSeqAlignment([only_protein])
             self._subhogs = []
-            self._dubious_members = []
+            self._dubious_members = set()
             # <<class 'Bio.Align.MultipleSeqAlignment'> instance (1 records of length 314) at 7f0e86c713d0>
 
         elif msa and all(isinstance(x, HOG) for x in input_instantiate):
-            # here we want to merge few subhogs and creat orthoxml_to_newick.py new HOG.   #the n
-
-            # merge few subhogs   , fragment_list
+            # here we want to merge few subhogs and create orthoxml_to_newick.py new HOG.   #the n
 
             sub_hogs = input_instantiate
             hog_members = set()
             for sub_hog in sub_hogs:
                 hog_members |= sub_hog.get_members()  # union
-            self._members = hog_members  # set.union(*tup)
+            self._members = hog_members  # set.union(*tup)    # this also include dubious_members
             self._subhogs = list(input_instantiate)  # full members of subhog, children
 
-            dubious_members = {}
+            dubious_members = set()
             for sub_hog in sub_hogs:
                 dubious_members |= sub_hog.get_dubious_members()  # union
             self._dubious_members = dubious_members
 
-            records_full = [record for record in msa if  (record.id in self._members) and (record.id not in self._dubious_members) ]
+            records_full = [record for record in msa if (record.id in self._members) and (record.id not in self._dubious_members) ]
             if len(records_full) > _config.hogclass_max_num_seq:
+                # to do in future:  select best seq, not easy to defin, keep diversity,
                 records_sub_sampled_raw = sample(records_full, _config.hogclass_max_num_seq)  # without replacement.
-                # to do in future:  select best seq
-                if len(records_sub_sampled_raw[0]) > _config.hogclass_min_cols_msa_to_filter:
-                    records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, _config.hogclass_tresh_ratio_gap_col)
-                else:
-                    records_sub_sampled = records_sub_sampled_raw
-            #         # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
-            #         # print(len(msa_filt_row_col), len(msa_filt_row_col[0]))
-            # logger_hog.info( "we are doing subsamping now from " + str(len(records_full)) + " to " + str(max_num_seq) + " seqs.")
+
+                # todo not sure to do filtering for columns in hog class , may be problamtic with fragment detection
+                records_sub_sampled = records_sub_sampled_raw
+                # if len(records_sub_sampled_raw[0]) > _config.hogclass_min_cols_msa_to_filter:
+                #     records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, _config.hogclass_tresh_ratio_gap_col)
+                # else:
+                #     records_sub_sampled = records_sub_sampled_raw
+                ## or even for rows
+                #         # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
+                # logger_hog.info( "we are doing subsamping in hig class from " + str(len(records_full)) + " to " + str(max_num_seq) + " seqs.")
             else:
                 records_sub_sampled = records_full
-                # removing some columns completely gap -  (not x   )
+                # removing some columns completely gap - (not x   )
             self._msa = MultipleSeqAlignment(records_sub_sampled)
             # without replacement sampling ,  # self._children = sub_hogs # as legacy  ?
         else:
-            logger_hog.error("Error 169,  check the input format to instantiate orthoxml_to_newick.py HOG class")
+            logger_hog.error("Error 142769,  check the input format to instantiate HOG class")
             assert False
 
     def __repr__(self):
-        return "an object of class HOG of hogID=" + self._hogid + ", length=" + str(
-            len(self._members)) + ", taxonomy= " + str(self._taxnomic_range)
+        return "object of HOGclass hogID=" + self._hogid + ",len=" + str(
+            len(self._members))+", tax_least=" + str(self._tax_least) + ", tax_now= " + str(self._tax_now)
 
     def get_members(self):
         return set(self._members)
 
     def get_dubious_members(self):
-        return set(self._dubious_members)
-
-
-
+        return self._dubious_members
 
     def remove_prots_from_hog(self, prots_to_remove):
         prot_members_hog_old = self._members
-        if prot_members_hog_old & prots_to_remove:
-            prot_members_hog_edited = prot_members_hog_old - prots_to_remove
+        if len(prot_members_hog_old) & len(prots_to_remove):
+            prot_members_hog_edited = prot_members_hog_old - set(prots_to_remove)
             self._members = prot_members_hog_edited
             msa_old = self._msa
             msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id not in prots_to_remove])
             self._msa = msa_edited
-
             if len(prot_members_hog_edited) == 0:  # hog should be removed , no members is left
                 return 0
         return 1
 
+    def insert_dubious_prots(self, fragment_host, fragments_list_nothost):
+
+        self._dubious_members |= set(fragments_list_nothost)
+        self._dubious_members |= {fragment_host}
+        if fragment_host not in self._members:
+            logger_hog.error("Error 1252769, fragment_host not in hog"+str(fragment_host))
+        self._members |= set(fragments_list_nothost)
+
+        msa_old = self._msa
+        msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id not in self._dubious_members])
+        self._msa = msa_edited
+
+        # species_name = fragment_host.split("||")[1]
+        # if self._tax_now == species_name:
+
+
+        return 1
 
 
 
@@ -105,7 +117,7 @@ class HOG:
     def to_orthoxml(self):
         hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
         property_element = ET.SubElement(hog_elemnt, "property",
-                                        attrib={"name": "TaxRange", "value": str(self._taxnomic_range)})
+                                        attrib={"name": "TaxRange", "value": str(self._tax_now)})  # todo double check we report the taxanomic level
 
         # to do the following could be improved ???   without this if it will be like, one property is enough
         # <orthologGroup>
@@ -128,7 +140,7 @@ class HOG:
             return geneRef_elemnt  # hog_elemnt
 
         def _sorter_key(sh):
-            return sh._taxnomic_range
+            return sh._tax_now  # for checking whether it is paralogous group we check the level we are looking at. Not the tax_least (could be species level).
 
         self._subhogs.sort(key=_sorter_key)
         for sub_clade, sub_hogs in itertools.groupby(self._subhogs, key=_sorter_key):
