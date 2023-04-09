@@ -371,6 +371,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     assert len(species_names_rhog) > 0, "species names list is empty in rhog, probably issue in formating with || in previous step find rhog"
 
     species_names_uniqe = set(species_names_rhog)
+
     first_common_ancestor_name = species_tree.get_common_ancestor(species_names_uniqe).name
     species_tree.prune(species_names_uniqe, preserve_branch_length=True)
     species_tree.name = first_common_ancestor_name

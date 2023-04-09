@@ -270,7 +270,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         gene_tree = Tree(gene_tree_raw + ";", format=0)
         logger_hog.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+str(rhogid_num)+", level: "+str(node_species_tree.name))
 
-        if _config.fragment_detection:
+        if _config.fragment_detection and len(gene_tree)>2:
             (gene_tree, hogs_children_level_list) = _utils_subhog.handle_fragment_msa(prot_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list)
 
         # when the prot dubious is removed during trimming
