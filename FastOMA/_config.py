@@ -61,8 +61,8 @@ protein_format_qfo_dataset = True
 fragment_detection = True
 
 ## output writing files
-gene_trees_write = True
-msa_write = True
+gene_trees_write = False
+msa_write = False
 
 
 keep_subhog_each_pickle = False

@@ -1,9 +1,9 @@
 __author__ = 'admin'
 
 
-import familyanalyzer as fa
-import lxml.etree as etree
-from familyanalyzer.orthoxmlquery import ElementError, OrthoXMLQuery
+import FastOMA.zoo.familyanalyzer as fa
+# import lxml.etree as etree
+# from familyanalyzer.orthoxmlquery import ElementError, OrthoXMLQuery
 
 
 

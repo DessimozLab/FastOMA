@@ -68,9 +68,9 @@ process batch_roothogs{
 }
 
 process hog_big{
-  cpus  8
-  time {10.h}    // for very big rhog it might need more, or you could re-run and add `-resume`
-  memory {80.GB}
+//   cpus  8
+//   time {10.h}    // for very big rhog it might need more, or you could re-run and add `-resume`
+//   memory {80.GB}
   publishDir params.pickles_rhogs_folder
   input:
   // val ready_batch_roothogs
@@ -88,9 +88,10 @@ process hog_big{
   // pi_big rhogs_big
   // params.species_tree
 
+// infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --parrallel True  --species-tree ${rhogsbig_tree_ready[1]}
   script:
   """
-  infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --parrallel True  --species-tree ${rhogsbig_tree_ready[1]}
+  ls > a.pickle
   """
 }
 

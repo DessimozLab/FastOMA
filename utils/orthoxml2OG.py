@@ -1,21 +1,26 @@
 
-
-
 # orthologous per group
-
 # for speciefic taxonomic level,  top level
 # option whether include its substes,  groups that emerge after
 # for root combiaiton is not alowed
-
 # (1) folder for fasta file
 # (2) text file, per group, gene id
-
-
 #  (3) extract gene markers, single copy ortho roots ,  for species tree reconstruction, , number of gene markers, or min
-
-
-
 # this code is for converting an OrthoXML file to a set of Fasta files as Ortholougous groups
+
+
+
+import sys
+import os
+from FastOMA.zoo.hog.convert import orthoxml_to_newick
+
+input_orthoxml = sys.argv[1]
+
+trees = orthoxml_to_newick(input_orthoxml)
+print("We extracted "+str(len(trees))+" trees from the input HOG orthoxml"+input_orthoxml)
+
+for treeid_hog, tree in trees.items():
+    tree
 
 
 def xmlTree2OGgenes(xmltree, prot_species_proteome):

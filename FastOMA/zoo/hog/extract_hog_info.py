@@ -1,8 +1,8 @@
 __author__ = 'admin'
 
-import lxml.etree as etree
-from familyanalyzer.orthoxmlquery import ElementError, OrthoXMLQuery
-import familyanalyzer as fa
+# import lxml.etree as etree
+from FastOMA.zoo.familyanalyzer.orthoxmlquery import OrthoXMLQuery
+import FastOMA.zoo.familyanalyzer as fa
 
 # To parse the orthoxml and get the related etree object: etree.parse(fn_orthoxml) denote here by XML
 # To get the root of your etree object: etree_object.getroot() denote here by XML_root
