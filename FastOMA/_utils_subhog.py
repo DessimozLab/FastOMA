@@ -283,9 +283,10 @@ def handle_fragment_msa(prot_dubious_msa_list,  gene_tree, node_species_tree, ge
             # remove fragments from gene tree
             fragments_set_union = set.union(*fragments_set_list)
             rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - fragments_set_union
-            gene_tree.prune(rest_leaves, preserve_branch_length=True)
+
             # gene_tree.write(format=1, format_root_node=True)
             if len(rest_leaves) > 1:
+                gene_tree.prune(rest_leaves, preserve_branch_length=True)
                 (gene_tree, species_dubious_sd_dic2) = genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr+"_dubiousMSA")
                 if species_dubious_sd_dic2:
                     # logger_hog.debug("these are  found after removing with msa , species_dubious_sd_dic2 "+str(species_dubious_sd_dic2))
@@ -620,7 +621,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
         record_edited = SeqRecord(Seq(record_seq_edited), record.id, '', '')
         msa_filtered_col.append(record_edited)
 
-    if _config.msa_write and gene_tree_file_addr:
+    if _config.msa_write_all and gene_tree_file_addr:
         out_name_msa=gene_tree_file_addr+"filtered_"+"col_"+str(tresh_ratio_gap_col)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_col, handle_msa_fasta,"fasta")
@@ -643,7 +644,7 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
                 msa_filtered_row.append(record)
         else:
             print("issue 12788 : error , seq len is zero when msa_filter_row")
-    if _config.msa_write and gene_tree_file_addr:
+    if _config.msa_write_all and gene_tree_file_addr:
         out_name_msa = gene_tree_file_addr +"_filtered_row_"+str(tresh_ratio_gap_row)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
@@ -717,11 +718,10 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
             msa_filt_col = msa_filt_row_1
             msa_filt_row_col = _wrappers.trim_msa(msa_filt_row_1)
         else:
-            msa_filt_col = msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col,
-                                                        gene_tree_file_addr)
+            msa_filt_col = msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr)
+            msa_filt_row_col = msa_filt_col
             if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
-                msa_filt_row_col = msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row,
-                                                                gene_tree_file_addr)
+                msa_filt_row_col = msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row,gene_tree_file_addr)
 
         # compare msa_filt_row_col and msa_filt_col,
         if len(msa_filt_row_col) != len(msa_filt_col):  # some sequences are removed

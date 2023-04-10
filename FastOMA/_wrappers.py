@@ -76,7 +76,7 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     # instead -> hash thing
     # ??? hashlib.md5(original_name).hexdig..it()
 
-    if _config.gene_trees_write or _config.rooting_method == "mad":
+    if _config.gene_trees_write_all or _config.rooting_method == "mad":
         file_gene_tree = open(gene_tree_file_addr, "w")
         file_gene_tree.write(tree_nwk)
         file_gene_tree.write(";\n")

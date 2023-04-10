@@ -108,7 +108,6 @@ class HOG:
         # species_name = fragment_host.split("||")[1]
         # if self._tax_now == species_name:
 
-
         return 1
 
 
@@ -117,7 +116,8 @@ class HOG:
     def to_orthoxml(self):
         hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
         property_element = ET.SubElement(hog_elemnt, "property",
-                                        attrib={"name": "TaxRange", "value": str(self._tax_now)})  # todo double check we report the taxanomic level
+                                        attrib={"name": "TaxRange", "value": str(self._tax_now)})
+        # todo double check we report the taxanomic level
 
         # to do the following could be improved ???   without this if it will be like, one property is enough
         # <orthologGroup>
@@ -130,17 +130,32 @@ class HOG:
         # hog_elemnt = ET.SubElement(species,
 
         if len(self._subhogs) == 0:
-            list_member_first = list(self._members)[0]
-            # 'tr|A0A3Q2UIK0|A0A3Q2UIK0_CHICK||CHICK_||1053007703'
-            prot_name_integer = list_member_first.split("||")[2].strip()
-            geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(prot_name_integer)})
-                #'id': str(gene_id_name[list_member_first])})  # # gene_id_name[query_prot_record.id]
-            # hog_elemnt.append(geneRef_elemnt)
-            # to do could be improved when the rhog contains only one protein
-            return geneRef_elemnt  # hog_elemnt
+            list_member = list(self._members)
+
+            if len(list_member) == 1:
+                list_member_first = list(self._members)[0]
+                # 'tr|A0A3Q2UIK0|A0A3Q2UIK0_CHICK||CHICK_||1053007703'
+                prot_name_integer = list_member_first.split("||")[2].strip()
+                geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(prot_name_integer)})
+                    #'id': str(gene_id_name[list_member_first])})  # # gene_id_name[query_prot_record.id]
+                # hog_elemnt.append(geneRef_elemnt)
+                # to do could be improved when the rhog contains only one protein
+                return geneRef_elemnt
+            elif len(list_member) > 1:
+                # probably becuase of inserting dubious prots
+                paralog_element = ET.Element('paralogGroup')
+                property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value":"Dubiousfragment"})
+                # removed proteins which are dubious are reported only in the log files.
+                for member in list_member:
+                    prot_name_integer = member.split("||")[2].strip()
+                    geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(prot_name_integer)})
+                    paralog_element.append(geneRef_elemnt)
+
+            return paralog_element  # hog_elemnt
 
         def _sorter_key(sh):
-            return sh._tax_now  # for checking whether it is paralogous group we check the level we are looking at. Not the tax_least (could be species level).
+            return sh._tax_now
+            # todo for checking whether it is paralogous group we check the level we are looking at. Not the tax_least (could be species level).
 
         self._subhogs.sort(key=_sorter_key)
         for sub_clade, sub_hogs in itertools.groupby(self._subhogs, key=_sorter_key):
