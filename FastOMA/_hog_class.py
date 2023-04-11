@@ -117,6 +117,8 @@ class HOG:
         hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
         property_element = ET.SubElement(hog_elemnt, "property",
                                         attrib={"name": "TaxRange", "value": str(self._tax_now)})
+
+
         # todo double check we report the taxanomic level
 
         # to do the following could be improved ???   without this if it will be like, one property is enough

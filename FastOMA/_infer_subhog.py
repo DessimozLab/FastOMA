@@ -50,8 +50,7 @@ def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
     logger_hog.debug("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
     (species_tree) = _utils_subhog.read_species_tree_add_internal(_config.species_tree_address)
-    # todo double check the issue with the root node name.
-    # todo check all the input and needed folders as a validation with nextflow
+
     (species_tree, species_names_rhog, prot_names_rhog) = _utils_subhog.prepare_species_tree(rhog_i, species_tree, rhogid_num)
     species_names_rhog = list(set(species_names_rhog))
     logger_hog.debug("Number of unique species in rHOG " + str(rhogid_num) + "is " + str(len(species_names_rhog)) + ".")
@@ -206,7 +205,8 @@ def read_children_hogs(node_species_tree, rhogid_num, pickles_subhog_folder_all)
     for child_name in children_name:
         pickle_subhog_file = pickles_subhog_folder + str(child_name) + ".pickle"
         with open(pickle_subhog_file, 'rb') as handle:
-            hogs_children_level_list.extend(pickle.load(handle))  # todo, check file exist, how to handle if not
+            hogs_children_level_list.extend(pickle.load(handle))  # when there is an error somewhere else, probably with paralelization, for big rootHOG, the root reasong of the error won't shown up. but you stope here at worst which is late.
+            #  todo, check file exist, how to handle if not
     logger_hog.debug("Finding hogs for rhogid_num: " + str(rhogid_num) + ", for taxonomic level:" + str(
         node_species_tree.name) + " for species sub-tree:\n  " + str(node_species_tree.write(format=1, format_root_node=True)) + "\n")
     return hogs_children_level_list
@@ -343,7 +343,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
             #         else:
             #             hoggraph.add_edge(hog_i, hog_j, weight=1)
             # print(hoggraph.edges(data=True))
-            # todo this piece of code could be neater
+            # todo this piece of code could be neater, for extracting connected component of inter-hog graph
             subHOG_to_be_merged = []
             for node_leave_name in node_leaves_name:  # print(node_leave_name)
                 for subHOG in hogs_children_level_list:

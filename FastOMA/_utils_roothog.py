@@ -61,7 +61,7 @@ def parse_proteome():  # list_oma_species
     return query_species_names, query_prot_recs
 
 
-def add_species_name_gene_id(query_prot_recs, query_species_names, ):  # TODO what's the last item?
+def add_species_name_gene_id(query_prot_recs, query_species_names):
     """
     adding the name of species to each protein record
         - based on file name

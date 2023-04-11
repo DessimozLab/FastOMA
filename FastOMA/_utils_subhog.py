@@ -331,8 +331,7 @@ def check_prot_dubious_msa(prot_dubious_msa_list, gene_tree):
         fragments = []
 
         for prot in prot_dubious_msa_set[1:]:
-            # todo follwoign could be imporved, during filtering row/col msa, a fragments could be removed and not in gene tree anymore,
-
+            # todo following could be imporved, during filtering row/col msa, a fragments could be removed and not in gene tree anymore,
             if prot_dubious_msa_set[0] in gene_tree_leaves_name and prot in gene_tree_leaves_name:
                 # there might be few fragments, checking the distance of the first one with the rest # todo check all vs all
                 dist_numNodes = gene_tree.get_distance(prot_dubious_msa_set[0], prot, topology_only=True)
@@ -376,8 +375,9 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     first_common_ancestor_name = species_tree.get_common_ancestor(species_names_uniqe).name
     species_tree.prune(species_names_uniqe, preserve_branch_length=True)
     species_tree.name = first_common_ancestor_name
-
-    #   print(species_tree.write(format=1))
+    # add internal node name to the tree
+    # this has an issue with root name, cannot add the root name
+    # print(species_tree.write(format=1, format_root_node=True))
     # counter_internal = 0
     # for node in species_tree.traverse(strategy="postorder"):
     #     node_name = node.name
@@ -389,20 +389,19 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     #             node_children = node.children
     #             # list_children_names = [str(node_child.name) for node_child in node_children]
     #             # node.name = '_'.join(list_children_names)
-    #
     #             # ?? to imrpove, if the species tree has internal node name, keep it,
     #             # then checn condition in  _infer_subhog.py, where logger_hog.info("Finding hogs for rhogid_num: "+str(rh
-    #
     #             node.name = "internal_" + str(counter_internal)  #  +"_rhg"+str(rhogid_num)  #  for debuging
     #             counter_internal += 1
     # print("Working on the following species tree.")
-    # print(species_tree.write(format=1))
-    #species_tree.write()
+    # print(species_tree.write(format=1, format_root_node=True))
 
     return species_tree, species_names_rhog, prot_names_rhog
 
 
 def find_prot_dubious_sd_remove(gene_tree, species_dubious_sd_dic):
+    # todo this function need to double check with cases of with and without dubious
+
     prot_dubious_sd_all_list = []
     prot_dubious_sd_remove_list = []
     # todo not sure postorder or preorder
@@ -411,7 +410,7 @@ def find_prot_dubious_sd_remove(gene_tree, species_dubious_sd_dic):
         if not node.is_leaf() and 'D' in node.name:
             node_name = node.name
             d, intersection, union = node_name.split("_")
-            #if int(intersection) / int(union) < _config.threshold_dubious_sd:
+            # if int(intersection) / int(union) < _config.threshold_dubious_sd:
             if node_name in species_dubious_sd_dic:
                 node_children = node.children
                 species_dubious_sd_list = species_dubious_sd_dic[node_name]
@@ -432,7 +431,7 @@ def find_prot_dubious_sd_remove(gene_tree, species_dubious_sd_dic):
                     # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
                     prot_dubious_sd_remove_list += prot_dubious_sd_all[child_size_min_indx]
 
-                #  for a species prot_dubious_sd_all contains two lists correspoding to two children of gene tree (fasttree) for this duplication event
+                # for a species prot_dubious_sd_all contains two lists correspoding to two children of gene tree (fasttree) for this duplication event
                 prot_dubious_sd_all_list.append(prot_dubious_sd_all)
 
     return prot_dubious_sd_remove_list
