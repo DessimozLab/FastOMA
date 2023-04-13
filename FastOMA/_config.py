@@ -56,7 +56,7 @@ input_rhog_folder = "./"
 # in_folder = "./in_folder"+ "/"
 species_tree_address = "species_tree.nwk"
 # no space or special charcter in internal node.
-protein_format_qfo_dataset = True
+# protein_format_qfo_dataset = True
 
 fragment_detection = False
 

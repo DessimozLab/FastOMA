@@ -5,6 +5,8 @@ params.input_folder = "./in_folder/"
 params.output_folder = "./out_folder/"
 params.proteome_folder = params.input_folder + "/proteome"
 params.proteomes = params.proteome_folder + "/*"
+params.hogmap_input_folder = params.input_folder + "/hogmap_input"
+
 
 params.hogmap_folder = params.output_folder + "/hogmap"
 params.rhogs_folder = params.output_folder + "/rhogs_all"
@@ -154,13 +156,22 @@ workflow {
     rhogs_folder = Channel.fromPath(params.rhogs_folder)
 
     genetrees_folder = Channel.fromPath(params.genetrees_folder)
-
+    hogmap_input_folder = Channel.fromPath(params.hogmap_input_folder)
 
     pickles_rhogs_folder =  Channel.fromPath(params.pickles_rhogs_folder)
     omamerdb = Channel.fromPath(params.input_folder+"/omamerdb.h5")
     // proteomes.view{"prot ${it}"}
-    proteomes_omamerdb = proteomes.combine(omamerdb)
+    proteomes_omamerdb= proteomes.combine(omamerdb)
+    // proteomes_omamerdb_hogmapinput = proteomes_omamerdb.comb
+
     // proteomes_omamerdb.view{"proteomes_omamerdb ${it}"}
+
+    // params.hogmap_input_folder = params.input_folder + "/hogmap_input"
+
+    // check if it is provided as input
+
+
+
     (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb)
     ready_omamer_run_c = ready_omamer_run.collect()
     // hogmaps.view{"hogmap ${it}"}

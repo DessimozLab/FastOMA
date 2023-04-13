@@ -37,7 +37,7 @@ which can be used with [PyHAM](https://github.com/DessimozLab/pyham)
 In summary, you need to 1) install FastOMA using pip after its prerequisites (below), and  2) put the input files in the folder `in_folder` 
 and 3) run FastOMA using the nextflow recipe `FastOMA_script.nf`. 
 ```
-python -m pip install ./FastOMA 
+python -m pip install -e ./FastOMA 
 nextflow  FastOMA_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
 ```
 For a detailed instruction start from prerequisites and continue to the section [How to run FastOMA on the test data (details)](https://github.com/sinamajidian/gethog3#how-to-run-gethog3-on-the-test-data-details).

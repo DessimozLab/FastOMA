@@ -49,9 +49,12 @@ def infer_subhogs():
 
     print("finsihed ", address_rhogs_folder)
 
+# TODO all below
 
 """
-TODO
+ 
+ 
+
 
 - use same seed for hog sampling and fasttree/mafft if they have 
 

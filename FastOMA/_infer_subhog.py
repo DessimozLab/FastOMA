@@ -80,7 +80,7 @@ def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,
     with open(pickles_rhog_file, 'wb') as handle:
         # dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
         pickle.dump(hogs_rhogs_xml, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    logger_hog.debug("All subHOGs for the rootHOG as orthoxml format is written in " + pickles_rhog_file)
+    logger_hog.debug("All subHOGs for the rootHOG as OrthoXML format is written in " + pickles_rhog_file)
 
     del hogs_a_rhog  # to be memory efficient
     gc.collect()
@@ -274,9 +274,9 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
             (gene_tree, hogs_children_level_list) = _utils_subhog.handle_fragment_msa(prot_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list)
 
         # when the prot dubious is removed during trimming
-        if _config.fragment_detection and len(gene_tree)>2:
+        if len(gene_tree) > 1:
             (gene_tree, species_dubious_sd_dic) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list)
-            if species_dubious_sd_dic:
+            if _config.fragment_detection and species_dubious_sd_dic:
                 (gene_tree, hogs_children_level_list) = _utils_subhog.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, species_dubious_sd_dic, hogs_children_level_list)
 
             logger_hog.debug("Merging sub-hogs for rhogid_num:"+str(rhogid_num)+", level:"+str(node_species_tree.name))
