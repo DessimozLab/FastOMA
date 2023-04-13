@@ -61,27 +61,26 @@ protein_format_qfo_dataset = True
 fragment_detection = True
 
 ## output writing files
-gene_trees_write = True
-msa_write = True
-gene_trees_write_all = True
-msa_write_all = True
-
-keep_subhog_each_pickle = True
+gene_trees_write = False
+msa_write = False
+gene_trees_write_all = False
+msa_write_all = False
+keep_subhog_each_pickle = False
 
 
 # filtering omamer
-omamer_fscore_treshold_big_rhog = 0.1  #  to have more proteins in the ortho groups 0.05  considering for big rhogs
+omamer_fscore_treshold_big_rhog = 0.5  #  to have more proteins in the ortho groups 0.05  considering for big rhogs
 treshold_big_rhog_szie = 500
 
 ## hogclass configs
-hogclass_max_num_seq = 5  # subsampling in msa
-hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 500
+hogclass_max_num_seq = 10  # subsampling in msa
+hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 300
 hogclass_tresh_ratio_gap_col = 0.2
 
 automated_trimAL = False
 
 label_SD_internal = "species_overlap"  # "reconcilation" "species_overlap"
-threshold_dubious_sd = 1/10
+threshold_dubious_sd = 1/10+0.01
 #threshold_sd_suspicious_fragment_ratio = 1/3
 tree_tool = "fasttree"  # "fasttree"  "iqtree"  # for  gene tree with two, we use
 
@@ -91,7 +90,7 @@ rooting_mad_executable_path = "mad" # /work/FAC/FBM/DBC/cdessim2/default/smajidi
 ##inferhog
 inferhog_tresh_ratio_gap_row = 0.1   # to have more proteins in the ortho groups 0.1
 inferhog_tresh_ratio_gap_col = 0.4
-inferhog_min_cols_msa_to_filter = 100  # used for msa before gene tree inference and  saving msa in hog class
+inferhog_min_cols_msa_to_filter = 500  # used for msa before gene tree inference and  saving msa in hog class
 
 inferhog_filter_all_msas_row = True
 
@@ -100,7 +99,7 @@ inferhog_resume_rhog = False  # main.py False
 # The intermediate files, internal node  pickle files is not working with nextflow
 # the reason is that the pickles_subhog_folder_all is relative and stored in nextflow_work folder
 # this folder can not be used for  the re-submitting
-inferhog_resume_subhog = True  # read pickle_subhog  # _infer_subhog.py
+inferhog_resume_subhog = False  # read pickle_subhog  # _infer_subhog.py
 
 # inferhog_concurrent_on = True now as an argument
 inferhog_max_workers_num = 8

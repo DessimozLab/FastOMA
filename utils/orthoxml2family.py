@@ -28,7 +28,7 @@ print("The first one contain "+str(len(toplevel_groups[0]))+" proteins.")
 
 with open(output_file, 'w') as handle:
     for toplevel_group_idx, toplevel_group in enumerate(toplevel_groups):
-        line_text = str(toplevel_group_idx)+"\t"+str(toplevel_group)
+        line_text = str(toplevel_group_idx)+"\t"+str(toplevel_group)+"\n"
         handle.write(line_text)
 handle.close()
 

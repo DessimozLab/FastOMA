@@ -9,106 +9,83 @@
 # this code is for converting an OrthoXML file to a set of Fasta files as Ortholougous groups
 
 from ete3 import Tree
-
 import sys
 import os
 from FastOMA.zoo.hog.convert import orthoxml_to_newick
 
-input_orthoxml = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_bird_/test/file_24531.pickle_4.orthoxml"  # sys.argv[1]
 
-trees = orthoxml_to_newick(input_orthoxml)
-print("We extracted "+str(len(trees))+" trees from the input HOG orthoxml"+input_orthoxml)
 
-#
 
-# I need to have a dic of species prot from orthxml file
+def max_og_tree(tree):
+    for node in tree.traverse("preorder"):
+        # for node in xml_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "attriremoved") and n.attriremoved==True):
+        if not node.is_leaf() and hasattr(node,"Ev") and node.Ev == 'duplication':       # node.name[:3] == "dup"
+            dup_node = node
+            children = dup_node.get_children()
+            list_num_species = []
+            for child in children:
+                child_name_leaves = child.get_leaves()
+                species_list = []
+                for leaf in child_name_leaves:
+                    name = leaf.name
+                    if name[:3] == "no_":
+                        name = leaf.name.split("_")[-1]
+                    if name in species_dic:
+                        species_name = species_dic[name]
+                        species_list.append(species_name)
+                    else:
+                        print("species not in the dic ",name)
+                species_set = set(species_list)
+                list_num_species.append(len(species_set))
+            index_max_species = list_num_species.index(max(list_num_species))
+            # if there are few children with identical number of species, the case would be not a polytomi but two children with one species
+            # num_occurence = [1 for i in list_num_species if i == max(list_num_species)]
+            # if len(num_occurence) > 1:
+            #    print("please check this case with the developer the tool. The tree has polytomy.")
+            child_max_species = children[index_max_species]
+            children_to_remove = [i for i in children if i != child_max_species]
+            for child_to_remove in children_to_remove:
+                for i in child_to_remove.get_leaves():
+                    i.in_og = "no"
 
-#
 
+    og_prot_list = []
+    for node in tree.traverse("preorder"):
+        if node.is_leaf():
+            if hasattr(node,"in_og") and node.in_og == "no":
+                pass # print(node.name)
+            else:
+                og_prot_list.append(node.name)
+
+    return og_prot_list
+
+
+
+
+input_orthoxml =  sys.argv[1]
+
+output_file = "maximal_og_prot.tsv"
+
+
+trees, species_dic = orthoxml_to_newick(input_orthoxml, return_gene_to_species=True) # encode_levels_as_nhx=False,  xref_tag="protId",
+print("We extracted "+str(len(trees))+" trees  in NHX format from the input HOG orthoxml"+input_orthoxml)
 
 
 OGs = {}
-for treeid_hog, tree_string in trees.items():
+for hog_id, tree_string in trees.items():
 
-    tree = Tree(tree_string)
-    og = ""
-    OGs[treeid_hog] = og
-
-    for node in tree.traverse("preorder"):
-        # for node in xml_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "attriremoved") and n.attriremoved==True):
-        if not node.is_leaf() and hasattr(node,"Ev") and node.Ev == 'duplication': # node.name[:3] == "dup"
-            dup_node = node
-            children = dup_node.get_children()
-            list_num_species = []
-            for child in children:
-                child_name_leaves = child.get_leaves()
-                species_ls = []
-                for leaf in child_name_leaves:
-                    name = leaf.name
-                    if name[:3] == "no_":
-                        name = leaf.name.split("_")[-1]
-        else:
-            pass
-            #         if name in prot_species_proteome:
-            #             species_name = prot_species_proteome[name]
-            #         else:
-            #             print(name)
-            #
-            #         species_ls.append(species_name)
-            #     species_set = set(species_ls)
-            #
-            #     list_num_species.append(len(species_set))
-            # index_max_species = list_num_species.index(max(list_num_species))
-            # child_max_species = children[index_max_species]
-            #
-            # remov_children = [i for i in children if i != child_max_species]
-            # for remov_child in remov_children:
-            #     for i in remov_child.get_leaves():
-            #         i.name = "no_" + i.name
-            #
-            #     # remov_child.attriremoved = True
+    tree = Tree(tree_string,format=1)
+    og_prot_list = max_og_tree(tree)
+    OGs[hog_id] = og_prot_list
 
 
+print("done")
 
 
-def xmlTree2OGgenes(tree, prot_species_proteome):
-    for node in tree.traverse("preorder"):
-        # for node in xml_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "attriremoved") and n.attriremoved==True):
-        if not node.is_leaf() and node.name[:3] == "dup":
-            dup_node = node
-            children = dup_node.get_children()
-            list_num_species = []
-            for child in children:
-                child_name_leaves = child.get_leaves()
-                species_ls = []
-                for leaf in child_name_leaves:
-                    name = leaf.name
-                    if name[:3] == "no_":
-                        name = leaf.name.split("_")[-1]
+with open(output_file, 'w') as handle:
+    for hog_id, og_prot_list in OGs.items():
+        line_text = str(hog_id)+"\t"+str(og_prot_list)+"\n"
+        handle.write(line_text)
+handle.close()
 
-                    if name in prot_species_proteome:
-                        species_name = prot_species_proteome[name]
-                    else:
-                        print(name)
-
-                    species_ls.append(species_name)
-                species_set = set(species_ls)
-
-                list_num_species.append(len(species_set))
-            index_max_species = list_num_species.index(max(list_num_species))
-            child_max_species = children[index_max_species]
-
-            remov_children = [i for i in children if i != child_max_species]
-            for remov_child in remov_children:
-                for i in remov_child.get_leaves():
-                    i.name = "no_" + i.name
-
-                # remov_child.attriremoved = True
-
-    prot_name_list_OG = []
-    for node in xml_tree.traverse("preorder"):
-        if node.is_leaf() and node.name[:3] != "no_":
-            prot_name_list_OG.append(node.name)
-
-    # print("number of prots in the tree was", len(xml_tree),"but OG list contains",len(prot_name_list_OG))
-    return prot_name_list_OG
+print("We wrote the protein families information in the file "+output_file)

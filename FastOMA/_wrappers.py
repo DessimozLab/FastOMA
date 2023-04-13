@@ -22,9 +22,12 @@ def merge_msa(list_msas, gene_tree_file_addr):
     output: merged (msa)
     """
     logger_hog.debug(list_msas)
+    #logger_hog.debug("we are mergin subhogs"+len(list_msas))
     # logger_hog.debug(str(list_msas[0][0].id ) + "\n")
     # SeqIO.write(list_msas ?? , gene_tree_file_addr + ".unaligned.fa", "fasta")
 
+    # todo using more cpus ?
+    # sometimes better not to merge and remove gapps and do from scratch!
     wrapper_mafft_merge = mafft.Mafft(list_msas, datatype="PROTEIN")
     wrapper_mafft_merge.options['--merge'].active = True
     # wrapper_mafft_merge.options['--anysymbol'].active = True
@@ -49,7 +52,10 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     output: gene tree in nwk format
     """
 
+    # todo using more cpus ?
     if len(msa) <= 2:
+
+        #todo what's difference between these two cases  in if and elif
         wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
         wrapper_tree.options.options['-fastest'].active = True   # .set_value(True)  is wrong.
 

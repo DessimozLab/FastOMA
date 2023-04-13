@@ -334,6 +334,9 @@ def check_prot_dubious_msa(prot_dubious_msa_list, gene_tree):
             # todo following could be imporved, during filtering row/col msa, a fragments could be removed and not in gene tree anymore,
             if prot_dubious_msa_set[0] in gene_tree_leaves_name and prot in gene_tree_leaves_name:
                 # there might be few fragments, checking the distance of the first one with the rest # todo check all vs all
+
+                # todo substract two terminal branches
+
                 dist_numNodes = gene_tree.get_distance(prot_dubious_msa_set[0], prot, topology_only=True)
                 dist_length = gene_tree.get_distance(prot_dubious_msa_set[0], prot)
                 print("check_prot_dubious_msa dist_numNodes, dist_length ",dist_numNodes, dist_length)
