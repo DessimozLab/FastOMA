@@ -63,7 +63,7 @@ class HOG:
                     else:
                         records_sub_sampled = records_sub_sampled_raw
                     # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
-                    logger_hog.info( "we are doing subsamping in hig class from " + str(len(records_full)) + " to " + str(max_num_seq) + " seqs.")
+                    logger_hog.info( "we are doing subsamping in hig class from " + str(len(records_full)) + " to " + str(hogclass_max_num_seq) + " seqs.")
 
             else:
                 records_sub_sampled = records_full

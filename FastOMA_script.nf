@@ -5,7 +5,7 @@ params.input_folder = "./in_folder/"
 params.output_folder = "./out_folder/"
 params.proteome_folder = params.input_folder + "/proteome"
 params.proteomes = params.proteome_folder + "/*"
-params.hogmap_input_folder = params.input_folder + "/hogmap_input"
+params.hogmap_input_folder = params.input_folder + "/hogmap_input_folder"
 
 
 params.hogmap_folder = params.output_folder + "/hogmap"
@@ -21,7 +21,7 @@ process omamer_run{
   cpus  10
   publishDir params.hogmap_folder
   input:
-  path proteomes_omamerdb
+  path proteomes_omamerdb_inputhog
   output:
   path "*.hogmap"
   val true      // ready_omamer_run
@@ -29,7 +29,12 @@ process omamer_run{
   //   omamer search --db ${proteomes_omamerdb[1]} --query ${proteomes_omamerdb[0]} --nthreads 1  --out ${proteomes_omamerdb[0]}.hogmap
   // cp /work/FAC/FBM/DBC/cdessim2/default/smajidi1/qfo_hogmap/${proteomes_omamerdb[0]}.hogmap .
   """
-  omamer search --db ${proteomes_omamerdb[1]} --query ${proteomes_omamerdb[0]} --nthreads 10  --out ${proteomes_omamerdb[0]}.hogmap
+    if [ -f ${proteomes_omamerdb_inputhog[2]}/${proteomes_omamerdb_inputhog[0]}.hogmap ]
+    then
+        cp ${proteomes_omamerdb_inputhog[2]}/${proteomes_omamerdb_inputhog[0]}.hogmap  ${proteomes_omamerdb_inputhog[0]}.hogmap
+    else
+        omamer search --db ${proteomes_omamerdb_inputhog[1]} --query ${proteomes_omamerdb_inputhog[0]} --nthreads 10  --out ${proteomes_omamerdb_inputhog[0]}.hogmap
+    fi
   """
 
 }
@@ -161,18 +166,12 @@ workflow {
     pickles_rhogs_folder =  Channel.fromPath(params.pickles_rhogs_folder)
     omamerdb = Channel.fromPath(params.input_folder+"/omamerdb.h5")
     // proteomes.view{"prot ${it}"}
-    proteomes_omamerdb= proteomes.combine(omamerdb)
-    // proteomes_omamerdb_hogmapinput = proteomes_omamerdb.comb
+    proteomes_omamerdb = proteomes.combine(omamerdb)
+    proteomes_omamerdb_inputhog = proteomes_omamerdb.combine(hogmap_input_folder)
+    // proteomes_omamerdb_inputhog.view{" rhogsbig ${it}"}
 
-    // proteomes_omamerdb.view{"proteomes_omamerdb ${it}"}
-
-    // params.hogmap_input_folder = params.input_folder + "/hogmap_input"
-
-    // check if it is provided as input
-
-
-
-    (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb)
+    (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb_inputhog)
+   // (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb)
     ready_omamer_run_c = ready_omamer_run.collect()
     // hogmaps.view{"hogmap ${it}"}
 

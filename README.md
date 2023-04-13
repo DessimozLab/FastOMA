@@ -194,6 +194,27 @@ among which `output_hog_.orthoxml` is the final output. Its content looks like t
 </orthoXML>
 ```
 
+### using omamer's output
+The first step of the FastOMA pipele is to run OmaMer. If you already have the hogmap files, you can put them in the `in_folder/hogmap_input_folder`.
+Then your structure of files will be 
+```
+$ tree ../testdata/
+├── in_folder
+│   ├── hogmap_input_folder
+│   │   ├── CHLTR.fa.hogmap
+│   │   ├── MYCGE.fa.hogmap
+│   ├── omamerdb.h5
+│   ├── proteome
+│   │   ├── AQUAE.fa
+│   │   ├── CHLTR.fa
+│   │   └── MYCGE.fa
+│   └── species_tree.nwk
+└── README.md
+```
+In this case, FastOMA uses two hogmap files and only run omamer for the `AQUAE.fa`. Then continue the rest of pipeline. 
+Let's save the planet together with 
+[green computational Biology](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009324). 
+
 
 ## Run on a cluster 
 For running on a SLURM cluster you can add `-c ../nextflow_slurm.config`  to the commond line.
@@ -223,7 +244,7 @@ for i in $(ls .); do mv $i `basename $i`.fa.hogmap; done
 
 
 ## Change log
-
+- prelease v.0.0.6: using input hogmpa
 - prelease v.0.0.5: adding pip setup.py 
 - prelease v.0.0.4: simple nextflow
 - prelease v.0.0.3: with dask
