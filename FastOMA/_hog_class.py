@@ -4,7 +4,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Align import MultipleSeqAlignment
 from random import sample
 import itertools
-# from . import _utils_subhog
+from . import _utils_subhog
 from ._utils_subhog import logger_hog
 from . import _config
 
@@ -54,14 +54,17 @@ class HOG:
                 records_sub_sampled_raw = sample(records_full, _config.hogclass_max_num_seq)  # without replacement.
 
                 # todo not sure to do filtering for columns in hog class , may be problamtic with fragment detection
-                records_sub_sampled = records_sub_sampled_raw
-                # if len(records_sub_sampled_raw[0]) > _config.hogclass_min_cols_msa_to_filter:
-                #     records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, _config.hogclass_tresh_ratio_gap_col)
-                # else:
-                #     records_sub_sampled = records_sub_sampled_raw
-                ## or even for rows
-                #         # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
-                # logger_hog.info( "we are doing subsamping in hig class from " + str(len(records_full)) + " to " + str(max_num_seq) + " seqs.")
+
+                if _config.fragment_detection:
+                    records_sub_sampled = records_sub_sampled_raw
+                else:
+                    if len(records_sub_sampled_raw[0]) > _config.hogclass_min_cols_msa_to_filter:
+                        records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, _config.hogclass_tresh_ratio_gap_col)
+                    else:
+                        records_sub_sampled = records_sub_sampled_raw
+                    # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
+                    logger_hog.info( "we are doing subsamping in hig class from " + str(len(records_full)) + " to " + str(max_num_seq) + " seqs.")
+
             else:
                 records_sub_sampled = records_full
                 # removing some columns completely gap - (not x   )
