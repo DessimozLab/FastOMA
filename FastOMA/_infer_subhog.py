@@ -274,9 +274,9 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
             (gene_tree, hogs_children_level_list) = _utils_subhog.handle_fragment_msa(prot_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list)
 
         # when the prot dubious is removed during trimming
-        if len(gene_tree)>1:
+        if _config.fragment_detection and len(gene_tree)>2:
             (gene_tree, species_dubious_sd_dic) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list)
-            if species_dubious_sd_dic and _config.fragment_detection:
+            if species_dubious_sd_dic:
                 (gene_tree, hogs_children_level_list) = _utils_subhog.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, species_dubious_sd_dic, hogs_children_level_list)
 
             logger_hog.debug("Merging sub-hogs for rhogid_num:"+str(rhogid_num)+", level:"+str(node_species_tree.name))

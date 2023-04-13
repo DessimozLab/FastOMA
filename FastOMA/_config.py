@@ -58,7 +58,7 @@ species_tree_address = "species_tree.nwk"
 # no space or special charcter in internal node.
 protein_format_qfo_dataset = True
 
-fragment_detection = True
+fragment_detection = False
 
 ## output writing files
 gene_trees_write = False
@@ -70,7 +70,7 @@ keep_subhog_each_pickle = False
 
 # filtering omamer
 omamer_fscore_treshold_big_rhog = 0.5  #  to have more proteins in the ortho groups 0.05  considering for big rhogs
-treshold_big_rhog_szie = 500
+treshold_big_rhog_szie = 10
 
 ## hogclass configs
 hogclass_max_num_seq = 10  # subsampling in msa
@@ -90,7 +90,7 @@ rooting_mad_executable_path = "mad" # /work/FAC/FBM/DBC/cdessim2/default/smajidi
 ##inferhog
 inferhog_tresh_ratio_gap_row = 0.1   # to have more proteins in the ortho groups 0.1
 inferhog_tresh_ratio_gap_col = 0.4
-inferhog_min_cols_msa_to_filter = 500  # used for msa before gene tree inference and  saving msa in hog class
+inferhog_min_cols_msa_to_filter = 100  # used for msa before gene tree inference and  saving msa in hog class
 
 inferhog_filter_all_msas_row = True
 
@@ -123,7 +123,7 @@ def set_configs():
     #  $rhogs_big_i - -parrallel
 
     parser.add_argument("--version", action="version", help="Show version and exit.",
-        version="0.0.5",) # version=__version__
+        version="0.0.6",) # version=__version__
 
     parser.add_argument('--species-tree-address', default="species_tree_test.nwk")
     parser.add_argument('--input-rhog-folder') # , default="./rhog"
