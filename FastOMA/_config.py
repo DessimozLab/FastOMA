@@ -70,10 +70,10 @@ keep_subhog_each_pickle = False
 
 # filtering omamer
 omamer_fscore_treshold_big_rhog = 0.5  #  to have more proteins in the ortho groups 0.05  considering for big rhogs
-treshold_big_rhog_szie = 10
+treshold_big_rhog_szie = 1000
 
 ## hogclass configs
-hogclass_max_num_seq = 10  # subsampling in msa
+hogclass_max_num_seq = 20  # subsampling in msa
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 300
 hogclass_tresh_ratio_gap_col = 0.2
 
@@ -99,7 +99,7 @@ inferhog_resume_rhog = False  # main.py False
 # The intermediate files, internal node  pickle files is not working with nextflow
 # the reason is that the pickles_subhog_folder_all is relative and stored in nextflow_work folder
 # this folder can not be used for  the re-submitting
-inferhog_resume_subhog = False  # read pickle_subhog  # _infer_subhog.py
+inferhog_resume_subhog = True  # read pickle_subhog  # _infer_subhog.py
 
 # inferhog_concurrent_on = True now as an argument
 inferhog_max_workers_num = 8

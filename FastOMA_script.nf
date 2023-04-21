@@ -185,7 +185,7 @@ workflow {
     (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, rhogs_folder)
     ready_batch_roothogs_c = ready_batch_roothogs.collect()
 
-    ready_batch_roothogs_c.view{" ready_batch_roothogs_c 44  ${it}"}
+   // ready_batch_roothogs_c.view{" ready_batch_roothogs_c 44  ${it}"}
 
     species_tree = Channel.fromPath(params.species_tree)
     rhogsbig = rhogs_big_list.flatten()
