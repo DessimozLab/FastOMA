@@ -6,6 +6,8 @@ import sys
 
 # setattr(sys.modules[__name__], 'in_folder', config_parser.in_folder)
 
+
+
 # mkdb_parser.add_argument(
 #     "--min_fam_size", default=6, help="Only root-HOGs with a protein count passing this threshold are used.",
 #     type=int
