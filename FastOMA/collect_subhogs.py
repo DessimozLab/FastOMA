@@ -11,7 +11,7 @@ def collect_subhogs():
     print("started  collecting pickle files ")
 
     # todo as input of function
-    protein_format_qfo_dataset = False
+    protein_format_qfo_dataset = True
 
     # in benchamrk dataset the output prot names should be short
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ

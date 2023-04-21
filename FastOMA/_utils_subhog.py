@@ -336,11 +336,24 @@ def check_prot_dubious_msa(prot_dubious_msa_list, gene_tree):
                 # there might be few fragments, checking the distance of the first one with the rest # todo check all vs all
 
                 # todo substract two terminal branches
+                assert len(gene_tree.get_leaves_by_name(prot_dubious_msa_set[0])) == 1,\
+                    "the prot name is not in gene tree or there are more than one" + str(prot_dubious_msa_set[0])
+                assert len(gene_tree.get_leaves_by_name(prot)) == 1,\
+                    "the prot name is not in gene tree or there are more than one" + str(prot)
 
                 dist_numNodes = gene_tree.get_distance(prot_dubious_msa_set[0], prot, topology_only=True)
                 dist_length = gene_tree.get_distance(prot_dubious_msa_set[0], prot)
+                node_prot = gene_tree.get_leaves_by_name(prot)[0]
+                node_prot_dubious = gene_tree.get_leaves_by_name(prot_dubious_msa_set[0])[0]
+
+
+                dist_length_corrected = dist_length - abs(node_prot.dist- node_prot_dubious.dist)
+
+
+
                 print("check_prot_dubious_msa dist_numNodes, dist_length ",dist_numNodes, dist_length)
-                if dist_numNodes < max(max_dist_numNodes * 1 / 5, 3) or dist_length < max(0.005, max_dist_length * 1 / 5) or (dist_length- 2*max_dist_length)< 0.001 :
+                if dist_length_corrected < max(0.005, max_dist_length * 1 / 5) or (dist_length_corrected- 2*max_dist_length)< 0.001 :
+                    # dist_numNodes < max(max_dist_numNodes * 1 / 5, 3) or
                     fragments += [prot_dubious_msa_set[0], prot]
         if fragments:
             fragments_set_list.append(set(fragments))
