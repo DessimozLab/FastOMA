@@ -61,7 +61,7 @@ species_tree_address = "species_tree.nwk"
 # no space or special charcter in internal node.
 # protein_format_qfo_dataset = True
 
-fragment_detection = False
+fragment_detection = True
 threshold_dubious_sd = 1/10+0.01
 
 ## output writing files

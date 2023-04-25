@@ -109,9 +109,9 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
     #     r_outgroup = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
     #     gene_tree.set_outgroup(r_outgroup)
 
-    species_dubious_sd_dic = {}
+    all_species_dubious_sd_dic = {}
     if _config.label_SD_internal == "species_overlap":
-        (gene_tree, species_dubious_sd_dic) = label_sd_internal_nodes(gene_tree)
+        (gene_tree, all_species_dubious_sd_dic) = label_sd_internal_nodes(gene_tree)
 
     elif _config.label_SD_internal == "reconcilation":
         node_species_tree_nwk_string = node_species_tree.write(format=1)
@@ -135,7 +135,7 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
     if _config.gene_trees_write:
         gene_tree.write(format=1, format_root_node=True, outfile=genetree_msa_file_addr+"_SD_labeled.nwk")
 
-    return gene_tree, species_dubious_sd_dic
+    return gene_tree, all_species_dubious_sd_dic
 
 
 def read_msa(input_msa):
@@ -246,26 +246,26 @@ def insert_dubious_prots_hog_hierarchy_toleaves(hog_host, fragment_host, fragmen
     return 1
 
 
-def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, species_dubious_sd_dic, hogs_children_level_list):
+def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list):
     #  prot_dubious_sd_list, node_species_tree, genetree_msa_file_addr, hogs_children_level_list
 
-    logger_hog.debug("These are  found after removing with msa , species_dubious_sd_dic " + str(species_dubious_sd_dic)+" which are now being handled.")
-    prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, species_dubious_sd_dic)
+    logger_hog.debug("These are  found after removing with msa , all_species_dubious_sd_dic " + str(all_species_dubious_sd_dic)+" which are now being handled.")
+    prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic)
 
     if prot_dubious_sd_remove_list:
         rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list)
         gene_tree.prune(rest_leaves, preserve_branch_length=True)
-        (gene_tree, species_dubious_sd_dic2) = genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr + "_dubious_sd")
-        if species_dubious_sd_dic2:
-            logger_hog.debug("these are found after removing with sd, species_dubious_sd_dic2 " + str(species_dubious_sd_dic2))
-            prot_dubious_sd_remove_list2 = find_prot_dubious_sd_remove(gene_tree, species_dubious_sd_dic2)
+        (gene_tree, all_species_dubious_sd_dic2) = genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr + "_dubious_sd")
+        if all_species_dubious_sd_dic2:
+            logger_hog.debug("these are found after removing with sd, all_species_dubious_sd_dic2 " + str(all_species_dubious_sd_dic2))
+            prot_dubious_sd_remove_list2 = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic2)
             if prot_dubious_sd_remove_list2:
                 rest_leaves2 = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list2)
                 gene_tree.prune(rest_leaves2, preserve_branch_length=True)
-                (gene_tree, species_dubious_sd_dic3) = genetree_sd(node_species_tree, gene_tree,genetree_msa_file_addr + "_dubious_sd_2")
-                if species_dubious_sd_dic3:
+                (gene_tree, all_species_dubious_sd_dic3) = genetree_sd(node_species_tree, gene_tree,genetree_msa_file_addr + "_dubious_sd_2")
+                if all_species_dubious_sd_dic3:
                     # todo make it as while to do it for all possible iteration, but there won't many cases for this at least in QFO dataset
-                    logger_hog.debug( "issue 13954,these are found after removing with sd two times , species_dubious_sd_dic3 " + str(species_dubious_sd_dic2))
+                    logger_hog.debug( "issue 13954,these are found after removing with sd two times , all_species_dubious_sd_dic3 " + str(all_species_dubious_sd_dic2))
 
         hogs_children_level_list_raw = hogs_children_level_list
         for prot_dubious_sd_remove in prot_dubious_sd_remove_list:
@@ -295,10 +295,10 @@ def handle_fragment_msa(prot_dubious_msa_list,  gene_tree, node_species_tree, ge
             # gene_tree.write(format=1, format_root_node=True)
             if len(rest_leaves) > 1:
                 gene_tree.prune(rest_leaves, preserve_branch_length=True)
-                (gene_tree, species_dubious_sd_dic2) = genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr+"_dubiousMSA")
-                if species_dubious_sd_dic2:
-                    # logger_hog.debug("these are  found after removing with msa , species_dubious_sd_dic2 "+str(species_dubious_sd_dic2))
-                    (gene_tree, hogs_children_level_list) = handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, species_dubious_sd_dic2, hogs_children_level_list)
+                (gene_tree, all_species_dubious_sd_dic2) = genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr+"_dubiousMSA")
+                if all_species_dubious_sd_dic2:
+                    # logger_hog.debug("these are  found after removing with msa , all_species_dubious_sd_dic2 "+str(all_species_dubious_sd_dic2))
+                    (gene_tree, hogs_children_level_list) = handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic2, hogs_children_level_list)
 
             for fragments_set in fragments_set_list:
                 fragments_list = list(fragments_set)
@@ -423,40 +423,38 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     return species_tree, species_names_rhog, prot_names_rhog
 
 
-def find_prot_dubious_sd_remove(gene_tree, species_dubious_sd_dic):
+def find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic):
     # todo this function need to double check with cases of with and without dubious
 
-    prot_dubious_sd_all_list = []
+    #prot_dubious_sd_allspecies = []
     prot_dubious_sd_remove_list = []
     # todo not sure postorder or preorder
     for node in gene_tree.traverse(strategy="postorder"):
         # print("** now working on node ",node.name) # node_children
         if not node.is_leaf() and 'D' in node.name:
-            node_name = node.name
-            d, intersection, union = node_name.split("_")
-            # if int(intersection) / int(union) < _config.threshold_dubious_sd:
-            if node_name in species_dubious_sd_dic:
+            node_name = node.name #d, intersection, union = node_name.split("_")  # if int(intersection) / int(union) < _config.threshold_dubious_sd:
+            if node_name in all_species_dubious_sd_dic: # a duplication node with low score,
                 node_children = node.children
-                species_dubious_sd_list = species_dubious_sd_dic[node_name]
-                for species in species_dubious_sd_list:
-                    prot_dubious_sd_all = []
-                    child_size = []
-                    # gene tree is binary for fasttree
+                all_species_dubious_sd = all_species_dubious_sd_dic[node_name]
+                # prot_dubious_sd_ = []
+                for species_dubious_sd in all_species_dubious_sd:
+                    child_size = []  # gene tree is binary for fasttree
+                    prot_dubious_list = []
                     for node_child in node_children:
-                        prot_dubious_child = []
                         list_leaves = [i.name for i in node_child.get_leaves()]
                         child_size.append(len(list_leaves))
                         for prot_name in list_leaves:
-                            if prot_name.split("||")[1] == species:
-                                prot_dubious_child.append(prot_name)
+                            if prot_name.split("||")[1] == species_dubious_sd:
+                                prot_dubious_list.append(prot_name)
+                    subhogs_list = [i.split("_|")[1] for i in prot_dubious_list]
+                    if len(set(subhogs_list)) > 1:
+                        # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
+                        child_size_min_indx = child_size.index(min(child_size))
+                        prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
 
-                        prot_dubious_sd_all.append(prot_dubious_child)
-                    child_size_min_indx = child_size.index(min(child_size))
-                    # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
-                    prot_dubious_sd_remove_list += prot_dubious_sd_all[child_size_min_indx]
-
-                # for a species prot_dubious_sd_all contains two lists correspoding to two children of gene tree (fasttree) for this duplication event
-                prot_dubious_sd_all_list.append(prot_dubious_sd_all)
+                    else:
+                        logger_hog.debug( "This species (protein from the same subhog) is safe to keep "+ str(node_name)+" "+str(species_dubious_sd))
+                        #all of them are from the same subhog, so it doesn't matter, a duplication event doesn't affect when all are from the same subhog at children level
 
     return prot_dubious_sd_remove_list
 
@@ -473,7 +471,7 @@ def label_sd_internal_nodes(tree_out):
     counter_S = 0
     counter_D = 0
 
-    species_dubious_sd_dic = {}
+    all_species_dubious_sd_dic = {}
     for node in tree_out.traverse(strategy="postorder"):
         # print("** now working on node ",node.name) # node_children
         if node.is_leaf():
@@ -495,11 +493,11 @@ def label_sd_internal_nodes(tree_out):
                 counter_D += 1
                 node.name = "D" + str(counter_D) + "_"+str(len(node_children_species_intersection))+"_"+str(len(node_children_species_union))
                 if len(node_children_species_intersection)/ len(node_children_species_union) < _config.threshold_dubious_sd:
-                    species_dubious_sd_dic[node.name] = list(node_children_species_intersection)
+                    all_species_dubious_sd_dic[node.name] = list(node_children_species_intersection)
             else:
                 counter_S += 1
                 node.name = "S" + str(counter_S)
-    return tree_out, species_dubious_sd_dic
+    return tree_out, all_species_dubious_sd_dic
 
 
 
@@ -623,7 +621,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
     # note this is used in hog class as well
 
     ratio_col_all = []
-    length_record= len(msa[0])
+    length_record = len(msa[0])
     num_records = len(msa)
     keep_cols = []
     for col_i in range(length_record):
@@ -647,7 +645,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
     if _config.msa_write_all and gene_tree_file_addr:
         out_name_msa=gene_tree_file_addr+"filtered_"+"col_"+str(tresh_ratio_gap_col)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
-        SeqIO.write(msa_filtered_col, handle_msa_fasta,"fasta")
+        SeqIO.write(msa_filtered_col, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
     # print("- Column-wise filtering of MSA is finished",len(msa_filtered_col),len(msa_filtered_col[0]))
     return msa_filtered_col
@@ -676,58 +674,58 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
 
 
 # Fragment detection using MSA
-
-def fragment_detector_candidate(merged_msa):
-
-    rec_group_species = {}
-    for seq in merged_msa:
-        species = seq.id.split("||")[1]
-        if species in rec_group_species:
-            rec_group_species[species].append(seq)
-        else:
-            rec_group_species[species]= [seq]
-
-    rec_candidate = {}
-
-    len_aligned = len(seq)
-
-    for species, list_seq in rec_group_species.items():
-        if len(list_seq)>1:
-            num_nongap_list = []
-            for i in range(len(list_seq)):
-                seq_i= list_seq[i] # seq_i is biopython record
-                num_nongap_i= len_aligned - seq_i.count("-")
-                num_nongap_list.append(num_nongap_i)
-                if num_nongap_i > len_aligned *0.25 and  num_nongap_i < len_aligned *0.75:
-                    for j in range(i):
-                        seq_j= list_seq[j]
-                        num_nongap_j= num_nongap_list[j]
-                        if num_nongap_j > len_aligned *0.25 and  num_nongap_j < len_aligned *0.75:
-                            count_gap_aa = 0
-                            for (chr_i, chr_j) in zip(seq_i, seq_j):
-                                if (chr_i=='-' and chr_j!='-')  or (chr_i!='-' and chr_j=='-'):
-                                    count_gap_aa +=1
-                            # print(count_gap_aa)
-                            if count_gap_aa  > len_aligned * 0.25: # two seq complment each other
-                                # TODO the downside is sth like this: seq1=-A-A seq2= A-A-  not fragments
-                                if species in rec_candidate:
-                                    seq_i_id = seq_i.id
-                                    seq_j_id = seq_j.id
-
-                                    if seq_i_id not in rec_candidate[species]:
-                                        rec_candidate[species] += seq_i_id
-                                    if seq_j_id not in rec_candidate[species]:
-                                        rec_candidate[species] += seq_j_id
-                                else:
-                                    rec_candidate[species] = [seq_i_id, seq_j_id]  # seq_i is biopython record
-
-    return rec_candidate
+#
+# def fragment_detector_candidate(merged_msa):
+#
+#     rec_group_species = {}
+#     for seq in merged_msa:
+#         species = seq.id.split("||")[1]
+#         if species in rec_group_species:
+#             rec_group_species[species].append(seq)
+#         else:
+#             rec_group_species[species]= [seq]
+#
+#     rec_candidate = {}
+#
+#     len_aligned = len(seq)
+#
+#     for species, list_seq in rec_group_species.items():
+#         if len(list_seq)>1:
+#             num_nongap_list = []
+#             for i in range(len(list_seq)):
+#                 seq_i= list_seq[i] # seq_i is biopython record
+#                 num_nongap_i= len_aligned - seq_i.count("-")
+#                 num_nongap_list.append(num_nongap_i)
+#                 if num_nongap_i > len_aligned *0.25 and  num_nongap_i < len_aligned *0.75:
+#                     for j in range(i):
+#                         seq_j= list_seq[j]
+#                         num_nongap_j= num_nongap_list[j]
+#                         if num_nongap_j > len_aligned *0.25 and  num_nongap_j < len_aligned *0.75:
+#                             count_gap_aa = 0
+#                             for (chr_i, chr_j) in zip(seq_i, seq_j):
+#                                 if (chr_i=='-' and chr_j!='-')  or (chr_i!='-' and chr_j=='-'):
+#                                     count_gap_aa +=1
+#                             # print(count_gap_aa)
+#                             if count_gap_aa  > len_aligned * 0.25: # two seq complment each other
+#                                 # TODO the downside is sth like this: seq1=-A-A seq2= A-A-  not fragments
+#                                 if species in rec_candidate:
+#                                     seq_i_id = seq_i.id
+#                                     seq_j_id = seq_j.id
+#
+#                                     if seq_i_id not in rec_candidate[species]:
+#                                         rec_candidate[species] += seq_i_id
+#                                     if seq_j_id not in rec_candidate[species]:
+#                                         rec_candidate[species] += seq_j_id
+#                                 else:
+#                                     rec_candidate[species] = [seq_i_id, seq_j_id]  # seq_i is biopython record
+#
+#     return rec_candidate
 
 
 
 def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
 
-    msa_filt_row_1 = merged_msa  #
+    msa_filt_row_1 = merged_msa
     # if _config.inferhog_filter_all_msas_row:
     #    msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
     # if   msa_filt_row_1 and len(msa_filt_row_1[0]) >=
@@ -744,7 +742,7 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
             msa_filt_col = msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr)
             msa_filt_row_col = msa_filt_col
             if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
-                msa_filt_row_col = msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row,gene_tree_file_addr)
+                msa_filt_row_col = msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
 
         # compare msa_filt_row_col and msa_filt_col,
         if len(msa_filt_row_col) != len(msa_filt_col):  # some sequences are removed
