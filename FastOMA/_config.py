@@ -1,5 +1,6 @@
 
-# global path
+
+
 import argparse
 import sys
 
@@ -61,6 +62,7 @@ species_tree_address = "species_tree.nwk"
 # protein_format_qfo_dataset = True
 
 fragment_detection = False
+threshold_dubious_sd = 1/10+0.01
 
 ## output writing files
 gene_trees_write = False
@@ -72,17 +74,17 @@ keep_subhog_each_pickle = False
 
 # filtering omamer
 omamer_fscore_treshold_big_rhog = 0.5  #  to have more proteins in the ortho groups 0.05  considering for big rhogs
-treshold_big_rhog_szie = 1000
+treshold_big_rhog_szie = 500
 
 ## hogclass configs
-hogclass_max_num_seq = 20  # subsampling in msa
+hogclass_max_num_seq = 10  # subsampling in msa
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 300
 hogclass_tresh_ratio_gap_col = 0.2
 
 automated_trimAL = False
 
 label_SD_internal = "species_overlap"  # "reconcilation" "species_overlap"
-threshold_dubious_sd = 1/10+0.01
+
 #threshold_sd_suspicious_fragment_ratio = 1/3
 tree_tool = "fasttree"  # "fasttree"  "iqtree"  # for  gene tree with two, we use
 

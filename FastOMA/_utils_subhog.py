@@ -249,15 +249,23 @@ def insert_dubious_prots_hog_hierarchy_toleaves(hog_host, fragment_host, fragmen
 def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, species_dubious_sd_dic, hogs_children_level_list):
     #  prot_dubious_sd_list, node_species_tree, genetree_msa_file_addr, hogs_children_level_list
 
-    logger_hog.debug("** , these are  found after removing with msa , species_dubious_sd_dic " + str(species_dubious_sd_dic))
+    logger_hog.debug("These are  found after removing with msa , species_dubious_sd_dic " + str(species_dubious_sd_dic)+" which are now being handled.")
     prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, species_dubious_sd_dic)
 
     if prot_dubious_sd_remove_list:
         rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list)
         gene_tree.prune(rest_leaves, preserve_branch_length=True)
-        (gene_tree, species_dubious_sd_dic2) = genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr + "_dubious_sd_")
+        (gene_tree, species_dubious_sd_dic2) = genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr + "_dubious_sd")
         if species_dubious_sd_dic2:
-            logger_hog.debug( "issue 13953 , these are  found after removing with sd , species_dubious_sd_dic2 " + str(species_dubious_sd_dic2))
+            logger_hog.debug("these are found after removing with sd, species_dubious_sd_dic2 " + str(species_dubious_sd_dic2))
+            prot_dubious_sd_remove_list2 = find_prot_dubious_sd_remove(gene_tree, species_dubious_sd_dic2)
+            if prot_dubious_sd_remove_list2:
+                rest_leaves2 = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list2)
+                gene_tree.prune(rest_leaves2, preserve_branch_length=True)
+                (gene_tree, species_dubious_sd_dic3) = genetree_sd(node_species_tree, gene_tree,genetree_msa_file_addr + "_dubious_sd_2")
+                if species_dubious_sd_dic3:
+                    # todo make it as while to do it for all possible iteration, but there won't many cases for this at least in QFO dataset
+                    logger_hog.debug( "issue 13954,these are found after removing with sd two times , species_dubious_sd_dic3 " + str(species_dubious_sd_dic2))
 
         hogs_children_level_list_raw = hogs_children_level_list
         for prot_dubious_sd_remove in prot_dubious_sd_remove_list:
@@ -352,7 +360,7 @@ def check_prot_dubious_msa(prot_dubious_msa_list, gene_tree):
 
 
                 print("check_prot_dubious_msa dist_numNodes, dist_length ",dist_numNodes, dist_length)
-                if dist_length_corrected < max(0.005, max_dist_length * 1 / 5) or (dist_length_corrected- 2*max_dist_length)< 0.001 :
+                if dist_length_corrected < max(0.005, max_dist_length / 5):   # or (dist_length_corrected - 2*max_dist_length)< 0.001
                     # dist_numNodes < max(max_dist_numNodes * 1 / 5, 3) or
                     fragments += [prot_dubious_msa_set[0], prot]
         if fragments:
