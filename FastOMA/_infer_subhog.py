@@ -255,7 +255,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
     if sub_msa_list_lowerLevel_ready:
         if len(sub_msa_list_lowerLevel_ready) > 1:
             merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, genetree_msa_file_addr)
-            prot_dubious_msa_list = _utils_subhog.find_prot_dubious_msa(merged_msa)
+            prot_dubious_msa_list, seq_dubious_msa_list = _utils_subhog.find_prot_dubious_msa(merged_msa)
         else:
             merged_msa = sub_msa_list_lowerLevel_ready #  when only on  child, the rest msa is empty.
         logger_hog.debug("All sub-hogs are merged, merged_msa "+str(len(merged_msa))+" "+str(len(merged_msa[0]))+" for rhog: "+str(rhogid_num)+", taxonomic level:"+str(node_species_tree.name))
@@ -271,7 +271,9 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         logger_hog.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+str(rhogid_num)+", level: "+str(node_species_tree.name))
 
         if _config.fragment_detection and len(gene_tree)>2:
-            (gene_tree, hogs_children_level_list) = _utils_subhog.handle_fragment_msa(prot_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list)
+            (gene_tree, hogs_children_level_list, merged_msa_new) = _utils_subhog.handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list, merged_msa)
+        else:
+            merged_msa_new = merged_msa
 
         # when the prot dubious is removed during trimming
         if len(gene_tree) > 1:
@@ -281,7 +283,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
 
             logger_hog.debug("Merging sub-hogs for rhogid_num:"+str(rhogid_num)+", level:"+str(node_species_tree.name))
             # the last element should be merged_msa not the trimmed msa, as we create new hog based on this msa
-            hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa)
+            hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa_new)
             # for i in hogs_this_level_list: print(i.get_members())
             logger_hog.debug("Hogs of this level is found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(this_level_node_name))
 
@@ -330,8 +332,11 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
 
         if not node.is_leaf() and node.name[0] == "S":
             node_leaves_name_raw = [i.name for i in node.get_leaves()]
-            # leaves names  with subhog id  'HALSEN_R15425||HALSEN_|1352015793_sub10149',
-            node_leaves_name = [i.split("_|")[0] for i in node_leaves_name_raw]
+            # leaves names  with subhog id  'HALSEN_R15425||HALSEN|_|1352015793_sub10149',
+            node_leaves_name = [i.split("|_|")[0] for i in node_leaves_name_raw]
+            # node_leaves_name =[]
+            # for name_i in node_leaves_name_:
+            #     node_leaves_name += name_i.split("_|_")
 
             # num_prot = len(s_gene_tree_leaves)
             # for i in range(num_prot):

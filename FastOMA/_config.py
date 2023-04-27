@@ -61,15 +61,26 @@ species_tree_address = "species_tree.nwk"
 # no space or special charcter in internal node.
 # protein_format_qfo_dataset = True
 
+merge_fragments_detected = True
 fragment_detection = True
+
+
+if not fragment_detection:
+    merge_fragments_detected=False
+
+# for fragment detection is better to subsampling_hogclass= False but make FastOMA slow
 threshold_dubious_sd = 1/10+0.01
 
+
+overlap_fragments= 0.15
+
+
 ## output writing files
-gene_trees_write = False
+gene_trees_write = True
 msa_write = False
-gene_trees_write_all = False
+gene_trees_write_all = True
 msa_write_all = False
-keep_subhog_each_pickle = False
+keep_subhog_each_pickle = True
 
 
 # filtering omamer
@@ -80,6 +91,7 @@ treshold_big_rhog_szie = 500
 hogclass_max_num_seq = 10  # subsampling in msa
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 300
 hogclass_tresh_ratio_gap_col = 0.2
+subsampling_hogclass = True
 
 automated_trimAL = False
 

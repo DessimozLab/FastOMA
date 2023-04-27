@@ -7,7 +7,8 @@ import itertools
 from . import _utils_subhog
 from ._utils_subhog import logger_hog
 from . import _config
-
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 class HOG:
     _hogid_iter = 10000
@@ -53,17 +54,15 @@ class HOG:
                 # to do in future:  select best seq, not easy to defin, keep diversity,
                 records_sub_sampled_raw = sample(records_full, _config.hogclass_max_num_seq)  # without replacement.
 
-                # todo not sure to do filtering for columns in hog class , may be problamtic with fragment detection
-
-                if _config.fragment_detection:
-                    records_sub_sampled = records_sub_sampled_raw
-                else:
+                if _config.subsampling_hogclass:
                     if len(records_sub_sampled_raw[0]) > _config.hogclass_min_cols_msa_to_filter:
                         records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, _config.hogclass_tresh_ratio_gap_col)
                     else:
                         records_sub_sampled = records_sub_sampled_raw
                     # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
                     logger_hog.info( "we are doing subsamping in hig class from " + str(len(records_full)) + " to " + str(_config.hogclass_max_num_seq) + " seqs.")
+                else:
+                    records_sub_sampled = records_sub_sampled_raw
 
             else:
                 records_sub_sampled = records_full
@@ -90,6 +89,7 @@ class HOG:
             prot_members_hog_edited = prot_members_hog_old - set(prots_to_remove)
             self._members = prot_members_hog_edited
             msa_old = self._msa
+            # we may not to edit the msa of children level
             msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id not in prots_to_remove])
             self._msa = msa_edited
             if len(prot_members_hog_edited) == 0:  # hog should be removed , no members is left
@@ -110,17 +110,43 @@ class HOG:
 
         # species_name = fragment_host.split("||")[1]
         # if self._tax_now == species_name:
-
         return 1
 
 
+    def merge_prots_name_hog(self, fragment_name_host, fragment_name_remove):
+
+        prot_members_hog = list(self._members)
+        assert fragment_name_host in prot_members_hog, str(fragment_name_host)+str("  prot_members_hog:")+str(prot_members_hog)
+        fragment_host_idx = prot_members_hog.index(fragment_name_host)
+        merged_fragment_name = fragment_name_host + "_|_" + fragment_name_remove
+        prot_members_hog[fragment_host_idx] = merged_fragment_name
+        # 'BUPERY_R03529||BUPERY||1105002086_|_BUPERY_R10933||BUPERY||1105008975']
+        self._members = prot_members_hog
+
+        return 1
+
+    def merge_prots_msa(self, fragment_name_host, fragment_name_remove, merged_sequence):
+        merged_fragment_name = fragment_name_host + "_|_" + fragment_name_remove
+        # 'BUPERY_R03529||BUPERY||1105002086_|_BUPERY_R10933||BUPERY||1105008975']
+        prot_members_hog = list(self._members)
+        assert merged_fragment_name in prot_members_hog
+
+        msa_old = self._msa
+        msa_new =[]
+        for seq_rec in msa_old:
+            seq_rec_edited = seq_rec
+            if seq_rec.id == fragment_name_host:
+                seq_rec_edited = SeqRecord(Seq(merged_sequence), id=merged_fragment_name, name=merged_fragment_name)
+            msa_new.append(seq_rec_edited)
+        self._msa = MultipleSeqAlignment(msa_new)
+
+        return 1
 
 
     def to_orthoxml(self):
         hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
         property_element = ET.SubElement(hog_elemnt, "property",
                                         attrib={"name": "TaxRange", "value": str(self._tax_now)})
-
 
         # todo double check we report the taxanomic level
 
@@ -138,16 +164,26 @@ class HOG:
             list_member = list(self._members)
 
             if len(list_member) == 1:
-                list_member_first = list(self._members)[0]
-                # 'tr|A0A3Q2UIK0|A0A3Q2UIK0_CHICK||CHICK_||1053007703'
-                prot_name_integer = list_member_first.split("||")[2].strip()
-                geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(prot_name_integer)})
+                list_member_first = list(self._members)[0]  # ['tr|A0A3Q2UIK0|A0A3Q2UIK0_CHICK||CHICK_||1053007703']
+                if _config.merge_fragments_detected and  "_|_" in  list_member_first :
+                    paralog_element = ET.Element('paralogGroup')
+                    property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value": "DubiousMergedfragment"})
+                    list_member_first_fragments = list_member_first.split("_|_")
+                    for fragment in list_member_first_fragments:
+                        prot_name_integer = fragment.split("||")[2].strip()
+                        geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(prot_name_integer)})
+                        paralog_element.append(geneRef_elemnt)
+                    return paralog_element
+                else:
+                    prot_name_integer = list_member_first.split("||")[2].strip()
+                    geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(prot_name_integer)})
                     #'id': str(gene_id_name[list_member_first])})  # # gene_id_name[query_prot_record.id]
                 # hog_elemnt.append(geneRef_elemnt)
                 # to do could be improved when the rhog contains only one protein
                 return geneRef_elemnt
-            elif len(list_member) > 1:
-                # probably becuase of inserting dubious prots
+
+            elif len(list_member) > 1 and not _config.merge_fragments_detected:
+                # todo  a better flag is needed probably becuase of inserting dubious prots
                 paralog_element = ET.Element('paralogGroup')
                 property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value":"Dubiousfragment"})
                 # removed proteins which are dubious are reported only in the log files.
@@ -155,8 +191,11 @@ class HOG:
                     prot_name_integer = member.split("||")[2].strip()
                     geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(prot_name_integer)})
                     paralog_element.append(geneRef_elemnt)
+            else:
+                print("** issue 455922")
 
             return paralog_element  # hog_elemnt
+
 
         def _sorter_key(sh):
             return sh._tax_now
