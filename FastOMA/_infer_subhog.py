@@ -14,6 +14,7 @@ from ete3 import Tree
 # import matplotlib.pyplot as plt
 from . import _wrappers
 from . import _utils_subhog
+from . import _utils_frag_SO_detection
 from ._hog_class import HOG
 from ._utils_subhog import logger_hog
 from . import _config
@@ -271,7 +272,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         logger_hog.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+str(rhogid_num)+", level: "+str(node_species_tree.name))
 
         if _config.fragment_detection and len(gene_tree)>2:
-            (gene_tree, hogs_children_level_list, merged_msa_new) = _utils_subhog.handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list, merged_msa)
+            (gene_tree, hogs_children_level_list, merged_msa_new) = _utils_frag_SO_detection.handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list, merged_msa)
         else:
             merged_msa_new = merged_msa
 
@@ -279,7 +280,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         if len(gene_tree) > 1:
             (gene_tree, all_species_dubious_sd_dic) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list)
             if _config.fragment_detection and all_species_dubious_sd_dic:
-                (gene_tree, hogs_children_level_list) = _utils_subhog.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list)
+                (gene_tree, hogs_children_level_list) = _utils_frag_SO_detection.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list)
 
             logger_hog.debug("Merging sub-hogs for rhogid_num:"+str(rhogid_num)+", level:"+str(node_species_tree.name))
             # the last element should be merged_msa not the trimmed msa, as we create new hog based on this msa
