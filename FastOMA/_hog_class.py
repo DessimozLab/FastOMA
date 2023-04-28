@@ -125,22 +125,43 @@ class HOG:
 
         return 1
 
-    def merge_prots_msa(self, fragment_name_host, fragment_name_remove, merged_sequence):
-        merged_fragment_name = fragment_name_host + "_|_" + fragment_name_remove
-        # 'BUPERY_R03529||BUPERY||1105002086_|_BUPERY_R10933||BUPERY||1105008975']
+
+
+    # hog_host.merge_prots_msa(fragment_name_host, fragment_name_remove, merged_sequence, merged_msa_new)
+    def merge_prots_msa(self,fragment_name_host, merged_fragment_name, merged_msa_new):
+        # merged_fragment_name 'BUPERY_R03529||BUPERY||1105002086_|_BUPERY_R10933||BUPERY||1105008975']
         prot_members_hog = list(self._members)
         assert merged_fragment_name in prot_members_hog
+        # merged_fragment_name in self._members   -> True . already the name of host prot is changed using merge_prots_name_hierarchy_toleaves
+        # msa_old = self._msa
+        msa_new = []
+        for seq_record in merged_msa_new:
+            if seq_record.id in  prot_members_hog:
+                msa_new.append(seq_record)
+            else:
+                logger_hog.debug("issue 132851"+seq_record.id +"not in merged_msa_new ")
 
-        msa_old = self._msa
-        msa_new =[]
-        for seq_rec in msa_old:
-            seq_rec_edited = seq_rec
-            if seq_rec.id == fragment_name_host:
-                seq_rec_edited = SeqRecord(Seq(merged_sequence), id=merged_fragment_name, name=merged_fragment_name)
-            msa_new.append(seq_rec_edited)
         self._msa = MultipleSeqAlignment(msa_new)
 
         return 1
+
+    # # hog_host.merge_prots_msa(fragment_name_host, fragment_name_remove, merged_sequence, merged_msa_new)
+    # def merge_prots_msa(self, fragment_name_host, fragment_name_remove, merged_sequence, merged_msa_new):
+    #     merged_fragment_name = fragment_name_host + "_|_" + fragment_name_remove
+    #     # 'BUPERY_R03529||BUPERY||1105002086_|_BUPERY_R10933||BUPERY||1105008975']
+    #     prot_members_hog = list(self._members)
+    #     assert merged_fragment_name in prot_members_hog
+    #     # merged_fragment_name in self._members   -> True . already the name of host prot is changed using merge_prots_name_hierarchy_toleaves
+    #     # msa_old = self._msa
+    #     msa_new = []
+    #     for prot_name in self._members:
+    #
+    #         if seq_rec.id == fragment_name_host:
+    #             seq_rec_edited = SeqRecord(Seq(merged_sequence), id=merged_fragment_name, name=merged_fragment_name)
+    #         msa_new.append(seq_rec_edited)
+    #     self._msa = MultipleSeqAlignment(msa_new)
+    #
+    #     return 1
 
 
     def to_orthoxml(self):

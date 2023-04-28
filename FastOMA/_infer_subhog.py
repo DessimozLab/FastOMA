@@ -53,7 +53,7 @@ def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,
 
     (species_tree, species_names_rhog, prot_names_rhog) = _utils_subhog.prepare_species_tree(rhog_i, species_tree, rhogid_num)
     species_names_rhog = list(set(species_names_rhog))
-    logger_hog.debug("Number of unique species in rHOG " + str(rhogid_num) + "is " + str(len(species_names_rhog)) + ".")
+    logger_hog.debug("Number of unique species in rHOG " + str(rhogid_num) + " is " + str(len(species_names_rhog)) + ".")
 
     if inferhog_concurrent_on:  # for big HOG we use paralelization at the level taxanomic level using concurrent
         hogs_a_rhog_num = infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)

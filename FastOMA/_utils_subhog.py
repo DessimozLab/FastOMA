@@ -285,7 +285,7 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
                     logger_hog.debug( "issue 13954,these are found after removing with sd two times , all_species_dubious_sd_dic3 " + str(all_species_dubious_sd_dic2))
 
         hogs_children_level_list_raw = hogs_children_level_list
-        logger_hog.debug("** we removed theses sequences"+str(prot_dubious_sd_remove_list))
+        logger_hog.debug("** we removed theses sequences "+str(prot_dubious_sd_remove_list))
         for prot_dubious_sd_remove in prot_dubious_sd_remove_list:
             for hog in hogs_children_level_list_raw:
                 if prot_dubious_sd_remove in hog._members:
@@ -347,25 +347,31 @@ def merge_fragments_hogclass(fragments_set, seq_dubious_msa, hogs_children_level
                 merged_sequence += "X"
         assert len(merged_sequence) == len(seq0)
 
-        result_merging1 = merge_prots_name_hierarchy_toleaves(hog_host, fragment_name_host, fragment_name_remove)
-        hog_host.merge_prots_msa(fragment_name_host, fragment_name_remove, merged_sequence)
 
 
         merged_fragment_name = fragment_name_host + "_|_" + fragment_name_remove
-        msa_filt_row_col_fragmerged_list =[]
+        merged_msa_new_list = []
+        if merged_msa and merged_msa[0]:
+            assert len(merged_msa[0]) == len(merged_sequence), str(fragment_name_host)
+        else:
+            print("issue 15723 merged_msa is empty ?")
         for seq_rec in merged_msa:
             if seq_rec.id == fragment_name_host:
                 seq_rec_edited = SeqRecord(Seq(merged_sequence), id=merged_fragment_name, name=merged_fragment_name)
-                msa_filt_row_col_fragmerged_list.append(seq_rec_edited)
+                merged_msa_new_list.append(seq_rec_edited)
             elif seq_rec.id == fragment_name_remove:
                 pass
             else:
-                msa_filt_row_col_fragmerged_list.append(seq_rec)
+                merged_msa_new_list.append(seq_rec)
+        merged_msa_new = MultipleSeqAlignment(merged_msa_new_list)
 
-        msa_filt_row_col_fragmerged= MultipleSeqAlignment(msa_filt_row_col_fragmerged_list)
+        result_merging1 = merge_prots_name_hierarchy_toleaves(hog_host, fragment_name_host, fragment_name_remove)
+
+        #hog_host.merge_prots_msa(fragment_name_host, fragment_name_remove, merged_sequence, merged_msa_new)
+        hog_host.merge_prots_msa(fragment_name_host, merged_fragment_name, merged_msa_new)
         logger_hog.debug("these proteins fragments are merged  into one "+str(merged_fragment_name)+"but reported seperately in orthoxml")
 
-    return fragments_list_remove, hogs_children_level_list, msa_filt_row_col_fragmerged
+    return fragments_list_remove, hogs_children_level_list, merged_msa_new
 
 
 
@@ -384,7 +390,7 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
             for fragments_set_idx, fragments_set in enumerate(fragments_set_list):
                 fragments_set = fragments_set_list[fragments_set_idx]
                 seq_dubious_msa = seq_dubious_msa_list[fragments_set_idx]
-                fragments_list_remove, hogs_children_level_list, merged_msa_new  = merge_fragments_hogclass(fragments_set, seq_dubious_msa, hogs_children_level_list, merged_msa)
+                fragments_list_remove, hogs_children_level_list, merged_msa_new = merge_fragments_hogclass(fragments_set, seq_dubious_msa, hogs_children_level_list, merged_msa)
                 # merged_msa_new  contains the merged_seq
                 # note that merged_msa is the merging of different subhog childrend and is not related to merge fragments  of two seqeuncs with bad annotation
 
@@ -401,33 +407,38 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
                 # todo
                 print("** issue 86194")
                 hogs_children_level_list = []
-                gene_tree =""
+                gene_tree = ""
                 return gene_tree, hogs_children_level_list, merged_msa_new
             else:
                 gene_tree.prune(rest_leaves, preserve_branch_length=True)
 
         (gene_tree, all_species_dubious_sd_dic2) = genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr+"_dubiousMSA")
-        if all_species_dubious_sd_dic2:
-            # logger_hog.debug("these are  found after removing with msa , all_species_dubious_sd_dic2 "+str(all_species_dubious_sd_dic2))
-            (gene_tree, hogs_children_level_list) = handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic2, hogs_children_level_list)
 
-            for fragments_set in fragments_set_list:
-                fragments_list = list(fragments_set)
-                fragment_host = fragments_list[0]  # host of the new small hog consisting few fragments
-                for hog in hogs_children_level_list:
-                    if fragment_host in hog._members:
-                        hog_host = hog
-                        break  # once we found, we don't need to continue searching in hog
-                fragments_list_nothost = fragments_list[1:]
-                for fragment in fragments_list_nothost:
-                    hogs_children_level_list_raw = hogs_children_level_list
-                    for hog in hogs_children_level_list_raw:
-                        if fragment in hog._members:
-                            result_removing = remove_prots_hog_hierarchy_toleaves(hog, [fragment])
-                            if result_removing == 0:  # the hog is empty
-                                hogs_children_level_list.remove(hog)
-                                # print(hogs_children_level_list)
-                insert_dubious_prots_hog_hierarchy_toleaves(hog_host, fragment_host, fragments_list_nothost)
+        # todo check the following is needed
+        # if all_species_dubious_sd_dic2:
+        #     # logger_hog.debug("these are  found after removing with msa , all_species_dubious_sd_dic2 "+str(all_species_dubious_sd_dic2))
+        #     (gene_tree, hogs_children_level_list) = handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic2, hogs_children_level_list)
+        # the handle_fragment_sd might have the issue as the gene tree might not contain the subHOG ids
+
+        # todo the following was part of this if condition. are they needed
+        #
+        # for fragments_set in fragments_set_list:
+        #     fragments_list = list(fragments_set)
+        #     fragment_host = fragments_list[0]  # host of the new small hog consisting few fragments
+        #     for hog in hogs_children_level_list:
+        #         if fragment_host in hog._members:
+        #             hog_host = hog
+        #             break  # once we found, we don't need to continue searching in hog
+        #     fragments_list_nothost = fragments_list[1:]
+        #     for fragment in fragments_list_nothost:
+        #         hogs_children_level_list_raw = hogs_children_level_list
+        #         for hog in hogs_children_level_list_raw:
+        #             if fragment in hog._members:
+        #                 result_removing = remove_prots_hog_hierarchy_toleaves(hog, [fragment])
+        #                 if result_removing == 0:  # the hog is empty
+        #                     hogs_children_level_list.remove(hog)
+        #                     # print(hogs_children_level_list)
+        #     insert_dubious_prots_hog_hierarchy_toleaves(hog_host, fragment_host, fragments_list_nothost)
 
     return gene_tree, hogs_children_level_list, merged_msa_new
 
