@@ -392,6 +392,8 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
+
+
     return msa_filtered_row
 
 

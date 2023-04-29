@@ -316,9 +316,7 @@ def merge_fragments_hogclass(fragments_set, seq_dubious_msa, hogs_children_level
             aa_consensus = 'X'
         else:
             print("issue 123124124", aa_col_set)
-
         merged_sequence += aa_consensus
-
     # seq0 = str(seq_dubious_msa[0].seq)
     # seq1 = str(seq_dubious_msa[1].seq)
     # assert len(seq0) == len(seq1)
@@ -333,9 +331,9 @@ def merge_fragments_hogclass(fragments_set, seq_dubious_msa, hogs_children_level
     #     else:
     #         merged_sequence += "X"
     # assert len(merged_sequence) == len(seq0)
-
-
     merged_fragment_name =  "_|_" .join(fragments_list) # fragment_name_host + "_|_" + fragments_list
+    if len(merged_fragment_name)>220:
+        logger_hog.info("The length of sequence id which now being merged is getting very long > 220, we should make sure that it won't cause any issues with fasttree nd biopython and Mafft"+str(merged_fragment_name))
     merged_msa_new_list = []
     if merged_msa and merged_msa[0]:
         assert len(merged_msa[0]) == len(merged_sequence), str(fragment_name_host)
@@ -358,8 +356,6 @@ def merge_fragments_hogclass(fragments_set, seq_dubious_msa, hogs_children_level
     hog_host.merge_prots_msa(merged_fragment_name, merged_msa_new)
     logger_hog.debug("these proteins fragments are merged  into one "+str(merged_fragment_name)+"but reported seperately in orthoxml")
 
-    if len(seq_dubious_msa) > 2:
-        print("issue 3450011, double check this case not tested completely ")
 
     return fragments_list_remove, hogs_children_level_list, merged_msa_new
 
@@ -371,24 +367,24 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
         return gene_tree, hogs_children_level_list, merged_msa_new
 
     logger_hog.debug("** these are found prot_dubious_msa_list " + str(prot_dubious_msa_list))
-    fragments_set_list = check_prot_dubious_msa(prot_dubious_msa_list, gene_tree)
+    fragments_set_list, seq_dubious_msa_list_checked = check_prot_dubious_msa(prot_dubious_msa_list, gene_tree, seq_dubious_msa_list)
     fragments_remove_list = [] # this list include only one of the fragments for each set, the other one is merged version afterwards
     if fragments_set_list and len(fragments_set_list[0]) > 1:
         # logger_hog.debug("** these are found fragments_set_list " + str(fragments_set_list))
         # remove fragments from gene tree
         if _config.fragment_detection and _config.fragment_detection_msa_merge:
+            merged_msa_new = merged_msa
             for fragments_set_idx, fragments_set in enumerate(fragments_set_list):
                 fragments_set = fragments_set_list[fragments_set_idx]
-                seq_dubious_msa = seq_dubious_msa_list[fragments_set_idx]
-                fragments_list_remove, hogs_children_level_list, merged_msa_new = merge_fragments_hogclass(fragments_set, seq_dubious_msa, hogs_children_level_list, merged_msa)
+                seq_dubious_msa = seq_dubious_msa_list_checked[fragments_set_idx]
+                fragments_list_remove, hogs_children_level_list, merged_msa_new = merge_fragments_hogclass(fragments_set, seq_dubious_msa, hogs_children_level_list, merged_msa_new)
                 # merged_msa_new  contains the merged_seq
                 # note that merged_msa is the merging of different subhog childrend and is not related to merge fragments  of two seqeuncs with bad annotation
 
-                # todo I may need to trim the msa
-
-                #
-                gene_tree_raw = _wrappers.infer_gene_tree(merged_msa_new, genetree_msa_file_addr+"_merged")
-                gene_tree = Tree(gene_tree_raw + ";", format=0)
+            if merged_msa_new:
+                (msa_filt_row_col_new, msa_filt_col, hogs_children_level_list) = _utils_subhog.filter_msa(merged_msa_new, genetree_msa_file_addr+"_merged",hogs_children_level_list)
+            gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col_new, genetree_msa_file_addr+"_merged_")
+            gene_tree = Tree(gene_tree_raw + ";", format=0)
                 # fragments_remove_list += fragments_list_remove # for now fragments_list_remove include 1 prots
         elif _config.fragment_detection and (not _config.fragment_detection_msa_merge):
             fragments_remove_set = set.union(*fragments_set_list)
@@ -432,7 +428,7 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
 
     return gene_tree, hogs_children_level_list, merged_msa_new
 
-def check_prot_dubious_msa(prot_dubious_msa_list, gene_tree):
+def check_prot_dubious_msa(prot_dubious_msa_list, gene_tree, seq_dubious_msa_list):
 
     farthest, max_dist_numNodes = gene_tree.get_farthest_node(topology_only=True)  # furthest from the node
     farthest, max_dist_length = gene_tree.get_farthest_node()  # furthest from the node
@@ -440,8 +436,10 @@ def check_prot_dubious_msa(prot_dubious_msa_list, gene_tree):
     fragments_set_list = []
     # some of the genes may not be in the merged_msa because of trimming rows of msa, we are not using merged_msa
     gene_tree_leaves_name = set([i.name for i in gene_tree.get_leaves()])
-    for prot_dubious_msa_set in prot_dubious_msa_list:
-        print(prot_dubious_msa_set)
+
+
+    for prot_dubious_msa_idx , prot_dubious_msa_set in enumerate(prot_dubious_msa_list):
+        # print(prot_dubious_msa_set)
         fragments = []
         prot_dubious_msa_set_edited = [i for i in prot_dubious_msa_set if i in gene_tree_leaves_name]
         if len(prot_dubious_msa_set_edited)>1:
@@ -463,13 +461,23 @@ def check_prot_dubious_msa(prot_dubious_msa_list, gene_tree):
 
                 print("check_prot_dubious_msa dist_numNodes, dist_length ", dist_length)
                 if dist_length_corrected < max(0.005, max_dist_length / 5):   # or (dist_length_corrected - 2*max_dist_length)< 0.001
+                    # todo important hazard to test
                     # dist_numNodes < max(max_dist_numNodes * 1 / 5, 3) or
                     fragments.append(prot)
+
             if fragments:
                 fragments.append(prot_host)
                 fragments_set_list.append(set(fragments))
 
+    seq_dubious_msa_list_checked = [ ]
+    for fragments_set in fragments_set_list:
+        seq_dubious_msa = []
+        for seq_original in seq_dubious_msa_list:
+            seq_dubious_msa = [i for i in seq_original if  i.id in fragments_set]
+            if seq_dubious_msa:
+                seq_dubious_msa_list_checked.append(seq_dubious_msa)
+
     logger_hog.debug("these are fragments found " +str(fragments_set_list))
 
-    return fragments_set_list
+    return fragments_set_list, seq_dubious_msa_list_checked
 

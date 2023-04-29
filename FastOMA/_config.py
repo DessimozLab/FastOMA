@@ -99,9 +99,9 @@ rooting_method = "midpoint"  # "midpoint" "mad"
 rooting_mad_executable_path = "mad"  # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/installers/mad/
 
 ##inferhog
-inferhog_tresh_ratio_gap_row = 0.1   # to have more proteins in the ortho groups 0.1
+inferhog_tresh_ratio_gap_row = 0.2   # to have more proteins in the ortho groups 0.1
 inferhog_tresh_ratio_gap_col = 0.4
-inferhog_min_cols_msa_to_filter = 100  # used for msa before gene tree inference and  saving msa in hog class
+inferhog_min_cols_msa_to_filter = 500  # used for msa before gene tree inference and  saving msa in hog class
 
 inferhog_filter_all_msas_row = True
 
