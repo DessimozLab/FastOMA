@@ -21,7 +21,9 @@ def infer_subhogs():
     print("_config.input_rhog_folder)", _config.input_rhog_folder)
     print(_config.parallel)
     print(_config.species_tree_address)
-    print( "--fragment-detection", _config.fragment_detection)
+    print("fragment_detection ", _config.fragment_detection)
+    print("low_so_detection ", _config.low_so_detection)
+
 
     # --input - rhog - folder $rhogs_big_i - -parallel
     # False

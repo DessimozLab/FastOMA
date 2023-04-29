@@ -113,15 +113,15 @@ class HOG:
         return 1
 
 
-    def merge_prots_name_hog(self, fragment_name_host, fragment_name_remove):
+    def merge_prots_name_hog(self, fragment_name_host, merged_fragment_name):
 
         prot_members_hog = list(self._members)
         assert fragment_name_host in prot_members_hog, str(fragment_name_host)+str("  prot_members_hog:")+str(prot_members_hog)
         fragment_host_idx = prot_members_hog.index(fragment_name_host)
-        merged_fragment_name = fragment_name_host + "_|_" + fragment_name_remove
+        # merged_fragment_name = fragment_name_host + "_|_" + fragment_name_remove1 + ... # there might be more than one fragment
         prot_members_hog[fragment_host_idx] = merged_fragment_name
         # 'BUPERY_R03529||BUPERY||1105002086_|_BUPERY_R10933||BUPERY||1105008975']
-        self._members = prot_members_hog
+        self._members = set(prot_members_hog)
 
         return 1
 
@@ -186,9 +186,11 @@ class HOG:
 
             if len(list_member) == 1:
                 list_member_first = list(self._members)[0]  # ['tr|A0A3Q2UIK0|A0A3Q2UIK0_CHICK||CHICK_||1053007703']
-                if _config.fragment_detection_msa and _config.fragment_detection_msa_merge and "_|_" in  list_member_first :
+                if _config.fragment_detection and _config.fragment_detection_msa_merge and "_|_" in  list_member_first :
                     paralog_element = ET.Element('paralogGroup')
+                    #property_element = ET.SubElement(paralog_element, "property", attrib={"name": "TaxRange", "value": str(self._tax_now)})
                     property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value": "DubiousMergedfragment"})
+                    # property_element = ET.SubElement(paralog_element, "property", attrib={"TaxRange": str(self._tax_now), "Type": "DubiousMergedfragment"})
                     list_member_first_fragments = list_member_first.split("_|_")
                     for fragment in list_member_first_fragments:
                         prot_name_integer = fragment.split("||")[2].strip()
@@ -203,10 +205,11 @@ class HOG:
                 # to do could be improved when the rhog contains only one protein
                 return geneRef_elemnt
 
-            elif len(list_member) > 1 and _config.fragment_detection_msa and (not _config.fragment_detection_msa_merge):
+            elif len(list_member) > 1 and _config.fragment_detection and (not _config.fragment_detection_msa_merge):
                 # todo  a better flag is needed probably becuase of inserting dubious prots
                 paralog_element = ET.Element('paralogGroup')
                 property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value":"Dubiousfragment"})
+                # property_element = ET.SubElement(paralog_element, "property", attrib={"TaxRange": str(self._tax_now),"Type": "DubiousMergedfragment"})
                 # removed proteins which are dubious are reported only in the log files.
                 for member in list_member:
                     prot_name_integer = member.split("||")[2].strip()
@@ -239,10 +242,13 @@ class HOG:
         """
 
         element_list =[]
-        for sub_clade, sub_hogs in itertools.groupby(self._subhogs, key=_sorter_key):
+        for sub_clade, sub_hogs in itertools.groupby(self._subhogs, key=_sorter_key): # sub_clade is the taxrange
             list_of_subhogs_of_same_clade = list(sub_hogs)
             if len(list_of_subhogs_of_same_clade) > 1:
                 paralog_element = ET.Element('paralogGroup')
+                # this could be improved, instead of tax_now we can use the least common ancestor of all members
+                # property_element = ET.SubElement(paralog_element, "property",attrib={"name": "TaxRange", "value": str(self._tax_now)})
+
                 for sh in list_of_subhogs_of_same_clade:
                     paralog_element.append(sh.to_orthoxml())  # ,**gene_id_name  indent+2
                 element_list.append(paralog_element)
@@ -251,8 +257,8 @@ class HOG:
 
         if len(element_list) == 1:
             return element_list[0]
-        elif len(element_list) > 1:
 
+        elif len(element_list) > 1:
             hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
             property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(self._tax_now)})
             for element in element_list:

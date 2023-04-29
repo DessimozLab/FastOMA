@@ -244,7 +244,7 @@ for i in $(ls .); do mv $i `basename $i`.fa.hogmap; done
 
 
 ## Change log
-- prelease v.0.0.6: use `--fragment-detection` for `infer-subhogs`
+- prelease v.0.0.6: use `--fragment-detection` for `infer-subhogs` and `--low-so-detection --fragment-detection`
 - prelease v.0.0.6: using input hogmpa
 - prelease v.0.0.5: adding pip setup.py 
 - prelease v.0.0.4: simple nextflow

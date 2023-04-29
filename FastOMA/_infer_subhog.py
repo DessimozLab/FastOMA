@@ -9,6 +9,7 @@ import pickle
 import gc
 import random
 from ete3 import Tree
+import xml.etree.ElementTree as ET
 
 # import networkx as nx
 # import matplotlib.pyplot as plt
@@ -74,8 +75,17 @@ def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,
     for hog_i in hogs_a_rhog:
         if len(hog_i._members) >= _config.inferhog_min_hog_size_xml:
             # could be improved   # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
-            hogs_a_rhog_xml = hog_i.to_orthoxml()
+            hogs_a_rhog_xml_raw = hog_i.to_orthoxml()
+            if _config.orthoxml_v03 and 'paralogGroup' in str(hogs_a_rhog_xml_raw) :
+                # in version v0.3 of orthoxml, there shouldn't be any paralogGroup at root level. Let's put them inside an orthogroup should be in
+                hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(hog_i._hogid)})
+                property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i._tax_now)})
+                hog_elemnt.append(hogs_a_rhog_xml_raw)
+                hogs_a_rhog_xml =hog_elemnt
+            else:
+                hogs_a_rhog_xml = hogs_a_rhog_xml_raw
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
+
 
     pickles_rhog_file = pickles_rhog_folder + '/file_' + str(rhogid_num) + '.pickle'
     with open(pickles_rhog_file, 'wb') as handle:
@@ -256,7 +266,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
     if sub_msa_list_lowerLevel_ready:
         if len(sub_msa_list_lowerLevel_ready) > 1:
             merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, genetree_msa_file_addr)
-            if _config.fragment_detection_msa:
+            if _config.fragment_detection:
                 prot_dubious_msa_list, seq_dubious_msa_list = _utils_frag_SO_detection.find_prot_dubious_msa(merged_msa)
         else:
             merged_msa = sub_msa_list_lowerLevel_ready #  when only on  child, the rest msa is empty.
@@ -272,7 +282,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         gene_tree = Tree(gene_tree_raw + ";", format=0)
         logger_hog.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+str(rhogid_num)+", level: "+str(node_species_tree.name))
 
-        if _config.fragment_detection_msa and len(gene_tree) > 2:
+        if _config.fragment_detection and len(gene_tree) > 2:
             (gene_tree, hogs_children_level_list, merged_msa_new) = _utils_frag_SO_detection.handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list, merged_msa)
         else:
             merged_msa_new = merged_msa
@@ -280,7 +290,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         # when the prot dubious is removed during trimming
         if len(gene_tree) > 1:
             (gene_tree, all_species_dubious_sd_dic) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list)
-            if _config.low_SO_detection and all_species_dubious_sd_dic:
+            if _config.low_so_detection and all_species_dubious_sd_dic:
                 (gene_tree, hogs_children_level_list) = _utils_frag_SO_detection.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list)
 
             logger_hog.debug("Merging sub-hogs for rhogid_num:"+str(rhogid_num)+", level:"+str(node_species_tree.name))
