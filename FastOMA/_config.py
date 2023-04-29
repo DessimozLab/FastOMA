@@ -61,18 +61,19 @@ species_tree_address = "species_tree.nwk"
 # no space or special charcter in internal node.
 # protein_format_qfo_dataset = True
 
-merge_fragments_detected = False
+fragment_detection_msa = False
+fragment_detection_msa_merge = False  # if this is false and fragment_detection_msa -> we'll remove both fragments in orthology analyss at parent level but report it in orthoxml Dubiousfragment
+low_SO_detection = False
+
 fragment_detection = False
-
-
-if not fragment_detection:
-    merge_fragments_detected = False
+if fragment_detection == True:
+    fragment_detection_msa = True
+    fragment_detection_msa_merge = True  # if this is false and fragment_detection_msa -> we'll remove both fragments in orthology analyss at parent level but report it in orthoxml Dubiousfragment
+    low_SO_detection = True
 
 # for fragment detection is better to subsampling_hogclass= False but make FastOMA slow
 threshold_dubious_sd = 1/10+0.01
-
-
-overlap_fragments= 0.15
+overlap_fragments = 0.15
 
 
 ## output writing files
@@ -80,7 +81,7 @@ gene_trees_write = False
 msa_write = False
 gene_trees_write_all = False
 msa_write_all = False
-keep_subhog_each_pickle = False
+keep_subhog_each_pickle = True
 
 
 # filtering omamer
@@ -88,7 +89,7 @@ omamer_fscore_treshold_big_rhog = 0.5  #  to have more proteins in the ortho gro
 treshold_big_rhog_szie = 500
 
 ## hogclass configs
-hogclass_max_num_seq = 30  # subsampling in msa
+hogclass_max_num_seq = 10  # subsampling in msa
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 300
 hogclass_tresh_ratio_gap_col = 0.2
 subsampling_hogclass = True
@@ -101,7 +102,7 @@ label_SD_internal = "species_overlap"  # "reconcilation" "species_overlap"
 tree_tool = "fasttree"  # "fasttree"  "iqtree"  # for  gene tree with two, we use
 
 rooting_method = "midpoint"  # "midpoint" "mad"
-rooting_mad_executable_path = "mad" # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/installers/mad/
+rooting_mad_executable_path = "mad"  # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/installers/mad/
 
 ##inferhog
 inferhog_tresh_ratio_gap_row = 0.1   # to have more proteins in the ortho groups 0.1
@@ -111,11 +112,11 @@ inferhog_min_cols_msa_to_filter = 100  # used for msa before gene tree inference
 inferhog_filter_all_msas_row = True
 
 
-inferhog_resume_rhog = False  # main.py False
+inferhog_resume_rhog = True  # main.py False
 # The intermediate files, internal node  pickle files is not working with nextflow
 # the reason is that the pickles_subhog_folder_all is relative and stored in nextflow_work folder
 # this folder can not be used for  the re-submitting
-inferhog_resume_subhog = False  # read pickle_subhog  # _infer_subhog.py
+inferhog_resume_subhog = True  # read pickle_subhog  # _infer_subhog.py
 
 # inferhog_concurrent_on = True now as an argument
 inferhog_max_workers_num = 8
@@ -133,27 +134,26 @@ sum_list_rhogs_filesize_thresh = 2 * 1e6
 
 
 def set_configs():
-    parser = argparse.ArgumentParser(description="This is GETHOG3 ")
-    # parser.add_argument('--working-folder', help="in_folder")
+    parser = argparse.ArgumentParser(description="This is GETHOG3 ")     # parser.add_argument('--working-folder', help="in_folder")
     parser.add_argument('--logger-level', default="DEBUG")
-    #  $rhogs_big_i - -parrallel
-
-    parser.add_argument("--version", action="version", help="Show version and exit.",
-        version="0.0.6",) # version=__version__
-
+    parser.add_argument("--version", action="version", help="Show version and exit.", version="0.0.6",)  # version=__version__
     parser.add_argument('--species-tree-address', default="species_tree_test.nwk")
-    parser.add_argument('--input-rhog-folder') # , default="./rhog"
-    parser.add_argument('--parrallel', default=False)
+    parser.add_argument('--input-rhog-folder')     # , default="./rhog"
+    parser.add_argument('--parallel', action=argparse.BooleanOptionalAction)
+    parser.add_argument('--fragment-detection', action=argparse.BooleanOptionalAction)
+
 
     config_parser = parser.parse_args()
 
     # Namespace(logger_level=None, in_folder=None)
     setattr(sys.modules[__name__], 'logger_level', config_parser.logger_level)
     setattr(sys.modules[__name__], 'input_rhog_folder', config_parser.input_rhog_folder)
-    setattr(sys.modules[__name__], 'parrallel', config_parser.parrallel)
+    setattr(sys.modules[__name__], 'parallel', config_parser.parallel)
     setattr(sys.modules[__name__], 'species_tree_address', config_parser.species_tree_address)
+    setattr(sys.modules[__name__], 'fragment_detection', config_parser.fragment_detection)
 
     print("config_parser 3 ", config_parser)
+
 
 '''
 

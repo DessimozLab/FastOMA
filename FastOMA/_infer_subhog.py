@@ -256,7 +256,8 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
     if sub_msa_list_lowerLevel_ready:
         if len(sub_msa_list_lowerLevel_ready) > 1:
             merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, genetree_msa_file_addr)
-            prot_dubious_msa_list, seq_dubious_msa_list = _utils_subhog.find_prot_dubious_msa(merged_msa)
+            if _config.fragment_detection_msa:
+                prot_dubious_msa_list, seq_dubious_msa_list = _utils_frag_SO_detection.find_prot_dubious_msa(merged_msa)
         else:
             merged_msa = sub_msa_list_lowerLevel_ready #  when only on  child, the rest msa is empty.
         logger_hog.debug("All sub-hogs are merged, merged_msa "+str(len(merged_msa))+" "+str(len(merged_msa[0]))+" for rhog: "+str(rhogid_num)+", taxonomic level:"+str(node_species_tree.name))
@@ -271,7 +272,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         gene_tree = Tree(gene_tree_raw + ";", format=0)
         logger_hog.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+str(rhogid_num)+", level: "+str(node_species_tree.name))
 
-        if _config.fragment_detection and len(gene_tree)>2:
+        if _config.fragment_detection_msa and len(gene_tree) > 2:
             (gene_tree, hogs_children_level_list, merged_msa_new) = _utils_frag_SO_detection.handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list, merged_msa)
         else:
             merged_msa_new = merged_msa
@@ -279,7 +280,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         # when the prot dubious is removed during trimming
         if len(gene_tree) > 1:
             (gene_tree, all_species_dubious_sd_dic) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list)
-            if _config.fragment_detection and all_species_dubious_sd_dic:
+            if _config.low_SO_detection and all_species_dubious_sd_dic:
                 (gene_tree, hogs_children_level_list) = _utils_frag_SO_detection.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list)
 
             logger_hog.debug("Merging sub-hogs for rhogid_num:"+str(rhogid_num)+", level:"+str(node_species_tree.name))
@@ -292,9 +293,9 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
             hogs_this_level_list = hogs_children_level_list
     else:
         if msa_filt_row_col:
-            logger_hog.debug("issue 13805 hogs_this_level_list is empty. msa_filt_row_col:"+str(len(msa_filt_row_col))+"*"+str(len(msa_filt_row_col[0]))+" !!")
+            logger_hog.debug("warning id 13805: hogs_this_level_list is empty. msa_filt_row_col:"+str(len(msa_filt_row_col))+"*"+str(len(msa_filt_row_col[0]))+" !!")
         else:
-            logger_hog.debug("issue 13806 msa_filt_row_col is empty." + str(len(msa_filt_row_col)) +"! .")
+            logger_hog.debug("warning id 13806: msa_filt_row_col is empty." + str(len(msa_filt_row_col)) +"! .")
 
         hogs_this_level_list = hogs_children_level_list
 

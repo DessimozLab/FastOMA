@@ -15,6 +15,12 @@ params.pickles_rhogs_folder = params.output_folder + "/pickle_rhogs"
 params.genetrees_folder = params.output_folder + "/genetrees"
 
 
+// todo resuming  pipeline not working well
+// https://github.com/nextflow-io/nextflow/issues/1629
+// https://www.nextflow.io/docs/latest/process.html?highlight=cache#cache
+
+// todo clean up this file
+
 process omamer_run{
   time {4.h}
   memory {50.GB}
@@ -97,7 +103,7 @@ process hog_big{
 
   script:
   """
-  infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --parrallel True  --species-tree ${rhogsbig_tree_ready[1]}
+  infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --parallel  --species-tree ${rhogsbig_tree_ready[1]}
   """
 }
 
@@ -128,8 +134,8 @@ process hog_rest{
   val true
   script:
   """
-  infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]} --parrallel False --species-tree ${rhogsrest_tree_ready[1]}
-  """
+  infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]}  --species-tree ${rhogsrest_tree_ready[1]}
+  """ // --parrallel False
 }
 
 process collect_subhogs{

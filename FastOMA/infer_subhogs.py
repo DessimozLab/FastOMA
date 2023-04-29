@@ -19,20 +19,25 @@ def infer_subhogs():
     _config.set_configs()
     print(_config.logger_level)
     print("_config.input_rhog_folder)", _config.input_rhog_folder)
-    print(_config.parrallel)
+    print(_config.parallel)
     print(_config.species_tree_address)
+    print( "--fragment-detection", _config.fragment_detection)
 
-    # --input - rhog - folder $rhogs_big_i - -parrallel
+    # --input - rhog - folder $rhogs_big_i - -parallel
     # False
 
     address_rhogs_folder = _config.input_rhog_folder
-    inferhog_concurrent_on_string = _config.parrallel #  sys.argv[2]   # "False"  # "False"  #
+    inferhog_concurrent_on = _config.parallel #  sys.argv[2]   # "False"  # "False"  #
 
+    if inferhog_concurrent_on:
+        print("parallelization for subhog inference is on.")
 
     pickles_rhog_folder = "./"
     pickles_subhog_folder_all = "./"
 
-    inferhog_concurrent_on = inferhog_concurrent_on_string == "True"
+    # inferhog_concurrent_on = inferhog_concurrent_on_string == "True"
+
+
 
     print("input is", address_rhogs_folder)
 
@@ -76,7 +81,11 @@ Other output :Orthogroup Sequences
 
 print as debug
 # [_config.oma_database_address, _config.working_folder_root , _config.species_tree_address , _config.working_id ,
- _config.protein_format_qfo_dataset, _config.in_folder, _config.omamer_fscore_treshold_big_rhog, _config.treshold_big_rhog_szie, _config.gene_trees_write, _config.keep_subhog_each_pickle, _config.hogclass_max_num_seq, _config.hogclass_min_cols_msa_to_filter, _config.hogclass_tresh_ratio_gap_col, _config.automated_trimAL, _config.lable_SD_internal , _config.rooting_method, _config.rooting_mad_executable_path , _config.inferhog_tresh_ratio_gap_row , _config.inferhog_tresh_ratio_gap_col , _config.inferhog_min_cols_msa_to_filter , _config.inferhog_filter_all_msas_row , _config.inferhog_resume_rhog  , _config.inferhog_resume_subhog , _config.inferhog_max_workers_num , _config.inferhog_min_hog_size_xml, _config.logger_level]
+ _config.protein_format_qfo_dataset, _config.in_folder, _config.omamer_fscore_treshold_big_rhog,
+  _config.treshold_big_rhog_szie, _config.gene_trees_write, _config.keep_subhog_each_pickle, 
+  _config.hogclass_max_num_seq, _config.hogclass_min_cols_msa_to_filter, _config.hogclass_tresh_ratio_gap_col, _config.automated_trimAL, _config.lable_SD_internal ,
+   _config.rooting_method, _config.rooting_mad_executable_path , _config.inferhog_tresh_ratio_gap_row , _config.inferhog_tresh_ratio_gap_col , _config.inferhog_min_cols_msa_to_filter
+    , _config.inferhog_filter_all_msas_row , _config.inferhog_resume_rhog  , _config.inferhog_resume_subhog , _config.inferhog_max_workers_num , _config.inferhog_min_hog_size_xml, _config.logger_level]
 
 species_tree_address = working_folder_root + "tree_fastaname.nwk" # no space or special charcter in internal node, 
 arise error or solve it
