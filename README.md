@@ -230,7 +230,7 @@ nextflow ../FastOMA_script.nf  -c ../nextflow_slurm.config   --input_folder in_f
 
 You may need to re-run nextflow command line by adding `-resume`, if the allocated time is not enough for your dataset.
 
-You may need to increase the number of opoened files in your system with `ulimit -n 131072`.
+You may need to increase the number of opoened files in your system with `ulimit -n 131072` or higher.
 
 
 If you have the omamer mappings, you can put them in hogmap folder  and run the following
@@ -244,6 +244,8 @@ for i in $(ls .); do mv $i `basename $i`.fa.hogmap; done
 
 
 ## Change log
+- prelease
+- prelease v.0.0.6: use `--fragment-detection` for `infer-subhogs` and `--low-so-detection --fragment-detection`
 - prelease v.0.0.6: using input hogmpa
 - prelease v.0.0.5: adding pip setup.py 
 - prelease v.0.0.4: simple nextflow

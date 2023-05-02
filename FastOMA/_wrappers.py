@@ -52,18 +52,12 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     output: gene tree in nwk format
     """
 
-    # todo using more cpus ?
-    if len(msa) <= 2:
-
-        #todo what's difference between these two cases  in if and elif
+    if _config.tree_tool == "fasttree":
         wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
         wrapper_tree.options.options['-fastest'].active = True   # .set_value(True)  is wrong.
 
-    elif _config.tree_tool == "fasttree":
-        wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
-        wrapper_tree.options.options['-fastest'].active = True
-
-    # elif _config.tree_tool == "iqtree": # very slow
+    # todo using more cpus ?
+    # elif _config.tree_tool == "iqtree": # very slow not recommanded
     #     wrapper_tree = iqtree.Iqtree(msa, datatype="PROTEIN")
     #     wrapper_tree.options.options['-m'].set_value("LG+I+G")
     #     wrapper_tree.options.options['-nt'].set_value(1)

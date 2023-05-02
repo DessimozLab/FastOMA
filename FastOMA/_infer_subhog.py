@@ -9,11 +9,13 @@ import pickle
 import gc
 import random
 from ete3 import Tree
+import xml.etree.ElementTree as ET
 
 # import networkx as nx
 # import matplotlib.pyplot as plt
 from . import _wrappers
 from . import _utils_subhog
+from . import _utils_frag_SO_detection
 from ._hog_class import HOG
 from ._utils_subhog import logger_hog
 from . import _config
@@ -53,7 +55,7 @@ def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,
 
     (species_tree, species_names_rhog, prot_names_rhog) = _utils_subhog.prepare_species_tree(rhog_i, species_tree, rhogid_num)
     species_names_rhog = list(set(species_names_rhog))
-    logger_hog.debug("Number of unique species in rHOG " + str(rhogid_num) + "is " + str(len(species_names_rhog)) + ".")
+    logger_hog.debug("Number of unique species in rHOG " + str(rhogid_num) + " is " + str(len(species_names_rhog)) + ".")
 
     if inferhog_concurrent_on:  # for big HOG we use paralelization at the level taxanomic level using concurrent
         hogs_a_rhog_num = infer_hogs_concurrent(species_tree, rhogid_num, pickles_subhog_folder_all, rhogs_fa_folder)
@@ -73,8 +75,18 @@ def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,
     for hog_i in hogs_a_rhog:
         if len(hog_i._members) >= _config.inferhog_min_hog_size_xml:
             # could be improved   # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
-            hogs_a_rhog_xml = hog_i.to_orthoxml()
+            hogs_a_rhog_xml_raw = hog_i.to_orthoxml()
+            if _config.orthoxml_v03 and 'paralogGroup' in str(hogs_a_rhog_xml_raw) :
+                # in version v0.3 of orthoxml, there shouldn't be any paralogGroup at root level. Let's put them inside an orthogroup should be in
+                hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(hog_i._hogid)})
+                property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i._tax_now)})
+                hog_elemnt.append(hogs_a_rhog_xml_raw)
+                hogs_a_rhog_xml =hog_elemnt
+            else:
+                hogs_a_rhog_xml = hogs_a_rhog_xml_raw
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
+        else:
+            logger_hog.debug("single tone hog "+str(hog_i._members)+" is not reported")
 
     pickles_rhog_file = pickles_rhog_folder + '/file_' + str(rhogid_num) + '.pickle'
     with open(pickles_rhog_file, 'wb') as handle:
@@ -255,9 +267,10 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
     if sub_msa_list_lowerLevel_ready:
         if len(sub_msa_list_lowerLevel_ready) > 1:
             merged_msa = _wrappers.merge_msa(sub_msa_list_lowerLevel_ready, genetree_msa_file_addr)
-            prot_dubious_msa_list = _utils_subhog.find_prot_dubious_msa(merged_msa)
+            if _config.fragment_detection:
+                prot_dubious_msa_list, seq_dubious_msa_list = _utils_frag_SO_detection.find_prot_dubious_msa(merged_msa)
         else:
-            merged_msa = sub_msa_list_lowerLevel_ready #  when only on  child, the rest msa is empty.
+            merged_msa = sub_msa_list_lowerLevel_ready   #  when only on  child, the rest msa is empty.
         logger_hog.debug("All sub-hogs are merged, merged_msa "+str(len(merged_msa))+" "+str(len(merged_msa[0]))+" for rhog: "+str(rhogid_num)+", taxonomic level:"+str(node_species_tree.name))
         (msa_filt_row_col, msa_filt_col, hogs_children_level_list) = _utils_subhog.filter_msa(merged_msa, genetree_msa_file_addr, hogs_children_level_list)
         # msa_filt_col is used for parent level of HOG. msa_filt_row_col is used for gene tree inference.
@@ -270,18 +283,20 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         gene_tree = Tree(gene_tree_raw + ";", format=0)
         logger_hog.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+str(rhogid_num)+", level: "+str(node_species_tree.name))
 
-        if _config.fragment_detection and len(gene_tree)>2:
-            (gene_tree, hogs_children_level_list) = _utils_subhog.handle_fragment_msa(prot_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list)
+        if _config.fragment_detection and len(gene_tree) > 2 and prot_dubious_msa_list:
+            (gene_tree, hogs_children_level_list, merged_msa_new) = _utils_frag_SO_detection.handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list, merged_msa)
+        else:
+            merged_msa_new = merged_msa
 
         # when the prot dubious is removed during trimming
         if len(gene_tree) > 1:
-            (gene_tree, species_dubious_sd_dic) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list)
-            if _config.fragment_detection and species_dubious_sd_dic:
-                (gene_tree, hogs_children_level_list) = _utils_subhog.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, species_dubious_sd_dic, hogs_children_level_list)
+            (gene_tree, all_species_dubious_sd_dic) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list)
+            if _config.low_so_detection and all_species_dubious_sd_dic:
+                (gene_tree, hogs_children_level_list) = _utils_frag_SO_detection.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list)
 
             logger_hog.debug("Merging sub-hogs for rhogid_num:"+str(rhogid_num)+", level:"+str(node_species_tree.name))
             # the last element should be merged_msa not the trimmed msa, as we create new hog based on this msa
-            hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa)
+            hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa_new)
             # for i in hogs_this_level_list: print(i.get_members())
             logger_hog.debug("Hogs of this level is found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(this_level_node_name))
 
@@ -289,14 +304,22 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
             hogs_this_level_list = hogs_children_level_list
     else:
         if msa_filt_row_col:
-            logger_hog.debug("issue 13805 hogs_this_level_list is empty. msa_filt_row_col:"+str(len(msa_filt_row_col))+"*"+str(len(msa_filt_row_col[0]))+" !!")
+            logger_hog.debug("warning id 13805: hogs_this_level_list is empty. msa_filt_row_col:"+str(len(msa_filt_row_col))+"*"+str(len(msa_filt_row_col[0]))+" !!")
         else:
-            logger_hog.debug("issue 13806 msa_filt_row_col is empty." + str(len(msa_filt_row_col)) +"! .")
+            logger_hog.debug("warning id 13806: msa_filt_row_col is empty." + str(len(msa_filt_row_col)) +"! ")
 
         hogs_this_level_list = hogs_children_level_list
 
     with open(pickle_subhog_file, 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+    # for hog in hogs_this_level_list:
+    #     msa_rec_ids = [i.id for i in hog._msa]
+    #     if set(hog._members) != set(msa_rec_ids):
+    #         logger_hog.debug("issue 123601, the members are not matching with msa"+str(set(hog._members))+"  "+str(msa_rec_ids))
+    # this could be becuase of sub-sampling
+
 
     return len(hogs_this_level_list)
 
@@ -330,8 +353,11 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
 
         if not node.is_leaf() and node.name[0] == "S":
             node_leaves_name_raw = [i.name for i in node.get_leaves()]
-            # leaves names  with subhog id  'HALSEN_R15425||HALSEN_|1352015793_sub10149',
-            node_leaves_name = [i.split("_|")[0] for i in node_leaves_name_raw]
+            # leaves names  with subhog id  'HALSEN_R15425||HALSEN|_|1352015793_sub10149',
+            node_leaves_name = [i.split("|_|")[0] for i in node_leaves_name_raw]
+            # node_leaves_name =[]
+            # for name_i in node_leaves_name_:
+            #     node_leaves_name += name_i.split("_|_")
 
             # num_prot = len(s_gene_tree_leaves)
             # for i in range(num_prot):
