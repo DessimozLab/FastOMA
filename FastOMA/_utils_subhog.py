@@ -233,7 +233,7 @@ def label_sd_internal_nodes(tree_out):
             if node_children_species_intersection:  # print("node_children_species_list",node_children_species_list)
                 counter_D += 1
                 node.name = "D" + str(counter_D) + "_"+str(len(node_children_species_intersection))+"_"+str(len(node_children_species_union))
-                if len(node_children_species_intersection)/ len(node_children_species_union) < _config.threshold_dubious_sd:
+                if len(node_children_species_intersection)/ len(node_children_species_union) <= _config.threshold_dubious_sd:
                     all_species_dubious_sd_dic[node.name] = list(node_children_species_intersection)
             else:
                 counter_S += 1
@@ -360,9 +360,10 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
     msa_filtered_col = []
     for record in msa:
         record_seq = str(record.seq)
-        record_seq_edited = ''.join([record_seq[i] for i in keep_cols  ])
-        record_edited = SeqRecord(Seq(record_seq_edited), record.id, '', '')
-        msa_filtered_col.append(record_edited)
+        record_seq_edited = ''.join([record_seq[i] for i in keep_cols])
+        if len(record_seq_edited) > 1:
+            record_edited = SeqRecord(Seq(record_seq_edited), record.id, '', '')
+            msa_filtered_col.append(record_edited)
 
     if _config.msa_write_all and gene_tree_file_addr:
         out_name_msa=gene_tree_file_addr+"filtered_"+"col_"+str(tresh_ratio_gap_col)+".msa.fa"
@@ -373,9 +374,9 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
     return msa_filtered_col
 
 
-def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
+def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
     msa_filtered_row = []
-    ratio_records=[]
+    ratio_records = []
     for record in msa:
         seq = record.seq
         seqLen = len(record)
@@ -383,16 +384,15 @@ def msa_filter_row(msa, tresh_ratio_gap_row, gene_tree_file_addr=""):
         if seqLen:
             ratio_record_nongap = 1-gap_count/seqLen
             ratio_records.append(round(ratio_record_nongap, 3))
-            if ratio_record_nongap > tresh_ratio_gap_row:
+            if ratio_record_nongap > inferhog_tresh_ratio_gap_row:
                 msa_filtered_row.append(record)
         else:
             print("issue 12788 : error , seq len is zero when msa_filter_row")
     if _config.msa_write_all and gene_tree_file_addr:
-        out_name_msa = gene_tree_file_addr +"_filtered_row_"+str(tresh_ratio_gap_row)+".msa.fa"
+        out_name_msa = gene_tree_file_addr +"_filtered_row_"+str(inferhog_tresh_ratio_gap_row)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
-
 
     return msa_filtered_row
 
@@ -473,16 +473,19 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
             set_prot_before = set([i.id for i in msa_filt_col])
             set_prot_after = set([i.id for i in msa_filt_row_col])
             prots_to_remove_level = set_prot_before - set_prot_after
+            for prots_to_remove in prots_to_remove_level:
+                logger_hog.debug("** we are removing the sequence "+str(prots_to_remove)+"due to trimming")
+
             assert len(prots_to_remove_level), "issue 31235"
             #prots_to_remove |= prots_to_remove_level
             # remove prot from all subhogs
+            # todo should I remove them from subhog._members ? we are doing so for merging fragments or low species overlap I guess
             # hogs_children_level_list_raw = hogs_children_level_list
             # hogs_children_level_list = []
             # for hog_i in hogs_children_level_list_raw:
             #     result_removal = hog_i.remove_prots_from_hog(prots_to_remove)
             #     if result_removal != 0:
             #         hogs_children_level_list.append(hog_i)
-
         else:
             msa_filt_row_col = msa_filt_col
         merged_msa_filt = msa_filt_row_col

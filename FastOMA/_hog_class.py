@@ -57,6 +57,8 @@ class HOG:
                 if _config.subsampling_hogclass:
                     if len(records_sub_sampled_raw[0]) > _config.hogclass_min_cols_msa_to_filter:
                         records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, _config.hogclass_tresh_ratio_gap_col)
+                        # todo the challange is that one of the sequences might be complete gap
+
                     else:
                         records_sub_sampled = records_sub_sampled_raw
                     # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
@@ -83,17 +85,19 @@ class HOG:
     def get_dubious_members(self):
         return self._dubious_members
 
-    def remove_prots_from_hog(self, prots_to_remove):
+    def remove_prot_from_hog(self, prot_to_remove):
         prot_members_hog_old = self._members
-        if len(prot_members_hog_old) & len(prots_to_remove):
-            prot_members_hog_edited = prot_members_hog_old - set(prots_to_remove)
-            self._members = prot_members_hog_edited
-            msa_old = self._msa
-            # we may not to edit the msa of children level
-            msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id not in prots_to_remove])
-            self._msa = msa_edited
-            if len(prot_members_hog_edited) == 0:  # hog should be removed , no members is left
-                return 0
+        assert prot_members_hog_old
+
+
+        prot_members_hog_edited = prot_members_hog_old - set([prot_to_remove])
+        self._members = prot_members_hog_edited
+        msa_old = self._msa
+        # todo we may want to edit the msa of children level
+        msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id != prot_to_remove])
+        self._msa = msa_edited
+        if len(prot_members_hog_edited) == 0:  # hog should be removed, no members is left
+            return 0
         return 1
 
     def insert_dubious_prots(self, fragment_host, fragments_list_nothost):
@@ -186,7 +190,7 @@ class HOG:
 
             if len(list_member) == 1:
                 list_member_first = list(self._members)[0]  # ['tr|A0A3Q2UIK0|A0A3Q2UIK0_CHICK||CHICK_||1053007703']
-                if _config.fragment_detection and _config.fragment_detection_msa_merge and "_|_" in  list_member_first :
+                if _config.fragment_detection and _config.fragment_detection_msa_merge and "_|_" in  list_member_first:
                     paralog_element = ET.Element('paralogGroup')
                     #property_element = ET.SubElement(paralog_element, "property", attrib={"name": "TaxRange", "value": str(self._tax_now)})
                     property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value": "DubiousMergedfragment"})
@@ -217,6 +221,7 @@ class HOG:
                     paralog_element.append(geneRef_elemnt)
                 return paralog_element
 
+        # else:   len(self._subhogs) >=1
 
         def _sorter_key(sh):
             return sh._tax_now
@@ -242,18 +247,34 @@ class HOG:
         """
 
         element_list =[]
-        for sub_clade, sub_hogs in itertools.groupby(self._subhogs, key=_sorter_key): # sub_clade is the taxrange
+        for sub_clade, sub_hogs in itertools.groupby(self._subhogs, key=_sorter_key):  # sub_clade is the taxrange
             list_of_subhogs_of_same_clade = list(sub_hogs)
+
+            # todo following only for debugging, can be deleted later
+            for subhog in list_of_subhogs_of_same_clade:
+                if len(subhog._members) == 0:
+                    logger_hog.debug("issue 12314506" + str(subhog) + str(sub_clade))
+
             if len(list_of_subhogs_of_same_clade) > 1:
                 paralog_element = ET.Element('paralogGroup')
                 # this could be improved, instead of tax_now we can use the least common ancestor of all members
                 # property_element = ET.SubElement(paralog_element, "property",attrib={"name": "TaxRange", "value": str(self._tax_now)})
 
                 for sh in list_of_subhogs_of_same_clade:
-                    paralog_element.append(sh.to_orthoxml())  # ,**gene_id_name  indent+2
+                    element_p = sh.to_orthoxml()
+                    if str(element_p):
+                        paralog_element.append(element_p)  # ,**gene_id_name  indent+2
+                    else:
+                        print("issue 123434", str(sh), str(sub_clade))
                 element_list.append(paralog_element)
-            else:
-                element_list.append(list_of_subhogs_of_same_clade[0].to_orthoxml())  # indent+2
+            elif len(list_of_subhogs_of_same_clade) == 1:
+                subhog = list_of_subhogs_of_same_clade[0]
+                if len(subhog._members):
+                    element = subhog.to_orthoxml()
+                    if str(element):  # element could be  <Element 'geneRef' at 0x7f7f9bacb450>
+                        element_list.append(element)  # indent+2
+                    else:
+                        logger_hog.debug("issue 12359 "+str(subhog))
 
         if len(element_list) == 1:
             return element_list[0]
@@ -266,10 +287,5 @@ class HOG:
 
             return hog_elemnt
 
-
-
-
-
-
-
-
+        # else:
+        #    return None

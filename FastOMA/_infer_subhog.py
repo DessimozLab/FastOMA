@@ -85,7 +85,8 @@ def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,
             else:
                 hogs_a_rhog_xml = hogs_a_rhog_xml_raw
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
-
+        else:
+            logger_hog.debug("single tone hog "+str(hog_i._members)+" is not reported")
 
     pickles_rhog_file = pickles_rhog_folder + '/file_' + str(rhogid_num) + '.pickle'
     with open(pickles_rhog_file, 'wb') as handle:
@@ -269,7 +270,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
             if _config.fragment_detection:
                 prot_dubious_msa_list, seq_dubious_msa_list = _utils_frag_SO_detection.find_prot_dubious_msa(merged_msa)
         else:
-            merged_msa = sub_msa_list_lowerLevel_ready #  when only on  child, the rest msa is empty.
+            merged_msa = sub_msa_list_lowerLevel_ready   #  when only on  child, the rest msa is empty.
         logger_hog.debug("All sub-hogs are merged, merged_msa "+str(len(merged_msa))+" "+str(len(merged_msa[0]))+" for rhog: "+str(rhogid_num)+", taxonomic level:"+str(node_species_tree.name))
         (msa_filt_row_col, msa_filt_col, hogs_children_level_list) = _utils_subhog.filter_msa(merged_msa, genetree_msa_file_addr, hogs_children_level_list)
         # msa_filt_col is used for parent level of HOG. msa_filt_row_col is used for gene tree inference.
@@ -282,7 +283,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         gene_tree = Tree(gene_tree_raw + ";", format=0)
         logger_hog.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+str(rhogid_num)+", level: "+str(node_species_tree.name))
 
-        if _config.fragment_detection and len(gene_tree) > 2:
+        if _config.fragment_detection and len(gene_tree) > 2 and prot_dubious_msa_list:
             (gene_tree, hogs_children_level_list, merged_msa_new) = _utils_frag_SO_detection.handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, node_species_tree, genetree_msa_file_addr, hogs_children_level_list, merged_msa)
         else:
             merged_msa_new = merged_msa
@@ -305,12 +306,20 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
         if msa_filt_row_col:
             logger_hog.debug("warning id 13805: hogs_this_level_list is empty. msa_filt_row_col:"+str(len(msa_filt_row_col))+"*"+str(len(msa_filt_row_col[0]))+" !!")
         else:
-            logger_hog.debug("warning id 13806: msa_filt_row_col is empty." + str(len(msa_filt_row_col)) +"! .")
+            logger_hog.debug("warning id 13806: msa_filt_row_col is empty." + str(len(msa_filt_row_col)) +"! ")
 
         hogs_this_level_list = hogs_children_level_list
 
     with open(pickle_subhog_file, 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+    # for hog in hogs_this_level_list:
+    #     msa_rec_ids = [i.id for i in hog._msa]
+    #     if set(hog._members) != set(msa_rec_ids):
+    #         logger_hog.debug("issue 123601, the members are not matching with msa"+str(set(hog._members))+"  "+str(msa_rec_ids))
+    # this could be becuase of sub-sampling
+
 
     return len(hogs_this_level_list)
 

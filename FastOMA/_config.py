@@ -61,12 +61,12 @@ species_tree_address = "species_tree.nwk"
 # no space or special charcter in internal node.
 # protein_format_qfo_dataset = True
 
-fragment_detection = False
+fragment_detection = False  # this can be changed through adding arguments to commond line run in nextflow run  --low-so-detection --fragment-detection
 fragment_detection_msa_merge = True  # if this is false and fragment_detection_msa -> we'll remove both fragments in orthology analyss at parent level but report it in orthoxml Dubiousfragment
 low_so_detection = False
 
 # for fragment detection is better to subsampling_hogclass= False but make FastOMA slow
-threshold_dubious_sd = 1/10+0.01
+threshold_dubious_sd = 1/10
 overlap_fragments = 0.15
 
 
@@ -75,7 +75,7 @@ gene_trees_write = False
 msa_write = False
 gene_trees_write_all = False
 msa_write_all = False
-keep_subhog_each_pickle = True
+keep_subhog_each_pickle = False
 
 
 # filtering omamer
@@ -83,9 +83,9 @@ omamer_fscore_treshold_big_rhog = 0.5  #  to have more proteins in the ortho gro
 treshold_big_rhog_szie = 500
 
 ## hogclass configs
-hogclass_max_num_seq = 10  # subsampling in msa
+hogclass_max_num_seq = 5  # subsampling in msa
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 300
-hogclass_tresh_ratio_gap_col = 0.2
+hogclass_tresh_ratio_gap_col = 0.6
 subsampling_hogclass = True
 
 automated_trimAL = False
@@ -99,9 +99,9 @@ rooting_method = "midpoint"  # "midpoint" "mad"
 rooting_mad_executable_path = "mad"  # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/installers/mad/
 
 ##inferhog
-inferhog_tresh_ratio_gap_row = 0.2   # to have more proteins in the ortho groups 0.1
-inferhog_tresh_ratio_gap_col = 0.4
-inferhog_min_cols_msa_to_filter = 500  # used for msa before gene tree inference and  saving msa in hog class
+inferhog_tresh_ratio_gap_row = 0.6   # to have more proteins in the ortho groups 0.1
+inferhog_tresh_ratio_gap_col = 0.6
+inferhog_min_cols_msa_to_filter = 400  # used for msa before gene tree inference and  saving msa in hog class
 
 inferhog_filter_all_msas_row = True
 
@@ -113,7 +113,7 @@ inferhog_resume_rhog = True  # main.py False
 inferhog_resume_subhog = True  # read pickle_subhog  # _infer_subhog.py
 
 # inferhog_concurrent_on = True now as an argument
-inferhog_max_workers_num = 8
+inferhog_max_workers_num = 3
 
 ## xml
 # write_all_prots_in_header = False  # if false writes only those in the hog group
