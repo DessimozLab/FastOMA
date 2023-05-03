@@ -71,11 +71,11 @@ overlap_fragments = 0.15
 
 
 ## output writing files
-gene_trees_write = False
+gene_trees_write = True
 msa_write = False
-gene_trees_write_all = False
+gene_trees_write_all = True
 msa_write_all = False
-keep_subhog_each_pickle = False
+keep_subhog_each_pickle = True
 
 
 # filtering omamer
@@ -85,7 +85,7 @@ treshold_big_rhog_szie = 500
 ## hogclass configs
 hogclass_max_num_seq = 5  # subsampling in msa
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 300
-hogclass_tresh_ratio_gap_col = 0.6
+hogclass_tresh_ratio_gap_col = 0.4
 subsampling_hogclass = True
 
 automated_trimAL = False
@@ -99,8 +99,8 @@ rooting_method = "midpoint"  # "midpoint" "mad"
 rooting_mad_executable_path = "mad"  # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/installers/mad/
 
 ##inferhog
-inferhog_tresh_ratio_gap_row = 0.6   # to have more proteins in the ortho groups 0.1
-inferhog_tresh_ratio_gap_col = 0.6
+inferhog_tresh_ratio_gap_row = 0.1   # to have more proteins in the ortho groups 0.1
+inferhog_tresh_ratio_gap_col = 0.4
 inferhog_min_cols_msa_to_filter = 400  # used for msa before gene tree inference and  saving msa in hog class
 
 inferhog_filter_all_msas_row = True
@@ -113,7 +113,7 @@ inferhog_resume_rhog = True  # main.py False
 inferhog_resume_subhog = True  # read pickle_subhog  # _infer_subhog.py
 
 # inferhog_concurrent_on = True now as an argument
-inferhog_max_workers_num = 3
+inferhog_max_workers_num = 4
 
 ## xml
 # write_all_prots_in_header = False  # if false writes only those in the hog group

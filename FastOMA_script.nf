@@ -15,7 +15,6 @@ params.pickles_rhogs_folder = params.output_folder + "/pickle_rhogs"
 params.genetrees_folder = params.output_folder + "/genetrees"
 
 
-// todo resuming  pipeline not working well
 // https://github.com/nextflow-io/nextflow/issues/1629
 // https://www.nextflow.io/docs/latest/process.html?highlight=cache#cache
 

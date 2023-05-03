@@ -58,11 +58,10 @@ class HOG:
                     if len(records_sub_sampled_raw[0]) > _config.hogclass_min_cols_msa_to_filter:
                         records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, _config.hogclass_tresh_ratio_gap_col)
                         # todo the challange is that one of the sequences might be complete gap
-
                     else:
                         records_sub_sampled = records_sub_sampled_raw
                     # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
-                    logger_hog.info( "we are doing subsamping in hig class from " + str(len(records_full)) + " to " + str(_config.hogclass_max_num_seq) + " seqs.")
+                    logger_hog.info("we are doing subsamping in hig class from " + str(len(records_full)) + " to " + str(_config.hogclass_max_num_seq) + " seqs.")
                 else:
                     records_sub_sampled = records_sub_sampled_raw
 
@@ -88,12 +87,9 @@ class HOG:
     def remove_prot_from_hog(self, prot_to_remove):
         prot_members_hog_old = self._members
         assert prot_members_hog_old
-
-
         prot_members_hog_edited = prot_members_hog_old - set([prot_to_remove])
-        self._members = prot_members_hog_edited
-        msa_old = self._msa
-        # todo we may want to edit the msa of children level
+        self._members = prot_members_hog_edited # self._members.remove(prot_to_remove)    # discard
+        msa_old = self._msa     # todo we may want to edit the msa of children level to be consistent
         msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id != prot_to_remove])
         self._msa = msa_edited
         if len(prot_members_hog_edited) == 0:  # hog should be removed, no members is left
@@ -111,9 +107,7 @@ class HOG:
         msa_old = self._msa
         msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id not in self._dubious_members])
         self._msa = msa_edited
-
-        # species_name = fragment_host.split("||")[1]
-        # if self._tax_now == species_name:
+        # species_name = fragment_host.split("||")[1]   # if self._tax_now == species_name:
         return 1
 
 
@@ -131,66 +125,44 @@ class HOG:
 
 
 
-    # hog_host.merge_prots_msa(fragment_name_host, fragment_name_remove, merged_sequence, merged_msa_new)
-    def merge_prots_msa(self, merged_fragment_name, merged_msa_new):
-        # merged_fragment_name 'BUPERY_R03529||BUPERY||1105002086_|_BUPERY_R10933||BUPERY||1105008975']
+    def merge_prots_msa(self, merged_fragment_name, merged_msa_new):   # merged_fragment_name 'BUPERY_R03529||BUPERY||1105002086_|_BUPERY_R10933||BUPERY||1105008975']
         prot_members_hog = list(self._members)
-        assert merged_fragment_name in prot_members_hog
-        # merged_fragment_name in self._members   -> True . already the name of host prot is changed using merge_prots_name_hierarchy_toleaves
-
+        assert merged_fragment_name in prot_members_hog  # merged_fragment_name in self._members   -> True . already the name of host prot is changed using merge_prots_name_hierarchy_toleaves
         msa_new = []
         for seq_record in merged_msa_new:
             if seq_record.id in prot_members_hog:
                 msa_new.append(seq_record)
-            # else:
-            # some of the sequences in the msa is for other subhogs, so we only care about those in this subhog.
+            # else:  # some of the sequences in the msa is for other subhogs, so we only care about those in this subhog.
         # msa_old = self._msa
         # host_fragment_name = merged_fragment_name.split("_|_")[0]
-        # merged_msa_new_ids = [i.id for i in merged_msa_new]
-        # for seq_record in msa_old:
-
+        # merged_msa_new_ids = [i.id for i in merged_msa_new]         # for seq_record in msa_old:
         self._msa = MultipleSeqAlignment(msa_new)
 
         return 1
 
-    # # hog_host.merge_prots_msa(fragment_name_host, fragment_name_remove, merged_sequence, merged_msa_new)
+
     # def merge_prots_msa(self, fragment_name_host, fragment_name_remove, merged_sequence, merged_msa_new):
     #     merged_fragment_name = fragment_name_host + "_|_" + fragment_name_remove
-    #     # 'BUPERY_R03529||BUPERY||1105002086_|_BUPERY_R10933||BUPERY||1105008975']
     #     prot_members_hog = list(self._members)
     #     assert merged_fragment_name in prot_members_hog
     #     # merged_fragment_name in self._members   -> True . already the name of host prot is changed using merge_prots_name_hierarchy_toleaves
-    #     # msa_old = self._msa
     #     msa_new = []
     #     for prot_name in self._members:
-    #
     #         if seq_rec.id == fragment_name_host:
     #             seq_rec_edited = SeqRecord(Seq(merged_sequence), id=merged_fragment_name, name=merged_fragment_name)
     #         msa_new.append(seq_rec_edited)
     #     self._msa = MultipleSeqAlignment(msa_new)
-    #
     #     return 1
+
 
 
     def to_orthoxml(self):
 
-        # todo double check we report the taxanomic leve
-        # to do the following could be improved ???   without this if it will be like, one property is enough
-        # <orthologGroup>
-        #    <property name="TaxRange" value="GORGO_HUMAN_PANTR"/>
-        #    <property name="TaxRange" value="GORGO_HUMAN_PANTR"/>
-        # if property_element not in hog_elemnt:
-        #    hog_elemnt.append(property_element)
-        #    print("*")
-        # gene = ET.SubElement(species, "gene", attrib={"id":str(gene_counter), "protId":query_prot_record.id})
-        # hog_elemnt = ET.SubElement(species,
-
         if len(self._subhogs) == 0:
             list_member = list(self._members)
-
             if len(list_member) == 1:
                 list_member_first = list(self._members)[0]  # ['tr|A0A3Q2UIK0|A0A3Q2UIK0_CHICK||CHICK_||1053007703']
-                if _config.fragment_detection and _config.fragment_detection_msa_merge and "_|_" in  list_member_first:
+                if _config.fragment_detection and _config.fragment_detection_msa_merge and "_|_" in list_member_first:
                     paralog_element = ET.Element('paralogGroup')
                     #property_element = ET.SubElement(paralog_element, "property", attrib={"name": "TaxRange", "value": str(self._tax_now)})
                     property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value": "DubiousMergedfragment"})
@@ -204,13 +176,11 @@ class HOG:
                 else:
                     prot_name_integer = list_member_first.split("||")[2].strip()
                     geneRef_elemnt = ET.Element('geneRef', attrib={'id': str(prot_name_integer)})
-                    #'id': str(gene_id_name[list_member_first])})  # # gene_id_name[query_prot_record.id]
-                # hog_elemnt.append(geneRef_elemnt)
-                # to do could be improved when the rhog contains only one protein
-                return geneRef_elemnt
+                    #'id': str(gene_id_name[list_member_first])})  # # gene_id_name[query_prot_record.id]   # hog_elemnt.append(geneRef_elemnt)
+                    # to do could be improved when the rhog contains only one protein
+                    return geneRef_elemnt
 
             elif len(list_member) > 1 and _config.fragment_detection and (not _config.fragment_detection_msa_merge):
-                # todo  a better flag is needed probably becuase of inserting dubious prots
                 paralog_element = ET.Element('paralogGroup')
                 property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value":"Dubiousfragment"})
                 # property_element = ET.SubElement(paralog_element, "property", attrib={"TaxRange": str(self._tax_now),"Type": "DubiousMergedfragment"})
@@ -221,45 +191,23 @@ class HOG:
                     paralog_element.append(geneRef_elemnt)
                 return paralog_element
 
-        # else:   len(self._subhogs) >=1
+        # We continue this function as an Implicit else :  len(self._subhogs) >=1
 
         def _sorter_key(sh):
             return sh._tax_now
-            # todo for checking whether it is paralogous group we check the level we are looking at. Not the tax_least (could be species level).
-
         self._subhogs.sort(key=_sorter_key)
-        # todo  number of cases
-        """
-        <orthologGroup id="HOG_0022401_sub10169">
-           <property name="TaxRange" value="Alcidae"/>
-           <paralogGroup>
-              <geneRef id="1163015305"/>
-              <orthologGroup id="HOG_0022401_sub10166">
-                 <property name="TaxRange" value="Alca_torda-Uria"/>
-                 <orthologGroup id="HOG_0022401_sub10164">
-                    <property name="TaxRange" value="Uria"/>
-                    <geneRef id="1164015054"/>
-                    <geneRef id="1180013314"/>
-                 </orthologGroup>
-              </orthologGroup>
-           </paralogGroup>
-        </orthologGroup>
-        """
 
-        element_list =[]
+        element_list = []
         for sub_clade, sub_hogs in itertools.groupby(self._subhogs, key=_sorter_key):  # sub_clade is the taxrange
             list_of_subhogs_of_same_clade = list(sub_hogs)
-
-            # todo following only for debugging, can be deleted later
+            # following only for debugging, can be deleted later
             for subhog in list_of_subhogs_of_same_clade:
-                if len(subhog._members) == 0:
-                    logger_hog.debug("issue 12314506" + str(subhog) + str(sub_clade))
+                if len(subhog._members) == 0: logger_hog.debug("issue 12314506" + str(subhog) + str(sub_clade))
 
             if len(list_of_subhogs_of_same_clade) > 1:
                 paralog_element = ET.Element('paralogGroup')
-                # this could be improved, instead of tax_now we can use the least common ancestor of all members
-                # property_element = ET.SubElement(paralog_element, "property",attrib={"name": "TaxRange", "value": str(self._tax_now)})
-
+                # the following line could be improved, instead of tax_now we can use the least common ancestor of all members
+                # property_element = ET.SubElement(paralog_element, "property",attrib={"name": "TaxRange", "value": str(sub_clade)}) # self._tax_now
                 for sh in list_of_subhogs_of_same_clade:
                     element_p = sh.to_orthoxml()
                     if str(element_p):
@@ -275,6 +223,8 @@ class HOG:
                         element_list.append(element)  # indent+2
                     else:
                         logger_hog.debug("issue 12359 "+str(subhog))
+                else:
+                    logger_hog.debug("issue 12369 " + str(subhog))
 
         if len(element_list) == 1:
             return element_list[0]
@@ -284,8 +234,22 @@ class HOG:
             property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(self._tax_now)})
             for element in element_list:
                 hog_elemnt.append(element)
-
             return hog_elemnt
 
-        # else:
-        #    return None
+""" 
+        Example of orthoxml format
+        <orthologGroup id="HOG_0022401_sub10169">
+           <property name="TaxRange" value="Alcidae"/>
+           <paralogGroup>
+              <geneRef id="1163015305"/>
+              <orthologGroup id="HOG_0022401_sub10166">
+                 <property name="TaxRange" value="Alca_torda-Uria"/>
+                 <orthologGroup id="HOG_0022401_sub10164">
+                    <property name="TaxRange" value="Uria"/>
+                    <geneRef id="1164015054"/>
+                    <geneRef id="1180013314"/>
+                 </orthologGroup>
+              </orthologGroup>
+           </paralogGroup>
+        </orthologGroup>
+"""
