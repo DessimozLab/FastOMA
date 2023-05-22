@@ -13,7 +13,7 @@ from Bio.SeqRecord import SeqRecord
 class HOG:
     _hogid_iter = 10000
 
-    def __init__(self, input_instantiate, taxnomic_range, rhogid_num, msa=None):
+    def __init__(self, input_instantiate, taxnomic_range, rhogid_num, msa=None, num_species_tax_speciestree=None):
         # fragment_list list of  sets , each set contains protein ID of fragments
         # the input_instantiate could be either
         #     1) orthoxml_to_newick.py protein as the biopython seq record  SeqRecord(seq=Seq('MAPSSRSPSPRT. ]
@@ -26,12 +26,14 @@ class HOG:
         self._tax_least = taxnomic_range  #  least taxnomic level
         self._tax_now = taxnomic_range    # the taxnomic level that we are considering now, checking for duplication
 
+
         if isinstance(input_instantiate, SeqRecord):  # if len(sub_hogs)==1:
             only_protein = input_instantiate  # only one seq, only on child, leaf
             self._members = set([only_protein.id])
             self._msa = MultipleSeqAlignment([only_protein])
             self._subhogs = []
             self._dubious_members = set()
+            self._num_species_tax_speciestree = 1  # at the leaf level, there is only one species in the species tree
             # <<class 'Bio.Align.MultipleSeqAlignment'> instance (1 records of length 314) at 7f0e86c713d0>
 
         elif msa and all(isinstance(x, HOG) for x in input_instantiate):
@@ -43,6 +45,8 @@ class HOG:
                 hog_members |= sub_hog.get_members()  # union
             self._members = hog_members  # set.union(*tup)    # this also include dubious_members
             self._subhogs = list(input_instantiate)  # full members of subhog, children
+            self._num_species_tax_speciestree = num_species_tax_speciestree
+
 
             dubious_members = set()
             for sub_hog in sub_hogs:
@@ -57,7 +61,7 @@ class HOG:
                 if _config.subsampling_hogclass:
                     if len(records_sub_sampled_raw[0]) > _config.hogclass_min_cols_msa_to_filter:
                         records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, _config.hogclass_tresh_ratio_gap_col)
-                        # todo the challange is that one of the sequences might be complete gap
+                        # the challange is that one of the sequences might be complete gap
                     else:
                         records_sub_sampled = records_sub_sampled_raw
                     # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
@@ -89,7 +93,7 @@ class HOG:
         assert prot_members_hog_old
         prot_members_hog_edited = prot_members_hog_old - set([prot_to_remove])
         self._members = prot_members_hog_edited # self._members.remove(prot_to_remove)    # discard
-        msa_old = self._msa     # todo we may want to edit the msa of children level to be consistent
+        msa_old = self._msa     #  we may want to edit the msa of children level to be consistent
         msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id != prot_to_remove])
         self._msa = msa_edited
         if len(prot_members_hog_edited) == 0:  # hog should be removed, no members is left
@@ -230,10 +234,16 @@ class HOG:
             return element_list[0]
 
         elif len(element_list) > 1:
-            hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
+            #hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
+            hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)}, )
+            num_species_tax_hog = len(set([i.split("||")[1] for i in self._members]))  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
+            completeness_score = round(num_species_tax_hog/self._num_species_tax_speciestree,4)
+            property_element = ET.SubElement(hog_elemnt, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
             property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(self._tax_now)})
+
             for element in element_list:
                 hog_elemnt.append(element)
+
             return hog_elemnt
 
 """ 

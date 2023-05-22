@@ -61,9 +61,9 @@ species_tree_address = "species_tree.nwk"
 # no space or special charcter in internal node.
 # protein_format_qfo_dataset = True
 
-fragment_detection = False  # this can be changed through adding arguments to commond line run in nextflow run  --low-so-detection --fragment-detection
+fragment_detection = True  # this can be changed through adding arguments to commond line run in nextflow run  --low-so-detection --fragment-detection
 fragment_detection_msa_merge = True  # if this is false and fragment_detection_msa -> we'll remove both fragments in orthology analyss at parent level but report it in orthoxml Dubiousfragment
-low_so_detection = False
+low_so_detection = True
 
 # for fragment detection is better to subsampling_hogclass= False but make FastOMA slow
 threshold_dubious_sd = 1/10
@@ -71,9 +71,9 @@ overlap_fragments = 0.15
 
 
 ## output writing files
-gene_trees_write = True
+gene_trees_write = False
 msa_write = False
-gene_trees_write_all = True
+gene_trees_write_all = False
 msa_write_all = False
 keep_subhog_each_pickle = True
 
@@ -83,7 +83,7 @@ omamer_fscore_treshold_big_rhog = 0.5  #  to have more proteins in the ortho gro
 treshold_big_rhog_szie = 500
 
 ## hogclass configs
-hogclass_max_num_seq = 5  # subsampling in msa
+hogclass_max_num_seq = 50  # subsampling in msa
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 300
 hogclass_tresh_ratio_gap_col = 0.4
 subsampling_hogclass = True
@@ -106,7 +106,7 @@ inferhog_min_cols_msa_to_filter = 400  # used for msa before gene tree inference
 inferhog_filter_all_msas_row = True
 
 
-inferhog_resume_rhog = True  # main.py False
+inferhog_resume_rhog = False  # main.py False
 # The intermediate files, internal node  pickle files is not working with nextflow
 # the reason is that the pickles_subhog_folder_all is relative and stored in nextflow_work folder
 # this folder can not be used for  the re-submitting

@@ -95,7 +95,7 @@ def read_species_tree_add_internal(species_tree_address):
             else:
                 node.name = "internal_ad_" + str(counter_internal)
                 counter_internal += 1
-        logger_hog.debug("The internal node name was empty, we added "+node.name)
+            logger_hog.debug("The internal node name was empty, we added "+node.name)
     return species_tree
 
 
@@ -468,12 +468,10 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
             prots_to_remove_level = set_prot_before - set_prot_after
             for prots_to_remove in prots_to_remove_level:
                 logger_hog.debug("** we are removing the sequence "+str(prots_to_remove)+" due to trimming")
-
-                # todo tag it in thee hog
-
+                # we may want to tag it in the hog object
             assert len(prots_to_remove_level), "issue 31235"
             #prots_to_remove |= prots_to_remove_level
-            # todo remove prot from all subhogs
+            # todo: we may want to remove prot from all subhogs
             # should I remove them from subhog._members ? we are doing so for merging fragments or low species overlap I guess
             # hogs_children_level_list_raw = hogs_children_level_list
             # hogs_children_level_list = []

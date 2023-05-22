@@ -93,7 +93,8 @@ def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,
         # dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
         pickle.dump(hogs_rhogs_xml, handle, protocol=pickle.HIGHEST_PROTOCOL)
     logger_hog.debug("All subHOGs for the rootHOG as OrthoXML format is written in " + pickles_rhog_file)
-
+    # to see orthoxml as string, you might need to do it for different idx
+    # idx=0; from xml.dom import minidom; import xml.etree.ElementTree as ET; minidom.parseString(ET.tostring(hogs_rhogs_xml[idx])).toprettyxml(indent="   ")
     del hogs_a_rhog  # to be memory efficient
     gc.collect()
     hogs_rhogs_xml_len = len(hogs_rhogs_xml)
@@ -384,7 +385,9 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
             if subHOG_to_be_merged:
                 subHOG_to_be_merged_set = set(subHOG_to_be_merged)
                 taxnomic_range = node_species_tree.name
-                HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid_num, msa=merged_msa)
+                num_species_tax_speciestree = len(node_species_tree.get_leaves())
+                # num_species_tax   is the number of species exist in the species tree at this clade
+                HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid_num, merged_msa, num_species_tax_speciestree)
 
                 hogs_this_level_list.append(HOG_this_node)
 
