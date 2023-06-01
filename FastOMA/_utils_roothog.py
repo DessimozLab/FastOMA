@@ -235,13 +235,13 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
     The treshold is set in the _config.py file.
     """
 
-    logger_hog.info("Filtering rhogs with fscore treshold "+str(_config.omamer_fscore_treshold_big_rhog)+"for rhogs size > "+str(_config.treshold_big_rhog_szie) )
+    logger_hog.info("Filtering rhogs with fscore treshold "+str(_config.omamer_fscore_treshold_big_rhog)+"for rhogs size > "+str(_config.omamer_treshold_big_rhog_szie) )
     rhogids_prot_records_query_filt = []
     rhogids_list_filt = []
     for rhogid_idx, rhogid in enumerate(rhogids_list):
 
         rhogid_prot_record_query = rhogids_prot_records_query[rhogid_idx]
-        if len(rhogid_prot_record_query) < _config.treshold_big_rhog_szie:
+        if len(rhogid_prot_record_query) < _config.omamer_treshold_big_rhog_szie:
             rhogid_prot_record_query_filt = rhogid_prot_record_query  # without change for small rhogs
         else:
             rhogid_prot_record_query_filt = []

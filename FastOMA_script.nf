@@ -77,8 +77,8 @@ process batch_roothogs{
 }
 
 process hog_big{
-  cpus  8
-  time {10.h}    // for very big rhog it might need more, or you could re-run and add `-resume`
+  cpus  6
+  time {20.h}    // for very big rhog it might need more, or you could re-run and add `-resume`
   memory {80.GB}
 
   publishDir params.pickles_rhogs_folder
@@ -102,7 +102,7 @@ process hog_big{
 
   script:
   """
-  infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --parallel  --species-tree ${rhogsbig_tree_ready[1]}
+  infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --parallel  --species-tree ${rhogsbig_tree_ready[1]} --parallel --fragment_detection --low_so_detection
   """
 }
 
@@ -133,7 +133,7 @@ process hog_rest{
   val true
   script:
   """
-  infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]}  --species-tree ${rhogsrest_tree_ready[1]}
+  infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]}  --species-tree ${rhogsrest_tree_ready[1]} --fragment_detection --low_so_detection
   """ // --parrallel False
 }
 
