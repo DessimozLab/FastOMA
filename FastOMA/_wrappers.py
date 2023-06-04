@@ -32,6 +32,7 @@ def merge_msa(list_msas, gene_tree_file_addr):
     wrapper_mafft_merge.options['--merge'].active = True
     # wrapper_mafft_merge.options['--anysymbol'].active = True
     wrapper_mafft_merge.options['--anysymbol'].set_value(True)
+    wrapper_mafft_merge.options['--thread'].set_value(-1) # -1 uses a largely appropriate number of threads in each step, after automatically counting the number of physical cores the computer has.
     merged = wrapper_mafft_merge()
     time_duration = wrapper_mafft_merge.elapsed_time
     # print(time_duration)
