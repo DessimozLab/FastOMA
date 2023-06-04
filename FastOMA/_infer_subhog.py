@@ -171,16 +171,24 @@ def singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rh
     node_species_name = node_species_tree.name  # there is only one species (for the one protein)
     this_level_node_name = node_species_name
     pickles_subhog_folder = pickles_subhog_folder_all + "/rhog_" + str(rhogid_num) + "/"
+    # logger_hog.debug(" ** inferhog_resume_subhog is " + str(_config.inferhog_resume_subhog))
     if _config.inferhog_resume_subhog:
+        # logger_hog.debug("inferhog_resume_subhog is " + str(_config.inferhog_resume_subhog) + " so, we are reading from pickles.")
         pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name) + ".pickle"
         # open already calculated subhogs , but not completed till root in previous run
         if os.path.exists(pickle_subhog_file):
             if os.path.getsize(pickle_subhog_file) > 3:  # 3 bytes
                 with open(pickle_subhog_file, 'rb') as handle:
                     # i don't even need to open this even
-                    hogs_children_level_list = pickle.load(handle) #[object class HOG HOG:4027_sub1,len=1,taxono=PSETE]
-                    if hogs_children_level_list:
-                        return len(hogs_children_level_list)
+                    # is output of pickle.load(handle) is chlired or this level ?
+                    # todo I think I don't need to read the pickle file
+                    hogs_this_level_list = pickle.load(handle) #[object class HOG HOG:4027_sub1,len=1,taxono=PSETE]
+                    if hogs_this_level_list:
+                        logger_hog.debug("Level " + str(this_level_node_name) + " with " + str(len(hogs_this_level_list)) + " hogs is read from pickle.")
+                        return len(hogs_this_level_list)
+                    else:
+                        logger_hog.debug(" Issue  1238510: the pickle file for single tone is empty "+ str(hogs_this_level_list)+" " + str(rhogid_num))
+
     # logger_hog.debug("reading protien / singletone HOG of  " + str(this_level_node_name))
     rhog_i_prot_address = rhogs_fa_folder +"/HOG_"+str(rhogid_num).zfill(7)+".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
@@ -195,7 +203,7 @@ def singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rh
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+".pickle"
     with open(pickle_subhog_file, 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    logger_hog.debug("HOGs for  " + str(this_level_node_name)+" including "+str(len(hogs_this_level_list))+ " hogs was written as pickle file.")
+    logger_hog.debug("HOGs for  " + str(this_level_node_name)+" including "+str(len(hogs_this_level_list))+ " hogs is written in pickle file.")
 
     return len(hogs_this_level_list)
 
@@ -237,13 +245,17 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
     assert not node_species_tree.is_leaf(), "issue 1235,singletone hogs are treated elsewhere"+ str(rhogid_num)
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name) + ".pickle"
 
-    # TODO arrage resume with nextflow
+    # TODO arrage resume with nextflow and also for when read single_tone pickles
     if _config.inferhog_resume_subhog:
         if os.path.exists(pickle_subhog_file) and os.path.getsize(pickle_subhog_file) > 3:  # 3 bytes
             with open(pickle_subhog_file, 'rb') as handle:
+                # todo : do I really need to read the pickle file
                 hogs_this_level_list = pickle.load(handle)  #[object class HOG HOG:4027_sub1,len=1,taxono=PSETE]
                 if hogs_this_level_list:
+                    logger_hog.debug("Level " + str(this_level_node_name) + " with " + str(len(hogs_this_level_list)) + " hogs is read from pickle.")
                     return len(hogs_this_level_list)
+                else:
+                    logger_hog.debug(" Issue  1238510: the pickle file for single tone is empty " + str(hogs_this_level_list) + " " + str(rhogid_num))
 
     hogs_children_level_list = read_children_hogs(node_species_tree, rhogid_num, pickles_subhog_folder_all)
 

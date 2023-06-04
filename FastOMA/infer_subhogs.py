@@ -10,6 +10,7 @@ import sys
 # from os import listdir
 # import _config
 
+from ._config import logger_hog
 
 
 # from ._utils import logger_hog
@@ -17,18 +18,36 @@ import sys
 
 def infer_subhogs():
     _config.set_configs()
-    print(_config.logger_level)
-    print("_config.input_rhog_folder)", _config.input_rhog_folder)
-    print(_config.parallel)
-    print(_config.species_tree_address)
-    print("fragment_detection ", _config.fragment_detection)
-    print("low_so_detection ", _config.low_so_detection)
+    logger_hog.debug("logger_level is "+str(_config.logger_level))
+    logger_hog.debug("input_rhog_folder is " + str(_config.input_rhog_folder))
+    logger_hog.debug("parallel is " + str(_config.parallel))
+    logger_hog.debug("species_tree_address is " + str(_config.species_tree_address))
+    logger_hog.debug("fragment_detection is " + str(_config.fragment_detection))
+    logger_hog.debug("low_so_detection is " + str(_config.low_so_detection))
+    logger_hog.debug("inferhog_max_workers_num is " + str(_config.inferhog_max_workers_num))
+    logger_hog.debug("inferhog_tresh_ratio_gap_row is " + str(_config.inferhog_tresh_ratio_gap_row))
+    logger_hog.debug("inferhog_tresh_ratio_gap_col is " + str(_config.inferhog_tresh_ratio_gap_col))
+    logger_hog.debug("inferhog_min_cols_msa_to_filter is " + str(_config.inferhog_min_cols_msa_to_filter))
+    logger_hog.debug("omamer_fscore_treshold_big_rhog is " + str(_config.omamer_fscore_treshold_big_rhog))
+    logger_hog.debug("omamer_treshold_big_rhog_szie is " + str(_config.omamer_treshold_big_rhog_szie))
+    logger_hog.debug("hogclass_max_num_seq is " + str(_config.hogclass_max_num_seq))
+    logger_hog.debug("hogclass_min_cols_msa_to_filter is " + str(_config.hogclass_min_cols_msa_to_filter))
+    logger_hog.debug("inferhog_resume_rhog is " + str(_config.inferhog_resume_rhog))
+    logger_hog.debug("inferhog_resume_subhog is " + str(_config.inferhog_resume_subhog))
+    logger_hog.debug("fragment_detection is " + str(_config.fragment_detection))
+    logger_hog.debug("fragment_detection_msa_merge is " + str(_config.fragment_detection_msa_merge))
+    logger_hog.debug("low_so_detection is " + str(_config.low_so_detection))
+    logger_hog.debug("threshold_dubious_sd is " + str(_config.threshold_dubious_sd))
+    logger_hog.debug("overlap_fragments is " + str(_config.overlap_fragments))
+    logger_hog.debug("gene_trees_write is " + str(_config.gene_trees_write))
+    logger_hog.debug("msa_write is " + str(_config.msa_write))
+    logger_hog.debug("gene_trees_write_all is " + str(_config.gene_trees_write_all))
+    logger_hog.debug("msa_write_all is " + str(_config.msa_write_all))
+    logger_hog.debug("keep_subhog_each_pickle is " + str(_config.keep_subhog_each_pickle))
 
-
-    # --input - rhog - folder $rhogs_big_i - -parallel
-    # False
 
     address_rhogs_folder = _config.input_rhog_folder
+    inferhog_concurrent_on = False
     inferhog_concurrent_on = _config.parallel #  sys.argv[2]   # "False"  # "False"  #
 
     if inferhog_concurrent_on:
