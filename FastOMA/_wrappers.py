@@ -21,15 +21,21 @@ def merge_msa(list_msas, gene_tree_file_addr):
 
     output: merged (msa)
     """
-    logger_hog.debug(list_msas)
+    logger_hog.debug("Number of items in list_msas "+str(len(list_msas)))
+    logger_hog.debug(str(list_msas[:4])+"...")
+    logger_hog.debug("max length is "+ str(max([len(i[0]) for i in list_msas]))+" .")
+
     #logger_hog.debug("we are mergin subhogs"+len(list_msas))
     # logger_hog.debug(str(list_msas[0][0].id ) + "\n")
     # SeqIO.write(list_msas ?? , gene_tree_file_addr + ".unaligned.fa", "fasta")
 
-    # todo using more cpus ?
+    # todo using more cpus ?  (now a bit better using --thread -1)
     # sometimes better not to merge and remove gapps and do from scratch!
     wrapper_mafft_merge = mafft.Mafft(list_msas, datatype="PROTEIN")
-    wrapper_mafft_merge.options['--merge'].active = True
+    if len(list_msas) < _config.num_msas_merge_mafft:
+        wrapper_mafft_merge.options['--merge'].active = True
+    else:
+        wrapper_mafft_merge.options['--merge'].active = False
     # wrapper_mafft_merge.options['--anysymbol'].active = True
     wrapper_mafft_merge.options['--anysymbol'].set_value(True)
     wrapper_mafft_merge.options['--thread'].set_value(-1) # -1 uses a largely appropriate number of threads in each step, after automatically counting the number of physical cores the computer has.

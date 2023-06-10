@@ -311,7 +311,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
             # the last element should be merged_msa not the trimmed msa, as we create new hog based on this msa
             hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa_new)
             # for i in hogs_this_level_list: print(i.get_members())
-            logger_hog.debug("Hogs of this level is found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(this_level_node_name))
+            logger_hog.debug("After merging subhogs of childrens, "+str(len(hogs_this_level_list))+" subhogs are found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(this_level_node_name))
 
         else:
             hogs_this_level_list = hogs_children_level_list
@@ -393,14 +393,18 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                             subhogs_id_children_assigned.append(subHOG._hogid)
                         else:  # this hog is already decided to be merged  print(node.name, subHOG._hogid, node_leave_name)
                             if "processed" in node:
-                                print("issue 1863", node.name, subHOG._hogid, node_leave_name) # print("processed", node.name) #else: #    print("processed not in ", node.name)  # print(node_leave_name,"is in ",subHOG._hogid)
+                                logger_hog.info("issue 1863"+ str(node.name)+str(subHOG._hogid)+ str(node_leave_name)) # print("processed", node.name) #else: #    print("processed not in ", node.name)  # print(node_leave_name,"is in ",subHOG._hogid)
             if subHOG_to_be_merged:
+                if len(subHOG_to_be_merged) == 1:
+                    logger_hog.info("issue 125568313"+str(subHOG_to_be_merged)+" "+node.name)
+
                 subHOG_to_be_merged_set = set(subHOG_to_be_merged)
                 taxnomic_range = node_species_tree.name
                 num_species_tax_speciestree = len(node_species_tree.get_leaves())
                 # num_species_tax   is the number of species exist in the species tree at this clade
                 HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid_num, merged_msa, num_species_tax_speciestree)
-
+                if len(HOG_this_node._msa) == 1:
+                    logger_hog.info("issue 1258313"+str(HOG_this_node)+str(HOG_this_node._msa)+" "+node.name  )
                 hogs_this_level_list.append(HOG_this_node)
 
                 subHOG_to_be_merged_set_other_Snodes.append([i._hogid for i in subHOG_to_be_merged_set])

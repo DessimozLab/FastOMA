@@ -4,9 +4,9 @@ from ete3 import Phyloxml
 from ete3 import Tree
 from ete3 import PhyloTree
 from Bio.SeqRecord import SeqRecord
-
-
+from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq  # , UnknownSeq
+
 from collections import defaultdict
 from typing import List, Tuple
 import random
@@ -351,7 +351,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
         gap_count=col_values.count("-") + col_values.count("?") + col_values.count(".") +col_values.count("~")
         ratio_col_nongap = 1- gap_count/num_records
         ratio_col_all.append(ratio_col_nongap)
-        if ratio_col_nongap > tresh_ratio_gap_col:
+        if ratio_col_nongap >= tresh_ratio_gap_col:
             keep_cols.append(col_i)
     #plt.hist(ratio_col_all,bins=100) # , bins=10
     #plt.show()
@@ -366,12 +366,12 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
             msa_filtered_col.append(record_edited)
 
     if _config.msa_write_all and gene_tree_file_addr:
-        out_name_msa=gene_tree_file_addr+"filtered_"+"col_"+str(tresh_ratio_gap_col)+".msa.fa"
+        out_name_msa=gene_tree_file_addr+"_filtered_"+"col_"+str(tresh_ratio_gap_col)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_col, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
     # print("- Column-wise filtering of MSA is finished",len(msa_filtered_col),len(msa_filtered_col[0]))
-    return msa_filtered_col
+    return MultipleSeqAlignment(msa_filtered_col)
 
 
 def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
@@ -384,7 +384,7 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
         if seqLen:
             ratio_record_nongap = 1-gap_count/seqLen
             ratio_records.append(round(ratio_record_nongap, 3))
-            if ratio_record_nongap > inferhog_tresh_ratio_gap_row:
+            if ratio_record_nongap >= inferhog_tresh_ratio_gap_row:
                 msa_filtered_row.append(record)
         else:
             print("issue 12788 : error , seq len is zero when msa_filter_row")
@@ -394,7 +394,7 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
         SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
 
-    return msa_filtered_row
+    return MultipleSeqAlignment(msa_filtered_row)
 
 
 # Fragment detection using MSA. Sina's implementation. We are using Alex implementation now.
@@ -456,10 +456,12 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
             msa_filt_col = msa_filt_row_1
             msa_filt_row_col = _wrappers.trim_msa(msa_filt_row_1)
         else:
-            msa_filt_col = msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr)
+            msa_filt_col = msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_0_")
             msa_filt_row_col = msa_filt_col
             if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
-                msa_filt_row_col = msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
+                msa_filt_row_col_raw = msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr+"_1_")
+                msa_filt_row_col = msa_filter_col(msa_filt_row_col_raw, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_2_")
+
 
         # compare msa_filt_row_col and msa_filt_col,
         if len(msa_filt_row_col) != len(msa_filt_col):  # some sequences are removed

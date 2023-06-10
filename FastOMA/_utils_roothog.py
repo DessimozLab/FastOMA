@@ -234,12 +234,11 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
     Some of the rhogs are very big. We filter those rhogs where many proteins several tousands are mapped on.
     The treshold is set in the _config.py file.
     """
-
     logger_hog.info("Filtering rhogs with fscore treshold "+str(_config.omamer_fscore_treshold_big_rhog)+"for rhogs size > "+str(_config.omamer_treshold_big_rhog_szie) )
+
     rhogids_prot_records_query_filt = []
     rhogids_list_filt = []
     for rhogid_idx, rhogid in enumerate(rhogids_list):
-
         rhogid_prot_record_query = rhogids_prot_records_query[rhogid_idx]
         if len(rhogid_prot_record_query) < _config.omamer_treshold_big_rhog_szie:
             rhogid_prot_record_query_filt = rhogid_prot_record_query  # without change for small rhogs
@@ -255,8 +254,28 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
                 fsore = float(prots_hogmap_fscore_allspecies[specis_idx][prot_idx])
                 if fsore > _config.omamer_fscore_treshold_big_rhog:
                     rhogid_prot_record_query_filt.append(prot_bio_seq)
-        if rhogid_prot_record_query_filt:  # at least one prot in the rhog
-            rhogids_prot_records_query_filt.append(rhogid_prot_record_query_filt)
+
+            if len(rhogid_prot_record_query_filt) < _config.omamer_treshold_big_rhog_szie2 : # 40 * 1000
+                    rhogid_prot_record_query_filt2 = rhogid_prot_record_query_filt  # without change for small rhogs
+            else:
+                logger_hog.info("Second round of filtering rhogs with fscore treshold " + str(
+                    _config.omamer_fscore_treshold_big_rhog2) + "for rhogs size > " + str(
+                    _config.omamer_treshold_big_rhog_szie2))
+                rhogid_prot_record_query_filt2 = []
+                for i in range(len(rhogid_prot_record_query_filt)):
+                    prot_bio_seq = rhogid_prot_record_query_filt[i]
+                    prot_name_trunc, species_name, prot_idx_xml = prot_bio_seq.id.split("||")
+                    prot_name = prot_bio_seq.name  # .id is the truncated one but .name is full
+                    specis_idx = query_species_names.index(species_name)
+                    prot_list = prots_hogmap_name_allspecies[specis_idx]
+                    prot_idx = prot_list.index(prot_name)
+                    fsore = float(prots_hogmap_fscore_allspecies[specis_idx][prot_idx])
+                    if fsore > _config.omamer_fscore_treshold_big_rhog2:
+                        rhogid_prot_record_query_filt2.append(prot_bio_seq)
+
+
+        if rhogid_prot_record_query_filt2:  # at least one prot in the rhog
+            rhogids_prot_records_query_filt.append(rhogid_prot_record_query_filt2)
             rhogids_list_filt.append(rhogid)
     return rhogids_list_filt, rhogids_prot_records_query_filt
 

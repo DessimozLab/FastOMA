@@ -47,30 +47,26 @@ class HOG:
             self._subhogs = list(input_instantiate)  # full members of subhog, children
             self._num_species_tax_speciestree = num_species_tax_speciestree
 
-
             dubious_members = set()
             for sub_hog in sub_hogs:
                 dubious_members |= sub_hog.get_dubious_members()  # union
             self._dubious_members = dubious_members
 
             records_full = [record for record in msa if (record.id in self._members) and (record.id not in self._dubious_members) ]
-            if len(records_full) > _config.hogclass_max_num_seq:
-                # to do in future:  select best seq, not easy to defin, keep diversity,
-                records_sub_sampled_raw = sample(records_full, _config.hogclass_max_num_seq)  # without replacement.
 
-                if _config.subsampling_hogclass:
-                    if len(records_sub_sampled_raw[0]) > _config.hogclass_min_cols_msa_to_filter:
-                        records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, _config.hogclass_tresh_ratio_gap_col)
-                        # the challange is that one of the sequences might be complete gap
-                    else:
-                        records_sub_sampled = records_sub_sampled_raw
-                    # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
-                    logger_hog.info("we are doing subsamping in hig class from " + str(len(records_full)) + " to " + str(_config.hogclass_max_num_seq) + " seqs.")
-                else:
-                    records_sub_sampled = records_sub_sampled_raw
-
+            if len(records_full[0]) > _config.hogclass_min_cols_msa_to_filter:
+                records_sub_filt = _utils_subhog.msa_filter_col(records_full, _config.hogclass_tresh_ratio_gap_col)
+                # the challange is that one of the sequences might be complete gap
             else:
-                records_sub_sampled = records_full
+                records_sub_filt = records_full  # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
+
+            if _config.subsampling_hogclass and len(records_sub_filt) > _config.hogclass_max_num_seq:
+                # to do in future:  select best seq, not easy to defin, keep diversity,
+                records_sub_sampled_raw = sample(list(records_sub_filt), _config.hogclass_max_num_seq)  # without replacement.
+                records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, 0.01) # to make sure no empty column
+                logger_hog.info("we are doing subsamping in hig class from " + str(len(records_full)) + " to " + str(_config.hogclass_max_num_seq) + " seqs.")
+            else:
+                records_sub_sampled = records_sub_filt
                 # removing some columns completely gap - (not x   )
             self._msa = MultipleSeqAlignment(records_sub_sampled)
             # without replacement sampling ,  # self._children = sub_hogs # as legacy  ?

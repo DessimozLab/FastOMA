@@ -3,7 +3,7 @@
 
 import sys
 
-
+import os
 folder = sys.argv[1]  #"/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/run_1june/out_folder/"
 
 from os import listdir
