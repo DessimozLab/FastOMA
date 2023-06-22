@@ -10,6 +10,7 @@ import sys
 # from os import listdir
 # import _config
 
+from ._config import logger_hog
 
 
 # from ._utils import logger_hog
@@ -17,18 +18,36 @@ import sys
 
 def infer_subhogs():
     _config.set_configs()
-    print(_config.logger_level)
-    print("_config.input_rhog_folder)", _config.input_rhog_folder)
-    print(_config.parallel)
-    print(_config.species_tree_address)
-    print("fragment_detection ", _config.fragment_detection)
-    print("low_so_detection ", _config.low_so_detection)
+    logger_hog.debug("logger_level is "+str(_config.logger_level))
+    logger_hog.debug("input_rhog_folder is " + str(_config.input_rhog_folder))
+    logger_hog.debug("parallel is " + str(_config.parallel))
+    logger_hog.debug("species_tree_address is " + str(_config.species_tree_address))
+    logger_hog.debug("fragment_detection is " + str(_config.fragment_detection))
+    logger_hog.debug("low_so_detection is " + str(_config.low_so_detection))
+    logger_hog.debug("inferhog_max_workers_num is " + str(_config.inferhog_max_workers_num))
+    logger_hog.debug("inferhog_tresh_ratio_gap_row is " + str(_config.inferhog_tresh_ratio_gap_row))
+    logger_hog.debug("inferhog_tresh_ratio_gap_col is " + str(_config.inferhog_tresh_ratio_gap_col))
+    logger_hog.debug("inferhog_min_cols_msa_to_filter is " + str(_config.inferhog_min_cols_msa_to_filter))
+    logger_hog.debug("omamer_fscore_treshold_big_rhog is " + str(_config.omamer_fscore_treshold_big_rhog))
+    logger_hog.debug("omamer_treshold_big_rhog_szie is " + str(_config.omamer_treshold_big_rhog_szie))
+    logger_hog.debug("hogclass_max_num_seq is " + str(_config.hogclass_max_num_seq))
+    logger_hog.debug("hogclass_min_cols_msa_to_filter is " + str(_config.hogclass_min_cols_msa_to_filter))
+    logger_hog.debug("inferhog_resume_rhog is " + str(_config.inferhog_resume_rhog))
+    logger_hog.debug("inferhog_resume_subhog is " + str(_config.inferhog_resume_subhog))
+    logger_hog.debug("fragment_detection is " + str(_config.fragment_detection))
+    logger_hog.debug("fragment_detection_msa_merge is " + str(_config.fragment_detection_msa_merge))
+    logger_hog.debug("low_so_detection is " + str(_config.low_so_detection))
+    logger_hog.debug("threshold_dubious_sd is " + str(_config.threshold_dubious_sd))
+    logger_hog.debug("overlap_fragments is " + str(_config.overlap_fragments))
+    logger_hog.debug("gene_trees_write is " + str(_config.gene_trees_write))
+    logger_hog.debug("msa_write is " + str(_config.msa_write))
+    logger_hog.debug("gene_trees_write_all is " + str(_config.gene_trees_write_all))
+    logger_hog.debug("msa_write_all is " + str(_config.msa_write_all))
+    logger_hog.debug("keep_subhog_each_pickle is " + str(_config.keep_subhog_each_pickle))
 
-
-    # --input - rhog - folder $rhogs_big_i - -parallel
-    # False
 
     address_rhogs_folder = _config.input_rhog_folder
+    inferhog_concurrent_on = False
     inferhog_concurrent_on = _config.parallel #  sys.argv[2]   # "False"  # "False"  #
 
     if inferhog_concurrent_on:
@@ -59,29 +78,13 @@ def infer_subhogs():
 # TODO all below
 
 """
- 
- 
-
-
+  
 - use same seed for hog sampling and fasttree/mafft if they have 
-
-
-
 - add python code for validate the input make sure the file is there and decent
 - check input tree 
 _utils_subhog line 92 add check for spaces or chars in 
 
-
-Other output :Orthogroup Sequences 
-- https://davidemms.github.io/orthofinder_tutorials/exploring-orthofinders-results.html 
-- extract and write og for the user 
-- Find universal genes for each clade that are not universal in its superset  10 Clades like  plants fungi
-- Loft format
-
-- provide the user with roothog, mode copy  
-
-
-print as debug
+- print as debug all the variables 
 # [_config.oma_database_address, _config.working_folder_root , _config.species_tree_address , _config.working_id ,
  _config.protein_format_qfo_dataset, _config.in_folder, _config.omamer_fscore_treshold_big_rhog,
   _config.treshold_big_rhog_szie, _config.gene_trees_write, _config.keep_subhog_each_pickle, 
@@ -89,36 +92,13 @@ print as debug
    _config.rooting_method, _config.rooting_mad_executable_path , _config.inferhog_tresh_ratio_gap_row , _config.inferhog_tresh_ratio_gap_col , _config.inferhog_min_cols_msa_to_filter
     , _config.inferhog_filter_all_msas_row , _config.inferhog_resume_rhog  , _config.inferhog_resume_subhog , _config.inferhog_max_workers_num , _config.inferhog_min_hog_size_xml, _config.logger_level]
 
-species_tree_address = working_folder_root + "tree_fastaname.nwk" # no space or special charcter in internal node, 
-arise error or solve it
-
-print("there shouldnt be any space in the tree name internal node name as well")
-  '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf//pickles_subhog/rhog_833762/delta/epsilon subdivisions.pickle'
-
-  FileExistsError: [Errno 17] File exists: '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf//pickles_subhog/'
+FileExistsError: [Errno 17] File exists: '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf//pickles_subhog/'
 
 when concurrent has a issue it doesnt stop
 Out[6]: {<Future at 0x7f1b48d9afa0 state=finished raised TypeError>: 'KORCO_'}
 add eception to show , whn this happens for which taxnomic level and rhog
 
-    if len(msa) <= 2:
-        wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
-        wrapper_tree.options.options['-fastest'].active = True
-        
-        we don't need tree for msa of 2 !
-
-precuaitions
-there shouldnt be any space in the tree name internal node name as well"
-
-
-- internal node _0 ,  the root name disapears , beacause of ete3 behaviour 
-
-
-
-check if all files in proteome are represented in the newick tree.
-throw a warning wit few  proteins 
 proteins were associated with known HOGs, and warn if less than ~80 % of proteins are associated with known HOGs.
-
 
 double check 
      prots_to_remove
@@ -128,23 +108,6 @@ double check
 """
 
 
-# # address_rhogs_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/working_nf/rhogs_rest/122/"  # bb1
-# inferhog_concurrent_on_string = sys.argv[2]   # "False"  # "False"  #
-# # mkdir pi_big_rhog pi_big_subhog pi_rest_rhog  pi_rest_subhog
-# prefix_pickle = sys.argv[3]  # "pi_big"
-# rhogs_fa_folder_pure = sys.argv[4]   # "rhogs_rest"  # or  "rhogs_big" # sys.argv[4] #
-# pickles_rhog_folder = _config.in_folder + "/" + prefix_pickle + "_rhog/"
-# pickles_subhog_folder_all = _config.in_folder + "/" + prefix_pickle + "_subhog/"
-# pickles_rhog_folder  should be created in nextflow, or previous step of parralell infer subhog,
-# workers may conflict of creating folders
-# # pickles_subhog_folder = pickles_subhog_folder_all+"/rhog_" + str(rhogid_num) + "/"
-# inferhog_concurrent_on = inferhog_concurrent_on_string == "True"  # sys.argv[2]
-# # if not os.path.exists(pickles_rhog_folder):
-# #     os.mkdir(pickles_rhog_folder)
-# #rhogid_num = int(rhog_file.split("/")[-1].split(".")[0].split("_")[1][1:])
-# #rhogid_batch = [rhogid_num]
-# list_rhog_fastas_files = _utils.list_rhog_fastas(address_rhogs_folder)
-# print("there are ", len(list_rhog_fastas_files), "rhogs in the input folder")
 # if address_rhogs_folder.endswith("/"):
 #     batch_folder=address_rhogs_folder.split("/")[-2]
 # elif "/" in address_rhogs_folder:
@@ -155,7 +118,6 @@ double check
 # print("rhogs in the input folder", batch_folder)
 #
 # rhogs_fa_folder = _config.in_folder + rhogs_fa_folder_pure + "/" + batch_folder + "/"
-#
 # list_done_rhogid = []
 # if _config.inferhog_resume_rhog:
 #     list_done_raw = listdir(pickles_rhog_folder)

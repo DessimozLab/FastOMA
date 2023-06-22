@@ -82,3 +82,14 @@ def check_input_fastoma():
 
 
     # todo check all the input and needed folders as a validation with nextflow
+
+"""
+
+print("there shouldnt be any space in the tree name internal node name as well")
+  '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf//pickles_subhog/rhog_833762/delta/epsilon subdivisions.pickle'
+
+check if all files in proteome are represented in the newick tree.
+throw a warning wit few  proteins 
+
+
+"""

@@ -329,4 +329,5 @@ def get_default_options():
         # Two or more sub MSAs are merged into a single MSA. Sub MSAs are assumed
         # to be phylogenetically separated from each other.
         StringOption('--merge', '', active=False),
+        IntegerOption('--thread', -1, active=False),
     ])

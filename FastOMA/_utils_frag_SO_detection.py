@@ -99,6 +99,7 @@ def split_candidates(input_msa_np, margin=0):
             #  (e1-s2) < 0 no overlap; (e1-s2) > 0 overlap.
             overlap = (e1 - s2)
             # print(overlap)
+            # todo  we could improve finding overlap between fragments
             if overlap < 0:
                 ident.append((1, 1))
             elif overlap <= i_margin:

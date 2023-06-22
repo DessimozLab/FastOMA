@@ -4,9 +4,9 @@ from ete3 import Phyloxml
 from ete3 import Tree
 from ete3 import PhyloTree
 from Bio.SeqRecord import SeqRecord
-
-
+from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq  # , UnknownSeq
+
 from collections import defaultdict
 from typing import List, Tuple
 import random
@@ -95,7 +95,7 @@ def read_species_tree_add_internal(species_tree_address):
             else:
                 node.name = "internal_ad_" + str(counter_internal)
                 counter_internal += 1
-
+            logger_hog.debug("The internal node name was empty, we added "+node.name)
     return species_tree
 
 
@@ -351,7 +351,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
         gap_count=col_values.count("-") + col_values.count("?") + col_values.count(".") +col_values.count("~")
         ratio_col_nongap = 1- gap_count/num_records
         ratio_col_all.append(ratio_col_nongap)
-        if ratio_col_nongap > tresh_ratio_gap_col:
+        if ratio_col_nongap >= tresh_ratio_gap_col:
             keep_cols.append(col_i)
     #plt.hist(ratio_col_all,bins=100) # , bins=10
     #plt.show()
@@ -366,12 +366,12 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
             msa_filtered_col.append(record_edited)
 
     if _config.msa_write_all and gene_tree_file_addr:
-        out_name_msa=gene_tree_file_addr+"filtered_"+"col_"+str(tresh_ratio_gap_col)+".msa.fa"
+        out_name_msa=gene_tree_file_addr+"_filtered_"+"col_"+str(tresh_ratio_gap_col)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_col, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
     # print("- Column-wise filtering of MSA is finished",len(msa_filtered_col),len(msa_filtered_col[0]))
-    return msa_filtered_col
+    return MultipleSeqAlignment(msa_filtered_col)
 
 
 def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
@@ -384,7 +384,7 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
         if seqLen:
             ratio_record_nongap = 1-gap_count/seqLen
             ratio_records.append(round(ratio_record_nongap, 3))
-            if ratio_record_nongap > inferhog_tresh_ratio_gap_row:
+            if ratio_record_nongap >= inferhog_tresh_ratio_gap_row:
                 msa_filtered_row.append(record)
         else:
             print("issue 12788 : error , seq len is zero when msa_filter_row")
@@ -394,13 +394,11 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
         SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
 
-    return msa_filtered_row
+    return MultipleSeqAlignment(msa_filtered_row)
 
 
-# Fragment detection using MSA
-#
+# Fragment detection using MSA. Sina's implementation. We are using Alex implementation now.
 # def fragment_detector_candidate(merged_msa):
-#
 #     rec_group_species = {}
 #     for seq in merged_msa:
 #         species = seq.id.split("||")[1]
@@ -408,11 +406,8 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
 #             rec_group_species[species].append(seq)
 #         else:
 #             rec_group_species[species]= [seq]
-#
 #     rec_candidate = {}
-#
 #     len_aligned = len(seq)
-#
 #     for species, list_seq in rec_group_species.items():
 #         if len(list_seq)>1:
 #             num_nongap_list = []
@@ -431,7 +426,7 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
 #                                     count_gap_aa +=1
 #                             # print(count_gap_aa)
 #                             if count_gap_aa  > len_aligned * 0.25: # two seq complment each other
-#                                 # TODO the downside is sth like this: seq1=-A-A seq2= A-A-  not fragments
+#                                 #  the downside is sth like this: seq1=-A-A seq2= A-A-  not fragments
 #                                 if species in rec_candidate:
 #                                     seq_i_id = seq_i.id
 #                                     seq_j_id = seq_j.id
@@ -442,16 +437,14 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
 #                                         rec_candidate[species] += seq_j_id
 #                                 else:
 #                                     rec_candidate[species] = [seq_i_id, seq_j_id]  # seq_i is biopython record
-#
 #     return rec_candidate
-
 
 
 def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
 
     msa_filt_row_1 = merged_msa
     # if _config.inferhog_filter_all_msas_row:
-    #    msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
+    #  msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
     # if   msa_filt_row_1 and len(msa_filt_row_1[0]) >=
     if len(msa_filt_row_1[0]) >= _config.inferhog_min_cols_msa_to_filter:
         # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
@@ -463,10 +456,12 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
             msa_filt_col = msa_filt_row_1
             msa_filt_row_col = _wrappers.trim_msa(msa_filt_row_1)
         else:
-            msa_filt_col = msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr)
+            msa_filt_col = msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_0_")
             msa_filt_row_col = msa_filt_col
             if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
-                msa_filt_row_col = msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
+                msa_filt_row_col_raw = msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr+"_1_")
+                msa_filt_row_col = msa_filter_col(msa_filt_row_col_raw, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_2_")
+
 
         # compare msa_filt_row_col and msa_filt_col,
         if len(msa_filt_row_col) != len(msa_filt_col):  # some sequences are removed
@@ -474,18 +469,19 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
             set_prot_after = set([i.id for i in msa_filt_row_col])
             prots_to_remove_level = set_prot_before - set_prot_after
             for prots_to_remove in prots_to_remove_level:
-                logger_hog.debug("** we are removing the sequence "+str(prots_to_remove)+"due to trimming")
-
+                logger_hog.debug("** we are removing the sequence "+str(prots_to_remove)+" due to trimming")
+                # we may want to tag it in the hog object
             assert len(prots_to_remove_level), "issue 31235"
             #prots_to_remove |= prots_to_remove_level
-            # remove prot from all subhogs
-            # todo should I remove them from subhog._members ? we are doing so for merging fragments or low species overlap I guess
+            # todo: we may want to remove prot from all subhogs
+            # should I remove them from subhog._members ? we are doing so for merging fragments or low species overlap I guess
             # hogs_children_level_list_raw = hogs_children_level_list
             # hogs_children_level_list = []
             # for hog_i in hogs_children_level_list_raw:
-            #     result_removal = hog_i.remove_prots_from_hog(prots_to_remove)
-            #     if result_removal != 0:
-            #         hogs_children_level_list.append(hog_i)
+            #   for prot_to_remove in prots_to_remove:
+            #         result_removal = hog_i.remove_prot_from_hog(prot_to_remove)
+            #       if result_removal != 0:
+            #             hogs_children_level_list.append(hog_i)
         else:
             msa_filt_row_col = msa_filt_col
         merged_msa_filt = msa_filt_row_col

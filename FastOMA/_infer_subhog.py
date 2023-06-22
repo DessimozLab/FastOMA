@@ -75,13 +75,13 @@ def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,
     for hog_i in hogs_a_rhog:
         if len(hog_i._members) >= _config.inferhog_min_hog_size_xml:
             # could be improved   # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
-            hogs_a_rhog_xml_raw = hog_i.to_orthoxml()
+            hogs_a_rhog_xml_raw = hog_i.to_orthoxml()    # <generef  >      <paralg object >
             if _config.orthoxml_v03 and 'paralogGroup' in str(hogs_a_rhog_xml_raw) :
                 # in version v0.3 of orthoxml, there shouldn't be any paralogGroup at root level. Let's put them inside an orthogroup should be in
                 hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(hog_i._hogid)})
                 property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i._tax_now)})
                 hog_elemnt.append(hogs_a_rhog_xml_raw)
-                hogs_a_rhog_xml =hog_elemnt
+                hogs_a_rhog_xml = hog_elemnt
             else:
                 hogs_a_rhog_xml = hogs_a_rhog_xml_raw
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
@@ -93,7 +93,8 @@ def read_infer_xml_rhog(rhogid_num, inferhog_concurrent_on, pickles_rhog_folder,
         # dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
         pickle.dump(hogs_rhogs_xml, handle, protocol=pickle.HIGHEST_PROTOCOL)
     logger_hog.debug("All subHOGs for the rootHOG as OrthoXML format is written in " + pickles_rhog_file)
-
+    # to see orthoxml as string, you might need to do it for different idx
+    # idx=0; from xml.dom import minidom; import xml.etree.ElementTree as ET; minidom.parseString(ET.tostring(hogs_rhogs_xml[idx])).toprettyxml(indent="   ")
     del hogs_a_rhog  # to be memory efficient
     gc.collect()
     hogs_rhogs_xml_len = len(hogs_rhogs_xml)
@@ -170,16 +171,24 @@ def singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rh
     node_species_name = node_species_tree.name  # there is only one species (for the one protein)
     this_level_node_name = node_species_name
     pickles_subhog_folder = pickles_subhog_folder_all + "/rhog_" + str(rhogid_num) + "/"
+    # logger_hog.debug(" ** inferhog_resume_subhog is " + str(_config.inferhog_resume_subhog))
     if _config.inferhog_resume_subhog:
+        # logger_hog.debug("inferhog_resume_subhog is " + str(_config.inferhog_resume_subhog) + " so, we are reading from pickles.")
         pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name) + ".pickle"
         # open already calculated subhogs , but not completed till root in previous run
         if os.path.exists(pickle_subhog_file):
             if os.path.getsize(pickle_subhog_file) > 3:  # 3 bytes
                 with open(pickle_subhog_file, 'rb') as handle:
                     # i don't even need to open this even
-                    hogs_children_level_list = pickle.load(handle) #[object class HOG HOG:4027_sub1,len=1,taxono=PSETE]
-                    if hogs_children_level_list:
-                        return len(hogs_children_level_list)
+                    # is output of pickle.load(handle) is chlired or this level ?
+                    # todo I think I don't need to read the pickle file
+                    hogs_this_level_list = pickle.load(handle) #[object class HOG HOG:4027_sub1,len=1,taxono=PSETE]
+                    if hogs_this_level_list:
+                        logger_hog.debug("Level " + str(this_level_node_name) + " with " + str(len(hogs_this_level_list)) + " hogs is read from pickle.")
+                        return len(hogs_this_level_list)
+                    else:
+                        logger_hog.debug(" Issue  1238510: the pickle file for single tone is empty "+ str(hogs_this_level_list)+" " + str(rhogid_num))
+
     # logger_hog.debug("reading protien / singletone HOG of  " + str(this_level_node_name))
     rhog_i_prot_address = rhogs_fa_folder +"/HOG_"+str(rhogid_num).zfill(7)+".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
@@ -194,7 +203,7 @@ def singletone_hog_(node_species_tree, rhogid_num, pickles_subhog_folder_all, rh
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+".pickle"
     with open(pickle_subhog_file, 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    logger_hog.debug("HOGs for  " + str(this_level_node_name)+" including "+str(len(hogs_this_level_list))+ " hogs was written as pickle file.")
+    logger_hog.debug("HOGs for  " + str(this_level_node_name)+" including "+str(len(hogs_this_level_list))+ " hogs is written in pickle file.")
 
     return len(hogs_this_level_list)
 
@@ -236,13 +245,17 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
     assert not node_species_tree.is_leaf(), "issue 1235,singletone hogs are treated elsewhere"+ str(rhogid_num)
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name) + ".pickle"
 
-    # TODO arrage resume with nextflow
+    # TODO arrage resume with nextflow and also for when read single_tone pickles
     if _config.inferhog_resume_subhog:
         if os.path.exists(pickle_subhog_file) and os.path.getsize(pickle_subhog_file) > 3:  # 3 bytes
             with open(pickle_subhog_file, 'rb') as handle:
+                # todo : do I really need to read the pickle file
                 hogs_this_level_list = pickle.load(handle)  #[object class HOG HOG:4027_sub1,len=1,taxono=PSETE]
                 if hogs_this_level_list:
+                    logger_hog.debug("Level " + str(this_level_node_name) + " with " + str(len(hogs_this_level_list)) + " hogs is read from pickle.")
                     return len(hogs_this_level_list)
+                else:
+                    logger_hog.debug(" Issue  1238510: the pickle file for single tone is empty " + str(hogs_this_level_list) + " " + str(rhogid_num))
 
     hogs_children_level_list = read_children_hogs(node_species_tree, rhogid_num, pickles_subhog_folder_all)
 
@@ -298,7 +311,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
             # the last element should be merged_msa not the trimmed msa, as we create new hog based on this msa
             hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid_num, merged_msa_new)
             # for i in hogs_this_level_list: print(i.get_members())
-            logger_hog.debug("Hogs of this level is found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(this_level_node_name))
+            logger_hog.debug("After merging subhogs of childrens, "+str(len(hogs_this_level_list))+" subhogs are found for rhogid_num: "+str(rhogid_num)+", for taxonomic level:"+str(this_level_node_name))
 
         else:
             hogs_this_level_list = hogs_children_level_list
@@ -380,12 +393,18 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                             subhogs_id_children_assigned.append(subHOG._hogid)
                         else:  # this hog is already decided to be merged  print(node.name, subHOG._hogid, node_leave_name)
                             if "processed" in node:
-                                print("issue 1863", node.name, subHOG._hogid, node_leave_name) # print("processed", node.name) #else: #    print("processed not in ", node.name)  # print(node_leave_name,"is in ",subHOG._hogid)
+                                logger_hog.info("issue 1863"+ str(node.name)+str(subHOG._hogid)+ str(node_leave_name)) # print("processed", node.name) #else: #    print("processed not in ", node.name)  # print(node_leave_name,"is in ",subHOG._hogid)
             if subHOG_to_be_merged:
+                if len(subHOG_to_be_merged) == 1:
+                    logger_hog.info("issue 125568313"+str(subHOG_to_be_merged)+" "+node.name)
+
                 subHOG_to_be_merged_set = set(subHOG_to_be_merged)
                 taxnomic_range = node_species_tree.name
-                HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid_num, msa=merged_msa)
-
+                num_species_tax_speciestree = len(node_species_tree.get_leaves())
+                # num_species_tax   is the number of species exist in the species tree at this clade
+                HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid_num, merged_msa, num_species_tax_speciestree)
+                if len(HOG_this_node._msa) == 1:
+                    logger_hog.info("issue 1258313"+str(HOG_this_node)+str(HOG_this_node._msa)+" "+node.name  )
                 hogs_this_level_list.append(HOG_this_node)
 
                 subHOG_to_be_merged_set_other_Snodes.append([i._hogid for i in subHOG_to_be_merged_set])
