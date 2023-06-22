@@ -241,7 +241,7 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
     for rhogid_idx, rhogid in enumerate(rhogids_list):
         rhogid_prot_record_query = rhogids_prot_records_query[rhogid_idx]
         if len(rhogid_prot_record_query) < _config.omamer_treshold_big_rhog_szie:
-            rhogid_prot_record_query_filt = rhogid_prot_record_query  # without change for small rhogs
+            rhogid_prot_record_query_filt2 = rhogid_prot_record_query  # without change for small rhogs
         else:
             rhogid_prot_record_query_filt = []
             for i in range(len(rhogid_prot_record_query)):
