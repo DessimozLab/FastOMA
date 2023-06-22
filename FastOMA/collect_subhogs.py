@@ -27,12 +27,13 @@ def collect_subhogs():
     with open(gene_id_pickle_file, 'rb') as handle:
         gene_id_name = pickle.load(handle)
         # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
-    logger_hog.debug("We read the gene_id_name dictionary.")
+    logger_hog.debug("We read the gene_id_name dictionary with"+str(len(gene_id_name))+"items")
+    logger_hog.debug("Now creating the header of orthoxml")
 
    #  #### create the header of orthoxml ####
     for query_species_name, list_prots in gene_id_name.items():
         species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": query_species_name, "NCBITaxId": "1"})
-        database_xml = ET.SubElement(species_xml, "database", attrib={"name": "QFO database ", "version": "2020"})
+        database_xml = ET.SubElement(species_xml, "database", attrib={"name": "database ", "version": "2023"})
         genes_xml = ET.SubElement(database_xml, "genes")
         for (gene_idx_integer, query_prot_name) in list_prots:
             if protein_format_qfo_dataset_before2022:
@@ -47,7 +48,7 @@ def collect_subhogs():
     pickle_files_adress_raw = listdir(pickle_folder)
     pickle_files_adress = [i for i in  pickle_files_adress_raw if i.endswith(".pickle")]
 
-    logger_hog.info("number of pickle files is ",len(pickle_files_adress))
+    logger_hog.info("number of pickle files is "+str(len(pickle_files_adress))+".")
     hogs_a_rhog_xml_all = []
     for pickle_file_adress in pickle_files_adress:
         with open(pickle_folder + pickle_file_adress, 'rb') as handle:
@@ -55,7 +56,7 @@ def collect_subhogs():
             hogs_a_rhog_xml_all.extend(hogs_a_rhog_xml_batch)
             # hogs_rhogs_xml_all is orthoxml_to_newick.py list of hog object.
 
-    logger_hog.debug("number of hogs in all batches is ", len(hogs_a_rhog_xml_all))
+    logger_hog.debug("number of hogs in all batches is "+str(len(hogs_a_rhog_xml_all))+" .")
     groups_xml = ET.SubElement(orthoxml_file, "groups")
 
     for hogs_a_rhog_xml in hogs_a_rhog_xml_all:

@@ -206,6 +206,7 @@ class HOG:
 
             if len(list_of_subhogs_of_same_clade) > 1:
                 paralog_element = ET.Element('paralogGroup')
+                # todo add score how much overlap they have, report as score
                 # the following line could be improved, instead of tax_now we can use the least common ancestor of all members
                 # property_element = ET.SubElement(paralog_element, "property",attrib={"name": "TaxRange", "value": str(sub_clade)}) # self._tax_now
                 for sh in list_of_subhogs_of_same_clade:

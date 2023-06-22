@@ -18,18 +18,18 @@ species_tree_address = "species_tree.nwk"  # no space or special charcter in int
 
 # the following is not controlled by
 # argument in nextflow run 
-fragment_detection = False  # this can be changed through adding arguments to commond line run in nextflow run  --low-so-detection --fragment-detection
-fragment_detection_msa_merge = False  # if this is false and fragment_detection_msa -> we'll remove both fragments in orthology analyss at parent level but report it in orthoxml Dubiousfragment
+fragment_detection = True  # this can be changed through adding arguments to commond line run in nextflow run  --low-so-detection --fragment-detection
+fragment_detection_msa_merge = True  # if this is false and fragment_detection_msa -> we'll remove both fragments in orthology analyss at parent level but report it in orthoxml Dubiousfragment
 low_so_detection = True
 # for fragment detection is better to subsampling_hogclass= False but make FastOMA slow
 threshold_dubious_sd = 1/10
 overlap_fragments = 0.15
 
 ## output writing files
-gene_trees_write = True
-msa_write = True
-gene_trees_write_all = True
-msa_write_all = True
+gene_trees_write = False
+msa_write = False
+gene_trees_write_all = False
+msa_write_all = False
 keep_subhog_each_pickle = True
 
 
@@ -40,12 +40,11 @@ omamer_treshold_big_rhog_szie = 100
 omamer_treshold_big_rhog_szie2 = 50*1000
 omamer_fscore_treshold_big_rhog2 = 0.9
 
-hogclass_max_num_seq = 2 #10  # subsampling in msa
+hogclass_max_num_seq = 10  # subsampling in msa # ver very 2
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 50
-hogclass_tresh_ratio_gap_col = 0.8  # 0.4 # new code before sampling
+hogclass_tresh_ratio_gap_col = 0.6  # 0.8 for very very big
 # old code after samplign if there are 2 seq sampled, then at least one nongap
 subsampling_hogclass = True
-
 
 
 num_msas_merge_mafft = 100
@@ -63,7 +62,7 @@ rooting_mad_executable_path = "mad"  # /work/FAC/FBM/DBC/cdessim2/default/smajid
 
 ##inferhog
 inferhog_tresh_ratio_gap_row = 0.6   # to have more proteins in the ortho groups 0.1
-inferhog_tresh_ratio_gap_col = 0.8
+inferhog_tresh_ratio_gap_col = 0.6   # ver very 0.8
 inferhog_min_cols_msa_to_filter = 50 #100  # used for msa before gene tree inference and  saving msa in hog class
 
 inferhog_filter_all_msas_row = True
@@ -74,7 +73,7 @@ inferhog_resume_rhog = True  # main.py False
 inferhog_resume_subhog = True  # read pickle_subhog  # _infer_subhog.py
 
 # inferhog_concurrent_on = True now as an argument
-inferhog_max_workers_num = 11
+inferhog_max_workers_num = 6
 
 ## xml
 # write_all_prots_in_header = False  # if false writes only those in the hog group
