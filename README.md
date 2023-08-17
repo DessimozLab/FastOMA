@@ -89,13 +89,13 @@ nextflow -h
 ## How to run FastOMA on the test data (details)
 First, download the FastOMA package:
 ```
-wget https://github.com/sinamajidian/FastOMA/archive/refs/heads/master.zip
+wget https://github.com/DessimozLab/FastOMA/archive/refs/heads/master.zip
 unzip master.zip
 mv FastOMA-master FastOMA
 ```
 or clone it 
 ```
-git clone git@github.com:sinamajidian/FastOMA.git
+git clone git@github.com:DessimozLab/FastOMA.git
 ```
 Then install it
 ```
