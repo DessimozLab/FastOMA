@@ -65,7 +65,9 @@ python -m pip install omamer
 python -m pip install ete3  
 python -m pip install nextflow
 python -m pip install pyparsing
-python -m pip install DendroPy 
+python -m pip install DendroPy
+python -m pip install future
+python -m pip install lxml
 ```
 You may use conda to install mafft, fasttree and [openjdk](https://jdk.java.net/java-se-ri/17) (the alternative for Java 11< version <17 which is needed for nextflow). 
 ```  
