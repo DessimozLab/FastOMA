@@ -89,3 +89,25 @@ with open(output_file, 'w') as handle:
 handle.close()
 
 print("We wrote the protein families information in the file "+output_file)
+
+
+out_folder_ogs = "OGs_maximal/"
+os.makedirs(out_folder_ogs)
+
+print("writing "+str(len(OGs))+" OGs as fasta files in folder " +out_folder_ogs )
+for hog_id, og_prot_list in OGs.items(): #hog_id="HOG_0667494_sub10524"
+    rhog_id = "_".join(hog_id.split("_")[:2]) 
+
+    rhogs_all_address = rhog_all_folder + rhog_id + "."+fasta_format
+    rhogs_all_prots = list(SeqIO.parse(rhogs_all_address, "fasta"))
+
+    og_prots = []
+    og_prot_list = OGs[hog_id]
+    for rhogs_prot in rhogs_all_prots:
+        if rhogs_prot.id.split("||")[0] in og_prot_list:
+            og_prots.append(rhogs_prot)
+
+    og_id =  "OG_" + hog_id  # one OG per rootHOG      # "/HOG_"+ str(rhogid_num).zfill(7)
+    SeqIO.write(og_prots, out_folder_ogs+og_id+".fa", "fasta")   
+print("writing done")
+
