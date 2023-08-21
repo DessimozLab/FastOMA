@@ -63,7 +63,10 @@ def max_og_tree(tree):
 
 
 
-input_orthoxml =  sys.argv[1]
+input_orthoxml=sys.argv[1] # "out_folder/output_hog_.orthoxml" 
+rhog_all_folder = sys.argv[2] # "out_folder/rhogs_all/" 
+fasta_format = ".fa" # of the rhogs_all
+
 
 output_file = "maximal_og_prot.tsv"
 
