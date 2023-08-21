@@ -12,6 +12,7 @@ from ete3 import Tree
 import sys
 import os
 from FastOMA.zoo.hog.convert import orthoxml_to_newick
+from Bio import SeqIO
 
 
 
