@@ -1,12 +1,17 @@
 
-# orthologous per group
-# for speciefic taxonomic level,  top level
-# option whether include its substes,  groups that emerge after
-# for root combiaiton is not alowed
-# (1) folder for fasta file
-# (2) text file, per group, gene id
-#  (3) extract gene markers, single copy ortho roots ,  for species tree reconstruction, , number of gene markers, or min
-# this code is for converting an OrthoXML file to a set of Fasta files as Ortholougous groups
+"""
+this code is for converting an OrthoXML file to a set of Fasta files as Ortholougous groups
+
+How to run:
+cd out_folder
+python orthoxml2OG.py output_hog_.orthoxml rhogs_all 
+
+
+Output
+ - Gene names per OG in maximal_og_prot.tsv
+ - Fasta files in OGs_maximal
+"""
+
 
 from ete3 import Tree
 import sys
@@ -62,10 +67,9 @@ def max_og_tree(tree):
 
 
 
-
 input_orthoxml=sys.argv[1] # "out_folder/output_hog_.orthoxml" 
-rhog_all_folder = sys.argv[2] # "out_folder/rhogs_all/" 
-fasta_format = ".fa" # of the rhogs_all
+rhog_all_folder = sys.argv[2]+"/" # "out_folder/rhogs_all/" 
+fasta_format = "fa" # of the rhogs_all
 
 
 output_file = "maximal_og_prot.tsv"
@@ -98,7 +102,7 @@ print("We wrote the protein families information in the file "+output_file)
 out_folder_ogs = "OGs_maximal/"
 os.makedirs(out_folder_ogs)
 
-print("writing "+str(len(OGs))+" OGs as fasta files in folder " +out_folder_ogs )
+print("start writing "+str(len(OGs))+" OGs as fasta files in folder " +out_folder_ogs )
 for hog_id, og_prot_list in OGs.items(): #hog_id="HOG_0667494_sub10524"
     rhog_id = "_".join(hog_id.split("_")[:2]) 
 
