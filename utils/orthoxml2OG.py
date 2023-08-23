@@ -1,17 +1,23 @@
 
-# orthologous per group
-# for speciefic taxonomic level,  top level
-# option whether include its substes,  groups that emerge after
-# for root combiaiton is not alowed
-# (1) folder for fasta file
-# (2) text file, per group, gene id
-#  (3) extract gene markers, single copy ortho roots ,  for species tree reconstruction, , number of gene markers, or min
-# this code is for converting an OrthoXML file to a set of Fasta files as Ortholougous groups
+"""
+this code is for converting an OrthoXML file to a set of Fasta files as Ortholougous groups
+
+How to run:
+cd out_folder
+python orthoxml2OG.py output_hog_.orthoxml rhogs_all 
+
+
+Output
+ - Gene names per OG in maximal_og_prot.tsv
+ - Fasta files in OGs_maximal
+"""
+
 
 from ete3 import Tree
 import sys
 import os
 from FastOMA.zoo.hog.convert import orthoxml_to_newick
+from Bio import SeqIO
 
 
 
@@ -61,8 +67,10 @@ def max_og_tree(tree):
 
 
 
+input_orthoxml=sys.argv[1] # "out_folder/output_hog_.orthoxml" 
+rhog_all_folder = sys.argv[2]+"/" # "out_folder/rhogs_all/" 
+fasta_format = "fa" # of the rhogs_all
 
-input_orthoxml =  sys.argv[1]
 
 output_file = "maximal_og_prot.tsv"
 
@@ -89,3 +97,25 @@ with open(output_file, 'w') as handle:
 handle.close()
 
 print("We wrote the protein families information in the file "+output_file)
+
+
+out_folder_ogs = "OGs_maximal/"
+os.makedirs(out_folder_ogs)
+
+print("start writing "+str(len(OGs))+" OGs as fasta files in folder " +out_folder_ogs )
+for hog_id, og_prot_list in OGs.items(): #hog_id="HOG_0667494_sub10524"
+    rhog_id = "_".join(hog_id.split("_")[:2]) 
+
+    rhogs_all_address = rhog_all_folder + rhog_id + "."+fasta_format
+    rhogs_all_prots = list(SeqIO.parse(rhogs_all_address, "fasta"))
+
+    og_prots = []
+    og_prot_list = OGs[hog_id]
+    for rhogs_prot in rhogs_all_prots:
+        if rhogs_prot.id.split("||")[0] in og_prot_list:
+            og_prots.append(rhogs_prot)
+
+    og_id =  "OG_" + hog_id  # one OG per rootHOG      # "/HOG_"+ str(rhogid_num).zfill(7)
+    SeqIO.write(og_prots, out_folder_ogs+og_id+".fa", "fasta")   
+print("writing done")
+

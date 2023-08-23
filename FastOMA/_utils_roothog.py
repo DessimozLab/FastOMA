@@ -236,12 +236,12 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
     """
     logger_hog.info("Filtering rhogs with fscore treshold "+str(_config.omamer_fscore_treshold_big_rhog)+"for rhogs size > "+str(_config.omamer_treshold_big_rhog_szie) )
 
-    rhogids_prot_records_query_filt = []
+    rhogids_prot_records_query_filt2 = []
     rhogids_list_filt = []
     for rhogid_idx, rhogid in enumerate(rhogids_list):
         rhogid_prot_record_query = rhogids_prot_records_query[rhogid_idx]
         if len(rhogid_prot_record_query) < _config.omamer_treshold_big_rhog_szie:
-            rhogid_prot_record_query_filt = rhogid_prot_record_query  # without change for small rhogs
+            rhogid_prot_record_query_filt2 = rhogid_prot_record_query  # without change for small rhogs
         else:
             rhogid_prot_record_query_filt = []
             for i in range(len(rhogid_prot_record_query)):
@@ -255,12 +255,10 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
                 if fsore > _config.omamer_fscore_treshold_big_rhog:
                     rhogid_prot_record_query_filt.append(prot_bio_seq)
 
-            if len(rhogid_prot_record_query_filt) < _config.omamer_treshold_big_rhog_szie2 : # 40 * 1000
+            if len(rhogid_prot_record_query_filt) < _config.omamer_treshold_big_rhog_szie2: # 40 * 1000
                     rhogid_prot_record_query_filt2 = rhogid_prot_record_query_filt  # without change for small rhogs
             else:
-                logger_hog.info("Second round of filtering rhogs with fscore treshold " + str(
-                    _config.omamer_fscore_treshold_big_rhog2) + "for rhogs size > " + str(
-                    _config.omamer_treshold_big_rhog_szie2))
+                logger_hog.info("Second round of filtering rhogs with fscore treshold " + str(_config.omamer_fscore_treshold_big_rhog2) + "for rhogs size > " + str(_config.omamer_treshold_big_rhog_szie2))
                 rhogid_prot_record_query_filt2 = []
                 for i in range(len(rhogid_prot_record_query_filt)):
                     prot_bio_seq = rhogid_prot_record_query_filt[i]
@@ -273,11 +271,11 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
                     if fsore > _config.omamer_fscore_treshold_big_rhog2:
                         rhogid_prot_record_query_filt2.append(prot_bio_seq)
 
-
         if rhogid_prot_record_query_filt2:  # at least one prot in the rhog
-            rhogids_prot_records_query_filt.append(rhogid_prot_record_query_filt2)
+            rhogids_prot_records_query_filt2.append(rhogid_prot_record_query_filt2)
             rhogids_list_filt.append(rhogid)
-    return rhogids_list_filt, rhogids_prot_records_query_filt
+    return rhogids_list_filt, rhogids_prot_records_query_filt2
+
 
 
 def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, min_rhog_size=1, max_rhog_size=1e100):
