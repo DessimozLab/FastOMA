@@ -113,6 +113,8 @@ for hog_id, og_prot_list in OGs.items(): #hog_id="HOG_0667494_sub10524"
     og_prot_list = OGs[hog_id]
     for rhogs_prot in rhogs_all_prots:
         if rhogs_prot.id.split("||")[0] in og_prot_list:
+            sp= rhogs_prot.id.split("||")[1]
+            rhogs_prot.description += " ["+ sp +"]"         
             og_prots.append(rhogs_prot)
 
     og_id =  "OG_" + hog_id  # one OG per rootHOG      # "/HOG_"+ str(rhogid_num).zfill(7)
