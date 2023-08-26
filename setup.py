@@ -10,9 +10,9 @@ with open('{:s}/__init__.py'.format(name), 'rt') as fp:
             exec(line.rstrip())
 
 # TODO
-requirements = []
+requirements = ['biopython', 'ete3', 'omamer', 'nextflow', 'pyparsing' , 'DendroPy', 'future', 'lxml']
 
-desc = 'GetHOG3 - blabla'
+desc = 'FastOM - a package to infer orthology information '
 
 setup(
     name=name,
