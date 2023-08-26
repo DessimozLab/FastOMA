@@ -30,46 +30,28 @@ If the species tree does not have label for some/all internal nodes, FastOMA lab
 
 ### Output:
 Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format
-which can be used with [PyHAM](https://github.com/DessimozLab/pyham)
+which can be used with [PyHAM](https://github.com/DessimozLab/pyham).
 
 
 # How to run FastOMA
-In summary, you need to 1) install FastOMA using pip after its prerequisites (below), and  2) put the input files in the folder `in_folder` 
+In summary, you need to 1) install FastOMA and its prerequisites (below), and  2) put the input files in the folder `in_folder` 
 and 3) run FastOMA using the nextflow recipe `FastOMA_script.nf`. 
 ```
-python -m pip install -e ./FastOMA 
 nextflow  FastOMA_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
 ```
-For a detailed instruction start from prerequisites and continue to the section [How to run FastOMA on the test data (details)](https://github.com/sinamajidian/gethog3#how-to-run-gethog3-on-the-test-data-details).
 
+
+# How to install FastOMA
 
 ## prerequisites
 
-FastOMA needs following software packages:  [omamer](https://github.com/DessimozLab/omamer),  [Nextflow](https://nextflow.io/),
-[Biopython](https://github.com/biopython/biopython), [dendropy](https://dendropy.org/),
-[pyparsing](https://github.com/pyparsing/pyparsing/) , [ete3](http://etetoolkit.org), [fasttree](http://www.microbesonline.org/fasttree/)
-and [mafft](http://mafft.cbrc.jp/alignment/software/).
-
-To do so, you can start with a fresh [conda](https://docs.conda.io/en/latest/miniconda.html) environment.
+First, we create a fresh [conda](https://docs.conda.io/en/latest/miniconda.html) environment.
 ```
 conda create --name FastOMA python=3.9
 conda activate FastOMA
-```
-You can install the packages using [pip](https://pypi.org/).
-You can always make sure whether you are using the python that you intended to use with `which python`  and `which python3`.
-``` 
 python -m pip install --upgrade pip
-python -m pip install biopython
-python -m pip install omamer
-# python -m pip install pytables==3.6.1 # if you had trouble with pytables for omamer.
-python -m pip install ete3  
-python -m pip install nextflow
-python -m pip install pyparsing
-python -m pip install DendroPy
-python -m pip install future
-python -m pip install lxml
 ```
-You may use conda to install mafft, fasttree and [openjdk](https://jdk.java.net/java-se-ri/17) (the alternative for Java 11< version <17 which is needed for nextflow). 
+(You can always make sure whether you are using the python that you intended to use with `which python`  and `which python3`.) You may use conda to install [fasttree](http://www.microbesonline.org/fasttree/), [mafft](http://mafft.cbrc.jp/alignment/software/). and [openjdk](https://jdk.java.net/java-se-ri/17) (the alternative for Java 11< version <17 which is needed for nextflow). 
 ```  
 conda install -c bioconda mafft fasttree
 conda install -c conda-forge openjdk
@@ -80,24 +62,19 @@ JAVA_HOME="/path/to/jdk-17"
 NXF_JAVA_HOME="/path/to/jdk-17"
 export PATH="/path/to/jdk-17/bin:$PATH"
 ```
-
 You can make sure that omamer and nextflow is installed with running  
 ``` 
-omamer
+omamer -h
 nextflow -h
 ```
 
 
-## How to run FastOMA on the test data (details)
+## How to install FastOMA 
 First, download the FastOMA package:
 ```
 wget https://github.com/DessimozLab/FastOMA/archive/refs/heads/master.zip
 unzip master.zip
 mv FastOMA-master FastOMA
-```
-or clone it 
-```
-git clone git@github.com:DessimozLab/FastOMA.git
 ```
 Then install it
 ```
@@ -107,22 +84,19 @@ python -m pip install -e FastOMA
 
 The output would be 
 ```
-  Preparing metadata (setup.py) ... done
-Building wheels for collected packages: FastOMA
-  Building wheel for FastOMA (setup.py) ... done
-  Created wheel for FastOMA: filename=FastOMA-0.0.5-py3-none-any.whl size=29386 sh
-Successfully built FastOMA
-Installing collected packages: FastOMA
-Successfully installed FastOMA-0.0.5
+...
+Running setup.py develop for FastOMA
+Successfully installed Cython-3.0.1 DendroPy-4.6.1  biopython-1.81 blosc2-2.0.0 ete3-3.1.3 future-0.18.3 humanfriendly-10.0 llvmlite-0.40.1 lxml-4.9.3 msgpack-1.0.5 nextflow-23.4.3 numba-0.57.1 numexpr-2.8.5 numpy-1.24.4 omamer-0.2.6 packaging-23.1 pandas-2.0.3 property-manager-3.0 py-cpuinfo-9.0.0 pyparsing-3.1.1 pysais-1.1.0 python-dateutil-2.8.2 pytz-2023.3 scipy-1.11.2 six-1.16.0 tables-3.8.0 tqdm-4.66.1 tzdata-2023.3 verboselogs-1.7
+FastOMA-0.0.6
 ```
 
-You can check your installation with 
+You can check your installation with running one of submodules of FastOMa
 ``` 
 infer-roothogs --version
 ```
 
 
-
+# How to run FastOMA on the test data
 Then, cd to the `testdata` folder and download the omamer database and change its name to `omamerdb.h5`.
 ```
 cd FastOMA/testdata
@@ -131,20 +105,16 @@ mv Primates.h5  in_folder/omamerdb.h5
 ```
 (This is for the test however, I would suggest downloading the `LUCA.h5` instead of `Primates.h5` for your real analysis.). Check the item 2 in the [input section](https://github.com/sinamajidian/FastOMA#input) for details.
 
-
 Now we have such a structre in our  testdata folder.
 ``` 
-$ tree ../testdata/
-├── in_folder
-│   ├── omamerdb.h5
-│   ├── proteome
-│   │   ├── AQUAE.fa
-│   │   ├── CHLTR.fa
-│   │   └── MYCGE.fa
-│   └── species_tree.nwk
-└── README.md
+$ tree ../testdata/in_folder
+   ├── omamerdb.h5
+   ├── proteome
+   │   ├── AQUAE.fa
+   │   ├── CHLTR.fa
+   │   └── MYCGE.fa
+   └── species_tree.nwk
 ```
-
 
 Finally, run the package using nextflow as below:
 ```
@@ -152,7 +122,7 @@ Finally, run the package using nextflow as below:
 nextflow ../FastOMA_script.nf  --input_folder in_folder   --output_folder out_folder  -with-report
 ```
 Note that to have a comprehensive test, we set the default value of needed cpus as 10.
-
+## expected log for test data
 After few minutes, the run for test data finishes. 
 ```
 [] process > omamer_run (3)      [100%] 3 of 3 ✔
@@ -163,7 +133,7 @@ After few minutes, the run for test data finishes.
 [] process > collect_subhogs (1) [100%] 1 of 1 ✔
 ```
 If the run interrupted, by adding `-resume` to the nextflow commond line, you can continue your previous nextflow job. 
-
+## expected output structure for test data
 Then, following files and folders should appear in the folder `out_folder` which was the argument.
 ```
 $ tree -L 1  out_folder
@@ -197,7 +167,7 @@ among which `output_hog_.orthoxml` is the final output. Its content looks like t
 ```
 
 ### using omamer's output
-The first step of the FastOMA pipele is to run OmaMer. If you already have the hogmap files, you can put them in the `in_folder/hogmap_input_folder`.
+The first step of the FastOMA pipele is to run [OMAmer](https://github.com/DessimozLab/omamer). If you already have the hogmap files, you can put them in the `in_folder/hogmap_input_folder`.
 Then your structure of files will be 
 ```
 $ tree ../testdata/
@@ -228,7 +198,6 @@ For running on a SLURM cluster you can add `-c ../nextflow_slurm.config`  to the
 
 nextflow ../FastOMA_script.nf  -c ../nextflow_slurm.config   --input_folder in_folder   --output_folder out_folder
 ```
-
 
 You may need to re-run nextflow command line by adding `-resume`, if the allocated time is not enough for your dataset.
 
