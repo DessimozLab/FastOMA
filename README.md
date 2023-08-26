@@ -1,6 +1,7 @@
 FastOMA
 ======
-FastOMA is a scalable software package to infer orthology relationship.  
+FastOMA is a scalable software package to infer orthology relationship.
+
 
 
 # Input and Output: 

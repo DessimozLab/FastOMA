@@ -1,18 +1,19 @@
 
 
+import numpy
 
-import pyham # pyham package for ham analysis
-import pandas as pd # pandas for dataframes
-
-import ete3
-working_folder  ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"
-tree_path = working_folder+"b/archive/lineage_tree_qfo_2.nwk"
-a= ete3.Tree(tree_path, format=1, quoted_node_names= True)
-a.write(format=1), a
-
-
-orthoxml_path = working_folder + "working_nf/out_3dec.xml"
-ham_analysis = pyham.Ham(tree_path, orthoxml_path, tree_format='newick', use_internal_name=True)
+# import pyham # pyham package for ham analysis
+#import pandas as pd # pandas for dataframes
+#
+# import ete3
+# working_folder  ="/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/"
+# tree_path = working_folder+"b/archive/lineage_tree_qfo_2.nwk"
+# a= ete3.Tree(tree_path, format=1, quoted_node_names= True)
+# a.write(format=1), a
+#
+#
+# orthoxml_path = working_folder + "working_nf/out_3dec.xml"
+# ham_analysis = pyham.Ham(tree_path, orthoxml_path, tree_format='newick', use_internal_name=True)
 
 print(222)
 
