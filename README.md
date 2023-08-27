@@ -36,9 +36,9 @@ which can be used with [PyHAM](https://github.com/DessimozLab/pyham).
 
 # How to run FastOMA
 In summary, you need to 1) install FastOMA and its prerequisites (below), and  2) put the input files in the folder `in_folder` 
-and 3) run FastOMA using the nextflow recipe `FastOMA_script.nf`. 
+and 3) run FastOMA using the nextflow recipe `FastOMA_light.nf`. 
 ```
-nextflow  FastOMA_script.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
+nextflow  FastOMA_light.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
 ```
 
 
@@ -123,18 +123,18 @@ $ tree ../testdata/in_folder
 Finally, run the package using nextflow as below:
 ```
 # cd FastOMA/testdata
-nextflow ../FastOMA_script.nf  --input_folder in_folder   --output_folder out_folder  -with-report
+nextflow ../FastOMA_light.nf  --input_folder in_folder   --output_folder out_folder  -with-report
 ```
 Note that to have a comprehensive test, we set the default value of needed cpus as 10.
 ## expected log for test data
 After few minutes, the run for test data finishes. 
 ```
-[] process > omamer_run (3)      [100%] 3 of 3 ✔
-[] process > infer_roothogs (1)  [100%] 1 of 1 ✔
-[] process > batch_roothogs (1)  [100%] 1 of 1 ✔
-[] process > hog_big (1)         [100%] 1 of 1 ✔
+[] process > omamer_run ( )      [100%] 3 of 3 ✔
+[] process > infer_roothogs ()  [100%] 1 of 1 ✔
+[] process > batch_roothogs ()  [100%] 1 of 1 ✔
+[] process > hog_big ()         [100%] 1 of 1 ✔
 [] process > hog_rest ( )        [100%] 2 of 2 ✔
-[] process > collect_subhogs (1) [100%] 1 of 1 ✔
+[] process > collect_subhogs () [100%] 1 of 1 ✔
 ```
 If the run interrupted, by adding `-resume` to the nextflow commond line, you can continue your previous nextflow job. 
 ## expected output structure for test data
@@ -198,9 +198,9 @@ For running on a SLURM cluster you can add `-c ../nextflow_slurm.config`  to the
 ```
 # cd FastOMA/testdata
 # rm -r out_folder work          # You may remove stuff from previous run
-# ls ../FastOMA_script.nf 
+# ls ../FastOMA_light.nf 
 
-nextflow ../FastOMA_script.nf  -c ../nextflow_slurm.config   --input_folder in_folder   --output_folder out_folder
+nextflow ../FastOMA_light.nf  -c ../nextflow_slurm.config   --input_folder in_folder   --output_folder out_folder
 ```
 
 You may need to re-run nextflow command line by adding `-resume`, if the allocated time is not enough for your dataset.
@@ -208,14 +208,6 @@ You may need to re-run nextflow command line by adding `-resume`, if the allocat
 You may need to increase the number of opoened files in your system with `ulimit -n 131072` or higher.
 
 
-If you have the omamer mappings, you can put them in hogmap folder  and run the following
-```
-$ ls
-hogmap  in_folder  genetrees
-$ nextflow   FastOMA/archive/FastOMA_script_after_omamer.nf   --input_folder in_folder   --output_folder out_folder
-
-for i in $(ls .); do mv $i `basename $i`.fa.hogmap; done 
-```
 
 
 ## Change log
