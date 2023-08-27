@@ -30,7 +30,7 @@ gene_trees_write = False
 msa_write = False
 gene_trees_write_all = False
 msa_write_all = False
-keep_subhog_each_pickle = True
+keep_subhog_each_pickle = False
 
 
 omamer_fscore_treshold_big_rhog = 0.5  #  to have more proteins in the ortho groups 0.05  considering for big rhogs

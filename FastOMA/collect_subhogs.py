@@ -16,7 +16,7 @@ def collect_subhogs():
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchamrk, the middle should be wirtten in the file
 
-    pickle_folder = "./pickle_rhogs/"
+    pickle_folder = "./" # pickle_rhogs
     output_xml_name = "./output_hog_.orthoxml"
     gene_id_pickle_file = "./gene_id_dic_xml.pickle"
 
@@ -46,9 +46,10 @@ def collect_subhogs():
 
     #  #### create the groups of orthoxml   ####
     pickle_files_adress_raw = listdir(pickle_folder)
-    pickle_files_adress = [i for i in  pickle_files_adress_raw if i.endswith(".pickle")]
+    pickle_files_adress = [i for i in pickle_files_adress_raw if i.endswith(".pickle") and i.startswith("file_")]
 
     logger_hog.info("number of pickle files is "+str(len(pickle_files_adress))+".")
+    logger_hog.info("pickle files are " + str(pickle_files_adress) + ".")
     hogs_a_rhog_xml_all = []
     for pickle_file_adress in pickle_files_adress:
         with open(pickle_folder + pickle_file_adress, 'rb') as handle:

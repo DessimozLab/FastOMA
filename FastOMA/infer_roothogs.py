@@ -63,5 +63,5 @@ def infer_roothogs():
 
 
     # import sys
-    output_folder_rhog = "./" #  sys.argv[1]  #
+    output_folder_rhog = "./rhogs_all/" #  sys.argv[1]  #
     rhogid_num_list_filt1 = _utils_roothog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, output_folder_rhog, 2)  # min_rhog_size, max_rhog_size

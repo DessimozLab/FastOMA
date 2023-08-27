@@ -17,7 +17,7 @@ def list_rhog_fastas(address_rhogs_folder):
     rhog_files = listdir(address_rhogs_folder)
     rhogid_num_list= []
     for rhog_file in rhog_files:
-        if rhog_file.split(".")[-1] == "fa":
+        if rhog_file.split(".")[-1] == "fa" and rhog_file.split("_")[0] == "HOG":
             rhogid_num = int(rhog_file.split(".")[0].split("_")[1][1:])
             rhogid_num_list.append(rhogid_num)
 
@@ -91,7 +91,7 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
 
 def batch_roothogs():
 
-    input_rhog = "./rhogs_all/"
+    input_rhog = "./" # rhogs_all
     output_folder_big = "./rhogs_big/"
     output_folder_rest = "./rhogs_rest/"
     folder_1h_rhog(input_rhog, output_folder_big, output_folder_rest)

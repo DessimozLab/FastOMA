@@ -6,9 +6,9 @@ params.proteomes = params.proteome_folder + "/*"
 params.hogmap_input_folder = params.input_folder + "/hogmap_input_folder"
 
 params.hogmap_folder = params.output_folder + "/hogmap"
-params.rhogs_folder = params.output_folder + "/rhogs_all"
+//params.rhogs_folder = params.output_folder + "/rhogs_all"
 params.species_tree = params.input_folder + "/species_tree.nwk"
-params.pickles_rhogs_folder = params.output_folder + "/pickle_rhogs"
+//params.pickles_rhogs_folder = params.output_folder + "/pickle_rhogs"
 params.genetrees_folder = params.output_folder + "/genetrees"
 
 
@@ -39,7 +39,7 @@ process infer_roothogs{   // publishDir  params.rhogs_folder
     path hogmap_folder
     path proteome_folder
   output:
-    path "*.fa"
+    path "rhogs_all/*"
     path "gene_id_dic_xml.pickle"
     val true         // nextflow-io.github.io/patterns/state-dependency/
   script:
@@ -101,7 +101,7 @@ process collect_subhogs{
   input:
     val ready_hog_rest
     val ready_hog_big     // path pickle_rhogs   // this is for depenedcy
-    path "pickle_rhogs"   // this is the folder includes pickles_rhogs
+    path all_pickles //"*.pickle"  //path "pickle_rhogs"   // this is the folder includes pickles_rhogs
     path "gene_id_dic_xml.pickle"
   output:
     path "output_hog_.orthoxml"
@@ -116,12 +116,12 @@ workflow {
     proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
     proteome_folder = Channel.fromPath(params.proteome_folder)
     hogmap_folder = Channel.fromPath(params.hogmap_folder)
-    rhogs_folder = Channel.fromPath(params.rhogs_folder)
+//    rhogs_folder = Channel.fromPath(params.rhogs_folder)
 
     genetrees_folder = Channel.fromPath(params.genetrees_folder)
     hogmap_input_folder = Channel.fromPath(params.hogmap_input_folder)
 
-    pickles_rhogs_folder =  Channel.fromPath(params.pickles_rhogs_folder)
+//    pickles_rhogs_folder =  Channel.fromPath(params.pickles_rhogs_folder)
     omamerdb = Channel.fromPath(params.input_folder+"/omamerdb.h5")     // proteomes.view{"prot ${it}"}
     proteomes_omamerdb = proteomes.combine(omamerdb)
     proteomes_omamerdb_inputhog = proteomes_omamerdb.combine(hogmap_input_folder) // proteomes_omamerdb_inputhog.view{" rhogsbig ${it}"}
@@ -130,29 +130,26 @@ workflow {
 
     (rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder)
     ready_infer_roothogs_c = ready_infer_roothogs.collect()
-    (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, rhogs_folder)
+
+    // old :  (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, rhogs_folder)
+
+    (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, rhogs)
     ready_batch_roothogs_c = ready_batch_roothogs.collect()
 
     species_tree = Channel.fromPath(params.species_tree)
     rhogsbig = rhogs_big_list.flatten()
     rhogsbig_tree =  rhogsbig.combine(species_tree)
-    rhogsbig_tree_ready = rhogsbig_tree.combine(ready_batch_roothogs)
-    rhogsbig_tree_ready.view{"rhogsbig_tree_ready ${it}"}
+    rhogsbig_tree_ready = rhogsbig_tree.combine(ready_batch_roothogs)   //     rhogsbig_tree_ready.view{"rhogsbig_tree_ready ${it}"}
     (pickle_big_rhog, msas_out, genetrees_out, ready_hog_big) = hog_big(rhogsbig_tree_ready)
 
     rhogsrest = rhogs_rest_list.flatten()
     rhogsrest_tree =  rhogsrest.combine(species_tree)
     rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
+    all_pickles = pickle_big_rhog.mix(pickle_rest_rhog).collect() // all_pickles.view() //     pickle_rhogs_folder = Channel.fromPath(params.output_folder+"/pickle_rhogs")
 
-    prb = pickle_big_rhog.collect()
-    prr = pickle_rest_rhog.collect()
-    all_pickles = prb.mix(prr)
-    pickle_rhogs_folder = Channel.fromPath(params.output_folder+"/pickle_rhogs")
-
-    orthoxml_file = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), pickles_rhogs_folder, gene_id_dic_xml)
+    orthoxml_file = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), all_pickles, gene_id_dic_xml)  // pickles_rhogs_folder
     orthoxml_file.view{" output orthoxml file ${it}"}
-
 
 }
 
