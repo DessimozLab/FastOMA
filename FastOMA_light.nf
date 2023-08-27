@@ -103,8 +103,11 @@ process collect_subhogs{
     val ready_hog_big     // path pickle_rhogs   // this is for depenedcy
     path all_pickles //"*.pickle"  //path "pickle_rhogs"   // this is the folder includes pickles_rhogs
     path "gene_id_dic_xml.pickle"
+    path rhogs_folder
   output:
-    path "output_hog_.orthoxml"
+    path "output_hog.orthoxml"
+    path "OrthologousGroupsFasta"
+    path "OrthologousGroups.tsv"
   script:
     """
         collect-subhogs
@@ -148,7 +151,7 @@ workflow {
     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
     all_pickles = pickle_big_rhog.mix(pickle_rest_rhog).collect() // all_pickles.view() //     pickle_rhogs_folder = Channel.fromPath(params.output_folder+"/pickle_rhogs")
 
-    orthoxml_file = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), all_pickles, gene_id_dic_xml)  // pickles_rhogs_folder
+    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv)  = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), all_pickles, gene_id_dic_xml, rhogs)  // pickles_rhogs_folder
     orthoxml_file.view{" output orthoxml file ${it}"}
 
 }
