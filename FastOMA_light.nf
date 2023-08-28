@@ -108,6 +108,7 @@ process collect_subhogs{
     path "output_hog.orthoxml"
     path "OrthologousGroupsFasta"
     path "OrthologousGroups.tsv"
+    path "rootHOGs.tsv"
   script:
     """
         collect-subhogs
@@ -151,7 +152,7 @@ workflow {
     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
     all_pickles = pickle_big_rhog.mix(pickle_rest_rhog).collect() // all_pickles.view() //     pickle_rhogs_folder = Channel.fromPath(params.output_folder+"/pickle_rhogs")
 
-    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv)  = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), all_pickles, gene_id_dic_xml, rhogs)  // pickles_rhogs_folder
+    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), all_pickles, gene_id_dic_xml, rhogs)  // pickles_rhogs_folder
     orthoxml_file.view{" output orthoxml file ${it}"}
 
 }

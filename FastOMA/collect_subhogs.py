@@ -130,7 +130,7 @@ def collect_subhogs():
         return og_prot_list
 
     input_orthoxml = output_xml_name # sys.argv[1]  # "out_folder/output_hog_.orthoxml"
-    rhog_all_folder =  "./" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
+    rhog_all_folder = "./" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
     fasta_format = "fa"  # of the rhogs_all
 
     output_file_og_tsv = "OrthologousGroups.tsv"
@@ -179,5 +179,30 @@ def collect_subhogs():
     print("writing done")
 
 
+
+
+    #import sys
+
+    from FastOMA.zoo.hog import extract_flat_groups_at_level
+
+    # input_orthoxml = output_xml_name
+    output_file = "rootHOGs.tsv"
+
+    toplevel_groups = []
+    for grp in extract_flat_groups_at_level(input_orthoxml):
+        toplevel_groups.append(set(g.xref for g in grp))
+
+    # toplevel_groups is a list of sets
+
+    print("We extracted "+str(len(toplevel_groups))+" protein families from the input HOG orthoxml"+input_orthoxml)
+    print("The first one contain "+str(len(toplevel_groups[0]))+" proteins.")
+
+    with open(output_file, 'w') as handle:
+        for toplevel_group_idx, toplevel_group in enumerate(toplevel_groups):
+            line_text = str(toplevel_group_idx)+"\t"+str(toplevel_group)[1:-1]+"\n"
+            handle.write(line_text)
+    handle.close()
+
+    print("We wrote the protein families information in the file "+output_file)
 
 
