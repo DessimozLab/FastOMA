@@ -129,26 +129,21 @@ Note that to have a comprehensive test, we set the default value of needed cpus 
 ## expected log for test data
 After few minutes, the run for test data finishes. 
 ```
-[] process > omamer_run ( )      [100%] 3 of 3 ✔
+[] process > omamer_run ()      [100%] 3 of 3 ✔
 [] process > infer_roothogs ()  [100%] 1 of 1 ✔
 [] process > batch_roothogs ()  [100%] 1 of 1 ✔
 [] process > hog_big ()         [100%] 1 of 1 ✔
-[] process > hog_rest ( )        [100%] 2 of 2 ✔
+[] process > hog_rest ()        [100%] 2 of 2 ✔
 [] process > collect_subhogs () [100%] 1 of 1 ✔
 ```
 If the run interrupted, by adding `-resume` to the nextflow commond line, you can continue your previous nextflow job. 
 ## expected output structure for test data
 Then, following files and folders should appear in the folder `out_folder` which was the argument.
 ```
-$ tree -L 1  out_folder
-├── hogmap
-├── output_hog.orthoxml
-├── pickle_rhogs
-├── rhogs_all
-├── rhogs_big
-└── rhogs_rest
+$ls out_folder
+hogmap  OrthologousGroupsFasta  OrthologousGroups.tsv  output_hog.orthoxml
 ```
-among which `output_hog_.orthoxml` is the final output. Its content looks like this
+among which `output_hog.orthoxml` is the final output in [orthoXML format](https://orthoxml.org/0.4/orthoxml_doc_v0.4.html). Its content looks like this
 
 ```
 <?xml version="1.0" ?>
