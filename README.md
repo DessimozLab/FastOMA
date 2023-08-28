@@ -165,6 +165,12 @@ among which `output_hog.orthoxml` is the final output in [orthoXML format](https
 </orthoXML>
 ```
 
+Note that some of the output files are symlink (a.k.a a symbolic link), linked to files in the folder `work` created by nextflow pipeline. 
+This means that if you remove the `work` folder, you will not have access to the output files anymore. 
+
+
+If you are working on a large scale project, you may need to change the limitation on the number of files opened in linux using `ulimit -n 271072`. 
+
 ### using omamer's output
 The first step of the FastOMA pipele is to run [OMAmer](https://github.com/DessimozLab/omamer). If you already have the hogmap files, you can put them in the `in_folder/hogmap_input_folder`.
 Then your structure of files will be 
