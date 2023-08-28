@@ -73,6 +73,12 @@ def collect_subhogs():
 
     logger_hog.info("orthoxml is written in " + output_xml_name)
 
+
+
+
+
+
+
     logger_hog.info("Now writing OG fasta files ")
 
     from ete3 import Tree
@@ -137,7 +143,8 @@ def collect_subhogs():
     for hog_id, tree_string in trees.items():
         tree = Tree(tree_string, format=1)
         og_prot_list = max_og_tree(tree)
-        OGs[hog_id] = og_prot_list
+        if len(og_prot_list) >= 2: # a group should have at least 1 member/protein
+            OGs[hog_id] = og_prot_list
 
     print("done")
 
