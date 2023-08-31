@@ -40,7 +40,7 @@ and 3) run FastOMA using the nextflow recipe `FastOMA_light.nf`.
 ```
 nextflow  FastOMA_light.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
 ```
-
+The script `FastOMA_light.nf` is tailored for a few species. To run FastOMA with hundreds of species, please use `FastOMA.nf`. 
 
 # How to install FastOMA
 
@@ -109,7 +109,7 @@ mv Primates.h5  in_folder/omamerdb.h5
 ```
 (This is for the test however, I would suggest downloading the `LUCA.h5` instead of `Primates.h5` for your real analysis.). Check the item 2 in the [input section](https://github.com/sinamajidian/FastOMA#input) for details.
 
-Now we have such a structre in our  testdata folder.
+Now we have such a structure in our  testdata folder.
 ``` 
 $ tree ../testdata/in_folder
    ├── omamerdb.h5
@@ -125,6 +125,9 @@ Finally, run the package using nextflow as below:
 # cd FastOMA/testdata
 nextflow ../FastOMA_light.nf  --input_folder in_folder   --output_folder out_folder  -with-report
 ```
+The script `FastOMA_light.nf` is tailored for a few species. In real case scenario, please use `FastOMA.nf`.   
+
+
 Note that to have a comprehensive test, we set the default value of needed cpus as 10.
 ## expected log for test data
 After few minutes, the run for test data finishes. 
@@ -141,7 +144,7 @@ If the run interrupted, by adding `-resume` to the nextflow commond line, you ca
 Then, following files and folders should appear in the folder `out_folder` which was the argument.
 ```
 $ls out_folder
-hogmap  OrthologousGroupsFasta  OrthologousGroups.tsv  output_hog.orthoxml
+hogmap  OrthologousGroupsFasta  OrthologousGroups.tsv  rootHOGs.tsv output_hog.orthoxml
 ```
 among which `output_hog.orthoxml` is the final output in [orthoXML format](https://orthoxml.org/0.4/orthoxml_doc_v0.4.html). Its content looks like this
 
@@ -199,9 +202,9 @@ For running on a SLURM cluster you can add `-c ../nextflow_slurm.config`  to the
 ```
 # cd FastOMA/testdata
 # rm -r out_folder work          # You may remove stuff from previous run
-# ls ../FastOMA_light.nf 
+# ls ../FastOMA.nf 
 
-nextflow ../FastOMA_light.nf  -c ../nextflow_slurm.config   --input_folder in_folder   --output_folder out_folder
+nextflow ../FastOMA.nf  -c ../nextflow_slurm.config   --input_folder in_folder   --output_folder out_folder
 ```
 
 You may need to re-run nextflow command line by adding `-resume`, if the allocated time is not enough for your dataset.
