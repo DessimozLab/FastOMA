@@ -42,6 +42,7 @@ nextflow  FastOMA_light.nf  --input_folder /path/to/in_folder   --output_folder 
 ```
 The script `FastOMA_light.nf` is tailored for a few species. To run FastOMA with hundreds of species, please use `FastOMA.nf`. 
 
+
 # How to install FastOMA
 
 ## prerequisites
