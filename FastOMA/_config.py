@@ -81,10 +81,7 @@ inferhog_min_hog_size_xml = 2     # by setting this as 1, pyham won't work on xm
 
 # batch_roothogs
 big_rhog_filesize_thresh = 600 * 1000
-sum_list_rhogs_filesize_thresh = 1 * 1e5
-
-#big_rhog_filesize_thresh = 600 * 1000
-#sum_list_rhogs_filesize_thresh = 2 * 1e6
+sum_list_rhogs_filesize_thresh = 2 * 1e6
 
 
 # big_rhog_filesize_thresh = 1.6 * 1000  # 600 would be better

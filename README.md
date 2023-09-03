@@ -216,7 +216,7 @@ You may need to increase the number of opoened files in your system with `ulimit
 
 
 ## Change log
-- prelease
+- Release  v0.1.0: improve nextflow pipeline and outputs. 
 - prelease v.0.0.6: use `--fragment-detection` for `infer-subhogs` and `--low-so-detection --fragment-detection`
 - prelease v.0.0.6: using input hogmpa
 - prelease v.0.0.5: adding pip setup.py 
