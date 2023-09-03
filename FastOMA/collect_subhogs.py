@@ -27,7 +27,7 @@ def collect_subhogs():
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchamrk, the middle should be wirtten in the file
 
-    pickle_folder = "./pickle_rhogs/" #pickle_rhogs
+    pickle_folder = "./pickles_temp/" #pickle_rhogs
     output_xml_name = "./output_hog.orthoxml"
     gene_id_pickle_file = "./gene_id_dic_xml.pickle"
 
@@ -136,8 +136,8 @@ def collect_subhogs():
         return og_prot_list
 
     input_orthoxml = output_xml_name # sys.argv[1]  # "out_folder/output_hog_.orthoxml"
-    rhog_all_folder = "./rhogs_all/" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
-    fasta_format = "fa"  # of the rhogs_all
+    rhog_all_folder = "./omamer_rhogs/" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
+    fasta_format = "fa"  # of the rhogs
 
     output_file_og_tsv = "OrthologousGroups.tsv"
 
@@ -168,12 +168,12 @@ def collect_subhogs():
     for hog_id, og_prot_list in OGs.items():  # hog_id="HOG_0667494_sub10524"
         rhog_id = "_".join(hog_id.split("_")[:2])
 
-        rhogs_all_address = rhog_all_folder + rhog_id + "." + fasta_format
-        rhogs_all_prots = list(SeqIO.parse(rhogs_all_address, "fasta"))
+        omamer_rhogs_all_address = rhog_all_folder + rhog_id + "." + fasta_format
+        omamer_rhogs_all_prots = list(SeqIO.parse(omamer_rhogs_all_address, "fasta"))
 
         og_prots = []
         og_prot_list = OGs[hog_id]
-        for rhogs_prot in rhogs_all_prots:
+        for rhogs_prot in omamer_rhogs_all_prots:
             if rhogs_prot.id.split("||")[0] in og_prot_list:
                 sp = rhogs_prot.id.split("||")[1]
                 rhogs_prot.description += " [" + sp + "]"

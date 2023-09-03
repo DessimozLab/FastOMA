@@ -57,11 +57,11 @@ def infer_roothogs():
                                                                                  query_species_names,
                                                                                  query_prot_names_species_mapped)
     # for pure usage of this python file, you can set the output folder
-    # output_folder_rhog = _config.in_folder + "rhogs_all/"
+    # output_folder_rhog = _config.in_folder + "rhogs_all/" // omamer_rhogs
     # using nextflow
 
 
 
     # import sys
-    output_folder_rhog = "./rhogs_all/" #  sys.argv[1]  #
+    output_folder_rhog = "./omamer_rhogs/" #  sys.argv[1]  #
     rhogid_num_list_filt1 = _utils_roothog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, output_folder_rhog, 2)  # min_rhog_size, max_rhog_size
