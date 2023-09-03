@@ -6,6 +6,10 @@ from xml.dom import minidom
 # from . import _config
 from ._config import logger_hog
 
+
+# This code collect subhogs and writes outputs.
+
+
 def collect_subhogs():
 
     logger_hog.info("started collecting pickle files ")
@@ -16,7 +20,7 @@ def collect_subhogs():
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchamrk, the middle should be wirtten in the file
 
-    pickle_folder = "./" # pickle_rhogs
+    pickle_folder = "./" #pickle_rhogs
     output_xml_name = "./output_hog.orthoxml"
     gene_id_pickle_file = "./gene_id_dic_xml.pickle"
 
@@ -130,7 +134,7 @@ def collect_subhogs():
         return og_prot_list
 
     input_orthoxml = output_xml_name # sys.argv[1]  # "out_folder/output_hog_.orthoxml"
-    rhog_all_folder = "./" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
+    rhog_all_folder = "./rhogs_all/" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
     fasta_format = "fa"  # of the rhogs_all
 
     output_file_og_tsv = "OrthologousGroups.tsv"
