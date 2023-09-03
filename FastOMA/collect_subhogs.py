@@ -6,6 +6,13 @@ from xml.dom import minidom
 # from . import _config
 from ._config import logger_hog
 
+from FastOMA.zoo.hog import extract_flat_groups_at_level
+
+from ete3 import Tree
+# import sys
+import os
+from FastOMA.zoo.hog.convert import orthoxml_to_newick
+from Bio import SeqIO
 
 # This code collect subhogs and writes outputs.
 
@@ -20,7 +27,7 @@ def collect_subhogs():
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchamrk, the middle should be wirtten in the file
 
-    pickle_folder = "./" #pickle_rhogs
+    pickle_folder = "./pickle_rhogs/" #pickle_rhogs
     output_xml_name = "./output_hog.orthoxml"
     gene_id_pickle_file = "./gene_id_dic_xml.pickle"
 
@@ -85,11 +92,6 @@ def collect_subhogs():
 
     logger_hog.info("Now writing OG fasta files ")
 
-    from ete3 import Tree
-    # import sys
-    import os
-    from FastOMA.zoo.hog.convert import orthoxml_to_newick
-    from Bio import SeqIO
 
     def max_og_tree(tree):
         for node in tree.traverse("preorder"):
@@ -139,8 +141,7 @@ def collect_subhogs():
 
     output_file_og_tsv = "OrthologousGroups.tsv"
 
-    trees, species_dic = orthoxml_to_newick(input_orthoxml,
-                                            return_gene_to_species=True)  # encode_levels_as_nhx=False,  xref_tag="protId",
+    trees, species_dic = orthoxml_to_newick(input_orthoxml, return_gene_to_species=True)  # encode_levels_as_nhx=False,  xref_tag="protId",
     print("We extracted " + str(len(trees)) + " trees  in NHX format from the input HOG orthoxml" + input_orthoxml)
 
     OGs = {}
@@ -184,11 +185,7 @@ def collect_subhogs():
 
 
 
-
-    #import sys
-
-    from FastOMA.zoo.hog import extract_flat_groups_at_level
-
+    # import sys
     # input_orthoxml = output_xml_name
     output_file = "rootHOGs.tsv"
 

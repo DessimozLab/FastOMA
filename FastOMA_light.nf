@@ -1,4 +1,6 @@
 
+// NXF_WRAPPER_STAGE_FILE_THRESHOLD='50000'
+
 params.input_folder = "./in_folder/"
 params.output_folder = "./out_folder/"
 params.proteome_folder = params.input_folder + "/proteome"
@@ -71,7 +73,8 @@ process hog_big{ //publishDir params.pickles_rhogs_folder
   input:
     val rhogsbig_tree_ready
   output:
-    path "*.pickle"
+    path "pickle_rhogs/*.pickle"
+    // path "*.pickle"
     path "*.fa", optional: true   // msa         if write True
     path "*.nwk", optional: true  // gene trees  if write True
     val true
@@ -85,7 +88,9 @@ process hog_rest{ //publishDir params.pickles_rhogs_folder
   input:
     val rhogsrest_tree_ready
   output:
-    path "*.pickle"
+    path "pickle_rhogs/*.pickle"
+    // path "*.pickle"
+    //path "pickle_rhogs/*.pickle"
     path "*.fa" , optional: true   // msa         if write True
     path "*.nwk" , optional: true  // gene trees  if write True
     val true
@@ -102,7 +107,7 @@ process collect_subhogs{
   input:
     val ready_hog_rest
     val ready_hog_big     // path pickle_rhogs   // this is for depenedcy
-    path all_pickles //"*.pickle"  //path "pickle_rhogs"   // this is the folder includes pickles_rhogs
+    path "pickle_rhogs/"  // "*.pickle"  // path "pickle_rhogs"   // this is the folder includes pickles_rhogs
     path "gene_id_dic_xml.pickle"
     path "rhogs_all"
   output:

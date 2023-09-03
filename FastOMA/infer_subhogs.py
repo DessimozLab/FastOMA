@@ -11,7 +11,7 @@ import sys
 # import _config
 
 from ._config import logger_hog
-
+import os
 
 # from ._utils import logger_hog
 # import ._utils_rhog
@@ -53,12 +53,14 @@ def infer_subhogs():
     if inferhog_concurrent_on:
         print("parallelization for subhog inference is on.")
 
-    pickles_rhog_folder = "./"
+    pickles_rhog_folder = "./pickle_rhogs/"
+    if not os.path.exists(pickles_rhog_folder):
+        os.makedirs(pickles_rhog_folder)
+
+    # pickles_rhog_folder = "./"
     pickles_subhog_folder_all = "./"
 
     # inferhog_concurrent_on = inferhog_concurrent_on_string == "True"
-
-
 
     print("input is", address_rhogs_folder)
 
@@ -66,7 +68,6 @@ def infer_subhogs():
     print("there are ", len(list_rhog_fastas_files), "rhogs in the input folder")
 
     rhogs_fa_folder = address_rhogs_folder
-
 
     list_rhog_fastas_files_rem = _utils_subhog.list_rhog_fastas(address_rhogs_folder)
     print("there are ", len(list_rhog_fastas_files_rem), "rhogs remained in the input folder", list_rhog_fastas_files_rem[:5] )
