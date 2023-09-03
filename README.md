@@ -176,12 +176,12 @@ This means that if you remove the `work` folder, you will not have access to the
 If you are working on a large scale project, you may need to change the limitation on the number of files opened in linux using `ulimit -n 271072`. 
 
 ### using omamer's output
-The first step of the FastOMA pipele is to run [OMAmer](https://github.com/DessimozLab/omamer). If you already have the hogmap files, you can put them in the `in_folder/hogmap_input_folder`.
+The first step of the FastOMA pipele is to run [OMAmer](https://github.com/DessimozLab/omamer). If you already have the hogmap files, you can put them in the `in_folder/hogmap_in`.
 Then your structure of files will be 
 ```
 $ tree ../testdata/
 ├── in_folder
-│   ├── hogmap_input_folder
+│   ├── hogmap_in
 │   │   ├── CHLTR.fa.hogmap
 │   │   ├── MYCGE.fa.hogmap
 │   ├── omamerdb.h5
