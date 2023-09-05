@@ -14,7 +14,7 @@ nwk_path= working_folder+"in_folder/species_tree.nwk" # species tree should be p
 tree_str = pyham.utils.get_newick_string(nwk_path, type="nwk")
 print(tree_str[:10])
 
-orthoxml_path=working_folder+"out_folder/output_hog_.orthoxml"
+orthoxml_path=working_folder+"out_folder/output_hog.orthoxml"
 ham_analysis = pyham.Ham(tree_str, orthoxml_path, use_internal_name=True)
 print("Ham analysis done") # for a big orthoxml file it can take ~30mins
 
