@@ -140,7 +140,14 @@ After few minutes, the run for test data finishes.
 [] process > hog_rest ()        [100%] 2 of 2 ✔
 [] process > collect_subhogs () [100%] 1 of 1 ✔
 ```
-If the run interrupted, by adding `-resume` to the nextflow commond line, you can continue your previous nextflow job. 
+
+The first step is to run [OMAmer](https://github.com/DessimozLab/omamer) for finding the putative gene families (putative rootHOG) based on  kmer similarity.
+Next, we write them in FASTA files, which could be used to run next steps in parrallel on each FASTA gene family.
+Then, to have similar size jobs, we batch these FASTA files either as one big roothog (per job `hog_big`) or a few hundreds together as one job `hog_rest`.
+These are decided based on the FASTA file size. Finally once all jobs of `hog_big` and `hog_rest` are done, we `collect_subhog` and save all outputs.  
+
+
+If the run interrupted, by adding `-resume` to the nextflow commond line, you might be able to continue your previous nextflow job. 
 ## expected output structure for test data
 The output of FastOMA includes two folders (`hogmap` and `OrthologousGroupsFasta`) and three files 
 (`OrthologousGroupsFasta.tsv`, `rootHOGs.tsv` and `output_hog.orthoxml`).
