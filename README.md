@@ -142,10 +142,18 @@ After few minutes, the run for test data finishes.
 ```
 If the run interrupted, by adding `-resume` to the nextflow commond line, you can continue your previous nextflow job. 
 ## expected output structure for test data
-Then, following files and folders should appear in the folder `out_folder` which was the argument.
+The output of FastOMA includes two folders (`hogmap` and `OrthologousGroupsFasta`) and three files 
+(`OrthologousGroupsFasta.tsv`, `rootHOGs.tsv` and `output_hog.orthoxml`).
+The `hogmap` folder includes the output of [OMAmer](https://github.com/DessimozLab/omamer); each file corresponds to an input proteome.
+The folder `OrthologousGroupsFasta` includes FASTA files, and all proteins inside each FASTA file are orthologous to each other. 
+These could be used as gene markers for species tree inference with refined resolution, [more info](https://f1000research.com/articles/9-511).
+Note that Orthologous Groups are groups of strict orthologs, with at most 1 representative per species.
+Hierarchical Orthologous Groups are groups of orthologs and paralogs, defined at each taxonomic level.
+
+So, following files and folders should appear in the folder `out_folder` which was the argument.
 ```
 $ls out_folder
-hogmap  OrthologousGroupsFasta  OrthologousGroups.tsv  rootHOGs.tsv output_hog.orthoxml
+hogmap  OrthologousGroupsFasta  OrthologousGroups.tsv  rootHOGs.tsv output_hog.orthoxml pickles_temp
 ```
 among which `output_hog.orthoxml` is the final output in [orthoXML format](https://orthoxml.org/0.4/orthoxml_doc_v0.4.html). Its content looks like this
 
@@ -169,11 +177,22 @@ among which `output_hog.orthoxml` is the final output in [orthoXML format](https
 </orthoXML>
 ```
 
-Note that some of the output files are symlink (a.k.a a symbolic link), linked to files in the folder `work` created by nextflow pipeline. 
-This means that if you remove the `work` folder, you will not have access to the output files anymore. 
+If you are interested in specific gene in specific species, and wants to know 
+proteins that are in the gene family, you can find its protein ID in the file `rootHOGs.tsv` using grep. 
+The first column of this file `rootHOGs.tsv` shows the rootHOG ID which could be searched on the [OMA browser](https://omabrowser.org/). 
+Note that some of the input genes might not appear in this file. 
 
+To find list of genes that are orthologous to your gene of interest, you can search in the file `OrthologousGroups.tsv` 
+where each line is an orthologous group. Each line corresponds to a FASTA file in the folder ` OrthologousGroupsFasta`. 
+
+
+Note that some of the output files are symlink (a.k.a a symbolic link), linked to files in the folder `work` created by nextflow pipeline. 
+This means that if you remove or rename the `work` folder, you will not have access to the output files anymore. 
 
 If you are working on a large scale project, you may need to change the limitation on the number of files opened in linux using `ulimit -n 271072`. 
+
+You can learn about OMA and FastOMA on [OMA Academy](https://oma-stage.vital-it.ch/oma/academy/).  
+
 
 ### using omamer's output
 The first step of the FastOMA pipele is to run [OMAmer](https://github.com/DessimozLab/omamer). If you already have the hogmap files, you can put them in the `in_folder/hogmap_in`.
