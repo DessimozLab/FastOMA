@@ -15,7 +15,7 @@ params.genetrees_folder = params.output_folder + "/genetrees"
 
 process omamer_run{
   time {4.h}
-  memory {16.GB}
+  memory {90.GB}
   publishDir params.hogmap_folder
   input:
     path proteomes_omamerdb_inputhog
@@ -68,7 +68,7 @@ process hog_big{
   publishDir params.pickles_temp
   cpus  6
   time {20.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
-  memory {20.GB}
+  memory {80.GB}
   input:
     val rhogsbig_tree_ready
   output:
