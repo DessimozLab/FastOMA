@@ -142,7 +142,7 @@ def get_default_options():
         # Speed up the neighbor joining phase & reduce memory usage (recommended for >50,000 sequences)
         StringOption('-fastest', active=False),
 
-        # -quote -- quote sequence names in the output and allow spaces, commas,  parentheses, and colons in them but not ' characters (fasta files only)\n"
+        #-quote -- quote sequence names in the output and allow spaces, commas,  parentheses, and colons in them but not ' characters (fasta files only)\n"
         StringOption('-quote', active=False),
 
         # Set the number of rounds of maximum-likelihood NNIs. Deafault 4*log2(N), N = the number of unique sequences
