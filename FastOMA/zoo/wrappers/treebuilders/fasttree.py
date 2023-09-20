@@ -63,7 +63,7 @@ class Fasttree(TreeBuilder):
         start = time.time()  # time the execution
         if self.input_type == AlignmentInput.OBJECT:  # different operation depending on what it is
             with tempfile.NamedTemporaryFile(mode='wt') as fh:
-                SeqIO.write(self.input, fh, 'phylip-relaxed') # default interleaved
+                SeqIO.write(self.input, fh, 'fasta') # default interleaved # 'phylip-relaxed'
                 fh.seek(0)
                 output, error = self._call(fh.name, *args, **kwargs)
                 self.result = self._read_result(output, error)  # store result

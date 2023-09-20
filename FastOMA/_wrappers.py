@@ -62,7 +62,8 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     if _config.tree_tool == "fasttree":
         wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
         wrapper_tree.options.options['-fastest'].active = True   # .set_value(True)  is wrong.
-        wrapper_tree.options.options['-quote'].active = True
+        #wrapper_tree.options.options['-quote'].active = True
+        #wrapper_tree.options.options['-nt'].active = True
 
     # todo using more cpus ?
     # elif _config.tree_tool == "iqtree": # very slow not recommanded
