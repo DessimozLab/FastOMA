@@ -1,4 +1,7 @@
 
+
+import os.path
+
 from ._utils_subhog import logger_hog
 from . import _utils_roothog
 from . import _config
@@ -45,9 +48,22 @@ def infer_roothogs():
     logger_hog.info("size of query_prot_recs_filt is " + str(len(query_prot_recs_filt)) + " " + str(
         len(query_prot_recs_filt[0])))
 
-    rhogids_list, rhogids_prot_records_query = _utils_roothog.group_prots_roothogs(prots_hogmap_hogid_allspecies,
+
+    splice_files =  os.path.exists("./splice/")
+    if splice_files:
+        isoform_by_gene_all = _utils_roothog.parse_isoform_file(query_species_names)
+        #query_species_names[0], isoform_by_gene_all[0], isoform_by_gene_all[2][:2]
+        not_selected_isofroms_all = _utils_roothog.find_nonbest_isoform(hogmap_allspecies_elements, isoform_by_gene_all)
+
+        prots_hogmap_hogid_allspecies_ ,  query_prot_recs_filt_ = _utils_roothog.handle_splice(prots_hogmap_hogid_allspecies, query_prot_recs_filt, selected_isofroms_all)
+    else:
+        prots_hogmap_hogid_allspecies_= prots_hogmap_hogid_allspecies
+        query_prot_recs_filt_ = query_prot_recs_filt
+
+
+    rhogids_list, rhogids_prot_records_query = _utils_roothog.group_prots_roothogs(prots_hogmap_hogid_allspecies_,
                                                                                 query_species_names,
-                                                                                query_prot_recs_filt)
+                                                                                query_prot_recs_filt_)
 
     # rhogid_num_list_raw=utils_rhog.write_rhog(rhogids_list,rhogids_prot_records_query, _config.in_folder+"rhogs/". "rhogs_raw",2)
 
