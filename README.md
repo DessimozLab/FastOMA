@@ -56,7 +56,7 @@ python -m pip install --upgrade pip
 You may use conda to install [fasttree](http://www.microbesonline.org/fasttree/), [mafft](http://mafft.cbrc.jp/alignment/software/). and [openjdk](https://jdk.java.net/java-se-ri/17) (the alternative for Java 11< version <17 which is needed for nextflow). 
 ```  
 conda install -c bioconda mafft fasttree
-conda install -c conda-forge openjdk
+conda install -c conda-forge openjdk=16
 ```
 
 You can make sure that omamer and nextflow is installed with running  
@@ -239,7 +239,18 @@ You may need to re-run nextflow command line by adding `-resume`, if the allocat
 You may need to increase the number of opoened files in your system with `ulimit -n 131072` or higher.
 
 
+## Handle splice files
+You can put the splice files in the folder `in_folder/splice`. They should be named as `species_name.splice` for each species.
+Those protiens that in the FASTA proteome file but not in the splice file, we would use them as main isoform. 
+```
+$ head HUMAN.splice 
+HUMAN00001;HUMAN00002;HUMAN00003;HUMAN00004;HUMAN00005;HUMAN00006
+HUMAN00007;HUMAN00008;HUMAN00009;HUMAN00010;HUMAN00011;HUMAN00012;
+HUMAN00022;HUMAN00023;HUMAN00024;
+HUMAN00027;HUMAN00028;HUMAN00029;HUMAN00030;HUMAN00031;HUMAN00032;HUMAN00033
+HUMAN00034;HUMAN00035
 
+```
 
 ## Change log
 - Release  v0.1.0: improve nextflow pipeline and outputs. 
