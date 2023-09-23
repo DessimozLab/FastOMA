@@ -241,7 +241,8 @@ You may need to increase the number of opoened files in your system with `ulimit
 
 ## Handle splice files
 You can put the splice files in the folder `in_folder/splice`. They should be named as `species_name.splice` for each species.
-Those protiens that in the FASTA proteome file but not in the splice file, we would use them as main isoform. 
+For each row of different isforoms of a preotien, FastOMA selects the best one (based on omamer family score and isoform length). 
+We also use those proteins that are not in splice file but present in the FASTA proteome file. 
 ```
 $ head HUMAN.splice 
 HUMAN00001;HUMAN00002;HUMAN00003;HUMAN00004;HUMAN00005;HUMAN00006
