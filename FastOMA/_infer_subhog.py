@@ -293,7 +293,7 @@ def infer_hogs_this_level(node_species_tree, rhogid_num, pickles_subhog_folder_a
     if len(msa_filt_row_col) > 1 and len(msa_filt_row_col[0]) > 1:
 
         gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, genetree_msa_file_addr)
-        gene_tree = Tree(gene_tree_raw + ";", format=0)
+        gene_tree = Tree(gene_tree_raw + ";", format=0)   # ,quoted_node_names=True
         logger_hog.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+str(rhogid_num)+", level: "+str(node_species_tree.name))
 
         if _config.fragment_detection and len(gene_tree) > 2 and prot_dubious_msa_list:
