@@ -8,6 +8,7 @@ params.proteomes = params.proteome_folder + "/*"
 params.hogmap_in = params.input_folder + "/hogmap_in"
 
 params.hogmap_folder = params.output_folder + "/hogmap"
+params.splice_folder = params.output_folder + "/splice"
 params.species_tree = params.input_folder + "/species_tree.nwk"
 params.pickles_temp = params.output_folder + "/pickles_temp"
 params.genetrees_folder = params.output_folder + "/genetrees"
@@ -38,6 +39,7 @@ process infer_roothogs{
     val ready_omamer_run
     path hogmap_folder
     path proteome_folder
+    path splice_folder
   output:
     path "omamer_rhogs"
     path "gene_id_dic_xml.pickle"
@@ -119,6 +121,7 @@ workflow {
     proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
     proteome_folder = Channel.fromPath(params.proteome_folder)
     hogmap_folder = Channel.fromPath(params.hogmap_folder)
+    splice_folder = Channel.fromPath(params.splice_folder)
 
     genetrees_folder = Channel.fromPath(params.genetrees_folder)
     hogmap_in = Channel.fromPath(params.hogmap_in)
@@ -130,7 +133,7 @@ workflow {
     (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb_inputhog)
     ready_omamer_run_c = ready_omamer_run.collect()
 
-    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder)
+    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
     ready_infer_roothogs_c = ready_infer_roothogs.collect()
 
     (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, omamer_rhogs)
