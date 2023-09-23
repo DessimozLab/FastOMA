@@ -403,7 +403,7 @@ def find_nonbest_isoform(hogmap_allspecies_elements, isoform_by_gene_all):
 
 
 def handle_splice(prots_hogmap_hogid_allspecies, query_prot_recs_filt, not_selected_isofroms_all,
-                  query_prot_names_species_mapped):  # _utils_roothog
+                  query_prot_names_species_mapped):
 
     query_prot_recs_filt_ = []
     prots_hogmap_hogid_allspecies_ = []

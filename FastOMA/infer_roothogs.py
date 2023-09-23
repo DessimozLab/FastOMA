@@ -55,7 +55,7 @@ def infer_roothogs():
         #query_species_names[0], isoform_by_gene_all[0], isoform_by_gene_all[2][:2]
         not_selected_isofroms_all = _utils_roothog.find_nonbest_isoform(hogmap_allspecies_elements, isoform_by_gene_all)
 
-        prots_hogmap_hogid_allspecies_ ,  query_prot_recs_filt_ = _utils_roothog.handle_splice(prots_hogmap_hogid_allspecies, query_prot_recs_filt, selected_isofroms_all)
+        prots_hogmap_hogid_allspecies_ ,  query_prot_recs_filt_ = _utils_roothog.handle_splice(prots_hogmap_hogid_allspecies, query_prot_recs_filt, not_selected_isofroms_all, query_prot_names_species_mapped)
     else:
         prots_hogmap_hogid_allspecies_= prots_hogmap_hogid_allspecies
         query_prot_recs_filt_ = query_prot_recs_filt
