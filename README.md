@@ -77,9 +77,9 @@ If you face any difficulty during installation, feel free to create a [github is
 ## How to install FastOMA 
 First, download the FastOMA package:
 ```
-wget https://github.com/DessimozLab/FastOMA/archive/refs/heads/master.zip
-unzip master.zip
-mv FastOMA-master FastOMA
+wget https://github.com/DessimozLab/FastOMA/archive/refs/heads/main.zip
+unzip main.zip
+mv FastOMA-main FastOMA
 ```
 Then install it
 ```
