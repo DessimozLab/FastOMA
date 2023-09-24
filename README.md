@@ -126,7 +126,8 @@ Finally, run the package using nextflow as below:
 # cd FastOMA/testdata
 nextflow ../FastOMA_light.nf  --input_folder in_folder   --output_folder out_folder  -with-report
 ```
-The script `FastOMA_light.nf` is tailored for a few species. In real case scenario, please use `FastOMA.nf`.   
+The script `FastOMA_light.nf` is tailored for a few species. In real case scenario, please use `FastOMA.nf`.  
+The only difference between these two scripts is the amount of CPU and memory assigned to each job. 
 
 
 Note that to have a comprehensive test, we set the default value of needed cpus as 10.
