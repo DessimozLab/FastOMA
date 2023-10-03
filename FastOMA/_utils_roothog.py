@@ -220,7 +220,7 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, que
             for (species_idx, prots_hogmap_idx) in rhogid_prot_idx:
                 prot_record = query_prot_recs_filt[species_idx][prots_hogmap_idx]
                 """
-                Keep prot seq in hog class. We can write species idx and prot idx to  improve speed of code for omamaer tresholidng 
+                Keep prot seq in hog class. We can write species idx and prot idx to  improve speed of code for omamer tresholidng 
                 """
                 rhogid_prot_records.append(prot_record)
                 species_idx_rhogid.append(species_idx)
@@ -254,6 +254,8 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
                 fsore = float(prots_hogmap_fscore_allspecies[specis_idx][prot_idx])
                 if fsore > _config.omamer_fscore_treshold_big_rhog:
                     rhogid_prot_record_query_filt.append(prot_bio_seq)
+                else:
+                    logger_hog.info("we are removing due to filtering rhogs with fscore treshold1 " + str(prot_name))
 
             if len(rhogid_prot_record_query_filt) < _config.omamer_treshold_big_rhog_szie2: # 40 * 1000
                     rhogid_prot_record_query_filt2 = rhogid_prot_record_query_filt  # without change for small rhogs
@@ -270,6 +272,8 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
                     fsore = float(prots_hogmap_fscore_allspecies[specis_idx][prot_idx])
                     if fsore > _config.omamer_fscore_treshold_big_rhog2:
                         rhogid_prot_record_query_filt2.append(prot_bio_seq)
+                    else:
+                        logger_hog.info("we are removing due to second round of filtering rhogs with fscore treshold2 " + str(prot_name))
 
         if rhogid_prot_record_query_filt2:  # at least one prot in the rhog
             rhogids_prot_records_query_filt2.append(rhogid_prot_record_query_filt2)
@@ -293,6 +297,10 @@ def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, m
 
         if min_rhog_size <= len(rhogid_prot_rec_query) <= max_rhog_size:
             SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder +"/HOG_"+ str(rhogid_num).zfill(7)+".fa", "fasta")
+        else:
+            for prot1 in rhogid_prot_rec_query:
+                logger_hog.debug("we are removing due to omamer signleton hog "+str(prot1.id))
+
 
     logger_hog.info("Writing Sequences of roothogs finished." )
 

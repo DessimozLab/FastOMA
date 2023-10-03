@@ -15,7 +15,7 @@ params.genetrees_folder = params.output_folder + "/genetrees"
 
 
 process omamer_run{
-  time {4.h}
+  //time {4.h}
   memory {90.GB}
   publishDir params.hogmap_folder
   input:
@@ -23,7 +23,7 @@ process omamer_run{
   output:
     path "*.hogmap"
     val true
-  script:
+  script: //todo this if condition can be done as part of nextflow, so it won't submit job for cp
   """
     if [ -f ${proteomes_omamerdb_inputhog[2]}/${proteomes_omamerdb_inputhog[0]}.hogmap ]
     then
@@ -69,7 +69,7 @@ process batch_roothogs{
 process hog_big{
   publishDir params.pickles_temp
   cpus  6
-  time {20.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
+  time {60.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
   memory {80.GB}
   input:
     val rhogsbig_tree_ready
@@ -101,7 +101,7 @@ process hog_rest{
 
 
 process collect_subhogs{
-  memory {90.GB}
+  memory {150.GB}
   publishDir params.output_folder, mode: 'copy'
   input:
     val ready_hog_rest
@@ -157,3 +157,7 @@ workflow {
     orthoxml_file.view{" output orthoxml file ${it}"}
 
 }
+
+
+
+// todo: check input files very beginning (before omamer starts) e.g all species are in the species tree. No species chars in fasta recrod.

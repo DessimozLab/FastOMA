@@ -64,7 +64,7 @@ class HOG:
                 # to do in future:  select best seq, not easy to defin, keep diversity,
                 records_sub_sampled_raw = sample(list(records_sub_filt), _config.hogclass_max_num_seq)  # without replacement.
                 records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, 0.01) # to make sure no empty column
-                logger_hog.info("we are doing subsamping in hig class from " + str(len(records_full)) + " to " + str(_config.hogclass_max_num_seq) + " seqs.")
+                logger_hog.info("we are doing subsamping in hog class from " + str(len(records_full)) + " to " + str(_config.hogclass_max_num_seq) + " seqs.")
             else:
                 records_sub_sampled = records_sub_filt
                 # removing some columns completely gap - (not x   )

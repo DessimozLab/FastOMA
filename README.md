@@ -59,21 +59,6 @@ conda install -c bioconda mafft fasttree
 conda install -c conda-forge openjdk=16
 ```
 
-You can make sure that omamer and nextflow is installed with running  
-``` 
-omamer -h
-nextflow -h
-```
-
-If it doesn't work, you may need to have the following for nextflow to work.
-```
-JAVA_HOME="/path/to/jdk-17"
-NXF_JAVA_HOME="/path/to/jdk-17"
-export PATH="/path/to/jdk-17/bin:$PATH"
-```
-You can always make sure whether you are using the python that you intended to use with `which python`  and `which python3`.
-If you face any difficulty during installation, feel free to create a [github issue](https://github.com/DessimozLab/FastOMA/issues), we'll try to solve it toghter.
-
 ## How to install FastOMA 
 First, download the FastOMA package:
 ```
@@ -99,6 +84,22 @@ You can check your installation with running one of submodules of FastOMa
 ``` 
 infer-roothogs --version
 ```
+
+You can make sure that omamer and nextflow is installed with running  
+``` 
+omamer -h
+nextflow -h
+```
+
+If it doesn't work, you may need to have the following for nextflow to work.
+```
+JAVA_HOME="/path/to/jdk-17"
+NXF_JAVA_HOME="/path/to/jdk-17"
+export PATH="/path/to/jdk-17/bin:$PATH"
+```
+You can always make sure whether you are using the python that you intended to use with `which python`  and `which python3`.
+If you face any difficulty during installation, feel free to create a [github issue](https://github.com/DessimozLab/FastOMA/issues), we'll try to solve it toghter.
+
 
 
 # How to run FastOMA on the test data
@@ -252,6 +253,12 @@ HUMAN00022;HUMAN00023;HUMAN00024;
 HUMAN00027;HUMAN00028;HUMAN00029;HUMAN00030;HUMAN00031;HUMAN00032;HUMAN00033
 HUMAN00034;HUMAN00035
 ```
+
+# Downstream analysis
+
+- High resolution Tree inference
+
+- phylostragraphy 
 
 ## Change log
 - Release  v0.1.0: improve nextflow pipeline and outputs. 

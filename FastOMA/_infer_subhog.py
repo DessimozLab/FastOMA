@@ -393,10 +393,10 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                             subhogs_id_children_assigned.append(subHOG._hogid)
                         else:  # this hog is already decided to be merged  print(node.name, subHOG._hogid, node_leave_name)
                             if "processed" in node:
-                                logger_hog.info("issue 1863"+ str(node.name)+str(subHOG._hogid)+ str(node_leave_name)) # print("processed", node.name) #else: #    print("processed not in ", node.name)  # print(node_leave_name,"is in ",subHOG._hogid)
+                                logger_hog.info("issue 1863 "+ str(node.name)+str(subHOG._hogid)+ str(node_leave_name)) # print("processed", node.name) #else: #    print("processed not in ", node.name)  # print(node_leave_name,"is in ",subHOG._hogid)
             if subHOG_to_be_merged:
                 if len(subHOG_to_be_merged) == 1:
-                    logger_hog.info("issue 125568313"+str(subHOG_to_be_merged)+" "+node.name)
+                    logger_hog.info("issue 125568313 "+str(subHOG_to_be_merged)+" "+node.name)
 
                 subHOG_to_be_merged_set = set(subHOG_to_be_merged)
                 taxnomic_range = node_species_tree.name
