@@ -37,7 +37,7 @@ def read_msa(input_msa):
         if len(ii):
             coords.append((np.min(ii), np.max(ii)))
         else:
-            logger_hog.debug("issue 1321230 all of the seq is gap"+str(rec))
+            logger_hog.warning("issue 1321230 all of the seq is gap"+str(rec))
             coords.append((0, 0))
 
     ids = np.array(ids)
@@ -189,15 +189,19 @@ def find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic):
                         for prot_name in list_leaves:
                             if prot_name.split("||")[1] == species_dubious_sd:
                                 prot_dubious_list.append(prot_name)
-                    subhogs_list = [i.split("|_|")[1] for i in prot_dubious_list]  # subhog id at child level
-                    if len(set(subhogs_list)) > 1:
-                        # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
-                        child_size_min_indx = child_size.index(min(child_size))
-                        prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
+                    try:
+                        subhogs_list = [i.split("|_|")[1] for i in prot_dubious_list]  # subhog id at child level
+                        if len(set(subhogs_list)) > 1:
+                            # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
+                            child_size_min_indx = child_size.index(min(child_size))
+                            prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
 
-                    else:
-                        logger_hog.debug( "This species (protein from the same subhog) is safe to keep "+ str(node_name)+" "+str(species_dubious_sd))
-                        #all of them are from the same subhog, so it doesn't matter, a duplication event doesn't affect when all are from the same subhog at children level
+                        else:
+                            logger_hog.debug( "This species (protein from the same subhog) is safe to keep "+ str(node_name)+" "+str(species_dubious_sd))
+                            #all of them are from the same subhog, so it doesn't matter, a duplication event doesn't affect when all are from the same subhog at children level
+                    except:
+                        logger_hog.warning("issue 2495869: prot_dubious_list doesnt include the hog id . so we'll  keep it" + str(gene_tree) + " " + str(prot_dubious_list))
+
 
     return prot_dubious_sd_remove_list
 
@@ -256,7 +260,7 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
 #                 (gene_tree, all_species_dubious_sd_dic3) = _utils_subhog.genetree_sd(node_species_tree, gene_tree,genetree_msa_file_addr + "_dubious_sd_2")
 #                 if all_species_dubious_sd_dic3:
 #                     # todo make it as while to do it for all possible iteration, but there won't many cases for this at least in QFO dataset
-#                     logger_hog.debug( "issue 13954,these are found after removing with sd two times , all_species_dubious_sd_dic3 " + str(all_species_dubious_sd_dic2))
+#                     logger_hog.warning( "issue 13954,these are found after removing with sd two times , all_species_dubious_sd_dic3 " + str(all_species_dubious_sd_dic2))
 #
 #         hogs_children_level_list_raw = hogs_children_level_list
 #         logger_hog.debug("** we removed theses sequences "+str(prot_dubious_sd_remove_list))
@@ -318,7 +322,8 @@ def merge_fragments_hogclass(fragments_set, seq_dubious_msa, hogs_children_level
         elif len(aa_col_set-{'-'}) > 1:
             aa_consensus = 'X'
         else:
-            print("issue 123124124", aa_col_set)
+            logger_hog.WARNING("issue 123124124"+str(aa_col_set))
+
         merged_sequence += aa_consensus
     # seq0 = str(seq_dubious_msa[0].seq)
     # seq1 = str(seq_dubious_msa[1].seq)
@@ -336,12 +341,12 @@ def merge_fragments_hogclass(fragments_set, seq_dubious_msa, hogs_children_level
     # assert len(merged_sequence) == len(seq0)
     # merged_fragment_name = "_|_" .join(fragments_list) # fragment_name_host + "_|_" + fragments_list
     if len(merged_fragment_name) > 220:
-        logger_hog.info("The length of sequence id which now being merged is getting very long > 220, we should make sure that it won't cause any issues with fasttree nd biopython and Mafft"+str(merged_fragment_name))
+        logger_hog.warning("The length of sequence id which now being merged is getting very long > 220, we should make sure that it won't cause any issues with fasttree nd biopython and Mafft"+str(merged_fragment_name))
     merged_msa_new_list = []
     if merged_msa and merged_msa[0]:
         assert len(merged_msa[0]) == len(merged_sequence), str(fragment_name_host)
     else:
-        print("issue 15723 merged_msa is empty ?")
+        logger_hog.warning("issue 15723 merged_msa is empty ?")
     for seq_rec in merged_msa:
         if seq_rec.id == fragment_name_host:
             seq_rec_edited = SeqRecord(Seq(merged_sequence), id=merged_fragment_name, name=merged_fragment_name)
@@ -397,7 +402,7 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
             rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - fragments_remove_set
             if len(rest_leaves) < 2:
                 # todo
-                print("** issue 86194")
+                logger_hog.warning("** issue 86194")
                 hogs_children_level_list = []
                 gene_tree = ""
                 return gene_tree, hogs_children_level_list, merged_msa_new

@@ -38,13 +38,13 @@ def list_rhog_fastas(address_rhogs_folder):
      output: list of rhog Id (integer)
     """
     rhog_files = listdir(address_rhogs_folder)
-    rhogid_num_list = []
+    rhogid_list = []
     for rhog_file in rhog_files:
         if rhog_file.split(".")[-1] == "fa":
-            rhogid_num = int(rhog_file.split(".")[0].split("_")[1][1:])
-            rhogid_num_list.append(rhogid_num)
+            rhogid = rhog_file.split(".")[0].split("_")[1] #  [1:]
+            rhogid_list.append(rhogid)
 
-    return rhogid_num_list
+    return rhogid_list
 
 
 def read_species_tree_add_internal(species_tree_address):
@@ -146,14 +146,14 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
 
 
 
-def prepare_species_tree(rhog_i, species_tree, rhogid_num):
+def prepare_species_tree(rhog_i, species_tree, rhogid):
     """
     orthoxml_to_newick.py function for extracting orthoxml_to_newick.py subtree from the input species tree  orthoxml_to_newick.py.k.orthoxml_to_newick.py pruning,
     based on the names of species in the rootHOG.
 
     output: species_tree (pruned), species_names_rhog, prot_names_rhog
     """
-    assert len(rhog_i) > 0, 'input hog_i is empty, probably previous step find_rhog has issue, rhogs/HOG_B0'+str(rhogid_num)+'is empty?'
+    assert len(rhog_i) > 0, 'input hog_i is empty, probably previous step find_rhog has issue, rhogs/HOG_B0'+rhogid+'is empty?'
     species_names_rhog = []
     prot_names_rhog = []
     for rec in rhog_i:
@@ -175,6 +175,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
 
     first_common_ancestor_name = species_tree.get_common_ancestor(species_names_uniqe).name
     species_tree.prune(species_names_uniqe, preserve_branch_length=True)
+    # todo check internal node with one child, we need to report for i or not ?
     species_tree.name = first_common_ancestor_name
     # add internal node name to the tree
     # this has an issue with root name, cannot add the root name
@@ -191,8 +192,8 @@ def prepare_species_tree(rhog_i, species_tree, rhogid_num):
     #             # list_children_names = [str(node_child.name) for node_child in node_children]
     #             # node.name = '_'.join(list_children_names)
     #             # ?? to imrpove, if the species tree has internal node name, keep it,
-    #             # then checn condition in  _infer_subhog.py, where logger_hog.info("Finding hogs for rhogid_num: "+str(rh
-    #             node.name = "internal_" + str(counter_internal)  #  +"_rhg"+str(rhogid_num)  #  for debuging
+    #             # then checn condition in  _infer_subhog.py, where logger_hog.info("Finding hogs for rhogid: "+str(rh
+    #             node.name = "internal_" + str(counter_internal)  #  +"_rhg"+rhogid  #  for debuging
     #             counter_internal += 1
     # print("Working on the following species tree.")
     # print(species_tree.write(format=1, format_root_node=True))
@@ -387,7 +388,7 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
             if ratio_record_nongap >= inferhog_tresh_ratio_gap_row:
                 msa_filtered_row.append(record)
         else:
-            print("issue 12788 : error , seq len is zero when msa_filter_row")
+            logger_hog.warning("issue 12788 : error , seq len is zero when msa_filter_row")
     if _config.msa_write_all and gene_tree_file_addr:
         out_name_msa = gene_tree_file_addr +"_filtered_row_"+str(inferhog_tresh_ratio_gap_row)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
@@ -449,7 +450,7 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
     if len(msa_filt_row_1[0]) >= _config.inferhog_min_cols_msa_to_filter:
         # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
         # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
-        # logger_hog.debug( "We are doing MSA trimming " + str(rhogid_num) + ", for taxonomic level:" + str(node_species_tree.name))
+        # logger_hog.debug( "We are doing MSA trimming " + rhogid + ", for taxonomic level:" + str(node_species_tree.name))
         # print(len(merged_msa), len(merged_msa[0]))
 
         if _config.automated_trimAL:
@@ -471,7 +472,7 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
             for prots_to_remove in prots_to_remove_level:
                 logger_hog.debug("** we are removing the sequence "+str(prots_to_remove)+" due to trimming")
                 # we may want to tag it in the hog object
-            assert len(prots_to_remove_level), "issue 31235"
+            #assert len(prots_to_remove_level), "issue 31235"
             #prots_to_remove |= prots_to_remove_level
             # todo: we may want to remove prot from all subhogs
             # should I remove them from subhog._members ? we are doing so for merging fragments or low species overlap I guess

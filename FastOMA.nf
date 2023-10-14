@@ -15,7 +15,7 @@ params.genetrees_folder = params.output_folder + "/genetrees"
 
 
 process omamer_run{
-  //time {4.h}
+  time {1.h}
   memory {90.GB}
   publishDir params.hogmap_folder
   input:
@@ -101,7 +101,7 @@ process hog_rest{
 
 
 process collect_subhogs{
-  memory {150.GB}
+  memory {200.GB}
   publishDir params.output_folder, mode: 'copy'
   input:
     val ready_hog_rest

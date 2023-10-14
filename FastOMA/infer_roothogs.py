@@ -65,7 +65,7 @@ def infer_roothogs():
                                                                                 query_species_names,
                                                                                 query_prot_recs_filt_)
 
-    # rhogid_num_list_raw=utils_rhog.write_rhog(rhogids_list,rhogids_prot_records_query, _config.in_folder+"rhogs/". "rhogs_raw",2)
+    # rhogid_list_raw=utils_rhog.write_rhog(rhogids_list,rhogids_prot_records_query, _config.in_folder+"rhogs/". "rhogs_raw",2)
 
     rhogids_list_filt, rhogids_prot_records_query_filt = _utils_roothog.filter_rhog(rhogids_list,
                                                                                  rhogids_prot_records_query,
@@ -80,4 +80,6 @@ def infer_roothogs():
 
     # import sys
     output_folder_rhog = "./omamer_rhogs/" #  sys.argv[1]  #
-    rhogid_num_list_filt1 = _utils_roothog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, output_folder_rhog, 2)  # min_rhog_size, max_rhog_size
+    rhogid_list_filt1 = _utils_roothog.write_rhog(rhogids_list_filt, rhogids_prot_records_query_filt, output_folder_rhog, 2)  # min_rhog_size, max_rhog_size
+    # the list of rhogid_list_filt1 only contain represetative roothog for merged rhogs
+

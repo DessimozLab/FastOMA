@@ -179,7 +179,7 @@ def collect_subhogs():
                 rhogs_prot.description += " [" + sp + "]"
                 og_prots.append(rhogs_prot)
 
-        og_id = "OG_" + hog_id  # one OG per rootHOG      # "/HOG_"+ str(rhogid_num).zfill(7)
+        og_id = "OG_" + hog_id  # one OG per rootHOG      # "/HOG_"+ rhogid
         SeqIO.write(og_prots, out_folder_ogs + og_id + ".fa", "fasta")
     print("writing done")
 

@@ -15,13 +15,13 @@ def list_rhog_fastas(address_rhogs_folder):
      output: list of rhog Id (integer)
     """
     rhog_files = listdir(address_rhogs_folder)
-    rhogid_num_list= []
+    rhogid_list= []
     for rhog_file in rhog_files:
         if rhog_file.split(".")[-1] == "fa" and rhog_file.split("_")[0] == "HOG":
-            rhogid_num = int(rhog_file.split(".")[0].split("_")[1][1:])
-            rhogid_num_list.append(rhogid_num)
+            rhogid = rhog_file.split(".")[0].split("_")[1]
+            rhogid_list.append(rhogid)
 
-    return rhogid_num_list
+    return rhogid_list
 
 
 
@@ -31,14 +31,14 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
 
     #work_fldor_out = in_folder
 
-    rhogid_num_list = list_rhog_fastas(address_rhogs_folder)
-    len(rhogid_num_list)
+    rhogid_list = list_rhog_fastas(address_rhogs_folder)
+    len(rhogid_list)
     dic_rhognum_size = {}
-    for rhogid_num in rhogid_num_list[2:]:
-        rhog_i_prot_address = address_rhogs_folder + "/HOG_" + str(rhogid_num).zfill(7) + ".fa"
+    for rhogid in rhogid_list[2:]:
+        rhog_i_prot_address = address_rhogs_folder + "/HOG_" + rhogid + ".fa"
         # rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
         rhog_i_size = os.path.getsize(rhog_i_prot_address)
-        dic_rhognum_size[rhogid_num] = rhog_i_size
+        dic_rhognum_size[rhogid] = rhog_i_size
     len(dic_rhognum_size)
 
 
@@ -49,9 +49,9 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
     # to have at least one big and one rest rhog, this makes nextflow pipline easier,
     # otherwise we need if condition  collect_subhogs won't satisfy if one of them is empty
 
-    list_list_rest_rhog = [[rhogid_num_list[0]],[]]  # each insid list should take 1h to
+    list_list_rest_rhog = [[rhogid_list[0]],[]]  # each insid list should take 1h to
     list_list_rest_size = [[],[]]
-    list_list_big = [rhogid_num_list[1]]
+    list_list_big = [rhogid_list[1]]
 
 
 
@@ -72,15 +72,15 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
         # print(folder_id)
         # output_folder_rest = work_fldor_out + "/rhogs_rest/"
         makedirs( output_folder_rest + str(folder_id))
-        for rhogid_num in list_rhog:
-            name = "HOG_" + str(rhogid_num).zfill(7) + ".fa"
+        for rhogid in list_rhog:
+            name = "HOG_" + rhogid + ".fa"
             folder_rest =output_folder_rest + str(folder_id) + "/"
             shutil.copy(address_rhogs_folder + name, folder_rest + name)
 
     # makedirs(work_fldor_out+"rhogs_big")
     #  output_folder_big = work_fldor_out + "rhogs_big/"
-    for folder_id, rhogid_num in enumerate(list_list_big):
-        name = "HOG_" + str(rhogid_num).zfill(7) + ".fa"
+    for folder_id, rhogid in enumerate(list_list_big):
+        name = "HOG_" + rhogid + ".fa"
         folder_big = output_folder_big + "b" + str(folder_id) + "/"
         makedirs(folder_big)
         shutil.copy(address_rhogs_folder + name, folder_big + name)

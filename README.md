@@ -15,8 +15,12 @@ The name of each fasta file is the name of species. Please make sure that the na
 which is from [OMA browser](https://omabrowser.org/oma/current/). 
 This file is `13 Gb` containing all the gene families of the Tree of Life or you can download it for a subset of them, e.g. Primates (352MB). 
 
-3- Sepecies tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
-Note that the name of leaves of the tree (species name) should be the same as the file name of fastas (without `.fa` extension) (item 1). 
+3- Rooted Species tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
+A rough species tree is enough and it does not need to be binary. Besides, we do not need branch length. 
+Note that the name of leaves of the tree (species name) should be the same as the file name of FASTAs (without `.fa` extension) (item 1). And there shouldn't be any repeated names in leaves names and internal node names. 
+
+
+
 You can see an example in the [testdata](https://github.com/sinamajidian/FastOMA/tree/master/testdata/in_folder) folder.
 ```
 $ ls proteome

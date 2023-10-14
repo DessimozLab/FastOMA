@@ -13,16 +13,17 @@ from Bio.SeqRecord import SeqRecord
 class HOG:
     _hogid_iter = 10000
 
-    def __init__(self, input_instantiate, taxnomic_range, rhogid_num, msa=None, num_species_tax_speciestree=None):
+    def __init__(self, input_instantiate, taxnomic_range, rhogid, msa=None, num_species_tax_speciestree=None):
         # fragment_list list of  sets , each set contains protein ID of fragments
         # the input_instantiate could be either
         #     1) orthoxml_to_newick.py protein as the biopython seq record  SeqRecord(seq=Seq('MAPSSRSPSPRT. ]
         # or  2) orthoxml_to_newick.py set of intances of class HOG   wit orthoxml_to_newick.py big msa
         # those variable starting with _ are local to the class, should not access directly  (although it is possbile)
-        self._rhogid_num = rhogid_num
+        self._rhogid = rhogid
         self.__class__._hogid_iter += 1
         # 0070124
-        self._hogid = "HOG_" + str(self._rhogid_num).zfill(7) + "_sub" + str(self.__class__._hogid_iter)
+        #todo add release id,
+        self._hogid = "HOG_" + self._rhogid+ "_sub" + str(self.__class__._hogid_iter)
         self._tax_least = taxnomic_range  #  least taxnomic level
         self._tax_now = taxnomic_range    # the taxnomic level that we are considering now, checking for duplication
 
@@ -202,7 +203,8 @@ class HOG:
             list_of_subhogs_of_same_clade = list(sub_hogs)
             # following only for debugging, can be deleted later
             for subhog in list_of_subhogs_of_same_clade:
-                if len(subhog._members) == 0: logger_hog.debug("issue 12314506" + str(subhog) + str(sub_clade))
+                if len(subhog._members) == 0:
+                    logger_hog.warning("issue 12314506" + str(subhog) + str(sub_clade))
 
             if len(list_of_subhogs_of_same_clade) > 1:
                 paralog_element = ET.Element('paralogGroup')
@@ -214,7 +216,8 @@ class HOG:
                     if str(element_p):
                         paralog_element.append(element_p)  # ,**gene_id_name  indent+2
                     else:
-                        print("issue 123434", str(sh), str(sub_clade))
+                        logger_hog.warning("issue 123434" + str(sh) + str(sub_clade))
+
                 element_list.append(paralog_element)
             elif len(list_of_subhogs_of_same_clade) == 1:
                 subhog = list_of_subhogs_of_same_clade[0]
@@ -223,9 +226,9 @@ class HOG:
                     if str(element):  # element could be  <Element 'geneRef' at 0x7f7f9bacb450>
                         element_list.append(element)  # indent+2
                     else:
-                        logger_hog.debug("issue 12359 "+str(subhog))
+                        logger_hog.warning("issue 12359 "+str(subhog))
                 else:
-                    logger_hog.debug("issue 12369 " + str(subhog))
+                    logger_hog.warning("issue 12369 " + str(subhog))
 
         if len(element_list) == 1:
             return element_list[0]

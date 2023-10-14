@@ -125,14 +125,19 @@ def parse_hogmap_omamer(query_species_names):
         prots_hogmap_subfmedseqlen = []
         for line in omamer_output_file:
             line_strip = line.strip()
-            if not line_strip.startswith('qs'):
+            if not line_strip.startswith('!') and not line_strip.startswith('qs'):
                 line_split = line_strip.split("\t")
+                # header of omamer v2
+                # qseqid	hogid	hoglevel	family_p	family_count	5)family_normcount	subfamily_score	subfamily_count	8)qseqlen	9)subfamily_medianseqlen	10)qseq_overlap
                 prots_hogmap_name.append(line_split[0])
-                prots_hogmap_hogid.append(line_split[1])
-                prots_hogmap_overlp.append(line_split[2])
+                if len(line_split[1].split(":"))>1:
+                    prots_hogmap_hogid.append(line_split[1].split(":")[1]) # HOG:B0012312
+                else:
+                    prots_hogmap_hogid.append(line_split[1])  # N/A
+                prots_hogmap_overlp.append(line_split[10]) # a value > 100 is good
                 prots_hogmap_fscore.append(line_split[3])
-                prots_hogmap_seqlen.append(line_split[5])
-                prots_hogmap_subfmedseqlen.append(line_split[6])
+                prots_hogmap_seqlen.append(line_split[8])
+                prots_hogmap_subfmedseqlen.append(line_split[9])
         prots_hogmap_name_allspecies.append(prots_hogmap_name)
         prots_hogmap_hogid_allspecies.append(prots_hogmap_hogid)
         prots_hogmap_overlp_allspecies.append(prots_hogmap_overlp)
@@ -175,7 +180,7 @@ def filter_prot_mapped(query_species_names, query_prot_recs, query_prot_names_sp
                     query_prot_records_filterd_sp.append(prot_record)
                 else:
                     logger_hog.error("Error 1349 " + query_species_name + " " + query_prot_name+". This shouldn't happen many times.")
-            logger_hog.info("For the species"+query_species_name+", few proteins were ignored by omamer, probably cause prot length .")
+            logger_hog.info("For the species "+query_species_name+", some proteins were ignored by omamer, probably cause prot length .")
             logger_hog.info("Before filtering: in hogmap "+str(len(query_prot_names_species_i))+", in proteome "+str(len(query_prot_recs_i)))
             logger_hog.info("After filtering: in hogmap "+str(len(query_prot_names_species_i))+" in proteome "+str(len(query_prot_records_filterd_sp)))
         else:
@@ -189,7 +194,7 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, que
     """
     orthoxml_to_newick.py function for finding those proteins that are mapped to the same rootHOG.
     Then, we write each rootHOG as orthoxml_to_newick.py seprate fasta file in the address_rhogs_folder folder
-    output: rhogid_num_list, rhogids_prot_records_query
+    output: rhogid_list, rhogids_prot_records_query
     """
     # extract rootHOG ID  "B0833755.5c.10g.24e.16c.18b" ->"B0833755"
     prots_hogmap_rhogid_allspecies = []
@@ -214,7 +219,7 @@ def group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, que
     for rhogid in rhogid_prot_idx_dic.keys():
         rhogid_prot_records = []
         species_idx_rhogid = []
-        if rhogid != "na" and len(rhogid) >= 1:  # ignore un-mapped prots
+        if rhogid != "N/A" and len(rhogid) >= 1:  # ignore un-mapped prots
             rhogids_list.append(rhogid)
             rhogid_prot_idx = rhogid_prot_idx_dic[rhogid]
             for (species_idx, prots_hogmap_idx) in rhogid_prot_idx:
@@ -288,23 +293,51 @@ def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, m
     if not os.path.exists(address_rhogs_folder):
         os.mkdir(address_rhogs_folder)
 
-    rhogid_num_list = []
-    for rhogid_idx, rhogid in enumerate(rhogids_list):
-        rhogid_prot_rec_query = rhogids_prot_records_query[rhogid_idx]
-        rhogid_B = rhogid.split(":")[1]
-        rhogid_num = int(rhogid_B[1:])  # # B0613860
-        rhogid_num_list.append(rhogid_num)
 
-        if min_rhog_size <= len(rhogid_prot_rec_query) <= max_rhog_size:
-            SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder +"/HOG_"+ str(rhogid_num).zfill(7)+".fa", "fasta")
-        else:
-            for prot1 in rhogid_prot_rec_query:
-                logger_hog.debug("we are removing due to omamer signleton hog "+str(prot1.id))
+    ## under development
+    merge_split=0
+    rhogid_list = []
+    rhogs_merged = []
+    if merge_split ==1:
+        import pickle
+        try:
+            with open('/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/allcc_cleaned.pickle', 'rb') as handle:
+                allcc_cleaned2 = pickle.load(handle)
+        except:
+            print("no merge split roothog info.")
+
+        for cc in allcc_cleaned2:
+            rhogs_merged += cc
+
+        for cc in allcc_cleaned2:
+            rhogid_prot_rec_query_merged =[ ]
+            for rhogid in cc:
+                if rhogid in rhogids_list:
+                    rhogid_idx = rhogids_list.index(rhogid)
+                    rhogids_prot_record_query = rhogids_prot_records_query[rhogid_idx]
+                    rhogid_prot_rec_query_merged += rhogids_prot_record_query
+                else:
+                    print("not in the list",rhogid)
+            if min_rhog_size <= len(rhogid_prot_rec_query_merged) <= max_rhog_size:
+                SeqIO.write(rhogid_prot_rec_query_merged, address_rhogs_folder + "/HOG_" + rhogid + ".fa", "fasta") # name of lastrhogid
+                rhogid_list.append(rhogid)
+
+    for rhogid_idx, rhogid in enumerate(rhogids_list):
+        if rhogid not in rhogs_merged:
+            rhogid_prot_rec_query = rhogids_prot_records_query[rhogid_idx]
+
+            if min_rhog_size <= len(rhogid_prot_rec_query) <= max_rhog_size:
+                # todo add the release id   to file names  rhogids_list[:2] > ['HOG:C0884658', 'HOG:C0709155']
+                SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder + "/HOG_" + rhogid + ".fa", "fasta")
+                rhogid_list.append(rhogid)
+            else:
+                for prot1 in rhogid_prot_rec_query:
+                    logger_hog.debug("we are removing due to omamer signleton hog |*|" + str(prot1.id))
 
 
     logger_hog.info("Writing Sequences of roothogs finished." )
 
-    return rhogid_num_list
+    return rhogid_list
 
 
 import os.path
@@ -356,7 +389,7 @@ def find_nonbest_isoform(hogmap_allspecies_elements, isoform_by_gene_all):
                     family_score = prots_hogmap_fscore[isof_idx]
                     seq_len = prots_hogmap_seqlen[isof_idx]
                     subf_med_len = prots_hogmap_subfmedseqlen[isof_idx]
-                    if family_score != "na":
+                    if family_score != "N/A":
                         score = float(family_score) * min(int(seq_len), int(subf_med_len))
                         # print(isoform_name,score, family_score,seq_len,subf_med_len)
                         if score > score_best:  # when there is a tie, the last one is selected!
