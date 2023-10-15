@@ -287,7 +287,7 @@ def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_al
 
 
 
-def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, min_rhog_size=1, max_rhog_size=1e100):
+def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, min_rhog_size=1, max_rhog_size=1e100,merge_split=0):
 
     logger_hog.info("Writing Sequences of roothogs are fasta file in " + address_rhogs_folder)
     if not os.path.exists(address_rhogs_folder):
@@ -295,7 +295,7 @@ def write_rhog(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, m
 
 
     ## under development
-    merge_split=0
+    #merge_split=0
     rhogid_list = []
     rhogs_merged = []
     if merge_split ==1:
