@@ -37,19 +37,17 @@ def infer_roothogs():
     prot_recs_all = _utils_roothog.add_species_name_prot_id(species_names, prot_recs_lists)
 
     hogmaps = _utils_roothog.parse_hogmap_omamer(species_names)#folder
+
+    splice_files =  os.path.exists("./splice/")
+    if splice_files:
+        isoform_by_gene_all = _utils_roothog.parse_isoform_file(species_names)
+        isoform_selected,  isoform_not_selected = _utils_roothog.find_nonbest_isoform(species_names,isoform_by_gene_all,hogmaps)
+        _utils_roothog.write_isoform_selected(isoform_by_gene_all, isoform_selected,prot_recs_lists)
+        # for each isoform file, there will be a file ending with _selected_isoforms.tsv
+        hogmaps = _utils_roothog.handle_splice(hogmaps,isoform_not_selected)
+
+
     rhogs_prots = _utils_roothog.group_prots_roothogs(hogmaps)
-
-    #
-    # splice_files =  os.path.exists("./splice/")
-    # if splice_files:
-    #     isoform_by_gene_all = _utils_roothog.parse_isoform_file(query_species_names)
-    #     #query_species_names[0], isoform_by_gene_all[0], isoform_by_gene_all[2][:2]
-    #     not_selected_isofroms_all = _utils_roothog.find_nonbest_isoform(hogmap_allspecies_elements, isoform_by_gene_all)
-    #     prots_hogmap_hogid_allspecies_ ,  query_prot_recs_filt_ = _utils_roothog.handle_splice(prots_hogmap_hogid_allspecies, query_prot_recs_filt, not_selected_isofroms_all, query_prot_names_species_mapped)
-    # else:
-    #     prots_hogmap_hogid_allspecies_= prots_hogmap_hogid_allspecies
-    #     query_prot_recs_filt_ = query_prot_recs_filt
-
     rhogs_prots = _utils_roothog.roothogs_postprocess(hogmaps, rhogs_prots)
     address_rhogs_folder = "./omamer_rhogs/"
     rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, address_rhogs_folder, min_rhog_size=2)
