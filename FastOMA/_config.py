@@ -39,13 +39,15 @@ gene_trees_write_all = False
 msa_write_all = False
 keep_subhog_each_pickle = False
 
-
-omamer_fscore_treshold_big_rhog = 0.04 # 0.5 # means no thresold #0.2 #0.5  #  to have more proteins in the ortho groups 0.05  considering for big rhogs
-omamer_treshold_big_rhog_szie = 100 #9000 #100
-
-# for very big rhog, we need to be more stringent
-omamer_treshold_big_rhog_szie2 = 50*1000
-omamer_fscore_treshold_big_rhog2 = 0.6 #0.9
+big_rhog_size = 80 * 1000
+omamer_family_threshold = 110
+#
+# omamer_fscore_treshold_big_rhog = 0.04 # 0.5 # means no thresold #0.2 #0.5  #  to have more proteins in the ortho groups 0.05  considering for big rhogs
+# omamer_treshold_big_rhog_szie = 100 #9000 #100
+#
+# # for very big rhog, we need to be more stringent
+# omamer_treshold_big_rhog_szie2 = 50*1000
+# omamer_fscore_treshold_big_rhog2 = 0.6 #0.9
 
 hogclass_max_num_seq = 50  # subsampling in msa # ver very 2
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 50
