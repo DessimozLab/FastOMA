@@ -523,6 +523,29 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
 #
 #
 
+
+def parse_isoform_file(species_names, folder="."):
+    isoform_by_gene_all = {}
+
+    for species_name in species_names:  # from fasta file
+
+        file_splice_name = folder + "/splice/" + species_name + ".splice"
+
+        if os.path.isfile(file_splice_name):
+            # from OMArk
+            isoform_by_gene = []
+            with open(file_splice_name) as handle:
+                for line in handle.readlines():
+                    line = line.strip('\n')
+                    splice = line.split(";")
+                    isoform_by_gene.append(splice)
+        else:
+            isoform_by_gene = []
+
+        isoform_by_gene_all[species_name] = isoform_by_gene
+    return isoform_by_gene_all
+
+
 def write_rhog_old(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, min_rhog_size=1, max_rhog_size=1e100,merge_split=0):
 
     logger_hog.info("Writing Sequences of roothogs are fasta file in " + address_rhogs_folder)
@@ -576,67 +599,157 @@ def write_rhog_old(rhogids_list, rhogids_prot_records_query, address_rhogs_folde
     return rhogid_list
 
 
-import os.path
+def find_nonbest_isoform(species_names, isoform_by_gene_all, hogmaps):
+    isoform_selected = {}
+    isoform_not_selected = {}
 
-
-def parse_isoform_file(query_species_names):
-    isoform_by_gene_all = []
-    for species_idx, query_species_name in enumerate(query_species_names):  # from fasta file
-
-        file_splice_name = "./splice/" + query_species_name + ".splice"
-
-        if os.path.isfile(file_splice_name):
-            # from OMArk
-            isoform_by_gene = list()
-            with open(file_splice_name) as handle:
-                for line in handle.readlines():
-                    line = line.strip('\n')
-                    splice = line.split(";")
-                    isoform_by_gene.append(splice)
-        else:
-            isoform_by_gene = []
-
-        isoform_by_gene_all.append(isoform_by_gene)
-    return isoform_by_gene_all
-
-
-def find_nonbest_isoform(hogmap_allspecies_elements, isoform_by_gene_all):
-    (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_overlp_allspecies,
-     prots_hogmap_fscore_allspecies, prots_hogmap_seqlen_allspecies,
-     prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
-
-    not_selected_isofroms_all = []
-    for species_idx in range(len(query_prot_names_species_mapped)):
-
-        not_selected_isofroms = []  # when there is no splice file for a species
-        query_prot_names = query_prot_names_species_mapped[species_idx]
-        prots_hogmap_hogid = prots_hogmap_hogid_allspecies[species_idx]
-        prots_hogmap_fscore = prots_hogmap_fscore_allspecies[species_idx]
-        prots_hogmap_seqlen = prots_hogmap_seqlen_allspecies[species_idx]
-        prots_hogmap_subfmedseqlen = prots_hogmap_subfmedseqlen_allspecies[species_idx]
-        not_selected_isofroms_list = []
-        isoform_list_sp = isoform_by_gene_all[species_idx]
+    for species_name in species_names:
+        isoform_not_selected[species_name] = []
+        isoform_selected[species_name] = []
+        isoform_list_sp = isoform_by_gene_all[species_name]
+        hogmaps_sp = hogmaps[species_name]
         for isoform_list in isoform_list_sp:
-            score_best = 0
+            score_isof_best = 0
             protname_best = isoform_list[0]  # to keep the order if all of the isoforms' omamer score are 'na'
             for isoform_name in isoform_list:
-                if isoform_name in query_prot_names:
-                    isof_idx = query_prot_names.index(isoform_name)
-                    family_score = prots_hogmap_fscore[isof_idx]
-                    seq_len = prots_hogmap_seqlen[isof_idx]
-                    subf_med_len = prots_hogmap_subfmedseqlen[isof_idx]
-                    if family_score != "N/A":
-                        score = float(family_score) * min(int(seq_len), int(subf_med_len))
-                        # print(isoform_name,score, family_score,seq_len,subf_med_len)
-                        if score > score_best:  # when there is a tie, the last one is selected!
-                            protname_best = isoform_name
-                            score_best = score
-            # selected_isofroms.append([protname_best)
-            # print("*", protname_best, score_best)
-            not_selected_isofroms_list += [i for i in isoform_list if i != protname_best]
-        not_selected_isofroms_all.append(not_selected_isofroms_list)
+                if isoform_name in hogmaps_sp:
 
-    return not_selected_isofroms_all # those isform that are not selected as best (which will be removed )
+                    prot_maps = hogmaps_sp[isoform_name]
+                    if len(prot_maps) > 1:  # for multi-hit omamer output with -n
+                        scores = [float(i[1]) for i in prot_maps]  # (hogid,score,seqlen,subfamily_medianseqlen)
+                        hogids = [i[0] for i in prot_maps]
+                        seq_lens = [i[2] for i in prot_maps]
+                        subf_med_lens = [i[3] for i in prot_maps]
+                        family_score = max(scores)
+                        idx_max = scores.index(max_score)
+                        seq_len = seq_lens[idx_max]
+                        subf_med_len = subf_med_lens[idx_max]
+                        # hogid = hogids[max_index]
+                    else:
+                        # hogid = prot_maps[0][0]
+                        family_score = float(prot_maps[0][1])
+                        seq_len = prot_maps[0][2]
+                        subf_med_len = prot_maps[0][3]
+                    score_isof = float(family_score) * min(int(seq_len), int(subf_med_len))
+                    # print(isoform_name, score_isof,score_isof_best)
+
+                    if score_isof >= score_isof_best:  # when there is a tie, the last one is selected!
+                        protname_best = isoform_name
+                        score_isof_best = score_isof
+
+            isoform_selected[species_name].append(protname_best)
+            isoform_not_selected[species_name] += [i for i in isoform_list if i != protname_best]  # flatten for all
+
+    return isoform_selected, isoform_not_selected
+
+
+def write_isoform_selected(isoform_by_gene_all, isoform_selected, prot_recs_lists):
+    """
+    write isofort
+
+    """
+
+    for species, isoform_selected_sp in isoform_selected.items():
+        isoform_by_gene = isoform_by_gene_all[species]
+        assert len(isoform_by_gene) == len(isoform_selected_sp)
+
+        file_handle = open(species + "_selected_isoforms.tsv", "w")
+        for gene_idx, isof_list in enumerate(isoform_by_gene):
+            isoform_selected_sp_i = isoform_selected_sp[gene_idx]
+            file_handle.write(";".join(isof_list) + "\t")
+            file_handle.write(isoform_selected_sp_i + "\n")
+
+        all_genes = []
+        for list_genes in isoform_by_gene_all[species]:
+            all_genes += list_genes
+        len(all_genes)
+
+        prot_all = [i.id.split("||")[0] for i in prot_recs_lists[species]]
+        len(prot_all), len(all_genes)
+
+        not_in_isoform = set(prot_all) - set(all_genes)
+
+        for isof1 in not_in_isoform:  # for these there is no isoform information, we write them at end of file
+            file_handle.write(isof1 + "\t" + isof1 + "\n")
+
+        file_handle.close()
+
+    return 1
+
+
+def handle_splice(hogmaps,isoform_not_selected):
+    hogmaps_selected_isof = {}
+    for species, hogmap in hogmaps.items():
+        hogmaps_selected_isof[species]={}
+
+        isoform_not_selected_sp = set(isoform_not_selected[species])
+        for prot in hogmap:
+            if prot not in isoform_not_selected_sp:
+                hogmaps_selected_isof[species][prot]=hogmap[prot]
+
+    return hogmaps_selected_isof
+
+#import os.path
+#
+#
+# def parse_isoform_file(query_species_names):
+#     isoform_by_gene_all = []
+#     for species_idx, query_species_name in enumerate(query_species_names):  # from fasta file
+#
+#         file_splice_name = "./splice/" + query_species_name + ".splice"
+#
+#         if os.path.isfile(file_splice_name):
+#             # from OMArk
+#             isoform_by_gene = list()
+#             with open(file_splice_name) as handle:
+#                 for line in handle.readlines():
+#                     line = line.strip('\n')
+#                     splice = line.split(";")
+#                     isoform_by_gene.append(splice)
+#         else:
+#             isoform_by_gene = []
+#
+#         isoform_by_gene_all.append(isoform_by_gene)
+#     return isoform_by_gene_all
+#
+#
+# def find_nonbest_isoform(hogmap_allspecies_elements, isoform_by_gene_all):
+#     (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_overlp_allspecies,
+#      prots_hogmap_fscore_allspecies, prots_hogmap_seqlen_allspecies,
+#      prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
+#
+#     not_selected_isofroms_all = []
+#     for species_idx in range(len(query_prot_names_species_mapped)):
+#
+#         not_selected_isofroms = []  # when there is no splice file for a species
+#         query_prot_names = query_prot_names_species_mapped[species_idx]
+#         prots_hogmap_hogid = prots_hogmap_hogid_allspecies[species_idx]
+#         prots_hogmap_fscore = prots_hogmap_fscore_allspecies[species_idx]
+#         prots_hogmap_seqlen = prots_hogmap_seqlen_allspecies[species_idx]
+#         prots_hogmap_subfmedseqlen = prots_hogmap_subfmedseqlen_allspecies[species_idx]
+#         not_selected_isofroms_list = []
+#         isoform_list_sp = isoform_by_gene_all[species_idx]
+#         for isoform_list in isoform_list_sp:
+#             score_best = 0
+#             protname_best = isoform_list[0]  # to keep the order if all of the isoforms' omamer score are 'na'
+#             for isoform_name in isoform_list:
+#                 if isoform_name in query_prot_names:
+#                     isof_idx = query_prot_names.index(isoform_name)
+#                     family_score = prots_hogmap_fscore[isof_idx]
+#                     seq_len = prots_hogmap_seqlen[isof_idx]
+#                     subf_med_len = prots_hogmap_subfmedseqlen[isof_idx]
+#                     if family_score != "N/A":
+#                         score = float(family_score) * min(int(seq_len), int(subf_med_len))
+#                         # print(isoform_name,score, family_score,seq_len,subf_med_len)
+#                         if score > score_best:  # when there is a tie, the last one is selected!
+#                             protname_best = isoform_name
+#                             score_best = score
+#             # selected_isofroms.append([protname_best)
+#             # print("*", protname_best, score_best)
+#             not_selected_isofroms_list += [i for i in isoform_list if i != protname_best]
+#         not_selected_isofroms_all.append(not_selected_isofroms_list)
+#
+#     return not_selected_isofroms_all # those isform that are not selected as best (which will be removed )
 
 
 # def select_best_isoform(hogmap_allspecies_elements, isoform_by_gene_all):
@@ -678,31 +791,31 @@ def find_nonbest_isoform(hogmap_allspecies_elements, isoform_by_gene_all):
 #     return selected_isofroms_all
 #
 
-
-def handle_splice(prots_hogmap_hogid_allspecies, query_prot_recs_filt, not_selected_isofroms_all,
-                  query_prot_names_species_mapped):
-
-    query_prot_recs_filt_ = []
-    prots_hogmap_hogid_allspecies_ = []
-    for species_idx, query_prot_rec_filt in enumerate(query_prot_recs_filt):
-        not_selected_isofroms = not_selected_isofroms_all[species_idx]
-        query_prot_recs_sp = []
-        prots_hogmap_hogids_ = []
-        for query_prot in query_prot_rec_filt:
-            if query_prot.id not in not_selected_isofroms:
-                query_prot_recs_sp.append(query_prot)
-        query_prot_recs_filt_.append(query_prot_recs_sp)
-
-        prots_hogmap_hogids = prots_hogmap_hogid_allspecies[species_idx]
-        query_prot_names = query_prot_names_species_mapped[species_idx]
-
-        for prot_idx, prots_hogmap_hogid in enumerate(prots_hogmap_hogids):
-            query_prot_name = query_prot_names[prot_idx]
-            if query_prot_name not in not_selected_isofroms:
-                prots_hogmap_hogids_.append(prots_hogmap_hogid)
-
-        prots_hogmap_hogid_allspecies_.append(prots_hogmap_hogids_)
-
-    return prots_hogmap_hogid_allspecies_, query_prot_recs_filt_
+#
+# def handle_splice(prots_hogmap_hogid_allspecies, query_prot_recs_filt, not_selected_isofroms_all,
+#                   query_prot_names_species_mapped):
+#
+#     query_prot_recs_filt_ = []
+#     prots_hogmap_hogid_allspecies_ = []
+#     for species_idx, query_prot_rec_filt in enumerate(query_prot_recs_filt):
+#         not_selected_isofroms = not_selected_isofroms_all[species_idx]
+#         query_prot_recs_sp = []
+#         prots_hogmap_hogids_ = []
+#         for query_prot in query_prot_rec_filt:
+#             if query_prot.id not in not_selected_isofroms:
+#                 query_prot_recs_sp.append(query_prot)
+#         query_prot_recs_filt_.append(query_prot_recs_sp)
+#
+#         prots_hogmap_hogids = prots_hogmap_hogid_allspecies[species_idx]
+#         query_prot_names = query_prot_names_species_mapped[species_idx]
+#
+#         for prot_idx, prots_hogmap_hogid in enumerate(prots_hogmap_hogids):
+#             query_prot_name = query_prot_names[prot_idx]
+#             if query_prot_name not in not_selected_isofroms:
+#                 prots_hogmap_hogids_.append(prots_hogmap_hogid)
+#
+#         prots_hogmap_hogid_allspecies_.append(prots_hogmap_hogids_)
+#
+#     return prots_hogmap_hogid_allspecies_, query_prot_recs_filt_
 
 

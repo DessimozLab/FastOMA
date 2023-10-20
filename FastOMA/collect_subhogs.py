@@ -25,11 +25,11 @@ def collect_subhogs():
     protein_format_qfo_dataset_before2022 = True #False
     # in benchamrk dataset the output prot names should be short
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
-    # for qfo benchamrk, the middle should be wirtten in the file
+    # for qfo benchmark, the middle should be written in the file
 
     pickle_folder = "./pickles_temp/" #pickle_rhogs
     output_xml_name = "./output_hog.orthoxml"
-    gene_id_pickle_file = "./gene_id_dic_xml.pickle"
+    gene_id_pickle_file = "./gene_id_dic_xml.pickle" # this file includes integer mapping of each protein
 
 
     orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
