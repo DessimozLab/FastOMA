@@ -16,7 +16,7 @@ params.genetrees_folder = params.output_folder + "/genetrees"
 
 process omamer_run{
   time {1.h}
-  memory {90.GB}
+  memory {40.GB}
   publishDir params.hogmap_folder
   input:
     path proteomes_omamerdb_inputhog
@@ -29,7 +29,7 @@ process omamer_run{
     then
         cp ${proteomes_omamerdb_inputhog[2]}/${proteomes_omamerdb_inputhog[0]}.hogmap  ${proteomes_omamerdb_inputhog[0]}.hogmap
     else
-        omamer search --db ${proteomes_omamerdb_inputhog[1]} --query ${proteomes_omamerdb_inputhog[0]} --out ${proteomes_omamerdb_inputhog[0]}.hogmap
+        omamer search -n 10 --db ${proteomes_omamerdb_inputhog[1]} --query ${proteomes_omamerdb_inputhog[0]} --out ${proteomes_omamerdb_inputhog[0]}.hogmap
     fi
   """  // --nthreads 10
 }
@@ -70,7 +70,7 @@ process hog_big{
   publishDir params.pickles_temp
   cpus  6
   time {60.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
-  memory {80.GB}
+  memory {50.GB}
   input:
     val rhogsbig_tree_ready
   output:
@@ -101,7 +101,7 @@ process hog_rest{
 
 
 process collect_subhogs{
-  memory {200.GB}
+  memory {150.GB}
   publishDir params.output_folder, mode: 'copy'
   input:
     val ready_hog_rest

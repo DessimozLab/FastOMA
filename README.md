@@ -2,8 +2,6 @@ FastOMA
 ======
 FastOMA is a scalable software package to infer orthology relationship.
 
-
-
 # Input and Output: 
 
 ### Input: 
@@ -11,7 +9,7 @@ FastOMA is a scalable software package to infer orthology relationship.
 The name of each fasta file is the name of species. Please make sure that the name of fasta records do not contain `||`. 
 
 
-2- The omamer database which you can download [this](https://omabrowser.org/All/LUCA.h5) 
+2- The omamer database which you can download [this](https://omabrowser.org/All/LUCA-v2.0.0.h5) 
 which is from [OMA browser](https://omabrowser.org/oma/current/). 
 This file is `13 Gb` containing all the gene families of the Tree of Life or you can download it for a subset of them, e.g. Primates (352MB). 
 
@@ -110,10 +108,10 @@ If you face any difficulty during installation, feel free to create a [github is
 Then, cd to the `testdata` folder and download the omamer database and change its name to `omamerdb.h5`.
 ```
 cd FastOMA/testdata
-wget https://omabrowser.org/All/Primates.h5    # 352MB
+wget https://omabrowser.org/All/Primates-v2.0.0.h5     # 105MB
 mv Primates.h5  in_folder/omamerdb.h5 
 ```
-(This is for the test however, I would suggest downloading the `LUCA.h5` instead of `Primates.h5` for your real analysis.). Check the item 2 in the [input section](https://github.com/sinamajidian/FastOMA#input) for details.
+(This is for the test however, I would suggest downloading the `LUCA-v2.0.0.h5` instead of `Primates-v2.0.0.h5` for your real analysis.). Check the item 2 in the [input section](https://github.com/sinamajidian/FastOMA#input) for details.
 
 Now we have such a structure in our  testdata folder.
 ``` 
@@ -265,7 +263,7 @@ HUMAN00034;HUMAN00035
 - phylostragraphy 
 
 ## Change log
-- Update  v0.1.2: improve rootHOG inference, splice 
+- Update   v0.1.2: improve rootHOG inference, splice, OMAmerv2 with multi-hits
 - Release  v0.1.0: improve nextflow pipeline and outputs. 
 - prelease v.0.0.6: use `--fragment-detection` for `infer-subhogs` and `--low-so-detection --fragment-detection`
 - prelease v.0.0.6: using input hogmpa
