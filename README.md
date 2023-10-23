@@ -265,6 +265,7 @@ HUMAN00034;HUMAN00035
 - phylostragraphy 
 
 ## Change log
+- Update  v0.1.2: improve rootHOG inference, splice 
 - Release  v0.1.0: improve nextflow pipeline and outputs. 
 - prelease v.0.0.6: use `--fragment-detection` for `infer-subhogs` and `--low-so-detection --fragment-detection`
 - prelease v.0.0.6: using input hogmpa
