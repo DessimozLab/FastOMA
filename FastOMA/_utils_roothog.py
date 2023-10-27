@@ -7,7 +7,7 @@ import os
 from ._utils_subhog import logger_hog
 from . import _config
 
-
+import numpy as np
 
 def parse_proteomes(folder="./"):  # list_oma_species
     """
@@ -134,15 +134,17 @@ def group_prots_roothogs(hogmaps):
         # prot_recs = prot_recs_all[species_name]
 
         for prot_id, prot_map in prots_map.items():
-            if len(prot_map)>1:
-                scores = [float(i[1]) for i in prot_map] # (hogid,score,seqlen,subfamily_medianseqlen)
-                rhogids =[i[0] for i in prot_map]
-                # select hog with the best score
-                max_index = scores.index(max(scores))
-                hogid =rhogids[max_index]
-            else:
-                hogid = prot_map[0][0]
-
+            # omamer output is sorted based on normcount. but that's ok
+            # this helps me in other functions like handle_singleton in this
+            # if len(prot_map)>1:
+            #     scores = [float(i[1]) for i in prot_map] # (hogid,score,seqlen,subfamily_medianseqlen)
+            #     rhogids =[i[0] for i in prot_map]
+            #     # select hog with the best score
+            #     max_index = scores.index(max(scores))
+            #     hogid =rhogids[max_index]
+            # else:
+            #     hogid = prot_map[0][0]
+            hogid = prot_map[0][0]
             rhogid = hogid.split(".")[0].split(":")[1]
 
             if rhogid in rhogs_prots:
@@ -151,6 +153,86 @@ def group_prots_roothogs(hogmaps):
                 rhogs_prots[rhogid] = [(species_name, prot_id)]
     logger_hog.info("There are " + str(len(rhogs_prots)) + " rootHOGs.")
     # from old code, to check later: Keep prot seq in hog class. We can write species idx and prot idx to  improve speed of code for omamer tresholidng
+    return rhogs_prots
+
+
+def handle_singleton(rhogs_prots,hogmaps):
+    query_singleton_rhog = []  # they are the only one to hit to this HOG
+    for rhog, prot_sp_list in rhogs_prots.items():  # 'C0602129': [('GORGO', 'GORGO00025'), ('GORGO', 'GORGO00026')],
+        if len(prot_sp_list) == 1:
+            query_singleton_rhog += prot_sp_list
+    logger_hog.debug(
+        "There are " + str(len(query_singleton_rhog)) + " singleton. The hog on which only one query proteins mapped.")
+
+    # adding singleton to already rhogs with >1 members
+    query_singleton_rhog_solved = []
+    for (species, prot) in query_singleton_rhog:
+        prot_maps = hogmaps[species][prot]
+        if len(prot_maps) > 1:
+            prot_maps2 = prot_maps
+            # omamer output is sorted based on normcount. but that's ok
+            # family_p	family_count	family_normcount
+            scores = [float(i[1]) for i in prot_maps]  # (hogid,score,seqlen,subfamily_medianseqlen)
+            hogids = [i[0] for i in prot_maps]
+            for hogid in hogids[1:]:  # the 0-index is already checked and is a singleton
+                rhogid = hogid.split(".")[0].split(":")[1]
+                if rhogid in rhogs_prots:
+                    if len(rhogs_prots[rhogid]) > 1:
+                        rhogs_prots[rhogid].append((species, prot))
+                        rhogid0 = hogids[0].split(".")[0].split(":")[1]  # 'HOG:D0903929.1a'
+                        del rhogs_prots[rhogid0]
+                        query_singleton_rhog_solved.append((species, prot))
+                        break
+    logger_hog.debug("We add " + str(
+        len(query_singleton_rhog_solved)) + " proteins/singleton to another rHOG based on omamer multi-hit.")
+
+    query_singleton_rhog_solved_set = set(query_singleton_rhog_solved)
+    query_singleton_rhog_remained = [i for i in query_singleton_rhog if i not in query_singleton_rhog_solved_set]
+    logger_hog.debug("However, " + str(len(query_singleton_rhog_remained)) + " proteins/singletons are remained.")
+
+    # try to create group from multi-hits of remained singleton
+    dic_singlton_remained = {}
+    for (species, prot) in query_singleton_rhog_remained:
+        prot_maps = hogmaps[species][prot]
+        scores = [float(i[1]) for i in prot_maps]  # (hogid,score,seqlen,subfamily_medianseqlen)
+        hogids = [i[0] for i in prot_maps]
+        for hogid in hogids[1:]:
+            rhogid = hogid.split(".")[0].split(":")[1]
+            if rhogid in dic_singlton_remained:
+                dic_singlton_remained[rhogid].append((species, prot))
+            else:
+                dic_singlton_remained[rhogid] = [(species, prot)]
+    logger_hog.debug("These are associated to " + str(len(dic_singlton_remained)) + " HOGs considering all multi-hits.")
+
+    count_new_rhogids = 0
+    count_updated_rhogids = 0
+    already_grouped = []
+    for rhogid, spec_prot_list in dic_singlton_remained.items():
+        if len(set(spec_prot_list)) > 1:
+            already_grouped_set = set(already_grouped)
+            val = sum([1 for i in spec_prot_list if i in already_grouped_set])
+
+            if val == 0:  # the prot has not yet grouped
+                if rhogid in rhogs_prots:
+                    count_updated_rhogids += 1
+                else:
+                    count_new_rhogids += 1
+                rhogs_prots[rhogid] = spec_prot_list
+                already_grouped += spec_prot_list
+    logger_hog.debug("We updated " + str(count_updated_rhogids) + " and created  " + str(
+        count_new_rhogids) + " new HOGs  which are not singleton anymore.")
+
+    counter_rhog_singlton_final = 0
+    counter_notsingl_final = 0
+    for rhogid, spec_prot_list in rhogs_prots.items():
+        if len(set(spec_prot_list)) > 1:
+            counter_notsingl_final += 1
+        else:
+            counter_rhog_singlton_final += 1
+
+    logger_hog.debug("Now, we have " + str(counter_notsingl_final) + " rootHOGs with >1 proteins and  and " + str(
+        counter_rhog_singlton_final) + " singleton rootHOGs ")
+
     return rhogs_prots
 
 
@@ -243,6 +325,124 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
     return rhogid_written_list
 
 
+def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
+    threshod_f_score_merging = 70
+    pair_rhogs_count = {}
+    for species, prt_prot_maps in hogmaps.items():
+        for prot, prot_maps in prt_prot_maps.items():
+            # [('HOG:D0017631.5a', '1771.7328874713658', '253', '234'), ('HOG:D0863448', '163.60700392437903', '253', '244'),
+            rhogids = []
+            for prot_map in prot_maps:
+                hog, score = prot_map[:2]
+                if float(score) > threshod_f_score_merging:
+                    rhogid = hog.split(".")[0].split(":")[1]
+                    rhogids.append(rhogid)
+            for ii in range(len(rhogids)):
+                for jj in range(ii + 1, len(rhogids)):
+                    hogi, hogj = rhogids[ii], rhogids[jj]
+                    if (hogi, hogj) in pair_rhogs_count:
+                        pair_rhogs_count[(hogi, hogj)] += 1
+                    else:
+                        pair_rhogs_count[(hogi, hogj)] = 1
+
+    print(len(pair_rhogs_count))
+    logger_hog.debug("There are " + str(len(pair_rhogs_count)) + " pairs of rhogs.")
+
+    rhogs_size = {}
+    for rhog, list_prot in rhogs_prots.items():
+        rhogs_size[rhog] = len(list_prot)
+
+    candidates_pair = []
+    # dic_pair_ratio = {}
+    for (hogi, hogj), count_shared in pair_rhogs_count.items():
+        if hogi in rhogs_size and hogj in rhogs_size:  # during previous functions, we might
+            ratioMax = count_shared / max(rhogs_size[hogi], rhogs_size[hogj])
+            ratioMin = count_shared / min(rhogs_size[hogi], rhogs_size[hogj])
+
+            if (ratioMax > 0.8 or ratioMin > 0.9) and count_shared > 20 and rhogs_size[hogi] < _config.big_rhog_size / 2 and \
+                    rhogs_size[hogj] < _config.big_rhog_size / 2:
+                if rhogs_size[hogi] >= rhogs_size[hogj]:
+                    candidates_pair.append((hogi, hogj))  # bigger first
+                else:
+                    candidates_pair.append((hogj, hogi))
+                # print(hogi,"(",rhogs_size[hogi],")",hogj,"(",rhogs_size[hogj],")", count_shared,round(ratioMax,2),round(ratioMin,2))
+            # D0651051 ( 59 ) D0658569 ( 180 ) 62 0.34 1.05 # todo why bigger than 1?
+            # D0646495 ( 2 ) D0631227 ( 14 ) 25 1.79 12.5
+
+    logger_hog.debug("There are " + str(len(candidates_pair)) + " candidate pairs of rhogs for merging.")
+    print(len(candidates_pair))
+
+    return candidates_pair
+
+
+def cluster_rhogs(candidates_pair):
+    # init
+    all_hog_raw = []
+    for pair in candidates_pair:
+        all_hog_raw.append(pair[0])
+        all_hog_raw.append(pair[1])
+    all_hog = list(set(all_hog_raw))
+
+    allcc = []  # connected compoenets
+    for hog in all_hog:
+        allcc.append([hog])
+
+    dic_where = {}
+    for idx, cc in enumerate(allcc):
+        dic_where[cc[0]] = idx  # in the begining, each inner list has only on element, a unique hog
+
+    # print(len(all_hog_raw),len(all_hog),len(allcc),allcc[:2])
+    logger_hog.debug("There are " + str(len(all_hog)) + " all_hog.")
+
+    # print(dic_where)
+    for pair in candidates_pair:
+        # print(pair)
+        idx_0 = dic_where[pair[0]]
+        idx_1 = dic_where[pair[1]]
+
+        dic_where[pair[1]] = idx_0
+
+        # print(idx_0)
+        allcc[idx_0] += allcc[idx_1]
+        allcc[idx_1] = []
+
+        # print(dic_where,allcc)
+
+    cluster_rhogs_list = [i for i in allcc if len(i) > 1]
+    # print(cluster_rhogs_list)
+    logger_hog.debug("There are " + str(len(cluster_rhogs_list)) + " cluster_rhogs.")
+
+    # allcc_cleaned_len = [len(i) for i in cluster_rhogs]
+    # len(allcc),len(cluster_rhogs),np.sum(allcc_cleaned_len)
+
+    return cluster_rhogs_list
+
+
+def merge_rhogs(hogmaps, rhogs_prots):
+    logger_hog.debug("started merging  ")
+
+    candidates_pair = find_rhog_candidate_pairs(hogmaps, rhogs_prots)
+
+    cluster_rhogs_list = cluster_rhogs(candidates_pair)
+
+    logger_hog.debug("There are " + str(len(rhogs_prots)) + " rhogs before merging.")
+    print(len(rhogs_prots))
+
+    for cluster in cluster_rhogs_list:
+
+        prots = [rhogs_prots[hog] for hog in cluster]
+
+        host_hog = cluster[0]
+        all_prots = []
+        for hog in cluster:
+            all_prots += rhogs_prots[hog]
+            del rhogs_prots[hog]
+        rhogs_prots[host_hog] = all_prots
+
+    print(len(rhogs_prots))
+    logger_hog.debug("There are " + str(len(rhogs_prots)) + " rhogs after merging.")
+
+    return rhogs_prots
 
 
 # import pyoma.browser.db as db
@@ -621,7 +821,7 @@ def find_nonbest_isoform(species_names, isoform_by_gene_all, hogmaps):
                         seq_lens = [i[2] for i in prot_maps]
                         subf_med_lens = [i[3] for i in prot_maps]
                         family_score = max(scores)
-                        idx_max = scores.index(max_score)
+                        idx_max = scores.index(family_score)
                         seq_len = seq_lens[idx_max]
                         subf_med_len = subf_med_lens[idx_max]
                         # hogid = hogids[max_index]

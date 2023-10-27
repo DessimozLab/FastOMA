@@ -48,6 +48,8 @@ def infer_roothogs():
 
 
     rhogs_prots = _utils_roothog.group_prots_roothogs(hogmaps)
+    rhogs_prots = _utils_roothog.handle_singleton(rhogs_prots,hogmaps)
+    rhogs_prots = _utils_roothog.merge_rhogs(hogmaps, rhogs_prots)
     rhogs_prots = _utils_roothog.roothogs_postprocess(hogmaps, rhogs_prots)
     address_rhogs_folder = "./omamer_rhogs/"
     rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, address_rhogs_folder, min_rhog_size=2)
