@@ -109,7 +109,7 @@ Then, cd to the `testdata` folder and download the omamer database and change it
 ```
 cd FastOMA/testdata
 wget https://omabrowser.org/All/Primates-v2.0.0.h5     # 105MB
-mv Primates.h5  in_folder/omamerdb.h5 
+mv Primates-v2.0.0.h5    in_folder/omamerdb.h5 
 ```
 (This is for the test however, I would suggest downloading the `LUCA-v2.0.0.h5` instead of `Primates-v2.0.0.h5` for your real analysis.). Check the item 2 in the [input section](https://github.com/sinamajidian/FastOMA#input) for details.
 

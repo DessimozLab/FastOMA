@@ -154,6 +154,7 @@ workflow {
     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
 
     (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), pickles_temp, gene_id_dic_xml, omamer_rhogs)
+    omamer_rhogs.view{" output omamer_rhogs ${it}"}
     orthoxml_file.view{" output orthoxml file ${it}"}
 
 }

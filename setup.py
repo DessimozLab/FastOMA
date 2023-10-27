@@ -10,7 +10,7 @@ with open('{:s}/__init__.py'.format(name), 'rt') as fp:
             exec(line.rstrip())
 
 # TODO
-requirements = ['biopython', 'ete3', 'omamer>=2.0.0.dev8', 'nextflow', 'pyparsing' , 'DendroPy', 'future', 'lxml','pyham']
+requirements = ['biopython', 'ete3', 'omamer>=2.0.0', 'nextflow', 'pyparsing' , 'DendroPy', 'future', 'lxml','pyham']
 
 desc = 'FastOM - a package to infer orthology information '
 

@@ -40,7 +40,7 @@ msa_write_all = False
 keep_subhog_each_pickle = False
 
 big_rhog_size = 60 * 1000
-omamer_family_threshold = 110
+omamer_family_threshold = 90
 #
 # omamer_fscore_treshold_big_rhog = 0.04 # 0.5 # means no thresold #0.2 #0.5  #  to have more proteins in the ortho groups 0.05  considering for big rhogs
 # omamer_treshold_big_rhog_szie = 100 #9000 #100
@@ -49,7 +49,7 @@ omamer_family_threshold = 110
 # omamer_treshold_big_rhog_szie2 = 50*1000
 # omamer_fscore_treshold_big_rhog2 = 0.6 #0.9
 
-hogclass_max_num_seq = 20  # subsampling in msa # ver very 2
+hogclass_max_num_seq = 40  # subsampling in msa # ver very 2
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 50
 hogclass_tresh_ratio_gap_col = 0.6  # 0.8 for very very big
 # old code after samplign if there are 2 seq sampled, then at least one nongap
@@ -70,7 +70,7 @@ rooting_method = "midpoint"  # "midpoint" "mad"
 rooting_mad_executable_path = "mad"  # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/installers/mad/
 
 ##inferhog
-inferhog_tresh_ratio_gap_row =0.4 # 0.6   # to have more proteins in the ortho groups 0.1
+inferhog_tresh_ratio_gap_row =0.1 # 0.6   # to have more proteins in the ortho groups 0.1
 inferhog_tresh_ratio_gap_col =0.5  # 0.6   # ver very 0.8
 inferhog_min_cols_msa_to_filter = 50 #300 #50  # used for msa before gene tree inference and  saving msa in hog class
 
