@@ -48,6 +48,7 @@ def infer_roothogs():
 
 
     rhogs_prots = _utils_roothog.group_prots_roothogs(hogmaps)
+    # todo
     rhogs_prots = _utils_roothog.handle_singleton(rhogs_prots,hogmaps)
     rhogs_prots = _utils_roothog.merge_rhogs(hogmaps, rhogs_prots)
     rhogs_prots = _utils_roothog.roothogs_postprocess(hogmaps, rhogs_prots)

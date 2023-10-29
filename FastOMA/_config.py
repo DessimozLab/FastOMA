@@ -28,16 +28,19 @@ low_so_detection = True
 threshold_dubious_sd = 1/10
 overlap_fragments = 0.15
 
+mergHOG_ratioMax_thresh = 0.8
+mergHOG_ratioMin_thresh = 0.9
+mergHOG_shared_thresh = 50
 
 # VARIABLE_threshold_dubious_sd
 # threshold_dubious_sd = float(os.getenv(VARIABLE_threshold_dubious_sd, 0.1))
 
 ## output writing files
-gene_trees_write = False
-msa_write = False
-gene_trees_write_all = False
-msa_write_all = False
-keep_subhog_each_pickle = False
+gene_trees_write = True
+msa_write = True
+gene_trees_write_all = True
+msa_write_all = True
+keep_subhog_each_pickle = True
 
 big_rhog_size = 60 * 1000
 omamer_family_threshold = 90

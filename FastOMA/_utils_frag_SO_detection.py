@@ -37,7 +37,7 @@ def read_msa(input_msa):
         if len(ii):
             coords.append((np.min(ii), np.max(ii)))
         else:
-            logger_hog.warning("issue 1321230 all of the seq is gap"+str(rec))
+            logger_hog.warning("issue 1321230 all of the seq is gap "+str(rec))
             coords.append((0, 0))
 
     ids = np.array(ids)
@@ -219,7 +219,10 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
         if prot_dubious_sd_remove_list:
             rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list)
             gene_tree.prune(rest_leaves, preserve_branch_length=True)
-            (gene_tree, all_species_dubious_sd_dic_updated) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr + "_dubious_sd"+str(itr_so))
+            if _config.gene_trees_write_all or _config.rooting_method=="mad":
+                gene_tree.write(format=1, outfile=genetree_msa_file_addr + "_dubious_sd"+str(itr_so)+".nwk" )
+
+            (gene_tree, all_species_dubious_sd_dic_updated) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr + "_dubious_sd"+str(itr_so)+".nwk")
 
             hogs_children_level_list_raw = hogs_children_level_list
             for prot_dubious_sd_remove in prot_dubious_sd_remove_list:
@@ -409,8 +412,11 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
             else:
                 gene_tree.prune(rest_leaves, preserve_branch_length=True)
 
+        if _config.gene_trees_write_all or _config.rooting_method == "mad":
+            gene_tree.write(outfile=genetree_msa_file_addr+"_dubiousMSA.nwk",format=1)
+
         if len(gene_tree) > 1:
-            (gene_tree, all_species_dubious_sd_dic2) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr+"_dubiousMSA")
+            (gene_tree, all_species_dubious_sd_dic2) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr+"_dubiousMSA.nwk")
 
 
 

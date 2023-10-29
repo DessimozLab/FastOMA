@@ -137,7 +137,7 @@ def mad_rooting(input_tree_file_path: str, mad_executable_path: str = "./mad"):
     #os.system(mad_command)
 
     import subprocess
-
+    logger_hog.debug("MAD rooting started")
     #bashCommand = f"mad {gene_tree_address}"
     process = subprocess.Popen(mad_command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
@@ -146,8 +146,21 @@ def mad_rooting(input_tree_file_path: str, mad_executable_path: str = "./mad"):
     #    print("error:\n", error)
 
     if "Error analyzing file" in str(output) or error:
-        rooted_tree = Tree(input_tree_file_path)
-    else:
-        rooted_tree = Tree(input_tree_file_path + ".rooted")
+        try:
+            rooted_tree = Tree(input_tree_file_path)
+        except:
+            rooted_tree = Tree(input_tree_file_path,format=1)
 
+
+    elif "rooted trees written" in str(output): # 3 rooted trees written to tree_664187_Eukaryota.nwk.rooted Warning: Trees with repeating branch lengths are suspicious (3 repeating values).
+        file_multiple_tree_handle= open(input_tree_file_path + ".rooted",'r')
+        trees=[]
+        for line_tree1 in file_multiple_tree_handle:
+            if line_tree1.strip():
+                trees.append(line_tree1.strip())
+        # todo which one to choose ?
+        rooted_tree = Tree(trees[0])
+    else:#Rooted tree written to 'tree_672375_Theria.nwk.rooted'
+        rooted_tree = Tree(input_tree_file_path + ".rooted")
+    logger_hog.debug("MAD rooting finished")
     return rooted_tree

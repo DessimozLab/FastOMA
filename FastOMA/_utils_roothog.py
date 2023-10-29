@@ -136,6 +136,7 @@ def group_prots_roothogs(hogmaps):
         for prot_id, prot_map in prots_map.items():
             # omamer output is sorted based on normcount. but that's ok
             # this helps me in other functions like handle_singleton in this
+            #  this should be commented
             # if len(prot_map)>1:
             #     scores = [float(i[1]) for i in prot_map] # (hogid,score,seqlen,subfamily_medianseqlen)
             #     rhogids =[i[0] for i in prot_map]
@@ -328,7 +329,7 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
 def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
     threshod_f_score_merging = 70
     pair_rhogs_count = {}
-    for species, prt_prot_maps in hogmaps.items():
+    for rhog, prt_prot_maps in hogmaps.items():
         for prot, prot_maps in prt_prot_maps.items():
             # [('HOG:D0017631.5a', '1771.7328874713658', '253', '234'), ('HOG:D0863448', '163.60700392437903', '253', '244'),
             rhogids = []
@@ -359,8 +360,8 @@ def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
             ratioMax = count_shared / max(rhogs_size[hogi], rhogs_size[hogj])
             ratioMin = count_shared / min(rhogs_size[hogi], rhogs_size[hogj])
 
-            if (ratioMax > 0.8 or ratioMin > 0.9) and count_shared > 20 and rhogs_size[hogi] < _config.big_rhog_size / 2 and \
-                    rhogs_size[hogj] < _config.big_rhog_size / 2:
+            if (ratioMax > _config.mergHOG_ratioMax_thresh or ratioMin >  _config.mergHOG_ratioMin_thresh ) and _config.mergHOG_shared_thresh > 20 and\
+                    rhogs_size[hogi] < _config.big_rhog_size / 2 and  rhogs_size[hogj] < _config.big_rhog_size / 2:
                 if rhogs_size[hogi] >= rhogs_size[hogj]:
                     candidates_pair.append((hogi, hogj))  # bigger first
                 else:
@@ -428,19 +429,32 @@ def merge_rhogs(hogmaps, rhogs_prots):
     logger_hog.debug("There are " + str(len(rhogs_prots)) + " rhogs before merging.")
     print(len(rhogs_prots))
 
+    file_out_merge =  open("merging_rhogs.txt","w")
+    file_out_merge.write("#first column is the host hog, the rest will be merged here.\n")
     for cluster in cluster_rhogs_list:
-
-        prots = [rhogs_prots[hog] for hog in cluster]
-
+        for cluster_i in cluster:
+            file_out_merge.write(cluster_i+"\t")
+        file_out_merge.write("\n")
+    file_out_merge.close()
+    counter_merged_prots=0
+    for cluster in cluster_rhogs_list:
+        #prots = [rhogs_prots[hog] for hog in cluster]
         host_hog = cluster[0]
+        rhogs_host_size= len(rhogs_prots[host_hog])
         all_prots = []
         for hog in cluster:
             all_prots += rhogs_prots[hog]
             del rhogs_prots[hog]
-        rhogs_prots[host_hog] = all_prots
+        all_prots_uniq = list(set(all_prots))  # there might be repeated prots
+        rhogs_prots[host_hog] = all_prots_uniq
+        # merging D0562038 and D0559070
+        # tr | C3ZG56 | C3ZG56_BRAFL HOG: D0562038, tr | H2Y1V7 | H2Y1V7_CIOIN HOG: D0562038, tr | C3ZG56 | C3ZG56_BRAFL HOG: D0559070, tr | H2Y1V7 | H2Y1V7_CIOIN HOG: D0559070
+        if len(all_prots_uniq) > rhogs_host_size:
+            counter_merged_prots += len(all_prots_uniq)
+        # otherwise, merging didn't help
 
-    print(len(rhogs_prots))
-    logger_hog.debug("There are " + str(len(rhogs_prots)) + " rhogs after merging.")
+    print(len(rhogs_prots),counter_merged_prots)
+    logger_hog.debug("There are " + str(len(rhogs_prots)) + " rhogs by merging "+str(counter_merged_prots)+" proteins in total.")
 
     return rhogs_prots
 
