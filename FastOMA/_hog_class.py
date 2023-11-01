@@ -201,6 +201,7 @@ class HOG:
         element_list = []
         for sub_clade, sub_hogs in itertools.groupby(self._subhogs, key=_sorter_key):  # sub_clade is the taxrange
             list_of_subhogs_of_same_clade = list(sub_hogs)
+            # list_of_subhogs_of_same_clade is  [object of HOGclass hogID=HOG_D0634402_sub10094,len=12, tax_least=Amniota, tax_now= Amniota, object of HOGclass hogID=HOG_D0634402_sub10096,len=20, tax_least=Amniota, tax_now= Amniota, object of HOGclass hogID=HOG_D0634402_sub10081,len=1, tax_least=MONDO, tax_now= Amniota, object of HOGclass hogID=HOG_D0634402_sub10093,len=12, tax_least=Amniota, tax_now= Amniota, object of HOGclass hogID=HOG_D0634402_sub10095,len=7, tax_least=Amniota, tax_now= Amniota]
             # following only for debugging, can be deleted later
             for subhog in list_of_subhogs_of_same_clade:
                 if len(subhog._members) == 0:

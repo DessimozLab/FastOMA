@@ -35,7 +35,7 @@ def parse_proteomes(folder="./"):  # list_oma_species
         prot_recs_lists[species_name]=prots_record
 
     logger_hog.info("The are "+str(len(species_names))+" species in the proteome folder.")
-    return species_names, prot_recs_lists
+    return species_names, prot_recs_lists, fasta_format_keep
 
 
 
@@ -78,7 +78,7 @@ def add_species_name_prot_id(species_names, prot_recs_lists):
     return prot_recs_all
 
 
-def parse_hogmap_omamer(species_names, folder="./"):
+def parse_hogmap_omamer(species_names, fasta_format_keep,  folder="./"):
     """
      function for parsing output of omamer (hogmap files) located in /hogmap/
     Each hogmap file correspond to one fasta file of species, with the same name.
@@ -90,7 +90,7 @@ def parse_hogmap_omamer(species_names, folder="./"):
     """
     hogmaps = {}
     for species_name in species_names:
-        hogmap_address = folder + "/hogmap/" + species_name + ".fa.hogmap"
+        hogmap_address = folder + "/hogmap/" + species_name + "."+fasta_format_keep+".hogmap"
         hogmap_file = open(hogmap_address, 'r')
 
         for line in hogmap_file:
@@ -256,20 +256,23 @@ def roothogs_postprocess(hogmaps, rhogs_prots):
         sp_prot_list_filt = []
         hogids = []
 
-        # removing protines with low omamer score from big rootHOG
+        # removing proteins with low omamer score from big rootHOG
         for species_name, prot_id in sp_prot_list:
             prot_maps = hogmaps[species_name][prot_id]
-            if len(prot_maps) > 1:  # probably for big rootHOG, there won't be multi-hits
-                scores = [float(i[1]) for i in prot_maps]  # (hogid,score,seqlen,subfamily_medianseqlen)
-                hogids = [i[0] for i in prot_maps]
-                max_score = max(scores)
-                max_index = scores.index(max_score)
-                hogid = hogids[max_index]
-            else:
-                hogid = prot_maps[0][0]
-                score = float(prot_maps[0][1])
+            # if len(prot_maps) > 1:  # probably for big rootHOG, there won't be multi-hits
+            #     scores = [float(i[1]) for i in prot_maps]  # (hogid,score,seqlen,subfamily_medianseqlen)
+            #     hogids = [i[0] for i in prot_maps]
+            #     max_score = max(scores)
+            #     max_index = scores.index(max_score)
+            #     hogid = hogids[max_index]
+            # else:
+            #     hogid = prot_maps[0][0]
+            #     max_score = float(prot_maps[0][1])
+            # todo: highest normcount or pavalue , default of omamer ?
+            hogid = prot_maps[0][0]
+            max_score = float(prot_maps[0][1])
 
-            if score > _config.omamer_family_threshold:
+            if max_score > _config.omamer_family_threshold:
                 sp_prot_list_filt.append((species_name, prot_id))
                 hogids.append(hogid)
 
@@ -279,21 +282,23 @@ def roothogs_postprocess(hogmaps, rhogs_prots):
         if len(sp_prot_list_filt) < _config.big_rhog_size:
             sp_prot_list_filt2 = sp_prot_list_filt
 
-
-        else:  # removing protines that are mapped to rootHOG (=HOGC123 not the levelsHOGC123.1a) from big rootHOG
-            hogids2 = []
+        else:  # removing proteins that are mapped to rootHOG (= HOGC123 not the levelsHOGC123.1a) from big rootHOG
+            #hogids2 = []
             sp_prot_list_filt2 = []
-            for prot_idx, sp_prot in enumerate(sp_prot_list_filt):
-                hogid = hogids[prot_idx]
-
-                if len(hogid.split(".")) > 1:
+            for prot_idx, sp_prot in enumerate(sp_prot_list_filt): #[('UP000192223_224129', 'tr|A0A1W4WAU6|A0A1W4WAU6_AGRPL'), ('UP000192223_224129', 'tr|A0A1W4WU99|A0A1W4WU99_AGRPL'),
+                species , protein = sp_prot
+                prot_maps =hogmaps[species][protein]
+                hogid = prot_maps[0][0]
+                if len(hogid.split(".")) > 1: # if mapped to subHOG (not to the rootHOG)
                     sp_prot_list_filt2.append(sp_prot)
-                    hogids2.append(hogid)
+                    #hogids2.append(hogid)
 
         logger_hog.info("For big rootHOG " + rhogid + ", " + str(
             len(sp_prot_list_filt2)) + " proteins left after removing non-child subhogs")
-
-        rhogs_prots[rhogid] = sp_prot_list_filt2
+        if len(sp_prot_list_filt2):
+            rhogs_prots[rhogid] = sp_prot_list_filt2
+        else:
+            del rhogs_prots[rhogid]
 
     return rhogs_prots
 

@@ -191,14 +191,20 @@ def find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic):
                                 prot_dubious_list.append(prot_name)
                     try:
                         subhogs_list = [i.split("|_|")[1] for i in prot_dubious_list]  # subhog id at child level
-                        if len(set(subhogs_list)) > 1:
-                            # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
-                            child_size_min_indx = child_size.index(min(child_size))
-                            prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
 
-                        else:
-                            logger_hog.debug( "This species (protein from the same subhog) is safe to keep "+ str(node_name)+" "+str(species_dubious_sd))
-                            #all of them are from the same subhog, so it doesn't matter, a duplication event doesn't affect when all are from the same subhog at children level
+                        # todo check !, is it safe or not!
+                        # if len(set(subhogs_list)) > 1:
+                        #     # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
+                        #     child_size_min_indx = child_size.index(min(child_size))
+                        #     prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
+                        #
+                        # else:
+                        #     logger_hog.debug( "This species (protein from the same subhog) is safe to keep "+ str(node_name)+" "+str(species_dubious_sd))
+                        #     #all of them are from the same subhog, so it doesn't matter, a duplication event doesn't affect when all are from the same subhog at children level
+
+                        child_size_min_indx = child_size.index(min(child_size))
+                        prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
+
                     except:
                         logger_hog.warning("issue 2495869: prot_dubious_list doesnt include the hog id . so we'll  keep it" + str(gene_tree) + " " + str(prot_dubious_list))
 

@@ -33,10 +33,10 @@ def infer_roothogs():
     # sys.exit(0)
 
     #folder = "/scratch/smajidi1/euk_omamer200.dev8_2/test/hogmap/FastOMA-main/testdata/in_folder/"
-    species_names, prot_recs_lists = _utils_roothog.parse_proteomes()# folder
+    species_names, prot_recs_lists,fasta_format_keep = _utils_roothog.parse_proteomes() # optional input folder
     prot_recs_all = _utils_roothog.add_species_name_prot_id(species_names, prot_recs_lists)
 
-    hogmaps = _utils_roothog.parse_hogmap_omamer(species_names)#folder
+    hogmaps = _utils_roothog.parse_hogmap_omamer(species_names,fasta_format_keep) # optional input folder
 
     splice_files =  os.path.exists("./splice/")
     if splice_files:
@@ -48,7 +48,7 @@ def infer_roothogs():
 
 
     rhogs_prots = _utils_roothog.group_prots_roothogs(hogmaps)
-    # todo
+
     rhogs_prots = _utils_roothog.handle_singleton(rhogs_prots,hogmaps)
     rhogs_prots = _utils_roothog.merge_rhogs(hogmaps, rhogs_prots)
     rhogs_prots = _utils_roothog.roothogs_postprocess(hogmaps, rhogs_prots)
