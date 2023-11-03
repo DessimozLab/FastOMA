@@ -70,7 +70,7 @@ process hog_big{
   publishDir params.pickles_temp
   cpus  6
   time {60.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
-  memory {50.GB}
+  memory {150.GB}
   input:
     val rhogsbig_tree_ready
   output:
