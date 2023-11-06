@@ -1,0 +1,7 @@
+.nextflow*
+work/
+.idea/
+dist/
+archive
+.git
+.gitignore

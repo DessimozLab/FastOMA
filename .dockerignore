@@ -1,0 +1,7 @@
+work
+.nextflow*
+.idea
+.git
+output
+testdata
+dist
