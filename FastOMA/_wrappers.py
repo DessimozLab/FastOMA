@@ -55,9 +55,10 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     infere gene tree using fastTree for the input msa
     and write it as orthoxml_to_newick.py file
 
-
     output: gene tree in nwk format
     """
+    prot_ids = [i.id for i in msa]
+    assert len(set(prot_ids)) == len(prot_ids), "non uniq fasta record in msa "+str(prot_ids)
 
     if _config.tree_tool == "fasttree":
         wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
@@ -65,11 +66,11 @@ def infer_gene_tree(msa, gene_tree_file_addr):
         #wrapper_tree.options.options['-quote'].active = True
         #wrapper_tree.options.options['-nt'].active = True
 
-    # todo using more cpus ?
-    # elif _config.tree_tool == "iqtree": # very slow not recommanded
-    #     wrapper_tree = iqtree.Iqtree(msa, datatype="PROTEIN")
-    #     wrapper_tree.options.options['-m'].set_value("LG+I+G")
-    #     wrapper_tree.options.options['-nt'].set_value(1)
+        # todo using more cpus ?
+        # elif _config.tree_tool == "iqtree": # very slow not recommanded
+        #     wrapper_tree = iqtree.Iqtree(msa, datatype="PROTEIN")
+        #     wrapper_tree.options.options['-m'].set_value("LG+I+G")
+        #     wrapper_tree.options.options['-nt'].set_value(1)
 
     result_tree1 = wrapper_tree()
     if wrapper_tree.stderr:
@@ -78,6 +79,25 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     result_tree2 = wrapper_tree.result
     tree_nwk = str(result_tree2["tree"])
     # print(time_taken_tree)
+    #
+    # else0
+    # rhogid= gene_tree_file_addr.split("_")[1]
+    # from ete3 import Tree
+    # tree1= Tree("/scratch/smajidi1/relD_merg_single2/t/omamer_rhogs/HOG_"+rhogid+".fa_msa.nwk",format=1)
+    # logger_hog.info("gene tree read from the folder ")
+    # r_outgroup = tree1.get_midpoint_outgroup()
+    # try:
+    #     tree1.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
+    # except:
+    #     pass
+    # a=2
+    # genes = [i.id for i in msa]
+    # try:
+    #     tree1.prune(genes)
+    # except:
+    #     logger_hog.warning("issue 1230971  prune issue _wrappers "+str(genes))
+    # tree_nwk= tree1.write(format=1)
+    #(msa, gene_tree_file_addr
 
     # current_time = datetime.now().strftime("%H:%M:%S")
     # for development we write the gene tree, the name of file should be limit in size in linux.

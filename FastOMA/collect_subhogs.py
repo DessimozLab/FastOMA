@@ -136,7 +136,7 @@ def collect_subhogs():
         return og_prot_list
 
     input_orthoxml = output_xml_name # sys.argv[1]  # "out_folder/output_hog_.orthoxml"
-    rhog_all_folder = "./omamer_rhogs/" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
+    rhog_all_folder = "./temp_omamer_rhogs/" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
     fasta_format = "fa"  # of the rhogs
 
     output_file_og_tsv = "OrthologousGroups.tsv"

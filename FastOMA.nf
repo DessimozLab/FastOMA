@@ -13,6 +13,8 @@ params.species_tree = params.input_folder + "/species_tree.nwk"
 params.pickles_temp = params.output_folder + "/pickles_temp"
 params.genetrees_folder = params.output_folder + "/genetrees"
 
+params.temp_omamer_rhogs = params.output_folder +"/temp_omamer_rhogs"
+
 
 process omamer_run{
   time {1.h}
@@ -36,13 +38,21 @@ process omamer_run{
 
 
 process infer_roothogs{
+
+    publishDir = [
+        path: params.temp_omamer_rhogs,
+        mode:  'copy',
+        // pattern: "temp_omamer_rhogs"
+        // saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
+    ]
+    //publishDir params.temp_omamer_rhogs , mode: 'copy'
   input:
     val ready_omamer_run
     path hogmap_folder
     path proteome_folder
     path splice_folder
   output:
-    path "omamer_rhogs"
+    path "temp_omamer_rhogs"
     path "gene_id_dic_xml.pickle"
     val true         // nextflow-io.github.io/patterns/state-dependency/
   script:
@@ -55,7 +65,7 @@ process infer_roothogs{
 process batch_roothogs{
   input:
     val ready_infer_roothogs
-    path "omamer_rhogs"
+    path "temp_omamer_rhogs"
   output:
     path "rhogs_rest/*", optional: true
     path "rhogs_big/*" , optional: true
@@ -108,7 +118,7 @@ process collect_subhogs{
     val ready_hog_big
     path "pickles_temp"   // this is the folder includes pickles_rhogs
     path "gene_id_dic_xml.pickle"
-    path "omamer_rhogs"
+    path "temp_omamer_rhogs"
   output:
     path "output_hog.orthoxml"
     path "OrthologousGroupsFasta"
@@ -125,7 +135,7 @@ workflow {
     proteome_folder = Channel.fromPath(params.proteome_folder)
     hogmap_folder = Channel.fromPath(params.hogmap_folder)
     splice_folder = Channel.fromPath(params.splice_folder)
-
+    temp_omamer_rhogs = Channel.fromPath(params.temp_omamer_rhogs)
     genetrees_folder = Channel.fromPath(params.genetrees_folder)
     hogmap_in = Channel.fromPath(params.hogmap_in)
 
@@ -136,10 +146,10 @@ workflow {
     (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb_inputhog)
     ready_omamer_run_c = ready_omamer_run.collect()
 
-    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
+    (temp_omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
     ready_infer_roothogs_c = ready_infer_roothogs.collect()
 
-    (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, omamer_rhogs)
+    (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, temp_omamer_rhogs)
     ready_batch_roothogs_c = ready_batch_roothogs.collect()
 
     species_tree = Channel.fromPath(params.species_tree)
@@ -153,8 +163,8 @@ workflow {
     rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
 
-    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), pickles_temp, gene_id_dic_xml, omamer_rhogs)
-    omamer_rhogs.view{" output omamer_rhogs ${it}"}
+    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), pickles_temp, gene_id_dic_xml, temp_omamer_rhogs)
+    temp_omamer_rhogs.view{" output omamer_rhogs ${it}"}
     orthoxml_file.view{" output orthoxml file ${it}"}
 
 }
