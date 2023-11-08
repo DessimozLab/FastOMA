@@ -86,16 +86,20 @@ def read_species_tree_add_internal(species_tree_address):
     # add name for the internal or leaf, if no name is provided
     num_leaves_no_name = 0
     counter_internal = 0
+    node_names_original = set()
     for node in species_tree.traverse(strategy="postorder"):
         node_name = node.name
-        if len(node_name) < 1:
+        if len(node_name) < 3 or node_name in node_names_original:
             if node.is_leaf():
                 node.name = "leaf_" + str(num_leaves_no_name)
                 num_leaves_no_name += 1
             else:
                 node.name = "internal_ad_" + str(counter_internal)
                 counter_internal += 1
-            logger_hog.debug("The internal node name was empty, we added "+node.name)
+            logger_hog.debug("The internal node name was too small or repeated "+node_name+" which is changed to "+node.name)
+        else:
+            node_names_original.add(node_name)
+
     return species_tree
 
 
@@ -115,6 +119,8 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
     #     outliers = find_outlier_leaves(gene_tree)
     #     r_outgroup = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
     #     gene_tree.set_outgroup(r_outgroup)
+    else:
+        logger_hog.warning("rooting method not found !!   * * * * *  *")
 
     all_species_dubious_sd_dic = {}
     if _config.label_SD_internal == "species_overlap":
