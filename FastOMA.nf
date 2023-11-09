@@ -17,7 +17,7 @@ params.temp_omamer_rhogs = params.output_folder +"/temp_omamer_rhogs"
 
 
 process omamer_run{
-  time {1.h}
+  time {3.h}
   memory {40.GB}
   publishDir params.hogmap_folder
   input:
