@@ -110,15 +110,15 @@ def parse_hogmap_omamer(species_names, fasta_format_keep,  folder="./"):
                         unmapped[species_name].append(prot_id)
                     else:
                         unmapped[species_name] = [prot_id]
-
-                if species_name in hogmaps:
-                    if prot_id in hogmaps[species_name]:
-                        hogmaps[species_name][prot_id].append((hogid, score, seqlen, subfamily_medianseqlen))
-
-                    else:
-                        hogmaps[species_name][prot_id] = [(hogid, score, seqlen, subfamily_medianseqlen)]
                 else:
-                    hogmaps[species_name] = {prot_id: [(hogid, score, seqlen, subfamily_medianseqlen)]}
+                    if species_name in hogmaps:
+                        if prot_id in hogmaps[species_name]:
+                            hogmaps[species_name][prot_id].append((hogid, score, seqlen, subfamily_medianseqlen))
+
+                        else:
+                            hogmaps[species_name][prot_id] = [(hogid, score, seqlen, subfamily_medianseqlen)]
+                    else:
+                        hogmaps[species_name] = {prot_id: [(hogid, score, seqlen, subfamily_medianseqlen)]}
 
     logger_hog.info("There are " + str(len(hogmaps)) + " species in the hogmap folder.")
     logger_hog.info("The first species " + species_names[0] + " contains " + str(len(hogmaps[species_names[0]])) + " proteins.")
@@ -490,6 +490,28 @@ def collect_unmapped_singleton(rhogs_prots, unmapped,prot_recs_all,unmapped_sing
     SeqIO.write(singleton_unmapped_recs, unmapped_singleton_fasta , "fasta")
 
     return len(singleton_unmapped_recs)
+
+
+import subprocess
+
+
+def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
+    num_threads = 5
+    command_clust = "mmseqs easy - linclust - -threads" + str(
+        num_threads) + " " + fasta_to_cluster + "singleton_unmapped tmp_linclust"
+
+    logger_hog.debug("linclust rooting started" + command_clust)
+    process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+
+    # if verbose:
+    #    print("output:\n", output)
+    #    print("error:\n", error)
+
+    # if "Error analyzing file" in str(output) or error:
+    #    try:
+
+    return "done"
 
 
 def write_clusters(address_rhogs_folder, min_rhog_size):

@@ -58,12 +58,13 @@ def infer_roothogs():
     address_rhogs_folder = "./temp_omamer_rhogs/"
     min_rhog_size =2
     rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, address_rhogs_folder, min_rhog_size)
-    linclust_available= "" # which("mmseqs")
+    linclust_available= which("mmseqs")
     # if memseqs is not installed the output will be empty / None
-    if linclust_available :
+    if linclust_available:
         num_unmapped_singleton = _utils_roothog.collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all,  "singleton_unmapped.fa")
-        result_linclust = _utils_roothog.run_linclust(fasta_to_cluster="singleton_unmapped.fa")
-        num_clusters = _utils_roothog.write_clusters(address_rhogs_folder, min_rhog_size)
+        if num_unmapped_singleton:
+            result_linclust = _utils_roothog.run_linclust(fasta_to_cluster="singleton_unmapped.fa")
+            num_clusters = _utils_roothog.write_clusters(address_rhogs_folder, min_rhog_size)
 
 
         #(rhogs_prot_records, address_rhogs_folder, min_rhog_size=2)

@@ -31,14 +31,15 @@ process omamer_run{
     then
         cp ${proteomes_omamerdb_inputhog[2]}/${proteomes_omamerdb_inputhog[0]}.hogmap  ${proteomes_omamerdb_inputhog[0]}.hogmap
     else
-        omamer search --db ${proteomes_omamerdb_inputhog[1]} --query ${proteomes_omamerdb_inputhog[0]} --out ${proteomes_omamerdb_inputhog[0]}.hogmap
+        omamer search -n 10 --db ${proteomes_omamerdb_inputhog[1]} --query ${proteomes_omamerdb_inputhog[0]} --out ${proteomes_omamerdb_inputhog[0]}.hogmap
     fi
   """  // --nthreads 10
 }
 
 
 process infer_roothogs{
-
+    // memory {200.GB} // 1500 speices
+    // memory {95.GB} // <1000 speices
     publishDir = [
         path: params.temp_omamer_rhogs,
         mode:  'copy',
