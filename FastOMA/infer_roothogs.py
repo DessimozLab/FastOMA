@@ -5,6 +5,7 @@ import os.path
 from ._utils_subhog import logger_hog
 from . import _utils_roothog
 from . import _config
+from shutil import which
 
 
 """
@@ -36,7 +37,7 @@ def infer_roothogs():
     species_names, prot_recs_lists,fasta_format_keep = _utils_roothog.parse_proteomes() # optional input folder
     prot_recs_all = _utils_roothog.add_species_name_prot_id(species_names, prot_recs_lists)
 
-    hogmaps = _utils_roothog.parse_hogmap_omamer(species_names,fasta_format_keep) # optional input folder
+    hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(species_names,fasta_format_keep) # optional input folder
 
     splice_files =  os.path.exists("./splice/")
     if splice_files:
@@ -51,9 +52,20 @@ def infer_roothogs():
 
     rhogs_prots = _utils_roothog.handle_singleton(rhogs_prots,hogmaps)
     rhogs_prots = _utils_roothog.merge_rhogs(hogmaps, rhogs_prots)
-    rhogs_prots = _utils_roothog.roothogs_postprocess(hogmaps, rhogs_prots)
+    rhogs_prots = _utils_roothog.filter_big_roothogs(hogmaps, rhogs_prots)
+
+
     address_rhogs_folder = "./temp_omamer_rhogs/"
-    rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, address_rhogs_folder, min_rhog_size=2)
+    min_rhog_size =2
+    rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, address_rhogs_folder, min_rhog_size)
+    linclust_available= "" # which("mmseqs")
+    # if memseqs is not installed the output will be empty / None
+    if linclust_available :
+        num_unmapped_singleton = _utils_roothog.collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all,  "singleton_unmapped.fa")
+        result_linclust = _utils_roothog.run_linclust(fasta_to_cluster="singleton_unmapped.fa")
+        num_clusters = _utils_roothog.write_clusters(address_rhogs_folder, min_rhog_size)
+
+
         #(rhogs_prot_records, address_rhogs_folder, min_rhog_size=2)
 
     #(query_species_names, query_prot_recs) = _utils_roothog.parse_proteome()

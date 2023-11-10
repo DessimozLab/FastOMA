@@ -17,12 +17,57 @@ from Bio import SeqIO
 # This code collect subhogs and writes outputs.
 
 
+def max_og_tree(tree,species_dic):
+    for node in tree.traverse("preorder"):
+        # for node in xml_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "attriremoved") and n.attriremoved==True):
+        if not node.is_leaf() and hasattr(node, "Ev") and node.Ev == 'duplication':  # node.name[:3] == "dup"
+            dup_node = node
+            children = dup_node.get_children()
+            list_num_species = []
+            for child in children:
+                child_name_leaves = child.get_leaves()
+                species_list = []
+                for leaf in child_name_leaves:
+                    name = leaf.name
+                    if name[:3] == "no_":
+                        name = leaf.name.split("_")[-1]
+                    if name in species_dic:
+                        species_name = species_dic[name]
+                        species_list.append(species_name)
+                    else:
+                        print("species not in the dic ", name)
+                species_set = set(species_list)
+                list_num_species.append(len(species_set))
+            index_max_species = list_num_species.index(max(list_num_species))
+            # if there are few children with identical number of species, the case would be not a polytomi but two children with one species
+            # num_occurence = [1 for i in list_num_species if i == max(list_num_species)]
+            # if len(num_occurence) > 1:
+            #    print("please check this case with the developer the tool. The tree has polytomy.")
+            child_max_species = children[index_max_species]
+            children_to_remove = [i for i in children if i != child_max_species]
+            for child_to_remove in children_to_remove:
+                for i in child_to_remove.get_leaves():
+                    i.in_og = "no"
+
+    og_prot_list = []
+    for node in tree.traverse("preorder"):
+        if node.is_leaf():
+            if hasattr(node, "in_og") and node.in_og == "no":
+                pass  # print(node.name)
+            else:
+                og_prot_list.append(node.name)
+
+    return og_prot_list
+
+
+
+
 def collect_subhogs():
 
     logger_hog.info("started collecting pickle files ")
 
     # todo as input argument/option in nextflow
-    protein_format_qfo_dataset_before2022 = True #False
+    protein_format_qfo_dataset_before2022 = False
     # in benchamrk dataset the output prot names should be short
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchmark, the middle should be written in the file
@@ -93,48 +138,6 @@ def collect_subhogs():
     logger_hog.info("Now writing OG fasta files ")
 
 
-    def max_og_tree(tree):
-        for node in tree.traverse("preorder"):
-            # for node in xml_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "attriremoved") and n.attriremoved==True):
-            if not node.is_leaf() and hasattr(node, "Ev") and node.Ev == 'duplication':  # node.name[:3] == "dup"
-                dup_node = node
-                children = dup_node.get_children()
-                list_num_species = []
-                for child in children:
-                    child_name_leaves = child.get_leaves()
-                    species_list = []
-                    for leaf in child_name_leaves:
-                        name = leaf.name
-                        if name[:3] == "no_":
-                            name = leaf.name.split("_")[-1]
-                        if name in species_dic:
-                            species_name = species_dic[name]
-                            species_list.append(species_name)
-                        else:
-                            print("species not in the dic ", name)
-                    species_set = set(species_list)
-                    list_num_species.append(len(species_set))
-                index_max_species = list_num_species.index(max(list_num_species))
-                # if there are few children with identical number of species, the case would be not a polytomi but two children with one species
-                # num_occurence = [1 for i in list_num_species if i == max(list_num_species)]
-                # if len(num_occurence) > 1:
-                #    print("please check this case with the developer the tool. The tree has polytomy.")
-                child_max_species = children[index_max_species]
-                children_to_remove = [i for i in children if i != child_max_species]
-                for child_to_remove in children_to_remove:
-                    for i in child_to_remove.get_leaves():
-                        i.in_og = "no"
-
-        og_prot_list = []
-        for node in tree.traverse("preorder"):
-            if node.is_leaf():
-                if hasattr(node, "in_og") and node.in_og == "no":
-                    pass  # print(node.name)
-                else:
-                    og_prot_list.append(node.name)
-
-        return og_prot_list
-
     input_orthoxml = output_xml_name # sys.argv[1]  # "out_folder/output_hog_.orthoxml"
     rhog_all_folder = "./temp_omamer_rhogs/" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
     fasta_format = "fa"  # of the rhogs
@@ -146,8 +149,15 @@ def collect_subhogs():
 
     OGs = {}
     for hog_id, tree_string in trees.items():
-        tree = Tree(tree_string, format=1)
-        og_prot_list = max_og_tree(tree)
+        try :
+            tree = Tree(tree_string, format=1)
+        except:
+            try:
+                tree = Tree(tree_string, format=1,quoted_node_names=True)
+            except:
+                print("error", tree_string)
+
+        og_prot_list = max_og_tree(tree,species_dic)
         if len(og_prot_list) >= 2: # a group should have at least 1 member/protein
             OGs[hog_id] = og_prot_list
 

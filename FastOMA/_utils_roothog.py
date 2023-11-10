@@ -89,6 +89,7 @@ def parse_hogmap_omamer(species_names, fasta_format_keep,  folder="./"):
     output is dic of dic for all species:
     """
     hogmaps = {}
+    unmapped = {}
     for species_name in species_names:
         hogmap_address = folder + "/hogmap/" + species_name + "."+fasta_format_keep+".hogmap"
         hogmap_file = open(hogmap_address, 'r')
@@ -105,7 +106,10 @@ def parse_hogmap_omamer(species_names, fasta_format_keep,  folder="./"):
                 subfamily_medianseqlen = line_split[9]
 
                 if hogid == "N/A":
-                    continue
+                    if species_name in unmapped:
+                        unmapped[species_name].append(prot_id)
+                    else:
+                        unmapped[species_name] = [prot_id]
 
                 if species_name in hogmaps:
                     if prot_id in hogmaps[species_name]:
@@ -119,7 +123,7 @@ def parse_hogmap_omamer(species_names, fasta_format_keep,  folder="./"):
     logger_hog.info("There are " + str(len(hogmaps)) + " species in the hogmap folder.")
     logger_hog.info("The first species " + species_names[0] + " contains " + str(len(hogmaps[species_names[0]])) + " proteins.")
 
-    return hogmaps
+    return hogmaps, unmapped
 
 
 def group_prots_roothogs(hogmaps):
@@ -237,7 +241,7 @@ def handle_singleton(rhogs_prots,hogmaps):
     return rhogs_prots
 
 
-def roothogs_postprocess(hogmaps, rhogs_prots):
+def filter_big_roothogs(hogmaps, rhogs_prots):
 
 
     prots_list_big = []  # as backup
@@ -463,6 +467,91 @@ def merge_rhogs(hogmaps, rhogs_prots):
 
     return rhogs_prots
 
+
+def collect_unmapped_singleton(rhogs_prots, unmapped,prot_recs_all,unmapped_singleton_fasta= "singleton_unmapped.fa"):
+    unmapped_recs = []
+    for species_name, prot_names in unmapped.items():
+        for prot_name in prot_names:
+            prot_rec = prot_recs_all[species_name][prot_name]
+            unmapped_recs.append(prot_rec)
+
+    print(len(unmapped_recs))
+    singleton_recs = []
+    for rhogid, sp_prot_list in rhogs_prots.items():
+        if len(sp_prot_list) == 1:
+            species_name = sp_prot_list[0][0]
+            prot_name = sp_prot_list[0][1]
+            prot_rec = prot_recs_all[species_name][prot_name]
+            singleton_recs.append(prot_rec)
+    print(len(singleton_recs))
+
+    singleton_unmapped_recs = unmapped_recs + singleton_recs
+
+    SeqIO.write(singleton_unmapped_recs, unmapped_singleton_fasta , "fasta")
+
+    return len(singleton_unmapped_recs)
+
+
+def write_clusters(address_rhogs_folder, min_rhog_size):
+    cluster_output_address = "singleton_unmapped_all_seqs.fasta"
+    cluster_file = open(cluster_output_address, 'r')
+    cluster_dic = {}
+    previous_line_start = " "
+    # parsing memseqs fasta-like format https://github.com/soedinglab/MMseqs2/wiki#cluster-fasta-like-format
+    # >A0A0R4IFW6
+    # >tr|A0A0R4IFW6|A0A0R4IFW6_DANRE||DANRE||1000001584 tr|A0A0R
+    # MSRKTTSKRHYKPSSEIDDAALARKREYW
+    clusters = []
+    cluster = []
+    line_strip = " "
+    # line_number =1
+    for line in cluster_file:
+        line_strip = line.strip()
+        # print(line_number,previous_line_start,line_strip[0],cluster )# "_",previous_line_start,line_strip[0])
+        if previous_line_start == " ":
+            clusters = []
+            cluster = []
+        elif line_strip[0] == ">" and previous_line_start == ">":  # new cluster started at previous line
+            if len(cluster) >= 5:  # more than one records [ID1, seq1,ID2, seq2, newcluster_id]
+                clusters.append(cluster[:-1])  # last item is the id of new cluster
+            cluster = [line_strip]
+        elif line_strip[0] == ">" and previous_line_start != ">":
+            cluster.append(line_strip)
+        elif line_strip[0] != ">":
+            cluster.append(line_strip)
+
+        previous_line_start = line_strip[0]
+        # line_number+=1
+
+    # for last cluster
+    if len(cluster) >= 4:  # more than one records  [ID1, seq1,ID2, seq2]
+        clusters.append(cluster)
+    cluster = [line_strip]
+
+    # cluster_output_address = "singleton_unmapped_cluster.tsv"
+    # cluster_file = open(cluster_output_address, 'r')
+    # cluster_dic = {}
+    # for line in cluster_file:
+    #     line_strip = line.strip()
+    #     rep, prot= line_strip.split()
+    #     if rep in cluster_dic:
+    #         cluster_dic[rep].append(prot) # the frist line includ (rep,rep)
+    #     else:
+    #         cluster_dic[rep]=[prot]
+
+    # cluster_list = []
+    # for rep, prot_list in cluster_dic.items():
+    #     if len(prot_list)>1:
+    #         cluster_list.append(prot_list)
+
+    for cluster_idx, cluster in enumerate(clusters):
+        if len(cluster) >= 2 * min_rhog_size:
+            file_idx = open(address_rhogs_folder + "/HOG_clust" + str(cluster_idx) + ".fa", "w")
+            for line in cluster:
+                file_idx.write(line + "\n")
+            file_idx.close()
+
+    return len(clusters)
 
 # import pyoma.browser.db as db
 # def parse_oma_db(oma_database_address):

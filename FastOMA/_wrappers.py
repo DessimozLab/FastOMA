@@ -6,7 +6,7 @@ from FastOMA.zoo.wrappers.treebuilders import fasttree
 # from trimmers.trimal import TrimAl
 from ete3 import Tree
 
-
+import subprocess
 
 from ._config import logger_hog
 from . import _config
@@ -63,6 +63,8 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     if _config.tree_tool == "fasttree":
         wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
         wrapper_tree.options.options['-fastest'].active = True   # .set_value(True)  is wrong.
+        wrapper_tree.options.options['-quote'].active = True
+
         #wrapper_tree.options.options['-quote'].active = True
         #wrapper_tree.options.options['-nt'].active = True
 
@@ -77,7 +79,7 @@ def infer_gene_tree(msa, gene_tree_file_addr):
         logger_hog.debug("tree inference stderr " + str(wrapper_tree.stderr))
     time_taken_tree = wrapper_tree.elapsed_time
     result_tree2 = wrapper_tree.result
-    tree_nwk = str(result_tree2["tree"])
+    tree_nwk = result_tree2["tree"].as_string(schema='newick') #str(result_tree2["tree"])
     # print(time_taken_tree)
     #
     # else0
@@ -114,7 +116,22 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     return tree_nwk
 
 
+def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
 
+    num_threads = 5
+    command_clust= "mmseqs easy - linclust - -threads" +str(num_threads) + " " +fasta_to_cluster+"singleton_unmapped tmp_linclust"
+
+    logger_hog.debug("linclust rooting started" + command_clust)
+    process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+
+    # if verbose:
+    #    print("output:\n", output)
+    #    print("error:\n", error)
+    #if "Error analyzing file" in str(output) or error:
+    #    try:
+
+    return "done"
 
 
 def trim_msa(msa):
@@ -156,7 +173,7 @@ def mad_rooting(input_tree_file_path: str, mad_executable_path: str = "./mad"):
     # Run MAD and ignore the output.
     #os.system(mad_command)
 
-    import subprocess
+
     logger_hog.debug("MAD rooting started")
     #bashCommand = f"mad {gene_tree_address}"
     process = subprocess.Popen(mad_command.split(), stdout=subprocess.PIPE)

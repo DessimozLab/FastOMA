@@ -86,7 +86,7 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
                 hogs_a_rhog_xml = hogs_a_rhog_xml_raw
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
         else:
-            logger_hog.debug("we are not reporting due to fastoma signleton hog |*|" + str(list(hog_i._members)[0]))
+            logger_hog.debug("we are not reporting due to fastoma signleton hog |*|  " + str(list(hog_i._members)[0]))
             if len(hog_i._members)>1:
                 logger_hog.warning("issue 166312309 this is not a singletome"+str(hog_i._members))
 
@@ -245,8 +245,8 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all):
 
     this_level_node_name = node_species_tree.name
     pickles_subhog_folder = pickles_subhog_folder_all + "/rhog_" + rhogid + "/"
-    if not node_species_tree.is_leaf():
-        logger_hog.warning("issue 1235,it seems that there is only on species in this tree, singletone hogs are treated elsewhere "+ rhogid)
+    if node_species_tree.is_leaf():
+        logger_hog.warning("issue 1235,it seems that there is only on species in this tree, singleton hogs are treated elsewhere "+ rhogid)
 
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name) + ".pickle"
 
@@ -298,7 +298,14 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all):
     if len(msa_filt_row_col) > 1 and len(msa_filt_row_col[0]) > 1:
 
         gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, genetree_msa_file_addr)
-        gene_tree = Tree(gene_tree_raw + ";", format=0)   # ,quoted_node_names=True
+        try:
+            gene_tree = Tree(gene_tree_raw + ";", format=0)   #
+        except:
+            try:
+                gene_tree = Tree(gene_tree_raw + ";", format=0, quoted_node_names=True)  #
+            except:
+
+                print("error")
         logger_hog.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+rhogid+", level: "+str(node_species_tree.name))
 
         if _config.fragment_detection and len(gene_tree) > 2 and prot_dubious_msa_list:
@@ -307,7 +314,7 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all):
             merged_msa_new = merged_msa
 
         # when the prot dubious is removed during trimming
-        if len(gene_tree) > 1:
+        if len(gene_tree) > 1: # e.g. "('sp|O67547|SUCD_AQUAE||AQUAE||1002000005|_|sub10001':0.329917,'tr|O84829|O84829_CHLTR||CHLTR||1001000005|_|sub10002':0.329917);"
             (gene_tree, all_species_dubious_sd_dic) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list)
             if _config.low_so_detection and all_species_dubious_sd_dic:
                 (gene_tree, hogs_children_level_list) = _utils_frag_SO_detection.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list)
@@ -370,9 +377,15 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     for node in gene_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "processed") and n.processed==True):
 
         if not node.is_leaf() and node.name[0] == "S":
-            node_leaves_name_raw = [i.name for i in node.get_leaves()]
+            node_leaves_name_raw0 = [i.name for i in node.get_leaves()]
             # leaves names  with subhog id  'HALSEN_R15425||HALSEN|_|1352015793_sub10149',
-            node_leaves_name = [i.split("|_|")[0] for i in node_leaves_name_raw]
+            node_leaves_name_raw1 = [i.split("|_|")[0] for i in node_leaves_name_raw0]
+
+            if node_leaves_name_raw1[0].startswith("'"):
+                node_leaves_name = [i[1:] for i in node_leaves_name_raw1] # since splited , there is no ' at the end. so -1] is not needed.
+                # "'sp|O67547|SUCD_AQUAE||AQUAE||1002000005", gene tree is quoted, there are both ' and " !
+            else:
+                node_leaves_name = node_leaves_name_raw1
             # node_leaves_name =[]
             # for name_i in node_leaves_name_:
             #     node_leaves_name += name_i.split("_|_")

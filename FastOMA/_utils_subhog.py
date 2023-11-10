@@ -113,7 +113,7 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
             pass
 
     elif _config.rooting_method == "mad":
-        gene_tree = _wrappers.mad_rooting(genetree_msa_file_addr)
+        gene_tree = _wrappers.mad_rooting(genetree_msa_file_addr) # todo check with qouted gene tree
     # elif _config.rooting_method == "outlier":
     #     gene_tree = PhyloTree(gene_tree_raw + ";", format=0)
     #     outliers = find_outlier_leaves(gene_tree)
@@ -133,14 +133,20 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
         gene_tree_PhyloTree = PhyloTree(gene_tree_nwk_string, format=1)
         gene_tree = label_SD_internal_nodes_reconcilation(gene_tree_PhyloTree, node_species_tree_PhyloTree)
 
+    # for better viz, the subhog ID is added to leaves of gene tree
     if hogs_children_level_list:
         for node in gene_tree.traverse(strategy="postorder"):
             if node.is_leaf():
-                node_name_old = node.name
+                node_name_old_raw = node.name
+                if node_name_old_raw.startswith("'"): # quated gene tree
+                    node_name_old = node_name_old_raw[1:-1]  # "'sp|O67547|SUCD_AQUAE||AQUAE||1002000005'", gene tree is quoted, there are both ' and " !
+                else:
+                    node_name_old = node_name_old_raw
+                # node_name_old = node.name
                 for hog_child in hogs_children_level_list:
                     if node_name_old in hog_child._members:
                         #node_name_new = node_name_old.split("||")[0]+" "+ hog_child._hogid.split("_")[-1]
-                        node_name_new = node_name_old + "|_|" + hog_child._hogid.split("_")[-1]
+                        node_name_new = "'"+node_name_old + "|_|" + hog_child._hogid.split("_")[-1]+"'"
                         # BUCABY_R15453||BUCABY||1286015722_sub10216
                         node.name = node_name_new
                         break
@@ -223,7 +229,13 @@ def label_sd_internal_nodes(tree_out):
     for node in tree_out.traverse(strategy="postorder"):
         # print("** now working on node ",node.name) # node_children
         if node.is_leaf():
-            prot_i = node.name
+            prot_i_raw = node.name
+            if prot_i_raw.startswith("'"):
+                prot_i = prot_i_raw[1:-1]  # "'sp|O67547|SUCD_AQUAE||AQUAE||1002000005'", gene tree is quoted, there are both ' and " !
+            else:
+                prot_i = prot_i_raw
+
+            #prot_i = node.name # "'sp|O67547|SUCD_AQUAE||AQUAE||1002000005'", gene tree is quoted, there are both ' and " !
             # species_name_dic[node] = {str(prot_i).split("|")[-1].split("_")[-1]}
             species_name_dic[node] = {str(prot_i).split("||")[1]}
         else:
@@ -274,6 +286,9 @@ def label_SD_internal_nodes_reconcilation(gene_tree, species_tree):
 
 
 def get_reconciled_tree_zmasek(gtree, sptree, inplace=False):
+    # todo all over the functions
+    #  todo node_leaves_name = [i[1:-1] for i in node_leaves_name_raw1] # "'sp|O67547|SUCD_AQUAE||AQUAE||1002000005'", gene tree is quoted, there are both ' and " !
+
     """
     from ete3
     https://github.com/etetoolkit/ete/blob/1f587a315f3c61140e3bdbe697e3e86eda6d2eca/ete3/phylo/reconciliation.py
@@ -302,7 +317,7 @@ def get_reconciled_tree_zmasek(gtree, sptree, inplace=False):
     g_node_species_all = []
     for g_node in gtree.get_leaves():
         # # leaves names  with subhog id  'HALSEN_R15425||HALSEN||1352015793||sub10149'
-        g_node_species_all.append(g_node.name.split("||")[1])
+        g_node_species_all.append(g_node.name.split("||")[1]) # todo check quoted
     species_sptree_all = [i.name for i in sptree.get_leaves()]
     missing_sp = set(g_node_species_all) - set(species_sptree_all)
     if missing_sp:

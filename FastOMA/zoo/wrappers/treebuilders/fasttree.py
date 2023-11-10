@@ -141,6 +141,8 @@ def get_default_options():
 
         # Speed up the neighbor joining phase & reduce memory usage (recommended for >50,000 sequences)
         StringOption('-fastest', active=False),
+        # allow spaces and other restricted characters (but not ' ) in sequence names and quote names in the output tree (fasta input only; FastTree will not be able to read these trees back in)
+        StringOption('-quote', active=True),
 
         #-quote -- quote sequence names in the output and allow spaces, commas,  parentheses, and colons in them but not ' characters (fasta files only)\n"
         StringOption('-quote', active=False),
