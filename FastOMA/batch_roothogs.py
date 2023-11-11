@@ -49,7 +49,7 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
     # to have at least one big and one rest rhog, this makes nextflow pipline easier,
     # otherwise we need if condition  collect_subhogs won't satisfy if one of them is empty
 
-    list_list_rest_rhog = [[rhogid_list[0]],[]]  # each insid list should take 1h to
+    list_list_rest_rhog = [[rhogid_list[0]],[]]  # each insid list should take around 1h
     list_list_rest_size = [[],[]]
     list_list_big = [rhogid_list[1]]
 

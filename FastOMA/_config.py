@@ -36,11 +36,11 @@ mergHOG_shared_thresh = 50
 # threshold_dubious_sd = float(os.getenv(VARIABLE_threshold_dubious_sd, 0.1))
 
 ## output writing files
-gene_trees_write = False
-msa_write = False
-gene_trees_write_all = False
-msa_write_all = False
-keep_subhog_each_pickle = False
+gene_trees_write = True
+msa_write = True
+gene_trees_write_all = True
+msa_write_all = True
+keep_subhog_each_pickle = True
 
 big_rhog_size = 60 * 1000
 omamer_family_threshold = 90
@@ -69,11 +69,11 @@ automated_trimAL = False
 label_SD_internal = "species_overlap"  # "reconcilation" "species_overlap"
 # threshold_sd_suspicious_fragment_ratio = 1/3
 tree_tool = "fasttree"  # "fasttree"  "iqtree"  # for  gene tree with two, we use
-rooting_method = "midpoint"  # "midpoint" "mad"
+rooting_method = "midpoint"#"midpoint"  # "midpoint" "mad"
 rooting_mad_executable_path = "mad"  # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/installers/mad/
 
 ##inferhog
-inferhog_tresh_ratio_gap_row =0.1 # 0.6   # to have more proteins in the ortho groups 0.1
+inferhog_tresh_ratio_gap_row =0.2 # 0.6   # to have more proteins in the ortho groups 0.1
 inferhog_tresh_ratio_gap_col =0.5  # 0.6   # ver very 0.8
 inferhog_min_cols_msa_to_filter = 50 #300 #50  # used for msa before gene tree inference and  saving msa in hog class
 

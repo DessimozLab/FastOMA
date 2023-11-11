@@ -496,9 +496,9 @@ import subprocess
 
 
 def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
-    num_threads = 5
-    command_clust = "mmseqs easy - linclust - -threads" + str(
-        num_threads) + " " + fasta_to_cluster + "singleton_unmapped tmp_linclust"
+    num_threads = 5 # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/miniconda/envs/fastoma/bin/
+    command_clust = "mmseqs easy-linclust --threads " + str(
+        num_threads) + " " + fasta_to_cluster + " singleton_unmapped tmp_linclust"
 
     logger_hog.debug("linclust rooting started" + command_clust)
     process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
@@ -548,7 +548,8 @@ def write_clusters(address_rhogs_folder, min_rhog_size):
     # for last cluster
     if len(cluster) >= 4:  # more than one records  [ID1, seq1,ID2, seq2]
         clusters.append(cluster)
-    cluster = [line_strip]
+
+    logger_hog.debug("Number of linclust clusters raw is " + str(len(clusters)))
 
     # cluster_output_address = "singleton_unmapped_cluster.tsv"
     # cluster_file = open(cluster_output_address, 'r')
@@ -566,14 +567,22 @@ def write_clusters(address_rhogs_folder, min_rhog_size):
     #     if len(prot_list)>1:
     #         cluster_list.append(prot_list)
 
-    for cluster_idx, cluster in enumerate(clusters):
-        if len(cluster) >= 2 * min_rhog_size:
-            file_idx = open(address_rhogs_folder + "/HOG_clust" + str(cluster_idx) + ".fa", "w")
-            for line in cluster:
-                file_idx.write(line + "\n")
-            file_idx.close()
 
-    return len(clusters)
+    cluster_iter= 1000*10
+    for cluster in clusters:
+        if len(cluster) >= 2 * min_rhog_size:
+            species_names= []     # it seems that genes from same species tend to cluster together, discard such clusters
+            for pr_idi in  range(int(len(cluster)/2)):
+                species_name = cluster[pr_idi*2].split(" ")[0].split("||")[1]
+                species_names.append(species_name)
+            if len(set(species_names))>1:
+                file_idx = open(address_rhogs_folder + "/HOG_clust" + str(cluster_iter) + ".fa", "w")
+                for line in cluster:
+                    file_idx.write(line + "\n")
+                file_idx.close()
+                cluster_iter+=1
+
+    return cluster_iter-1
 
 # import pyoma.browser.db as db
 # def parse_oma_db(oma_database_address):

@@ -59,9 +59,13 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     """
     prot_ids = [i.id for i in msa]
     assert len(set(prot_ids)) == len(prot_ids), "non uniq fasta record in msa "+str(prot_ids)
-
+    # since quote is activated, the description of prots will be in the gene tree leaves. so we need to remove that.
+    msa_edited = []
+    for rec in msa:
+        rec.description=""
+        msa_edited.append(rec)
     if _config.tree_tool == "fasttree":
-        wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
+        wrapper_tree = fasttree.Fasttree(msa_edited, datatype="PROTEIN")
         wrapper_tree.options.options['-fastest'].active = True   # .set_value(True)  is wrong.
         wrapper_tree.options.options['-quote'].active = True
 
