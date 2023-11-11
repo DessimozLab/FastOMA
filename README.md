@@ -263,7 +263,8 @@ HUMAN00034;HUMAN00035
 - phylostragraphy 
 
 ## Change log
-- Update   v0.1.3: merge rootHOGs  and handle singleton using omamer multi-hits
+- Update   v0.1.4: new gene families with linclust if mmseqs is installed, using quoted protein name to handle species chars 
+- Update   v0.1.3: merge rootHOGs and handle singleton using omamer multi-hits
 - Update   v0.1.2: improve rootHOG inference, splice, OMAmerv2 with multi-hits
 - Release  v0.1.0: improve nextflow pipeline and outputs. 
 - prelease v.0.0.6: use `--fragment-detection` for `infer-subhogs` and `--low-so-detection --fragment-detection`
