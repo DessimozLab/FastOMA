@@ -129,7 +129,7 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
     elif _config.label_SD_internal == "reconcilation":
         node_species_tree_nwk_string = node_species_tree.write(format=1)
         node_species_tree_PhyloTree = PhyloTree(node_species_tree_nwk_string, format=1)
-        gene_tree_nwk_string = gene_tree.write(format=1)
+        gene_tree_nwk_string = gene_tree.write(format=1, format_root_node=True)
         gene_tree_PhyloTree = PhyloTree(gene_tree_nwk_string, format=1)
         gene_tree = label_SD_internal_nodes_reconcilation(gene_tree_PhyloTree, node_species_tree_PhyloTree)
 

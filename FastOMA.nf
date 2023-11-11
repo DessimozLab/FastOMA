@@ -38,6 +38,7 @@ process omamer_run{
 
 
 process infer_roothogs{
+  time {5.h}   // including linclust
     // memory {200.GB} // 1500 speices
     // memory {95.GB} // <1000 speices
     publishDir = [

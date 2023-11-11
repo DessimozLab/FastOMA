@@ -412,10 +412,12 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                         else:  # this hog is already decided to be merged  print(node.name, subHOG._hogid, node_leave_name)
                             if "processed" in node:
                                 logger_hog.warning("issue 1863 "+ str(node.name)+str(subHOG._hogid)+ str(node_leave_name)) # print("processed", node.name) #else: #    print("processed not in ", node.name)  # print(node_leave_name,"is in ",subHOG._hogid)
-            if subHOG_to_be_merged:
-                if len(subHOG_to_be_merged) == 1:
-                    logger_hog.warning("issue 125568313 "+str(subHOG_to_be_merged)+" "+node.name)
+            if len(subHOG_to_be_merged) == 1:
+                logger_hog.warning("issue 125568313 "+str(subHOG_to_be_merged)+" "+node.name+" probably the subhog was merged previously" )
+                logger_hog.debug("issue 125568313 " + str(subHOG_to_be_merged_set_other_Snodes_flattned_temp))
+                logger_hog.debug("issue 125568313 " +str(node.name)+" "+ str(gene_tree.write(format=1,format_root_node=True)))
 
+            elif len(subHOG_to_be_merged)>1:
                 subHOG_to_be_merged_set = set(subHOG_to_be_merged)
                 taxnomic_range = node_species_tree.name
                 num_species_tax_speciestree = len(node_species_tree.get_leaves())
@@ -426,13 +428,10 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                 hogs_this_level_list.append(HOG_this_node)
 
                 subHOG_to_be_merged_set_other_Snodes.append([i._hogid for i in subHOG_to_be_merged_set])
-                subHOG_to_be_merged_set_other_Snodes_flattned_temp = [item for items in
-                                                                      subHOG_to_be_merged_set_other_Snodes for
-                                                                      item in items]
+                subHOG_to_be_merged_set_other_Snodes_flattned_temp = [item for items in subHOG_to_be_merged_set_other_Snodes for  item in items]
                 #  I don't need to traverse deeper in this clade
             node.processed = True  # print("?*?*  ", node.name)
-        subHOG_to_be_merged_set_other_Snodes_flattned = [item for items in subHOG_to_be_merged_set_other_Snodes for
-                                                         item in items]
+        subHOG_to_be_merged_set_other_Snodes_flattned = [item for items in subHOG_to_be_merged_set_other_Snodes for item in items]
         if [i._hogid for i in hogs_children_level_list] == subHOG_to_be_merged_set_other_Snodes_flattned:
             break
     ##  the following if fore debugging and visualisation of connected component of inter-HOG graph

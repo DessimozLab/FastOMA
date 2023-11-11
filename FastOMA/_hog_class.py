@@ -76,8 +76,8 @@ class HOG:
             assert False
 
     def __repr__(self):
-        return "object of HOGclass hogID=" + self._hogid + ",len=" + str(
-            len(self._members))+", tax_least=" + str(self._tax_least) + ", tax_now= " + str(self._tax_now)
+        return "HOGobj" + self._hogid + ",len=" + str(
+            len(self._members))+", taxLeast=" + str(self._tax_least) + ", taxNow= " + str(self._tax_now)
 
     def get_members(self):
         return set(self._members)

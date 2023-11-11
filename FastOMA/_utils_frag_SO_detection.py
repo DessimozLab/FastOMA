@@ -192,7 +192,7 @@ def find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic):
                     try:
                         subhogs_list = [i.split("|_|")[1] for i in prot_dubious_list]  # subhog id at child level
 
-                        # todo check !, is it safe or not!
+                        # todo check ! is it safe or not!
                         # if len(set(subhogs_list)) > 1:
                         #     # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
                         #     child_size_min_indx = child_size.index(min(child_size))
@@ -221,7 +221,7 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
     itr_so = 0
     while all_species_dubious_sd_dic_updated:
         logger_hog.debug("These are found with low SO score all_species_dubious_sd_dic " + str(all_species_dubious_sd_dic_updated)+" which are now being handled itr"+str(itr_so)+" .")
-        prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic)
+        prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic_updated)
         if prot_dubious_sd_remove_list:
             rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list)
             gene_tree.prune(rest_leaves, preserve_branch_length=True)
