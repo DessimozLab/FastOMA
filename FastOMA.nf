@@ -92,7 +92,7 @@ process hog_big{
     val true
   script:
     """
-        infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --species-tree ${rhogsbig_tree_ready[1]} --parallel --fragment-detection --low-so-detection
+        infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --species-tree ${rhogsbig_tree_ready[1]} --parallel
     """
 }
 
@@ -107,7 +107,7 @@ process hog_rest{
     val true
   script:
     """
-        infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]}  --species-tree ${rhogsrest_tree_ready[1]} --fragment-detection --low-so-detection
+        infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]}  --species-tree ${rhogsrest_tree_ready[1]}
     """  // --parrallel False
 }
 

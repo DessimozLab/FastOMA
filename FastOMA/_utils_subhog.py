@@ -47,7 +47,7 @@ def list_rhog_fastas(address_rhogs_folder):
     return rhogid_list
 
 
-def read_species_tree_add_internal(species_tree_address):
+def read_species_tree(species_tree_address):
     """
     reading  species tree in Phyloxml format using ete3 package .
 
@@ -82,23 +82,6 @@ def read_species_tree_add_internal(species_tree_address):
     else:
         logger_hog.error("for now we accept phyloxml or nwk format for input species tree.or the file doesn't exist "+species_tree_address)
         sys.exit()
-
-    # add name for the internal or leaf, if no name is provided
-    num_leaves_no_name = 0
-    counter_internal = 0
-    node_names_original = set()
-    for node in species_tree.traverse(strategy="postorder"):
-        node_name = node.name
-        if len(node_name) < 3 or node_name in node_names_original:
-            if node.is_leaf():
-                node.name = "leaf_" + str(num_leaves_no_name)
-                num_leaves_no_name += 1
-            else:
-                node.name = "internal_ad_" + str(counter_internal)
-                counter_internal += 1
-            logger_hog.debug("The internal node name was too small or repeated "+node_name+" which is changed to "+node.name)
-        else:
-            node_names_original.add(node_name)
 
     return species_tree
 

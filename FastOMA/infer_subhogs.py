@@ -47,7 +47,7 @@ def infer_subhogs():
 
 
     address_rhogs_folder = _config.input_rhog_folder
-    inferhog_concurrent_on = False
+    # inferhog_concurrent_on = False
     inferhog_concurrent_on = _config.parallel #  sys.argv[2]   # "False"  # "False"  #
 
     if inferhog_concurrent_on:

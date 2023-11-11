@@ -106,7 +106,7 @@ def set_configs():
     parser = argparse.ArgumentParser(description="This is GETHOG3 ")     # parser.add_argument('--working-folder', help="in_folder")
     parser.add_argument('--logger-level', default="DEBUG")
     parser.add_argument("--version", action="version", help="Show version and exit.", version="0.0.6",)  # version=__version__
-    parser.add_argument('--species-tree-address', default="species_tree_test.nwk")
+    parser.add_argument('--species-tree-address', default="species_tree.nwk")
     parser.add_argument('--input-rhog-folder')     # , default="./rhog"
     parser.add_argument('--parallel', action=argparse.BooleanOptionalAction)
     parser.add_argument('--fragment-detection', action=argparse.BooleanOptionalAction)
@@ -117,7 +117,7 @@ def set_configs():
     setattr(sys.modules[__name__], 'logger_level', config_parser.logger_level)
     setattr(sys.modules[__name__], 'input_rhog_folder', config_parser.input_rhog_folder)
     setattr(sys.modules[__name__], 'parallel', config_parser.parallel)
-    setattr(sys.modules[__name__], 'species_tree_address', config_parser.species_tree_address)
+    setattr(sys.modules[__name__], 'species_tree_address', config_parser.species_tree_address) # todo _checked.nwk
     setattr(sys.modules[__name__], 'fragment_detection', config_parser.fragment_detection)
     setattr(sys.modules[__name__], 'low_so_detection', config_parser.low_so_detection)
     print("config_parser 3 ", config_parser)
@@ -126,6 +126,5 @@ def set_configs():
 
 '''
 
-TODO
- default doesnt work
+TODO : default doesnt work fragment_detection
 '''
