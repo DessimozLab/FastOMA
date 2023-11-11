@@ -67,7 +67,7 @@ def collect_subhogs():
     logger_hog.info("started collecting pickle files ")
 
     # todo as input argument/option in nextflow
-    protein_format_qfo_dataset_before2022 = False
+    protein_format_qfo_dataset_before2022 = True
     # in benchamrk dataset the output prot names should be short
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchmark, the middle should be written in the file

@@ -37,7 +37,7 @@ def read_msa(input_msa):
         if len(ii):
             coords.append((np.min(ii), np.max(ii)))
         else:
-            logger_hog.warning("issue 1321230 all of the seq is gap "+str(rec))
+            logger_hog.warning("issue 1321230 all of the seq is gap.  "+str(rec))
             coords.append((0, 0))
 
     ids = np.array(ids)
@@ -189,24 +189,26 @@ def find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic):
                         for prot_name in list_leaves:
                             if prot_name.split("||")[1] == species_dubious_sd:
                                 prot_dubious_list.append(prot_name)
-                    try:
-                        subhogs_list = [i.split("|_|")[1] for i in prot_dubious_list]  # subhog id at child level
+                    #try:
+                    subhogs_list = [i.split("|_|")[1][:-1] for i in prot_dubious_list]  # subhog id at child level
+                    #  ["'tr|Q4V8S5|Q4V8S5_DANRE||DANRE||1000020519|_|sub12962'"]
+                    # the last char is ', watch out!
 
-                        # todo check ! is it safe or not!
-                        # if len(set(subhogs_list)) > 1:
-                        #     # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
-                        #     child_size_min_indx = child_size.index(min(child_size))
-                        #     prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
-                        #
-                        # else:
-                        #     logger_hog.debug( "This species (protein from the same subhog) is safe to keep "+ str(node_name)+" "+str(species_dubious_sd))
-                        #     #all of them are from the same subhog, so it doesn't matter, a duplication event doesn't affect when all are from the same subhog at children level
+                    # todo check ! is it safe or not!
+                    # if len(set(subhogs_list)) > 1:
+                    #     # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
+                    #     child_size_min_indx = child_size.index(min(child_size))
+                    #     prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
+                    #
+                    # else:
+                    #     logger_hog.debug( "This species (protein from the same subhog) is safe to keep "+ str(node_name)+" "+str(species_dubious_sd))
+                    #     #all of them are from the same subhog, so it doesn't matter, a duplication event doesn't affect when all are from the same subhog at children level
 
-                        child_size_min_indx = child_size.index(min(child_size))
-                        prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
+                    child_size_min_indx = child_size.index(min(child_size))
+                    prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx]) # ["'sp|Q9PRL8|ACBP_CHICK||CHICK||1020017457|_|sub10101'"]
 
-                    except:
-                        logger_hog.warning("issue 2495869: prot_dubious_list doesnt include the hog id . so we'll  keep it" + str(gene_tree) + " " + str(prot_dubious_list))
+                    # except:
+                    #    logger_hog.warning("issue 2495869: prot_dubious_list doesnt include the hog id . so we'll  keep it" + str(prot_dubious_list)+ " " +str(gene_tree.write(format=1, format_root_node=True) ) )
 
 
     return prot_dubious_sd_remove_list
