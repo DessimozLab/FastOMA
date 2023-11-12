@@ -28,8 +28,20 @@ $ cat species_tree.nwk
 ```
 
 Besides, the internal node should not contain any special character (e.g. `\`  `/` or space).
-The reason is that FastOMA write some files whose names contains the internal node's name. 
+The reason is that FastOMA write some files whose names contain the internal node's name. 
 If the species tree does not have label for some/all internal nodes, FastOMA labels them sequentially.  
+
+
+### Input check:
+
+After installing FastOMA, you have a initial check for your input dataset by running the following in the folder `in_folder`:
+
+```
+cd in_folder
+check-fastoma-input
+```
+
+
 
 ### Output:
 Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format
