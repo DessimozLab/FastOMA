@@ -10,6 +10,7 @@ from . import _utils_roothog
 from ._utils_subhog import logger_hog
 
 
+
 """
 cd in_folder
 python check_fastoma_input.py
@@ -97,7 +98,7 @@ def check_speciestree_leaves(species_tree,species_names):
         logger_hog.error("These species are not in the species tree "+ str(species_names_not_intree))
         logger_hog.error("This is a tree template:  ((AQUAE,CHLTR)inter1,MYCGE)inter2; for proteome folder with these three files:  AQUAE.fa  CHLTR.fa  MYCGE.fa. ")
         logger_hog.error("Check input failed. FastOMA halted!")
-        sys.exit(1)
+        #sys.exit(1)
     leaves_tree_not_proteome = [i for i in leaves_name  if i not in species_names]
     if leaves_tree_not_proteome:
         logger_hog.warning("there are "+str(len(leaves_tree_not_proteome))+" leaves in the species tree that there is no proteome. So we will discard them.")
@@ -153,6 +154,34 @@ def add_internal_node(species_tree):
     return species_tree
 
 
+def check_splice(isoform_by_gene_all):
+    total_genes = 0
+    total_isoforms = 0
+    spliced_species_num = 0
+    for sp, isoforms in isoform_by_gene_all.items():
+        if len(isoforms)>1:
+            spliced_species_num+=1
+
+            for isoform in isoforms:
+                if len(isoform)>1:
+                    total_isoforms+=len(isoform)
+                    total_genes+=1
+
+    logger_hog.debug("For "+str(spliced_species_num)+"  species, out of "+str(len(isoform_by_gene_all))+" , we have splice files.")
+    if total_genes ==0:
+        logger_hog.debug("It seems that in all of the splice files, each line has only one item. Make sure that the splitter in each line is semicolon ; ")
+        sys.exit(1)
+
+    logger_hog.debug("In total, for "+ str(total_genes)+" genes, we have " + str(total_isoforms)+"  splices.")
+
+    # make sys back
+    return 1
+
+
+
+
+
+
 def check_fastoma_input():
     _config.set_configs()
 
@@ -205,6 +234,8 @@ def check_fastoma_input():
     logger_hog.info("Input check finished ! ")
 
     #todo  check splice file format . if the name matches with the proteome files.
-    #splice_files = os.path.exists("./splice/")
-    #if splice_files:
-    #    isoform_by_gene_all = _utils_roothog.parse_isoform_file(species_names)
+    splice_files = os.path.exists("./splice/")
+    if splice_files:
+        isoform_by_gene_all = _utils_roothog.parse_isoform_file(species_names)
+        check_splice(isoform_by_gene_all)
+
