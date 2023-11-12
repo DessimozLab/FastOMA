@@ -27,7 +27,7 @@ setup(
     license='MIT',
     entry_points={
         'console_scripts': [
-            "check-input-fastoma=FastOMA.check_input_fastoma:check_input_fastoma",
+            "check-fastoma-input=FastOMA.check_fastoma_input:check_fastoma_input",
             "infer-roothogs=FastOMA.infer_roothogs:infer_roothogs",
             "batch-roothogs=FastOMA.batch_roothogs:batch_roothogs",
             "infer-subhogs=FastOMA.infer_subhogs:infer_subhogs",

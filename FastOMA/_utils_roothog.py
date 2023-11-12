@@ -26,6 +26,7 @@ def parse_proteomes(folder="./"):  # list_oma_species
             file_name_split = file.split(".")[:-1]
             species_names.append('.'.join(file_name_split))
             fasta_format_keep = fasta_format # last one is stored either fa or fasta
+    # todo accept all fasta formats in the input prtoeome folder, fasta, fa, fna, ..
     prot_recs_lists = {} # key: species name, value is a dic of query protein Biopython records.
     # 'MYCGE': [SeqRecord(seq=Seq('MDFDK
 
@@ -34,7 +35,7 @@ def parse_proteomes(folder="./"):  # list_oma_species
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
         prot_recs_lists[species_name]=prots_record
 
-    logger_hog.info("The are "+str(len(species_names))+" species in the proteome folder.")
+    logger_hog.info("There are "+str(len(species_names))+" species in the proteome folder.")
     return species_names, prot_recs_lists, fasta_format_keep
 
 

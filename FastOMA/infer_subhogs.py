@@ -21,7 +21,7 @@ def infer_subhogs():
     logger_hog.debug("logger_level is "+str(_config.logger_level))
     logger_hog.debug("input_rhog_folder is " + str(_config.input_rhog_folder))
     logger_hog.debug("parallel is " + str(_config.parallel))
-    logger_hog.debug("species_tree_address is " + str(_config.species_tree_address))
+    logger_hog.debug("species_tree_checked is " + str(_config.species_tree_checked))
     logger_hog.debug("fragment_detection is " + str(_config.fragment_detection))
     logger_hog.debug("low_so_detection is " + str(_config.low_so_detection))
     logger_hog.debug("inferhog_max_workers_num is " + str(_config.inferhog_max_workers_num))

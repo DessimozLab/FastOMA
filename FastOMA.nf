@@ -10,18 +10,38 @@ params.hogmap_in = params.input_folder + "/hogmap_in"
 params.hogmap_folder = params.output_folder + "/hogmap"
 params.splice_folder = params.output_folder + "/splice"
 params.species_tree = params.input_folder + "/species_tree.nwk"
+params.species_tree_checked = params.output_folder + "/species_tree_checked.nwk"
+
 params.pickles_temp = params.output_folder + "/pickles_temp"
 params.genetrees_folder = params.output_folder + "/genetrees"
 
 params.temp_omamer_rhogs = params.output_folder +"/temp_omamer_rhogs"
 
 
+process check_input{
+    publishDir params.output_folder, mode: 'copy'
+    input:
+    path proteome_folder
+    path hogmap_folder
+    path species_tree
+    path omamerdb
+    path splice_folder
+
+  output:
+        path "species_tree_checked.nwk"
+        val true
+ script:
+    """
+       check-fastoma-input
+    """
+}
 process omamer_run{
   time {3.h}
   memory {40.GB}
   publishDir params.hogmap_folder, mode: 'copy'
   input:
     path proteomes_omamerdb_inputhog
+    val ready_input_check_c
   output:
     path "*.hogmap"
     val true
@@ -35,6 +55,7 @@ process omamer_run{
     fi
   """  // --nthreads 10
 }
+
 
 
 process infer_roothogs{
@@ -132,6 +153,9 @@ process collect_subhogs{
     """
 }
 
+
+
+
 workflow {
     proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
     proteome_folder = Channel.fromPath(params.proteome_folder)
@@ -143,9 +167,18 @@ workflow {
 
     pickles_temp =  Channel.fromPath(params.pickles_temp)
     omamerdb = Channel.fromPath(params.input_folder+"/omamerdb.h5")
+    species_tree = Channel.fromPath(params.species_tree)
+    species_tree_checked = Channel.fromPath(params.species_tree_checked)
+
+    (species_tree_checked_, ready_input_check) = check_input(proteome_folder,hogmap_in,species_tree,omamerdb,splice_folder)
+    ready_input_check_c = ready_input_check.collect()
+    //species_tree_checked.view{"species_tree_checked ${it}"}
+
+
     proteomes_omamerdb = proteomes.combine(omamerdb)
     proteomes_omamerdb_inputhog = proteomes_omamerdb.combine(hogmap_in) // proteomes_omamerdb_inputhog.view{" rhogsbig ${it}"}
-    (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb_inputhog)
+    //proteomes_omamerdb_inputhog_inputcheck =  proteomes_omamerdb_inputhog.combine(ready_input_check_c)
+    (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb_inputhog,ready_input_check_c)
     ready_omamer_run_c = ready_omamer_run.collect()
 
     (temp_omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
@@ -154,14 +187,14 @@ workflow {
     (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, temp_omamer_rhogs)
     ready_batch_roothogs_c = ready_batch_roothogs.collect()
 
-    species_tree = Channel.fromPath(params.species_tree)
+
     rhogsbig = rhogs_big_list.flatten()
-    rhogsbig_tree =  rhogsbig.combine(species_tree)
+    rhogsbig_tree =  rhogsbig.combine(species_tree_checked)
     rhogsbig_tree_ready = rhogsbig_tree.combine(ready_batch_roothogs)   //     rhogsbig_tree_ready.view{"rhogsbig_tree_ready ${it}"}
     (pickle_big_rhog, msas_out, genetrees_out, ready_hog_big) = hog_big(rhogsbig_tree_ready)
 
     rhogsrest = rhogs_rest_list.flatten()
-    rhogsrest_tree =  rhogsrest.combine(species_tree)
+    rhogsrest_tree =  rhogsrest.combine(species_tree_checked)
     rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
 

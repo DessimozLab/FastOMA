@@ -137,6 +137,7 @@ Note that to have a comprehensive test, we set the default value of needed cpus 
 ## expected log for test data
 After few minutes, the run for test data finishes. 
 ```
+[] process > check_input ()     [100%] 1 of 1 ✔
 [] process > omamer_run ()      [100%] 3 of 3 ✔
 [] process > infer_roothogs ()  [100%] 1 of 1 ✔
 [] process > batch_roothogs ()  [100%] 1 of 1 ✔
@@ -264,10 +265,10 @@ HUMAN00034;HUMAN00035
 
 
 ## Change log
-- Update   v0.1.4: new gene families with linclust if mmseqs is installed, using quoted protein name to handle species chars 
-- Update   v0.1.3: merge rootHOGs and handle singleton using omamer multi-hits
-- Update   v0.1.2: improve rootHOG inference, splice, OMAmerv2 with multi-hits
-- Release  v0.1.0: improve nextflow pipeline and outputs. 
+- Update  v0.1.4: new gene families with linclust if mmseqs is installed, using quoted protein name to handle species chars, check input first 
+- Update  v0.1.3: merge rootHOGs and handle singleton using omamer multi-hits
+- Update  v0.1.2: improve rootHOG inference, splice, OMAmerv2 with multi-hits
+- Release v0.1.0: improve nextflow pipeline and outputs. 
 - prelease v.0.0.6: use `--fragment-detection` for `infer-subhogs` and `--low-so-detection --fragment-detection`
 - prelease v.0.0.6: using input hogmpa
 - prelease v.0.0.5: adding pip setup.py 

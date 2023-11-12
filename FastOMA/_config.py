@@ -17,6 +17,7 @@ if logger_level == "DEBUG":
     logger_hog.setLevel(logging.DEBUG)  # TRACE  DEBUG INFO  WARN  ERROR  FATAL
 input_rhog_folder = "./"
 species_tree_address = "species_tree.nwk"  # no space or special charcter in internal node.
+species_tree_checked = "species_tree_checked.nwk"
 # protein_format_qfo_dataset = True
 
 # the following is not controlled by
@@ -106,18 +107,18 @@ def set_configs():
     parser = argparse.ArgumentParser(description="This is GETHOG3 ")     # parser.add_argument('--working-folder', help="in_folder")
     parser.add_argument('--logger-level', default="DEBUG")
     parser.add_argument("--version", action="version", help="Show version and exit.", version="0.0.6",)  # version=__version__
-    parser.add_argument('--species-tree-address', default="species_tree.nwk")
+    parser.add_argument('--species-tree-checked', default="species_tree_checked.nwk")
     parser.add_argument('--input-rhog-folder')     # , default="./rhog"
-    parser.add_argument('--parallel', action=argparse.BooleanOptionalAction)
-    parser.add_argument('--fragment-detection', action=argparse.BooleanOptionalAction)
-    parser.add_argument('--low-so-detection', action=argparse.BooleanOptionalAction)
+    parser.add_argument('--parallel', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('--fragment-detection', action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument('--low-so-detection', action=argparse.BooleanOptionalAction, default=True)
 
     config_parser = parser.parse_args()
     # Namespace(logger_level=None, in_folder=None)
     setattr(sys.modules[__name__], 'logger_level', config_parser.logger_level)
     setattr(sys.modules[__name__], 'input_rhog_folder', config_parser.input_rhog_folder)
     setattr(sys.modules[__name__], 'parallel', config_parser.parallel)
-    setattr(sys.modules[__name__], 'species_tree_address', config_parser.species_tree_address) # todo _checked.nwk
+    setattr(sys.modules[__name__], 'species_tree_checked', config_parser.species_tree_checked) # todo _checked.nwk
     setattr(sys.modules[__name__], 'fragment_detection', config_parser.fragment_detection)
     setattr(sys.modules[__name__], 'low_so_detection', config_parser.low_so_detection)
     print("config_parser 3 ", config_parser)
