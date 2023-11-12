@@ -5,23 +5,17 @@ from ete3 import Tree
 from ete3 import PhyloTree
 from Bio.SeqRecord import SeqRecord
 from Bio.Align import MultipleSeqAlignment
-from Bio.Seq import Seq  # , UnknownSeq
-
+from Bio.Seq import Seq
 from collections import defaultdict
 from typing import List, Tuple
 import random
 from itertools import combinations
 import numpy as np
-
 import sys
+from os import listdir
+
 
 from ._config import logger_hog
-
-from os import listdir
-# import pickle
-# from xml.dom import minidom
-# import xml.etree.ElementTree as ET
-
 from . import _config
 from . import _wrappers
 
@@ -401,48 +395,6 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
 
     return MultipleSeqAlignment(msa_filtered_row)
 
-
-# Fragment detection using MSA. Sina's implementation. We are using Alex implementation now.
-# def fragment_detector_candidate(merged_msa):
-#     rec_group_species = {}
-#     for seq in merged_msa:
-#         species = seq.id.split("||")[1]
-#         if species in rec_group_species:
-#             rec_group_species[species].append(seq)
-#         else:
-#             rec_group_species[species]= [seq]
-#     rec_candidate = {}
-#     len_aligned = len(seq)
-#     for species, list_seq in rec_group_species.items():
-#         if len(list_seq)>1:
-#             num_nongap_list = []
-#             for i in range(len(list_seq)):
-#                 seq_i= list_seq[i] # seq_i is biopython record
-#                 num_nongap_i= len_aligned - seq_i.count("-")
-#                 num_nongap_list.append(num_nongap_i)
-#                 if num_nongap_i > len_aligned *0.25 and  num_nongap_i < len_aligned *0.75:
-#                     for j in range(i):
-#                         seq_j= list_seq[j]
-#                         num_nongap_j= num_nongap_list[j]
-#                         if num_nongap_j > len_aligned *0.25 and  num_nongap_j < len_aligned *0.75:
-#                             count_gap_aa = 0
-#                             for (chr_i, chr_j) in zip(seq_i, seq_j):
-#                                 if (chr_i=='-' and chr_j!='-')  or (chr_i!='-' and chr_j=='-'):
-#                                     count_gap_aa +=1
-#                             # print(count_gap_aa)
-#                             if count_gap_aa  > len_aligned * 0.25: # two seq complment each other
-#                                 #  the downside is sth like this: seq1=-A-A seq2= A-A-  not fragments
-#                                 if species in rec_candidate:
-#                                     seq_i_id = seq_i.id
-#                                     seq_j_id = seq_j.id
-#
-#                                     if seq_i_id not in rec_candidate[species]:
-#                                         rec_candidate[species] += seq_i_id
-#                                     if seq_j_id not in rec_candidate[species]:
-#                                         rec_candidate[species] += seq_j_id
-#                                 else:
-#                                     rec_candidate[species] = [seq_i_id, seq_j_id]  # seq_i is biopython record
-#     return rec_candidate
 
 
 def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):

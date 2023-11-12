@@ -84,9 +84,7 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     time_taken_tree = wrapper_tree.elapsed_time
     result_tree2 = wrapper_tree.result
     tree_nwk = result_tree2["tree"].as_string(schema='newick') #str(result_tree2["tree"])
-    # print(time_taken_tree)
-    #
-    # else0
+    # using one rooting for all part of the levels , which didn't improve that much
     # rhogid= gene_tree_file_addr.split("_")[1]
     # from ete3 import Tree
     # tree1= Tree("/scratch/smajidi1/relD_merg_single2/t/omamer_rhogs/HOG_"+rhogid+".fa_msa.nwk",format=1)
@@ -96,7 +94,6 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     #     tree1.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
     # except:
     #     pass
-    # a=2
     # genes = [i.id for i in msa]
     # try:
     #     tree1.prune(genes)
@@ -128,10 +125,6 @@ def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
     logger_hog.debug("linclust rooting started" + command_clust)
     process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
-
-    # if verbose:
-    #    print("output:\n", output)
-    #    print("error:\n", error)
     #if "Error analyzing file" in str(output) or error:
     #    try:
 

@@ -7,7 +7,6 @@ import os
 from ._utils_subhog import logger_hog
 from . import _config
 
-import numpy as np
 
 def parse_proteomes(folder="./"):  # list_oma_species
     """
@@ -27,8 +26,7 @@ def parse_proteomes(folder="./"):  # list_oma_species
             species_names.append('.'.join(file_name_split))
             fasta_format_keep = fasta_format # last one is stored either fa or fasta
     # todo accept all fasta formats in the input prtoeome folder, fasta, fa, fna, ..
-    prot_recs_lists = {} # key: species name, value is a dic of query protein Biopython records.
-    # 'MYCGE': [SeqRecord(seq=Seq('MDFDK
+    prot_recs_lists = {} # key: species name, value is a dic of query protein Biopython records. # 'MYCGE': [SeqRecord(seq=Seq('MDFDK
 
     for species_name in species_names:
         prot_address = folder+"/proteome/" + species_name + "."+fasta_format_keep
@@ -139,7 +137,7 @@ def group_prots_roothogs(hogmaps):
         # prot_recs = prot_recs_all[species_name]
 
         for prot_id, prot_map in prots_map.items():
-            # omamer output is sorted based on normcount. but that's ok
+            # omamer output is sorted based on normcount (not family-p). but that's intended by omamer developers
             # this helps me in other functions like handle_singleton in this
             #  this should be commented
             # if len(prot_map)>1:
@@ -176,7 +174,7 @@ def handle_singleton(rhogs_prots,hogmaps):
         prot_maps = hogmaps[species][prot]
         if len(prot_maps) > 1:
             prot_maps2 = prot_maps
-            # omamer output is sorted based on normcount. but that's ok
+            # omamer output is sorted based on normcount. but that's intended by omamer developers
             # family_p	family_count	family_normcount
             scores = [float(i[1]) for i in prot_maps]  # (hogid,score,seqlen,subfamily_medianseqlen)
             hogids = [i[0] for i in prot_maps]
@@ -551,7 +549,7 @@ def write_clusters(address_rhogs_folder, min_rhog_size):
         clusters.append(cluster)
 
     logger_hog.debug("Number of linclust clusters raw is " + str(len(clusters)))
-
+    # the record id is parsed by mmseqs very ad hoc. so better use the fasta-like file
     # cluster_output_address = "singleton_unmapped_cluster.tsv"
     # cluster_file = open(cluster_output_address, 'r')
     # cluster_dic = {}
@@ -562,7 +560,6 @@ def write_clusters(address_rhogs_folder, min_rhog_size):
     #         cluster_dic[rep].append(prot) # the frist line includ (rep,rep)
     #     else:
     #         cluster_dic[rep]=[prot]
-
     # cluster_list = []
     # for rep, prot_list in cluster_dic.items():
     #     if len(prot_list)>1:

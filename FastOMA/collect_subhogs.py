@@ -3,16 +3,15 @@ import xml.etree.ElementTree as ET
 import pickle
 from os import listdir
 from xml.dom import minidom
-# from . import _config
-from ._config import logger_hog
+from ete3 import Tree
+import os
+from Bio import SeqIO
 
 from FastOMA.zoo.hog import extract_flat_groups_at_level
-
-from ete3 import Tree
-# import sys
-import os
 from FastOMA.zoo.hog.convert import orthoxml_to_newick
-from Bio import SeqIO
+
+from ._config import logger_hog
+from . import _config
 
 # This code collect subhogs and writes outputs.
 
@@ -67,7 +66,7 @@ def collect_subhogs():
     logger_hog.info("started collecting pickle files ")
 
     # todo as input argument/option in nextflow
-    protein_format_qfo_dataset_before2022 = True
+
     # in benchamrk dataset the output prot names should be short
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchmark, the middle should be written in the file
@@ -92,7 +91,7 @@ def collect_subhogs():
         database_xml = ET.SubElement(species_xml, "database", attrib={"name": "database ", "version": "2023"})
         genes_xml = ET.SubElement(database_xml, "genes")
         for (gene_idx_integer, query_prot_name) in list_prots:
-            if protein_format_qfo_dataset_before2022:
+            if _config.protein_format_qfo_dataset_before2022:
                 # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ   for qfo benchamrk, the middle should be wirtten in the file
                 query_prot_name_pure = query_prot_name.split("|")[1]
             else:

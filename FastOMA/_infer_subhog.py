@@ -359,7 +359,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     hogs_this_level_list = []
     subHOG_to_be_merged_set_other_Snodes = []
     subHOG_to_be_merged_set_other_Snodes_flattned_temp = []
-    ##  the following if fore debugging and visualisation of connected component of inter-HOG graph
+    ##  the following if for debugging and visualisation of connected component of inter-HOG graph
     # hoggraph_node_name = [i._hogid.split("_")[1][3:] for i in hogs_children_level_list]
     # hog_size_dic = {}
     # dic_hog = {}

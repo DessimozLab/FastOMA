@@ -1,10 +1,10 @@
 
 
-# from Bio import SeqIO
 import os
 from os import makedirs
 import shutil
 from os import listdir
+
 from . import _config
 
 
@@ -41,19 +41,12 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
         dic_rhognum_size[rhogid] = rhog_i_size
     len(dic_rhognum_size)
 
-
-    #list_list_rest_rhog = [[]]
-    list_list_rest_size = [[]]
-    #list_list_big = []
-
     # to have at least one big and one rest rhog, this makes nextflow pipline easier,
     # otherwise we need if condition  collect_subhogs won't satisfy if one of them is empty
 
     list_list_rest_rhog = [[rhogid_list[0]],[]]  # each insid list should take around 1h
     list_list_rest_size = [[],[]]
     list_list_big = [rhogid_list[1]]
-
-
 
     for rhognum, size in dic_rhognum_size.items():
         # print(rhognum, size)

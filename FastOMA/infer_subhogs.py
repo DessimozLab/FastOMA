@@ -1,20 +1,12 @@
-# from xml.dom import minidom
-# import xml.etree.ElementTree as ET
+
+
+import os
+
 from . import _utils_subhog
 from . import _infer_subhog
 from . import _config
-# import os
-# from os import listdir
-# import os
-import sys
-# from os import listdir
-# import _config
-
 from ._config import logger_hog
-import os
 
-# from ._utils import logger_hog
-# import ._utils_rhog
 
 def infer_subhogs():
     _config.set_configs()
@@ -57,11 +49,7 @@ def infer_subhogs():
     if not os.path.exists(pickles_rhog_folder):
         os.makedirs(pickles_rhog_folder)
 
-    # pickles_rhog_folder = "./"
     pickles_subhog_folder_all = "./"
-
-    # inferhog_concurrent_on = inferhog_concurrent_on_string == "True"
-
     print("input is", address_rhogs_folder)
 
     list_rhog_fastas_files = _utils_subhog.list_rhog_fastas(address_rhogs_folder)
@@ -107,25 +95,4 @@ double check
      
 
 """
-
-
-# if address_rhogs_folder.endswith("/"):
-#     batch_folder=address_rhogs_folder.split("/")[-2]
-# elif "/" in address_rhogs_folder:
-#     batch_folder = address_rhogs_folder.split("/")[-1]
-# else:
-#     batch_folder = address_rhogs_folder
-#
-# print("rhogs in the input folder", batch_folder)
-#
-# rhogs_fa_folder = _config.in_folder + rhogs_fa_folder_pure + "/" + batch_folder + "/"
-# list_done_rhogid = []
-# if _config.inferhog_resume_rhog:
-#     list_done_raw = listdir(pickles_rhog_folder)
-#     for file in list_done_raw:
-#        numr = int(file.split(".")[0].split("_")[1])
-#        list_done_rhogid.append(numr)
-# #list_done_rhogid = []
-# list_rhog_fastas_files_rem = [i for i in list_rhog_fastas_files if i not in list_done_rhogid
-#list_rhog_fastas_files_rem = [573914]  # [622140] #[605975] #[594043]
 

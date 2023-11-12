@@ -1,15 +1,14 @@
 
 
-from . import _utils_roothog
-from ._utils_subhog import logger_hog
-
 import sys
 from ete3 import Tree
 import os
 import collections
-from . import _config
 
-# parse  proteom hogmap
+from . import _config
+from . import _utils_roothog
+from ._utils_subhog import logger_hog
+
 
 """
 cd in_folder
