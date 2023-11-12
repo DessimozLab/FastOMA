@@ -35,7 +35,7 @@ If the species tree does not have label for some/all internal nodes, FastOMA lab
 
 ### Input check:
 
-After installing FastOMA, you have a initial check for your input dataset by running the following in the folder `in_folder`:
+After installing FastOMA, you can have a initial check for your input dataset by running the following in the folder `in_folder`:
 
 ```
 cd in_folder
@@ -165,8 +165,11 @@ Then, to have similar size jobs, we batch these FASTA files either as one big ro
 These are decided based on the FASTA file size. Finally once all jobs of `hog_big` and `hog_rest` are done, we `collect_subhog` and save all outputs.  
 
 
-If the run interrupted, by adding `-resume` to the nextflow commond line, you might be able to continue your previous nextflow job. 
+If the run interrupted, by adding `-resume` to the nextflow commond line, you might be able to continue your previous nextflow job.
+
+
 ## expected output structure for test data
+
 The output of FastOMA includes two folders (`hogmap` and `OrthologousGroupsFasta`) and three files 
 (`OrthologousGroupsFasta.tsv`, `rootHOGs.tsv` and `output_hog.orthoxml`).
 The `hogmap` folder includes the output of [OMAmer](https://github.com/DessimozLab/omamer); each file corresponds to an input proteome.

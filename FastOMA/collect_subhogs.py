@@ -71,7 +71,7 @@ def collect_subhogs():
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchmark, the middle should be written in the file
 
-    pickle_folder = "./pickles_temp/" #pickle_rhogs
+    pickle_folder = "./temp_pickles/" #pickle_rhogs
     output_xml_name = "./output_hog.orthoxml"
     gene_id_pickle_file = "./gene_id_dic_xml.pickle" # this file includes integer mapping of each protein
 

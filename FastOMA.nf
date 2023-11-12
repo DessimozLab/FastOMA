@@ -76,7 +76,7 @@ process infer_roothogs{
     output:
         path "temp_omamer_rhogs"
         path "gene_id_dic_xml.pickle"
-        path "selected_isoforms" // SPECIESNAME_selected_isoforms.tsv
+        path "selected_isoforms" , optional: true  // SPECIESNAME_selected_isoforms.tsv
         val true         // nextflow-io.github.io/patterns/state-dependency/
     script:
         """
@@ -187,8 +187,7 @@ workflow {
     //proteomes_omamerdb_inputhog_inputcheck =  proteomes_omamerdb_inputhog.combine(ready_input_check_c)
     (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb_inputhog,ready_input_check_c)
     ready_omamer_run_c = ready_omamer_run.collect()
-
-    (temp_omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
+    (temp_omamer_rhogs, gene_id_dic_xml,selected_isoforms, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
     ready_infer_roothogs_c = ready_infer_roothogs.collect()
 
     (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, temp_omamer_rhogs)
@@ -206,8 +205,8 @@ workflow {
     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
 
     (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), temp_pickles, gene_id_dic_xml, temp_omamer_rhogs)
-    temp_omamer_rhogs.view{" output omamer_rhogs ${it}"}
-    orthoxml_file.view{" output orthoxml file ${it}"}
+    // temp_omamer_rhogs.view{" output omamer_rhogs ${it}"}
+    // orthoxml_file.view{" output orthoxml file ${it}"}
 
 }
 
