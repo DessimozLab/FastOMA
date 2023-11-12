@@ -137,7 +137,7 @@ def add_internal_node_prune(species_tree,species_names):
                     counter_internal += 1
                     node_names.add(node.name)
                     logger_hog.debug("The internal node name was too small or repeated "+node_name+" which is changed to "+node.name)
-            elif any(not c.isalnum() for c in node_name):
+            elif not all(e.isalnum() or e=="_" or e=="-"  for e in node_name):  #any(not c.isalnum() for c in node_name):
                 node_name_new = ''.join(e for e in node_name if e.isalnum() or e=="_" or e=="-") # removing special chars
                 if node_name_new in node_names:
                     node.name =node_name_new+"_"+str(counter_internal)
