@@ -88,6 +88,7 @@ def check_speciestree_internalnode(species_tree):
 def check_speciestree_leaves(species_tree,species_names):
 
     leaves_name = [i.name for i in species_tree.get_leaves()]
+    logger_hog.info("The species tree has " + str(len(leaves_name))+" leaves.")
     if len(set(leaves_name))!=len(leaves_name):
         logger_hog.error("Leaves name should be unique in the species tree. You may try ete3 prune")
         logger_hog.error("Check input failed. FastOMA halted!")
@@ -147,9 +148,9 @@ def add_internal_node_prune(species_tree,species_names):
         else:
             node_names.add(node_name)
 
-    logger_hog.error("The species tree has " + str(len(species_tree)) + " leaves")
+    logger_hog.info("The species tree has " + str(len(species_tree)) + " leaves")
     species_tree.prune(species_names) # , preserve_branch_length=True)
-    logger_hog.error("After pruning, the species tree has " + str(len(species_tree)) + " leaves")
+    logger_hog.info("After pruning, the species tree has " + str(len(species_tree)) + " leaves")
 
     species_tree_output= "./species_tree_checked.nwk"
     species_tree.write(format=1, format_root_node=True, outfile=species_tree_output)
@@ -233,13 +234,17 @@ def check_fastoma_input():
         logger_hog.error("Check input failed. FastOMA halted!")
         sys.exit(1)
     else:
-        logger_hog.info("OMAmer db or hogmap exist. so looks ok. ")
+        logger_hog.info("OMAmer db or hogmap exist. It looks ok. ")
 
     #todo  check splice file format . if the name matches with the proteome files.
     splice_files = os.path.exists("./splice/")
     if splice_files:
+        logger_hog.debug("splice folder exist. Let's see its inside.")
         isoform_by_gene_all = _utils_roothog.parse_isoform_file(species_names)
         check_splice(isoform_by_gene_all)
+    else:
+        logger_hog.info("Splice folder doesn't exist and that's ok.")
+
 
     logger_hog.info("Input check finished ! ")
 

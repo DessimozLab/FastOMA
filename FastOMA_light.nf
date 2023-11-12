@@ -8,17 +8,19 @@ params.proteomes = params.proteome_folder + "/*"
 params.hogmap_in = params.input_folder + "/hogmap_in"
 
 params.hogmap_folder = params.output_folder + "/hogmap"
-params.splice_folder = params.output_folder + "/splice"
+params.splice_folder = params.input_folder + "/splice"
 params.species_tree = params.input_folder + "/species_tree.nwk"
 params.species_tree_checked = params.output_folder + "/species_tree_checked.nwk"
 
-params.pickles_temp = params.output_folder + "/pickles_temp"
+params.temp_pickles = params.output_folder + "/temp_pickles"
 params.genetrees_folder = params.output_folder + "/genetrees"
 
-params.temp_omamer_rhogs = params.output_folder +"/temp_omamer_rhogs"
+params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
 
 
 process check_input{
+
+
     publishDir params.output_folder, mode: 'copy'
     input:
         path proteome_folder
@@ -37,6 +39,8 @@ process check_input{
 
 
 process omamer_run{
+
+
     publishDir params.hogmap_folder, mode: 'copy'
     input:
         path proteomes_omamerdb_inputhog
@@ -58,11 +62,12 @@ process omamer_run{
 
 
 process infer_roothogs{
+
+
     publishDir = [
-        path: params.temp_omamer_rhogs,
-        mode:  'copy', // pattern: "temp_omamer_rhogs", saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
+        path: params.temp_output,
+        mode:  'copy', // pattern: "temp_output", saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
         ]
-        //publishDir params.temp_omamer_rhogs , mode: 'copy'
     input:
         val ready_omamer_run
         path hogmap_folder
@@ -71,6 +76,7 @@ process infer_roothogs{
     output:
         path "temp_omamer_rhogs"
         path "gene_id_dic_xml.pickle"
+        path "selected_isoforms" , optional: true  // SPECIESNAME_selected_isoforms.tsv
         val true         // nextflow-io.github.io/patterns/state-dependency/
     script:
         """
@@ -80,6 +86,8 @@ process infer_roothogs{
 
 
 process batch_roothogs{
+
+
     input:
         val ready_infer_roothogs
         path "temp_omamer_rhogs"
@@ -94,8 +102,10 @@ process batch_roothogs{
 }
 
 process hog_big{
-    cpus 2
-    publishDir params.pickles_temp
+    cpus  2
+
+
+    publishDir params.temp_pickles
     input:
         val rhogsbig_tree_ready
     output:
@@ -108,9 +118,14 @@ process hog_big{
         infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --species-tree ${rhogsbig_tree_ready[1]} --parallel
         """
 }
+temp_pickles =2
+
+
 
 process hog_rest{
-    publishDir params.pickles_temp
+
+
+    publishDir params.temp_pickles
     input:
         val rhogsrest_tree_ready
     output:
@@ -126,11 +141,13 @@ process hog_rest{
 
 
 process collect_subhogs{
+
+
     publishDir params.output_folder, mode: 'copy'
     input:
         val ready_hog_rest
         val ready_hog_big
-        path "pickles_temp"   // this is the folder includes pickles_rhogs
+        path "temp_pickles"   // this is the folder includes pickles_rhogs
         path "gene_id_dic_xml.pickle"
         path "temp_omamer_rhogs"
     output:
@@ -152,11 +169,11 @@ workflow {
     proteome_folder = Channel.fromPath(params.proteome_folder)
     hogmap_folder = Channel.fromPath(params.hogmap_folder)
     splice_folder = Channel.fromPath(params.splice_folder)
-    temp_omamer_rhogs = Channel.fromPath(params.temp_omamer_rhogs)
+    temp_output = Channel.fromPath(params.temp_output)
     genetrees_folder = Channel.fromPath(params.genetrees_folder)
     hogmap_in = Channel.fromPath(params.hogmap_in)
 
-    pickles_temp =  Channel.fromPath(params.pickles_temp)
+    temp_pickles =  Channel.fromPath(params.temp_pickles)
     omamerdb = Channel.fromPath(params.input_folder+"/omamerdb.h5")
     species_tree = Channel.fromPath(params.species_tree)
     species_tree_checked = Channel.fromPath(params.species_tree_checked)
@@ -170,8 +187,7 @@ workflow {
     //proteomes_omamerdb_inputhog_inputcheck =  proteomes_omamerdb_inputhog.combine(ready_input_check_c)
     (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb_inputhog,ready_input_check_c)
     ready_omamer_run_c = ready_omamer_run.collect()
-
-    (temp_omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
+    (temp_omamer_rhogs, gene_id_dic_xml,selected_isoforms, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
     ready_infer_roothogs_c = ready_infer_roothogs.collect()
 
     (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, temp_omamer_rhogs)
@@ -188,9 +204,9 @@ workflow {
     rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
 
-    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), pickles_temp, gene_id_dic_xml, temp_omamer_rhogs)
-    temp_omamer_rhogs.view{" output omamer_rhogs ${it}"}
-    orthoxml_file.view{" output orthoxml file ${it}"}
+    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), temp_pickles, gene_id_dic_xml, temp_omamer_rhogs)
+    // temp_omamer_rhogs.view{" output omamer_rhogs ${it}"}
+    // orthoxml_file.view{" output orthoxml file ${it}"}
 
 }
 
