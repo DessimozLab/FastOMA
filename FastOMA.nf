@@ -62,6 +62,7 @@ process omamer_run{
 
 
 process infer_roothogs{
+    cpus  10      // useful for linclust
     time {15.h}    // including linclust
     memory {200.GB}
     publishDir = [

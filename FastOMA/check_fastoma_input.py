@@ -146,7 +146,7 @@ def add_internal_node_prune(species_tree,species_names):
                     node.name=node_name_new
 
                 node_names.add(node.name)
-                logger_hog.debug("The internal node name has special chars " + node_name + " which is changed to " + node.name)
+                logger_hog.debug("The internal node name has special chars or repeated " + node_name + " which is changed to " + node.name)
             else:
                 node_names.add(node_name)
 

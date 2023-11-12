@@ -495,8 +495,8 @@ import subprocess
 
 
 def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
-    num_threads = 5 # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/miniconda/envs/fastoma/bin/
-    command_clust = "mmseqs easy-linclust --threads " + str(
+    num_threads = 10 # todo how to assign more cpu for this step
+    command_clust = _config.mmseqs_executable_path +" easy-linclust --threads " + str(
         num_threads) + " " + fasta_to_cluster + " singleton_unmapped tmp_linclust"
 
     logger_hog.debug("linclust rooting started" + command_clust)
