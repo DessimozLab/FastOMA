@@ -110,8 +110,7 @@ def infer_gene_tree(msa, gene_tree_file_addr):
 
     if _config.gene_trees_write_all or _config.rooting_method == "mad":
         file_gene_tree = open(gene_tree_file_addr, "w")
-        file_gene_tree.write(tree_nwk)
-        file_gene_tree.write(";\n")
+        file_gene_tree.write(tree_nwk) #file_gene_tree.write(";\n")
         file_gene_tree.close()
 
     return tree_nwk

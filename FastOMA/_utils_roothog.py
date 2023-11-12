@@ -398,7 +398,7 @@ def cluster_rhogs(candidates_pair):
 
     dic_where = {}
     for idx, cc in enumerate(allcc):
-        dic_where[cc[0]] = idx  # in the begining, each inner list has only on element, a unique hog
+        dic_where[cc[0]] = idx  # in the beginning, each inner list has only on element, a unique hog
 
     # print(len(all_hog_raw),len(all_hog),len(allcc),allcc[:2])
     logger_hog.debug("There are " + str(len(all_hog)) + " all_hog.")
@@ -653,15 +653,21 @@ def find_nonbest_isoform(species_names, isoform_by_gene_all, hogmaps):
 
 def write_isoform_selected(isoform_by_gene_all, isoform_selected, prot_recs_lists):
     """
-    write isofort
+    write isoforms
 
     """
+    selected_isoforms_folder= "selected_isoforms/"
+    if not os.path.exists(selected_isoforms_folder):
+        os.mkdir(selected_isoforms_folder)
+
+
+
 
     for species, isoform_selected_sp in isoform_selected.items():
         isoform_by_gene = isoform_by_gene_all[species]
         assert len(isoform_by_gene) == len(isoform_selected_sp)
 
-        file_handle = open(species + "_selected_isoforms.tsv", "w")
+        file_handle = open(selected_isoforms_folder+species + "_selected_isoforms.tsv", "w")
         for gene_idx, isof_list in enumerate(isoform_by_gene):
             isoform_selected_sp_i = isoform_selected_sp[gene_idx]
             file_handle.write(";".join(isof_list) + "\t")

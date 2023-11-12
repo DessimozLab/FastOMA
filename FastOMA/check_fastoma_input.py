@@ -53,7 +53,7 @@ def check_proteome(species_names,prot_recs_lists):
 def check_hogmap_files():
 
     hogmap_files = os.listdir("./hogmap_in/")
-    logger_hog.info("There are " + str(len(hogmap_files)) + "files in the hogmap folder. ")
+    logger_hog.info("There are " + str(len(hogmap_files)) + " files in the hogmap folder. ")
     not_hogmap = [i for i in hogmap_files if not i.endswith(".hogmap") ]
     if not_hogmap:
         logger_hog.warning("We expect that only hogmap files are in the hogmap_in folder. Better to remove these " + str(not_hogmap) )
@@ -121,7 +121,7 @@ def check_omamer_db(omamerdb_adress="omamerdb.h5"):
     return omamerdb
 
 
-def add_internal_node(species_tree):
+def add_internal_node_prune(species_tree,species_names):
 
     # add name for the internal, if no name is provided, removintg special chars
     counter_internal = 0
@@ -146,6 +146,10 @@ def add_internal_node(species_tree):
             logger_hog.debug("The internal node name has special chars " + node_name + " which is changed to " + node.name)
         else:
             node_names.add(node_name)
+
+    logger_hog.error("The species tree has " + str(len(species_tree)) + " leaves")
+    species_tree.prune(species_names) # , preserve_branch_length=True)
+    logger_hog.error("After pruning, the species tree has " + str(len(species_tree)) + " leaves")
 
     species_tree_output= "./species_tree_checked.nwk"
     species_tree.write(format=1, format_root_node=True, outfile=species_tree_output)
@@ -208,7 +212,7 @@ def check_fastoma_input():
     check_speciestree_internalnode(species_tree)
     check_speciestree_leaves(species_tree,species_names)
 
-    add_internal_node(species_tree)
+    add_internal_node_prune(species_tree,species_names)
 
     hogmap_files = os.path.exists("./hogmap_in/")
     species_hogmaps =[]
@@ -231,11 +235,11 @@ def check_fastoma_input():
     else:
         logger_hog.info("OMAmer db or hogmap exist. so looks ok. ")
 
-    logger_hog.info("Input check finished ! ")
-
     #todo  check splice file format . if the name matches with the proteome files.
     splice_files = os.path.exists("./splice/")
     if splice_files:
         isoform_by_gene_all = _utils_roothog.parse_isoform_file(species_names)
         check_splice(isoform_by_gene_all)
+
+    logger_hog.info("Input check finished ! ")
 
