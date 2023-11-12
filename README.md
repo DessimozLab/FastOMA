@@ -14,8 +14,9 @@ which is from [OMA browser](https://omabrowser.org/oma/current/).
 This file is `13 Gb` containing all the gene families of the Tree of Life or you can download it for a subset of them, e.g. Primates (352MB). 
 
 3- Rooted Species tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
-A rough species tree is enough and it does not need to be binary. Besides, we do not need branch length. 
-Note that the name of leaves of the tree (species name) should be the same as the file name of FASTAs (without `.fa` extension) (item 1). And there shouldn't be any repeated names in leaves names and internal node names. 
+A rough species tree is enough and it does not need to be binary. Besides, we do not need branch lengths. 
+Note that the name of leaves of the tree (species name) should be the same as the file name of FASTAs (without `.fa` extension) (item 1). 
+And there shouldn't be any repeated names in leaves names and internal node names. The tree should not be with quotation.  
 
 
 
@@ -267,13 +268,37 @@ HUMAN00007;HUMAN00008;HUMAN00009;HUMAN00010;HUMAN00011;HUMAN00012;
 HUMAN00022;HUMAN00023;HUMAN00024;
 HUMAN00027;HUMAN00028;HUMAN00029;HUMAN00030;HUMAN00031;HUMAN00032;HUMAN00033
 HUMAN00034;HUMAN00035
+HUMAN00036
+HUMAN00037
 ```
+
+The selected isforoms will be added as a new column to the input splice files stored as tsv at `out_folder/temp_output/selected_isoforms/`
+
+## Under the hood: what are fastOMA gene families?
+Firstly, those proteins that are mapped to the same OMAdb rootHOG (e.g. HOG:D0066142 for HOG:D0066142.1a.1a) by OMAmer are 
+grouped together to create query rootHOGs (no protein from OMAdb is stored), from now on called rootHOG.
+Then, as OMAmer provide us with alternative mapping, we try to merge those rootHOGs (high chance of split HOGs) that have 
+many shared mapping. The query proteins of these rootHOG will be stored in one rootHOG. 
+
+These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_LXXXXX.fa`. `L` is the release ID of OMADB. 
+Replacing `_` with ':' gives the HOG ID which could be investigated in the [OMA Browser](https://omabrowser.org/oma/hog/HOG:D0114562/Sar/iham/).
+
+There are some cases that only one protein is mapped to one rootHOG, called singleton.
+Using alternative OMAmer mapping, FastOMA tries to put these to other rootHOGs. Still some will be left. 
+
+FastOMA uses the linclust software to find new gene families on set of unmapped proteins and singleton.
+These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_clustXXXXX.fa`.
+
+These are initial gene families that are used in `infer_subhogs` step, which could be split into a few smaller gene families. 
+
+
+
 
 # Downstream analysis
 
-- High resolution Tree inference
+- High resolution tree inference
 
-- phylostragraphy 
+- Phylostragraphy with pyham 
 
 
 ## Change log
