@@ -128,25 +128,27 @@ def add_internal_node_prune(species_tree,species_names):
     counter_internal = 0
     node_names = set()
     for node in species_tree.traverse(strategy="postorder"):
-        node_name = node.name
-        if len(node_name) < 3 or node_name in node_names:
-            if not node.is_leaf():
-                node.name = "internal_" + str(counter_internal)
-                counter_internal += 1
-                node_names.add(node.name)
-                logger_hog.debug("The internal node name was too small or repeated "+node_name+" which is changed to "+node.name)
-        elif any(not c.isalnum() for c in node_name):
-            node_name_new = ''.join(e for e in node_name if e.isalnum()) # removign special chars
-            if node_name_new in node_names:
-                node.name =node_name_new+"_"+str(counter_internal)
-                counter_internal += 1
-            else:
-                node.name=node_name_new
+        if not node.is_leaf() :
+            node_name = node.name
 
-            node_names.add(node.name)
-            logger_hog.debug("The internal node name has special chars " + node_name + " which is changed to " + node.name)
-        else:
-            node_names.add(node_name)
+            if len(node_name) < 3 or node_name in node_names:
+                if not node.is_leaf():
+                    node.name = "internal_" + str(counter_internal)
+                    counter_internal += 1
+                    node_names.add(node.name)
+                    logger_hog.debug("The internal node name was too small or repeated "+node_name+" which is changed to "+node.name)
+            elif any(not c.isalnum() for c in node_name):
+                node_name_new = ''.join(e for e in node_name if e.isalnum() or e=="_" or e=="-") # removing special chars
+                if node_name_new in node_names:
+                    node.name =node_name_new+"_"+str(counter_internal)
+                    counter_internal += 1
+                else:
+                    node.name=node_name_new
+
+                node_names.add(node.name)
+                logger_hog.debug("The internal node name has special chars " + node_name + " which is changed to " + node.name)
+            else:
+                node_names.add(node_name)
 
     logger_hog.info("The species tree has " + str(len(species_tree)) + " leaves")
     species_tree.prune(species_names) # , preserve_branch_length=True)
