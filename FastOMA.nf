@@ -19,138 +19,143 @@ params.temp_omamer_rhogs = params.output_folder +"/temp_omamer_rhogs"
 
 
 process check_input{
+    time {5.h}
+    memory {95.GB}
     publishDir params.output_folder, mode: 'copy'
     input:
-    path proteome_folder
-    path hogmap_folder
-    path species_tree
-    path omamerdb
-    path splice_folder
-
-  output:
+        path proteome_folder
+        path hogmap_folder
+        path species_tree
+        path omamerdb
+        path splice_folder
+    output:
         path "species_tree_checked.nwk"
         val true
- script:
-    """
-       check-fastoma-input
-    """
+    script:
+        """
+        check-fastoma-input
+        """
 }
+
+
 process omamer_run{
-  time {3.h}
-  memory {40.GB}
-  publishDir params.hogmap_folder, mode: 'copy'
-  input:
-    path proteomes_omamerdb_inputhog
-    val ready_input_check_c
-  output:
-    path "*.hogmap"
-    val true
-  script: //todo this if condition can be done as part of nextflow, so it won't submit job for cp
-  """
-    if [ -f ${proteomes_omamerdb_inputhog[2]}/${proteomes_omamerdb_inputhog[0]}.hogmap ]
-    then
-        cp ${proteomes_omamerdb_inputhog[2]}/${proteomes_omamerdb_inputhog[0]}.hogmap  ${proteomes_omamerdb_inputhog[0]}.hogmap
-    else
-        omamer search -n 10 --db ${proteomes_omamerdb_inputhog[1]} --query ${proteomes_omamerdb_inputhog[0]} --out ${proteomes_omamerdb_inputhog[0]}.hogmap
-    fi
-  """  // --nthreads 10
+    time {5.h}
+    memory {95.GB}
+    publishDir params.hogmap_folder, mode: 'copy'
+    input:
+        path proteomes_omamerdb_inputhog
+        val ready_input_check_c
+    output:
+        path "*.hogmap"
+        val true
+    script: //todo this if condition can be done as part of nextflow, so it won't submit job for cp
+        """
+            if [ -f ${proteomes_omamerdb_inputhog[2]}/${proteomes_omamerdb_inputhog[0]}.hogmap ]
+        then
+            cp ${proteomes_omamerdb_inputhog[2]}/${proteomes_omamerdb_inputhog[0]}.hogmap  ${proteomes_omamerdb_inputhog[0]}.hogmap
+        else
+            omamer search -n 10 --db ${proteomes_omamerdb_inputhog[1]} --query ${proteomes_omamerdb_inputhog[0]} --out ${proteomes_omamerdb_inputhog[0]}.hogmap
+        fi
+        """  // --nthreads 10
 }
 
 
 
 process infer_roothogs{
-  time {5.h}   // including linclust
-    // memory {200.GB} // 1500 speices
-    // memory {95.GB} // <1000 speices
+    time {15.h}    // including linclust
+    memory {200.GB}
     publishDir = [
         path: params.temp_omamer_rhogs,
-        mode:  'copy',
-        // pattern: "temp_omamer_rhogs"
-        // saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
-    ]
-    //publishDir params.temp_omamer_rhogs , mode: 'copy'
-  input:
-    val ready_omamer_run
-    path hogmap_folder
-    path proteome_folder
-    path splice_folder
-  output:
-    path "temp_omamer_rhogs"
-    path "gene_id_dic_xml.pickle"
-    val true         // nextflow-io.github.io/patterns/state-dependency/
-  script:
-    """
-       infer-roothogs  --logger-level DEBUG
-    """
+        mode:  'copy', // pattern: "temp_omamer_rhogs", saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
+        ]
+        //publishDir params.temp_omamer_rhogs , mode: 'copy'
+    input:
+        val ready_omamer_run
+        path hogmap_folder
+        path proteome_folder
+        path splice_folder
+    output:
+        path "temp_omamer_rhogs"
+        path "gene_id_dic_xml.pickle"
+        val true         // nextflow-io.github.io/patterns/state-dependency/
+    script:
+        """
+        infer-roothogs  --logger-level DEBUG
+        """
 }
 
 
 process batch_roothogs{
-  input:
-    val ready_infer_roothogs
-    path "temp_omamer_rhogs"
-  output:
-    path "rhogs_rest/*", optional: true
-    path "rhogs_big/*" , optional: true
-    val true
-  script:
-    """
+    time {15.h}    // including linclust
+    memory {95.GB}
+    input:
+        val ready_infer_roothogs
+        path "temp_omamer_rhogs"
+    output:
+        path "rhogs_rest/*", optional: true
+        path "rhogs_big/*" , optional: true
+        val true
+    script:
+        """
         batch-roothogs
-    """
+        """
 }
 
 process hog_big{
-  publishDir params.pickles_temp
-  cpus  6
-  time {60.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
-  memory {150.GB}
-  input:
-    val rhogsbig_tree_ready
-  output:
-    path "*.pickle"
-    path "*.fa", optional: true   // msa         if write True
-    path "*.nwk", optional: true  // gene trees  if write True
-    val true
-  script:
-    """
+    cpus  6
+    time {72.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
+    memory {200.GB}
+    publishDir params.pickles_temp
+    input:
+        val rhogsbig_tree_ready
+    output:
+        path "*.pickle"
+        path "*.fa", optional: true   // msa         if write True
+        path "*.nwk", optional: true  // gene trees  if write True
+        val true
+    script:
+        """
         infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --species-tree ${rhogsbig_tree_ready[1]} --parallel
-    """
+        """
 }
 
 process hog_rest{
-  publishDir params.pickles_temp
-  input:
-    val rhogsrest_tree_ready
-  output:
-    path "*.pickle"
-    path "*.fa" , optional: true   // msa         if write True
-    path "*.nwk" , optional: true  // gene trees  if write True
-    val true
-  script:
-    """
+    time {10.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
+    memory {95.GB}
+    publishDir params.pickles_temp
+    input:
+        val rhogsrest_tree_ready
+    output:
+        path "*.pickle"
+        path "*.fa" , optional: true   // msa         if write True
+        path "*.nwk" , optional: true  // gene trees  if write True
+        val true
+    script:
+        """
         infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]}  --species-tree ${rhogsrest_tree_ready[1]}
-    """  // --parrallel False
+        """  // --parrallel False
 }
 
 
 process collect_subhogs{
-  memory {150.GB}
-  publishDir params.output_folder, mode: 'copy'
-  input:
-    val ready_hog_rest
-    val ready_hog_big
-    path "pickles_temp"   // this is the folder includes pickles_rhogs
-    path "gene_id_dic_xml.pickle"
-    path "temp_omamer_rhogs"
-  output:
-    path "output_hog.orthoxml"
-    path "OrthologousGroupsFasta"
-    path "OrthologousGroups.tsv"
-    path "rootHOGs.tsv"
-  script:
-    """
+    time {10.h}
+    memory {200.GB} // orthoxml string can be very huge in memory
+    publishDir params.output_folder, mode: 'copy'
+    input:
+        val ready_hog_rest
+        val ready_hog_big
+        path "pickles_temp"   // this is the folder includes pickles_rhogs
+        path "gene_id_dic_xml.pickle"
+        path "temp_omamer_rhogs"
+    output:
+        path "output_hog.orthoxml"
+        path "OrthologousGroupsFasta"
+        path "OrthologousGroups.tsv"
+        path "rootHOGs.tsv"
+    script:
+        """
         collect-subhogs
-    """
+        """
 }
 
 
@@ -173,7 +178,6 @@ workflow {
     (species_tree_checked_, ready_input_check) = check_input(proteome_folder,hogmap_in,species_tree,omamerdb,splice_folder)
     ready_input_check_c = ready_input_check.collect()
     //species_tree_checked.view{"species_tree_checked ${it}"}
-
 
     proteomes_omamerdb = proteomes.combine(omamerdb)
     proteomes_omamerdb_inputhog = proteomes_omamerdb.combine(hogmap_in) // proteomes_omamerdb_inputhog.view{" rhogsbig ${it}"}
@@ -206,4 +210,4 @@ workflow {
 
 
 
-// todo: check input files very beginning (before omamer starts) e.g all species are in the species tree. No species chars in fasta recrod.
+// todo: check input files very beginning (before omamer starts) e.g all species are in the species tree. No species chars in fasta record.
