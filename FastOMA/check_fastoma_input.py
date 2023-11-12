@@ -98,7 +98,7 @@ def check_speciestree_leaves(species_tree,species_names):
         logger_hog.error("These species are not in the species tree "+ str(species_names_not_intree))
         logger_hog.error("This is a tree template:  ((AQUAE,CHLTR)inter1,MYCGE)inter2; for proteome folder with these three files:  AQUAE.fa  CHLTR.fa  MYCGE.fa. ")
         logger_hog.error("Check input failed. FastOMA halted!")
-        #sys.exit(1)
+        sys.exit(1)
     leaves_tree_not_proteome = [i for i in leaves_name  if i not in species_names]
     if leaves_tree_not_proteome:
         logger_hog.warning("there are "+str(len(leaves_tree_not_proteome))+" leaves in the species tree that there is no proteome. So we will discard them.")
