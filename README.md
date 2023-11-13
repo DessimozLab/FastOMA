@@ -44,9 +44,10 @@ check-fastoma-input
 
 
 
-### Output:
+### Main output:
 Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format
 which can be used with [PyHAM](https://github.com/DessimozLab/pyham).
+The details of output are described [below](https://github.com/DessimozLab/FastOMA#expected-output-structure-for-test-data).
 
 
 # How to run FastOMA
@@ -147,6 +148,7 @@ The only difference between these two scripts is the amount of CPU and memory as
 
 
 Note that to have a comprehensive test, we set the default value of needed cpus as 10.
+
 ## expected log for test data
 After few minutes, the run for test data finishes. 
 ```
@@ -170,8 +172,10 @@ If the run interrupted, by adding `-resume` to the nextflow commond line, you mi
 
 ## expected output structure for test data
 
-The output of FastOMA includes two folders (`hogmap` and `OrthologousGroupsFasta`) and three files 
-(`OrthologousGroupsFasta.tsv`, `rootHOGs.tsv` and `output_hog.orthoxml`).
+The output of FastOMA includes three files 
+(`OrthologousGroupsFasta.tsv`, `rootHOGs.tsv`, `output_hog.orthoxml` and `species_tree_checked.nwk`) and four folders
+(`hogmap`, `OrthologousGroupsFasta`, `temp_pickles` and `temp_output`) and .
+  
 The `hogmap` folder includes the output of [OMAmer](https://github.com/DessimozLab/omamer); each file corresponds to an input proteome.
 The folder `OrthologousGroupsFasta` includes FASTA files, and all proteins inside each FASTA file are orthologous to each other. 
 These could be used as gene markers for species tree inference with refined resolution, [more info](https://f1000research.com/articles/9-511).
@@ -181,7 +185,7 @@ Hierarchical Orthologous Groups are groups of orthologs and paralogs, defined at
 So, following files and folders should appear in the folder `out_folder` which was the argument.
 ```
 $ls out_folder
-hogmap  OrthologousGroupsFasta  OrthologousGroups.tsv  rootHOGs.tsv output_hog.orthoxml pickles_temp
+hogmap  OrthologousGroupsFasta  OrthologousGroups.tsv  output_hog.orthoxml  rootHOGs.tsv  species_tree_checked.nwk  temp_output  temp_pickles
 ```
 among which `output_hog.orthoxml` is the final output in [orthoXML format](https://orthoxml.org/0.4/orthoxml_doc_v0.4.html). Its content looks like this
 
@@ -220,6 +224,16 @@ This means that if you remove or rename the `work` folder, you will not have acc
 If you are working on a large scale project, you may need to change the limitation on the number of files opened in linux using `ulimit -n 271072`. 
 
 You can learn about OMA and FastOMA on [OMA Academy](https://oma-stage.vital-it.ch/oma/academy/).  
+
+
+Regarding temp folders:
+The folder `temp_output` includes `gene_id_dic_xml.pickle` storting mapping between gene name and gene integer ID used for orthoxml format,
+`temp_omamer_rhogs` a folder include the fata file of omamer-based gene families (described [here](https://github.com/DessimozLab/FastOMA#under-the-hood-what-are-fastoma-gene-families)).  
+
+The folder `temp_pickles` includes the pickle file of orthoxml object of each gene family stored in `temp_omamer_rhogs`. 
+These file can be empty when the gene family doesn't end up as a group. Gene trees and MSAs will be stored in `temp_pickles` 
+if activated (in `_config.py` and fastOMA installed with `pip -e` ). 
+
 
 
 ### using omamer's output
