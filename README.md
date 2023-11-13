@@ -172,9 +172,9 @@ If the run interrupted, by adding `-resume` to the nextflow commond line, you mi
 
 ## expected output structure for test data
 
-The output of FastOMA includes three files 
+The output of FastOMA includes four files 
 (`OrthologousGroupsFasta.tsv`, `rootHOGs.tsv`, `output_hog.orthoxml` and `species_tree_checked.nwk`) and four folders
-(`hogmap`, `OrthologousGroupsFasta`, `temp_pickles` and `temp_output`) and .
+(`hogmap`, `OrthologousGroupsFasta`, `temp_pickles` and `temp_output`).
   
 The `hogmap` folder includes the output of [OMAmer](https://github.com/DessimozLab/omamer); each file corresponds to an input proteome.
 The folder `OrthologousGroupsFasta` includes FASTA files, and all proteins inside each FASTA file are orthologous to each other. 
@@ -219,19 +219,19 @@ where each line is an orthologous group. Each line corresponds to a FASTA file i
 
 
 Note that some of the output files are symlink (a.k.a a symbolic link), linked to files in the folder `work` created by nextflow pipeline. 
-This means that if you remove or rename the `work` folder, you will not have access to the output files anymore. 
+This means that if you remove or rename the `work` and its parents folder, you will not have access to the output files anymore. 
 
 If you are working on a large scale project, you may need to change the limitation on the number of files opened in linux using `ulimit -n 271072`. 
 
-You can learn about OMA and FastOMA on [OMA Academy](https://oma-stage.vital-it.ch/oma/academy/).  
+You can learn about OMA and FastOMA on [OMA Academy](https://omabrowser.org/oma/academy/).  
 
 
 Regarding temp folders:
-The folder `temp_output` includes `gene_id_dic_xml.pickle` storting mapping between gene name and gene integer ID used for orthoxml format,
-`temp_omamer_rhogs` a folder include the fata file of omamer-based gene families (described [here](https://github.com/DessimozLab/FastOMA#under-the-hood-what-are-fastoma-gene-families)).  
+The folder `temp_output` includes `gene_id_dic_xml.pickle` storing mapping between gene name and gene integer ID used for orthoxml format,
+`temp_omamer_rhogs` a folder that includes the fasta files of omamer-based gene families (described [here](https://github.com/DessimozLab/FastOMA#under-the-hood-what-are-fastoma-gene-families)).  
 
-The folder `temp_pickles` includes the pickle file of orthoxml object of each gene family stored in `temp_omamer_rhogs`. 
-These file can be empty when the gene family doesn't end up as a group. Gene trees and MSAs will be stored in `temp_pickles` 
+The folder `temp_pickles` includes the pickle file of orthoxml object which are final product of FastOMA for each gene family stored in `temp_omamer_rhogs`. 
+These file can be empty when the gene family doesn't end up as a group (usually with size of 5 Byte). Gene trees and MSAs will be stored in `temp_pickles` 
 if activated (in `_config.py` and fastOMA installed with `pip -e` ). 
 
 
@@ -295,19 +295,16 @@ The selected isforoms will be added as a new column to the input splice files st
 Firstly, those proteins that are mapped to the same OMAdb rootHOG (e.g. HOG:D0066142 for HOG:D0066142.1a.1a) by OMAmer are 
 grouped together to create query rootHOGs (no protein from OMAdb is stored), from now on called rootHOG.
 Then, as OMAmer provide us with alternative mapping, we try to merge those rootHOGs (high chance of split HOGs) that have 
-many shared mapping. The query proteins of these rootHOG will be stored in one rootHOG. 
-
+many shared mappings. The query proteins of these rootHOGs will be stored in only one rootHOG. 
 These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_LXXXXX.fa`. `L` is the release ID of OMADB. 
 Replacing `_` with ':' gives the HOG ID which could be investigated in the [OMA Browser](https://omabrowser.org/oma/hog/HOG:D0114562/Sar/iham/).
 
-There are some cases that only one protein is mapped to one rootHOG, called singleton.
+There are some cases that only one protein is mapped to one rootHOG, called singleton (which is not good, we are hoping for orthologous groups/pairs).
 Using alternative OMAmer mapping, FastOMA tries to put these to other rootHOGs. Still some will be left. 
 
-FastOMA uses the linclust software to find new gene families on set of unmapped proteins and singleton.
+FastOMA uses the [linclust](https://github.com/soedinglab/MMseqs2#cluster) software to find new gene families on set of unmapped proteins and singletons.
 These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_clustXXXXX.fa`.
-
 These are initial gene families that are used in `infer_subhogs` step, which could be split into a few smaller gene families. 
-
 
 
 
