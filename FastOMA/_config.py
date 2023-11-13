@@ -17,7 +17,7 @@ input_rhog_folder = "./"
 species_tree_address = "species_tree.nwk"
 species_tree_checked = "species_tree_checked.nwk"
 
-protein_format_qfo_dataset_before2022 = True
+protein_format_qfo_dataset_before2022 = False
 
 fragment_detection_msa_merge = True  # if this is false and fragment_detection_msa -> we'll remove both fragments in orthology analsys at parent level but report it in orthoxml Dubiousfragment
 
@@ -29,11 +29,11 @@ mergHOG_ratioMin_thresh = 0.9
 mergHOG_shared_thresh = 50
 
 
-gene_trees_write = True
-msa_write = True
-gene_trees_write_all = True
-msa_write_all = True
-keep_subhog_each_pickle = True
+gene_trees_write = False
+msa_write = False
+gene_trees_write_all = False
+msa_write_all = False
+keep_subhog_each_pickle = False
 
 big_rhog_size = 60 * 1000
 omamer_family_threshold = 90
@@ -54,9 +54,10 @@ label_SD_internal = "species_overlap"  # "reconcilation" "species_overlap"
 tree_tool = "fasttree"  # "fasttree"  "iqtree"  # for  gene tree with two, we use
 rooting_method = "midpoint"#"midpoint"  # "midpoint" "mad"
 rooting_mad_executable_path = "mad"  # /work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/installers/mad/
+mmseqs_executable_path ="mmseqs"
 
 
-inferhog_tresh_ratio_gap_row =0.2 # 0.6   # to have more proteins in the ortho groups 0.1
+inferhog_tresh_ratio_gap_row =0.3 # 0.6   # to have more proteins in the ortho groups 0.1
 inferhog_tresh_ratio_gap_col =0.5  # 0.6   # ver very 0.8
 inferhog_min_cols_msa_to_filter = 50 #300 #50  # used for msa before gene tree inference and  saving msa in hog class
 
