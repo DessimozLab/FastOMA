@@ -46,11 +46,22 @@ def collect_subhogs():
                         help="file containing the gene-id dictionary in pickle format")
     parser.add_argument('--out', required=False, default="output_hog.orthoxml", help="output filename in orthoxml")
     parser.add_argument('-v', action="count", default=0)
+    parser.add_argument('--roothog-tsv', default=None, required=False,
+                        help="If specified, a tsv file with the given path will be produced containing the roothog asignments as TSV file.")
+    parser.add_argument('--marker-groups-fasta', default=None, required=False,
+                        help="If specified, a folder named OrthologousFasta and a TSV file with the name provided in "
+                             "this argument will be generated that contains single copy groups, i.e. groups which have " 
+                             "at most one gene per species. Useful as phylogenetic marker genes to reconstruct species "
+                             "trees.")
     conf = parser.parse_args()
     logger_hog.setLevel(level=30 - 10 * min(conf.v, 2))
     logger_hog.debug(conf)
 
     write_hog_orthoxml(conf.pickle_folder, conf.out, conf.gene_id_pickle_file)
+    if conf.roothog_tsv is not None:
+        write_roothogs(conf.out, conf.roothog_tsv)
+    if conf.marker_groups_fasta is not None:
+        write_group_files(conf.out, conf.roothogs_folder, conf.marker_groups_fasta)
 
 
 def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file):
@@ -99,10 +110,13 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file):
     logger_hog.info("orthoxml is written in %s", output_xml_name)
 
 
-def write_fasta():
-    logger_hog.info("Now writing OG fasta files ")
+def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=None, output_fasta_groups=None):
+    if output_file_og_tsv is None:
+        output_file_og_tsv = "OrthologousGroups.tsv"
+    if output_fasta_groups is None:
+        output_fasta_groups = "OrthologousGroupsFasta"
 
-
+    logger_hog.info("Start writing OG fasta files")
     def max_og_tree(tree):
         for node in tree.traverse("preorder"):
             # for node in xml_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "attriremoved") and n.attriremoved==True):
@@ -145,14 +159,12 @@ def write_fasta():
 
         return og_prot_list
 
-    input_orthoxml = output_xml_name # sys.argv[1]  # "out_folder/output_hog_.orthoxml"
     rhog_all_folder = "./omamer_rhogs/" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
     fasta_format = "fa"  # of the rhogs
 
-    output_file_og_tsv = "OrthologousGroups.tsv"
 
-    trees, species_dic = orthoxml_to_newick(input_orthoxml, return_gene_to_species=True)  # encode_levels_as_nhx=False,  xref_tag="protId",
-    print("We extracted " + str(len(trees)) + " trees  in NHX format from the input HOG orthoxml" + input_orthoxml)
+    trees, species_dic = orthoxml_to_newick(orthoxml, return_gene_to_species=True)
+    logger_hog.info("We extracted %d trees in NHX format from the input HOG orthoxml %s", len(trees),  orthoxml)
 
     OGs = {}
     for hog_id, tree_string in trees.items():
@@ -171,10 +183,9 @@ def write_fasta():
 
     print("We wrote the protein families information in the file " + output_file_og_tsv)
 
-    out_folder_ogs = "OrthologousGroupsFasta/"
-    os.makedirs(out_folder_ogs)
+    os.makedirs(output_fasta_groups)
 
-    print("start writing " + str(len(OGs)) + " OGs as fasta files in folder " + out_folder_ogs)
+    print("start writing " + str(len(OGs)) + " OGs as fasta files in folder " + output_fasta_groups)
     for hog_id, og_prot_list in OGs.items():  # hog_id="HOG_0667494_sub10524"
         rhog_id = "_".join(hog_id.split("_")[:2])
 
@@ -190,30 +201,28 @@ def write_fasta():
                 og_prots.append(rhogs_prot)
 
         og_id = "OG_" + hog_id  # one OG per rootHOG      # "/HOG_"+ rhogid
-        SeqIO.write(og_prots, out_folder_ogs + og_id + ".fa", "fasta")
-    print("writing done")
+        SeqIO.write(og_prots, output_fasta_groups + og_id + ".fa", "fasta")
+    logger_hog.info("writing done")
 
 
-
+def write_roothogs(orthoxml, out):
     # import sys
     # input_orthoxml = output_xml_name
-    output_file = "rootHOGs.tsv"
+    if out is None:
+        out = "rootHOGs.tsv"
 
     toplevel_groups = []
-    for grp in extract_flat_groups_at_level(input_orthoxml):
+    for grp in extract_flat_groups_at_level(orthoxml):
         toplevel_groups.append(set(g.xref for g in grp))
 
-    # toplevel_groups is a list of sets
+    logger_hog.info("We extracted %d protein families from the input HOG orthoxml %s", len(toplevel_groups), orthoxml)
+    logger_hog.info("The first one contain %d proteins.", len(toplevel_groups[0]))
 
-    print("We extracted "+str(len(toplevel_groups))+" protein families from the input HOG orthoxml"+input_orthoxml)
-    print("The first one contain "+str(len(toplevel_groups[0]))+" proteins.")
-
-    with open(output_file, 'w') as handle:
+    with open(out, 'w') as handle:
         for toplevel_group_idx, toplevel_group in enumerate(toplevel_groups):
             line_text = str(toplevel_group_idx)+"\t"+str(toplevel_group)[1:-1]+"\n"
             handle.write(line_text)
-    handle.close()
 
-    print("We wrote the protein families information in the file "+output_file)
+    logger_hog.info("We wrote the protein families information in the file %s", out)
 
 

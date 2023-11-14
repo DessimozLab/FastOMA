@@ -117,6 +117,8 @@ process collect_subhogs{
                         --roothogs-folder omamer_rhogs/ \
                         --gene-id-pickle-file gene_id_dic_xml.pickle \
                         --out output_hog.orthoxml \
+                        --marker-groups-fasta OrthologousGroups.tsv \
+                        --roothog-tsv rootHOGs.tsv \
                         -vv
     """
 }
@@ -150,9 +152,7 @@ workflow {
     //rhogsbig_tree_ready = rhogsbig_tree.combine(ready_batch_roothogs)   //     rhogsbig_tree_ready.view{"rhogsbig_tree_ready ${it}"}
     //(pickle_big_rhog, msas_out, genetrees_out, ready_hog_big) = hog_big(rhogsbig_tree)
 
-    //rhogsrest_tree =  rhogs_rest_list.combine(species_tree)
-    //rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
-    (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogs_rest_batches.flatten(), species_tree)
+    (pickle_rest_rhog,  msas_out_rest, genetrees_out_test) = hog_rest(rhogs_rest_batches.flatten(), species_tree)
     pickle_rest_rhog.view()
 
     (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(pickle_rest_rhog.collect(), gene_id_dic_xml, omamer_rhogs)
