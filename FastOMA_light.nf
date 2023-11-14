@@ -113,7 +113,11 @@ process collect_subhogs{
     path "rootHOGs.tsv"
   script:
     """
-        collect-subhogs
+        collect-subhogs --pickle-folder pickle_folders/ \
+                        --roothogs-folder omamer_rhogs/ \
+                        --gene-id-pickle-file gene_id_dic_xml.pickle \
+                        --out output_hog.orthoxml \
+                        -vv
     """
 }
 

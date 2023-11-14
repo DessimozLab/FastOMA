@@ -38,7 +38,7 @@ class BatchBuilder:
         self.cur_batch = []
 
 
-def folder_1h_rhog(roothog_path:Path, output_folder_big:Path, output_folder_rest:Path):
+def folder_1h_rhog(roothog_path: Path, output_folder_big: Path, output_folder_rest: Path):
     # create a list of hogs in descending filesize order
     hog_size_tuples = sorted([(f, f.stat().st_size) for f in roothog_path.rglob("*.fa")], key=lambda x: -x[1])
     with BatchBuilder(output_folder_big, 1) as big_hogs, \

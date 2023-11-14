@@ -13,24 +13,52 @@ from ete3 import Tree
 import os
 from FastOMA.zoo.hog.convert import orthoxml_to_newick
 from Bio import SeqIO
+from pathlib import Path
 
 # This code collect subhogs and writes outputs.
 
+def load_hogs(pickle_folder: Path):
+    hogs_all = []
+    cnt = 0
+    logger_hog.info("reading pickle files from %s", pickle_folder)
+    for root, dirs, files in os.walk(pickle_folder, followlinks=True):
+        for f in files:
+            if f.startswith('file_') and f.endswith('.pickle'):
+                with open(os.path.join(root, f), 'rb') as handle:
+                    cur = pickle.load(handle)
+                hogs_all.extend(cur)
+                cnt += 1
+                if cnt % 500 == 0:
+                    logger_hog.info("read %d batch pickle files so far, resulting in %d roothogs so far",
+                                    cnt, len(hogs_all))
+    logger_hog.info("number of pickle files is %d.", cnt)
+    logger_hog.debug("number of hogs in all batches is %d", len(hogs_all))
+    return hogs_all
+
 
 def collect_subhogs():
+    import argparse
+    parser = argparse.ArgumentParser(description="collecting all computed HOGs and combine into a single orthoxml")
+    parser.add_argument('--pickle-folder', required=True,
+                        help="folder containing the pickle files. Will be searched recursively")
+    parser.add_argument('--roothogs-folder', required=True, help="folder containing the omamer roothogs")
+    parser.add_argument('--gene-id-pickle-file', required=True,
+                        help="file containing the gene-id dictionary in pickle format")
+    parser.add_argument('--out', required=False, default="output_hog.orthoxml", help="output filename in orthoxml")
+    parser.add_argument('-v', action="count", default=0)
+    conf = parser.parse_args()
+    logger_hog.setLevel(level=30 - 10 * min(conf.v, 2))
+    logger_hog.debug(conf)
 
-    logger_hog.info("started collecting pickle files ")
+    write_hog_orthoxml(conf.pickle_folder, conf.out, conf.gene_id_pickle_file)
 
+
+def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file):
     # todo as input argument/option in nextflow
     protein_format_qfo_dataset_before2022 = True #False
     # in benchamrk dataset the output prot names should be short
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchmark, the middle should be written in the file
-
-    pickle_folder = "./pickles_temp/" #pickle_rhogs
-    output_xml_name = "./output_hog.orthoxml"
-    gene_id_pickle_file = "./gene_id_dic_xml.pickle" # this file includes integer mapping of each protein
-
 
     orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
                                                    "originVersion": "Nov 2021", "version": "0.3"})  #
@@ -38,7 +66,7 @@ def collect_subhogs():
     with open(gene_id_pickle_file, 'rb') as handle:
         gene_id_name = pickle.load(handle)
         # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
-    logger_hog.debug("We read the gene_id_name dictionary with"+str(len(gene_id_name))+"items")
+    logger_hog.debug("We read the gene_id_name dictionary with %d items", len(gene_id_name))
     logger_hog.debug("Now creating the header of orthoxml")
 
    #  #### create the header of orthoxml ####
@@ -56,22 +84,8 @@ def collect_subhogs():
     logger_hog.debug("gene_xml is created.")
 
     #  #### create the groups of orthoxml   ####
-    pickle_files_adress_raw = listdir(pickle_folder)
-    pickle_files_adress = [i for i in pickle_files_adress_raw if i.endswith(".pickle") and i.startswith("file_")]
-
-    logger_hog.info("number of pickle files is "+str(len(pickle_files_adress))+".")
-    logger_hog.debug("pickle files are " + str(len(pickle_files_adress)) + ".")
-    hogs_a_rhog_xml_all = []
-    for pickle_file_adress in pickle_files_adress:
-        with open(pickle_folder + pickle_file_adress, 'rb') as handle:
-            hogs_a_rhog_xml_batch = pickle.load(handle)  #  list of hog object.
-            hogs_a_rhog_xml_all.extend(hogs_a_rhog_xml_batch)
-            # hogs_rhogs_xml_all is orthoxml_to_newick.py list of hog object.
-
-    logger_hog.debug("number of hogs in all batches is "+str(len(hogs_a_rhog_xml_all))+" .")
     groups_xml = ET.SubElement(orthoxml_file, "groups")
-
-    for hogs_a_rhog_xml in hogs_a_rhog_xml_all:
+    for hogs_a_rhog_xml in load_hogs(Path(pickle_folder)):
         groups_xml.append(hogs_a_rhog_xml)
     logger_hog.debug("converting the xml object to string.")
 
@@ -82,14 +96,10 @@ def collect_subhogs():
         file_xml.write(xml_str)
     file_xml.close()
 
-    logger_hog.info("orthoxml is written in " + output_xml_name)
+    logger_hog.info("orthoxml is written in %s", output_xml_name)
 
 
-
-
-
-
-
+def write_fasta():
     logger_hog.info("Now writing OG fasta files ")
 
 
