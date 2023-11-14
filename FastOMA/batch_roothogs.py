@@ -25,6 +25,7 @@ class BatchBuilder:
         self.cur_size += hog_file.stat().st_size
         if self.cur_size > self.max_size:
             self._flush()
+            self.counter += 1
 
     def _flush(self):
         batch_dir = self.outdir / str(self.counter)

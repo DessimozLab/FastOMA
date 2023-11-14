@@ -3,13 +3,6 @@
 from . import _utils_subhog
 from . import _infer_subhog
 from . import _config
-# import os
-# from os import listdir
-# import os
-import sys
-# from os import listdir
-# import _config
-
 from ._config import logger_hog
 import os
 
@@ -53,7 +46,7 @@ def infer_subhogs():
     if inferhog_concurrent_on:
         print("parallelization for subhog inference is on.")
 
-    pickles_rhog_folder = "./" # pickles_temp/ pickle_rhogs
+    pickles_rhog_folder = "./pickle_hogs" # pickles_temp/ pickle_rhogs
     if not os.path.exists(pickles_rhog_folder):
         os.makedirs(pickles_rhog_folder)
 

@@ -65,7 +65,6 @@ process batch_roothogs{
 }
 
 process hog_big{
-  publishDir params.pickles_temp
   cpus  2
   time {20.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
   input:
@@ -82,17 +81,21 @@ process hog_big{
 }
 
 process hog_rest{
-  publishDir params.pickles_temp
   input:
-    tuple path(rhogsrest), path(species_tree)
+    each rhogsrest
+    path species_tree
   output:
-    path "*.pickle"
-    path "*.fa" , optional: true   // msa         if write True
-    path "*.nwk" , optional: true  // gene trees  if write True
+    path "pickle_hogs"
+    path "msa/*.fa" , optional: true   // msa         if write True
+    path "gene_trees/*.nwk" , optional: true  // gene trees  if write True
     val true
   script:
     """
-        infer-subhogs  --input-rhog-folder ${rhogsrest}  --species-tree ${species_tree} --fragment-detection --low-so-detection
+        infer-subhogs  --input-rhog-folder ${rhogsrest}  \
+                       --species-tree ${species_tree} \
+                       --fragment-detection \
+                       --low-so-detection
+                       #--out pickle_hogs
     """
 }
 
@@ -100,11 +103,9 @@ process hog_rest{
 process collect_subhogs{
   publishDir params.output_folder, mode: 'copy'
   input:
-    val ready_hog_rest
-    val ready_hog_big
-    path "pickles_temp"   // this is the folder includes pickles_rhogs
+    path pickles, stageAs: "pickle_folders/?"
     path "gene_id_dic_xml.pickle"
-    path "omamer_rhogs"
+    path rhogs, stageAs: "omamer_rhogs/*"
   output:
     path "output_hog.orthoxml"
     path "OrthologousGroupsFasta"
@@ -121,6 +122,7 @@ workflow {
     proteome_folder = Channel.fromPath(params.proteome_folder)
     hogmap_folder = Channel.fromPath(params.hogmap_folder)
     splice_folder = Channel.fromPath(params.splice_folder)
+    species_tree = Channel.fromPath(params.species_tree)
 
     genetrees_folder = Channel.fromPath(params.genetrees_folder)
     hogmap_in = Channel.fromPath(params.hogmap_in, type:'dir')
@@ -135,20 +137,21 @@ workflow {
 
     (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
 
-    (rhogs_rest_list, rhogs_big_list) = batch_roothogs(omamer_rhogs)
+    (rhogs_rest_batches, rhogs_big_list) = batch_roothogs(omamer_rhogs)
+    rhogs_rest_batches.flatten().view{ "batch $it" }
 
 
-    species_tree = Channel.fromPath(params.species_tree)
     //rhogsbig = rhogs_big_list.flatten()
     //rhogsbig_tree =  rhogsbig.combine(species_tree)
     //rhogsbig_tree_ready = rhogsbig_tree.combine(ready_batch_roothogs)   //     rhogsbig_tree_ready.view{"rhogsbig_tree_ready ${it}"}
     //(pickle_big_rhog, msas_out, genetrees_out, ready_hog_big) = hog_big(rhogsbig_tree)
 
-    rhogsrest_tree =  rhogs_rest_list.combine(species_tree)
+    //rhogsrest_tree =  rhogs_rest_list.combine(species_tree)
     //rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
-    (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogsrest_tree)
+    (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogs_rest_batches.flatten(), species_tree)
+    pickle_rest_rhog.view()
 
-    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), pickles_temp, gene_id_dic_xml, omamer_rhogs)
+    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(pickle_rest_rhog.collect(), gene_id_dic_xml, omamer_rhogs)
     orthoxml_file.view{" output orthoxml file ${it}"}
 
 }
