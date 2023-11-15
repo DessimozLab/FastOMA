@@ -121,12 +121,19 @@ def infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs
                 # {<Future at 0x7f1b48d9afa0 state=finished raised TypeError>: 'KORCO_'}
                 pending_futures[future_id] = node.name
                 # node.infer_submitted = True
+        # todo : when one future_id fails , halt the whole, do  not allow the rest continue
+        # to keep, have a family
         while len(pending_futures) > 0:
             time.sleep(0.01)
             future_id_list = list(pending_futures.keys())
             for future_id in future_id_list:
-                if future_id.done():
+                if future_id.done(): # done means finished, but may be unsecussful.
+
                     species_node_name = pending_futures[future_id]
+                    logger_hog.debug("checking for rootHOG id "+str(rhogid)+" future object is done for node " +str(species_node_name))
+                    future_id.result()
+                    #logger_hog.debug("the result of future is  " + str(future_id.result()))
+
                     del pending_futures[future_id]
                     species_node = species_tree.search_nodes(name=species_node_name)[0]
                     parent_node = species_node.up
