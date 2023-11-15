@@ -121,7 +121,6 @@ def infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs
                 # {<Future at 0x7f1b48d9afa0 state=finished raised TypeError>: 'KORCO_'}
                 pending_futures[future_id] = node.name
                 # node.infer_submitted = True
-        # todo : when one future_id fails , halt the whole, do  not allow the rest continue
         # to keep, have a family
         while len(pending_futures) > 0:
             time.sleep(0.01)
