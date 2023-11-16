@@ -47,7 +47,7 @@ def add_species_name_prot_id(species_names, prot_recs_lists):
     """
     prot_idx_name_pickle_file = "./gene_id_dic_xml.pickle"
     start_num_prot = int(1e9)
-    start_num_prot_per_sp = int(1e6)
+    start_num_prot_per_sp = int(1e6) #
     prot_recs_all = {} # {'MYCGE': {'sp|P47500|RF1_MYCGE||MYCGE||1000000001': SeqRecord(seq=
     prot_idx_name = {} # {'MYCGE': [(1000000001, 'sp|P47500|RF1_MYCGE'),(1000000002, 'sp|P13927|EFTU_MYCGE'),
     species_idx = -1

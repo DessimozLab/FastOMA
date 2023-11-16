@@ -372,6 +372,7 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
                 gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col_new, genetree_msa_file_addr+"_merged_")
                 gene_tree = Tree(gene_tree_raw , format=0, quoted_node_names=True) #+ ";"
             else:
+                logger_hog.warning("** issue 861956")
                 gene_tree = ""
                 # fragments_remove_list += fragments_list_remove # for now fragments_list_remove include 1 prots
         elif _config.fragment_detection and (not _config.fragment_detection_msa_merge):
@@ -386,8 +387,12 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
             else:
                 gene_tree.prune(rest_leaves, preserve_branch_length=True)
 
-        if _config.gene_trees_write_all or _config.rooting_method == "mad":
-            gene_tree.write(outfile=genetree_msa_file_addr+"_dubiousMSA.nwk",format=1)
+        try:
+            if  len(gene_tree) and (_config.gene_trees_write_all or _config.rooting_method == "mad"): # len(gene_tree) > 1 and
+                gene_tree.write(outfile=genetree_msa_file_addr+"_dubiousMSA.nwk",format=1)
+        except:
+            logger_hog.warning("couldn't write the file _dubiousMSA.nwk")
+
 
         if len(gene_tree) > 1:
             (gene_tree, all_species_dubious_sd_dic2) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr+"_dubiousMSA.nwk")

@@ -40,11 +40,15 @@ def check_proteome_files():
 
 
 def check_proteome(species_names,prot_recs_lists):
-
+    # ids_set=set()
     for species_name in species_names:
         num_prots = len(prot_recs_lists[species_name])
+        # todo , check duplicated Ids  for seq in prot_recs_lists[species_name]:
+        #  if seq.id in ids_set: report duplciated   ids_set.add(seq.id),
         if num_prots <= 2:
             logger_hog.error("The input proteome looks empty or too few proteins or Bio.SeqIO couldn't read it,  in_folder/proteome/" + species_name + "."+fasta_format_keep)
+    # todo write new protoems with cleaned record ids, keep the mapping, to be used in orthoxml writing
+    # use the mapping back for orhtoxml
 
     return 1
 
