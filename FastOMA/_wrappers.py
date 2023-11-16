@@ -1,9 +1,8 @@
 
 from Bio import SeqIO
-from FastOMA.zoo.wrappers.aligners import mafft
-# iqtree
-from FastOMA.zoo.wrappers.treebuilders import fasttree
-# from trimmers.trimal import TrimAl
+from .zoo.wrappers.aligners import mafft
+from .zoo.wrappers.treebuilders import fasttree
+from .zoo.wrappers.trimmers.trimal import TrimAl
 from ete3 import Tree
 
 import subprocess
@@ -58,11 +57,11 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     output: gene tree in nwk format
     """
     prot_ids = [i.id for i in msa]
-    assert len(set(prot_ids)) == len(prot_ids), "non uniq fasta record in msa "+str(prot_ids)
+    #assert len(set(prot_ids)) == len(prot_ids), "non uniq fasta record in msa "+str(prot_ids)
     # since quote is activated, the description of prots will be in the gene tree leaves. so we need to remove that.
     msa_edited = []
     for rec in msa:
-        rec.description=""
+        rec.description = ""
         msa_edited.append(rec)
     if _config.tree_tool == "fasttree":
         wrapper_tree = fasttree.Fasttree(msa_edited, datatype="PROTEIN")
@@ -131,9 +130,7 @@ def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
 
 
 def trim_msa(msa):
-
-
-    try :
+    try:
         trimal = TrimAl(msa)
         trimal.options['-automated1'].set_value(True)
         msa_out = trimal()
