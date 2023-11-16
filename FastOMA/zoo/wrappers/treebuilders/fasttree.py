@@ -9,7 +9,7 @@ from Bio import SeqIO
 from pyparsing import ParseException
 import tempfile
 
-from .base_treebuilder import TreeBuilder, AlignmentInput, DataType
+from .base_treebuilder import TreeBuilder, AlignmentInput, DataType, WrapperError
 from .parsers import FasttreeParser
 
 from ..abstract_cli import AbstractCLI
@@ -88,6 +88,14 @@ class Fasttree(TreeBuilder):
         #hard code tmp_output as the output name since we don't save it anyway
         #self.cli('{} -log {log_output} {seqfile} > {tmp_path}'.format(self.command(), tmp_path=os.path.join(tmpd,'tmp_output'), log_output=logfile, seqfile=filename), wait=True)
         self.cli('{} {seq_file}'.format(self.command(), seq_file=filename), wait=True)
+        self.returncode = self.cli.process.returncode
+
+        if self.returncode != 0:
+            self.stderr = self.cli.get_stderr()
+            last_error_line = self.stderr.split('\n')[-1].strip()
+            msg = f"Fasttree failed on {filename}: {last_error_line}"
+            logger.error(msg)
+            raise WrapperError(msg, self.stderr)
 
         return (self.cli.get_stdout(), self.cli.get_stderr())
 
