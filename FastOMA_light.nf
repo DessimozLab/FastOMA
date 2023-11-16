@@ -16,7 +16,7 @@ params.genetrees_folder = params.output_folder + "/genetrees"
 
 process omamer_run{
   time {4.h}
-  publishDir params.hogmap_folder
+  publishDir params.hogmap_folder, mode: 'copy'
 
   input:
   tuple path(proteome), path(omamer_db), path(precomputed_hogmap_folder)
@@ -67,16 +67,20 @@ process batch_roothogs{
 process hog_big{
   cpus  2
   time {20.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
-  input:
-    val rhogsbig_tree_ready
+    input:
+    each rhogsbig
+    path species_tree
   output:
-    path "*.pickle"
-    path "*.fa", optional: true   // msa         if write True
-    path "*.nwk", optional: true  // gene trees  if write True
-    val true
+    path "pickle_hogs"
+    path "msa/*.fa" , optional: true          // msa         if write True
+    path "gene_trees/*.nwk" , optional: true  // gene trees  if write True
   script:
     """
-        infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --species-tree ${rhogsbig_tree_ready[1]} --parallel --fragment-detection --low-so-detection
+        infer-subhogs  --input-rhog-folder ${rhogsbig}  \
+                       --species-tree ${species_tree} \
+                       --fragment-detection \
+                       --low-so-detection \
+                       --parallel
     """
 }
 
@@ -86,9 +90,8 @@ process hog_rest{
     path species_tree
   output:
     path "pickle_hogs"
-    path "msa/*.fa" , optional: true   // msa         if write True
+    path "msa/*.fa" , optional: true          // msa         if write True
     path "gene_trees/*.nwk" , optional: true  // gene trees  if write True
-    val true
   script:
     """
         infer-subhogs  --input-rhog-folder ${rhogsrest}  \
@@ -143,19 +146,13 @@ workflow {
 
     (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
 
-    (rhogs_rest_batches, rhogs_big_list) = batch_roothogs(omamer_rhogs)
-    rhogs_rest_batches.flatten().view{ "batch $it" }
+    (rhogs_rest_batches, rhogs_big_batches) = batch_roothogs(omamer_rhogs)
 
-
-    //rhogsbig = rhogs_big_list.flatten()
-    //rhogsbig_tree =  rhogsbig.combine(species_tree)
-    //rhogsbig_tree_ready = rhogsbig_tree.combine(ready_batch_roothogs)   //     rhogsbig_tree_ready.view{"rhogsbig_tree_ready ${it}"}
-    //(pickle_big_rhog, msas_out, genetrees_out, ready_hog_big) = hog_big(rhogsbig_tree)
-
+    (pickle_big_rhog, msa_out_big, genetrees_out_rest) = hog_big(rhogs_big_batches.flatten(), species_tree)
     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test) = hog_rest(rhogs_rest_batches.flatten(), species_tree)
-    pickle_rest_rhog.view()
+    channel.empty().concat(pickle_big_rhog, pickle_rest_rhog).set{ all_rhog_pickle }
 
-    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(pickle_rest_rhog.collect(), gene_id_dic_xml, omamer_rhogs)
+    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(all_rhog_pickle.collect(), gene_id_dic_xml, omamer_rhogs)
     orthoxml_file.view{" output orthoxml file ${it}"}
 
 }

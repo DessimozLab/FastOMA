@@ -92,7 +92,7 @@ inferhog_max_workers_num = 6
 inferhog_min_hog_size_xml = 2     # by setting this as 1, pyham won't work on xml output.
 
 # batch_roothogs
-big_rhog_filesize_thresh = 400 * 1000
+big_rhog_filesize_thresh = 1300
 sum_list_rhogs_filesize_thresh = 2 * 1e3
 
 

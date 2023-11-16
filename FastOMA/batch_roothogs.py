@@ -23,6 +23,7 @@ class BatchBuilder:
     def add_hog(self, hog_file: Path):
         self.cur_batch.append(hog_file)
         self.cur_size += hog_file.stat().st_size
+        logger.debug("adding %s with size %d to batch %d", hog_file, hog_file.stat().st_size, self.counter)
         if self.cur_size > self.max_size:
             self._flush()
             self.counter += 1
