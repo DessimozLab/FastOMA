@@ -14,8 +14,9 @@ which is from [OMA browser](https://omabrowser.org/oma/current/).
 This file is `13 Gb` containing all the gene families of the Tree of Life or you can download it for a subset of them, e.g. Primates (352MB). 
 
 3- Rooted Species tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
-A rough species tree is enough and it does not need to be binary. Besides, we do not need branch length. 
-Note that the name of leaves of the tree (species name) should be the same as the file name of FASTAs (without `.fa` extension) (item 1). And there shouldn't be any repeated names in leaves names and internal node names. 
+A rough species tree is enough and it does not need to be binary. Besides, we do not need branch lengths. 
+Note that the name of leaves of the tree (species name) should be the same as the file name of FASTAs (without `.fa` extension) (item 1). 
+And there shouldn't be any repeated names in leaves names and internal node names. The tree should not be with quotation.  
 
 
 
@@ -28,12 +29,25 @@ $ cat species_tree.nwk
 ```
 
 Besides, the internal node should not contain any special character (e.g. `\`  `/` or space).
-The reason is that FastOMA write some files whose names contains the internal node's name. 
+The reason is that FastOMA write some files whose names contain the internal node's name. 
 If the species tree does not have label for some/all internal nodes, FastOMA labels them sequentially.  
 
-### Output:
+
+### Input check:
+
+After installing FastOMA, you can have a initial check for your input dataset by running the following in the folder `in_folder`:
+
+```
+cd in_folder
+check-fastoma-input
+```
+
+
+
+### Main output:
 Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format
 which can be used with [PyHAM](https://github.com/DessimozLab/pyham).
+The details of output are described [below](https://github.com/DessimozLab/FastOMA#expected-output-structure-for-test-data).
 
 
 # How to run FastOMA
@@ -147,9 +161,11 @@ The only difference between these two scripts is the amount of CPU and memory as
 
 
 Note that to have a comprehensive test, we set the default value of needed cpus as 10.
+
 ## expected log for test data
 After few minutes, the run for test data finishes. 
 ```
+[] process > check_input ()     [100%] 1 of 1 ✔
 [] process > omamer_run ()      [100%] 3 of 3 ✔
 [] process > infer_roothogs ()  [100%] 1 of 1 ✔
 [] process > batch_roothogs ()  [100%] 1 of 1 ✔
@@ -164,10 +180,15 @@ Then, to have similar size jobs, we batch these FASTA files either as one big ro
 These are decided based on the FASTA file size. Finally once all jobs of `hog_big` and `hog_rest` are done, we `collect_subhog` and save all outputs.  
 
 
-If the run interrupted, by adding `-resume` to the nextflow commond line, you might be able to continue your previous nextflow job. 
+If the run interrupted, by adding `-resume` to the nextflow commond line, you might be able to continue your previous nextflow job.
+
+
 ## expected output structure for test data
-The output of FastOMA includes two folders (`hogmap` and `OrthologousGroupsFasta`) and three files 
-(`OrthologousGroupsFasta.tsv`, `rootHOGs.tsv` and `output_hog.orthoxml`).
+
+The output of FastOMA includes four files 
+(`OrthologousGroupsFasta.tsv`, `rootHOGs.tsv`, `output_hog.orthoxml` and `species_tree_checked.nwk`) and four folders
+(`hogmap`, `OrthologousGroupsFasta`, `temp_pickles` and `temp_output`).
+  
 The `hogmap` folder includes the output of [OMAmer](https://github.com/DessimozLab/omamer); each file corresponds to an input proteome.
 The folder `OrthologousGroupsFasta` includes FASTA files, and all proteins inside each FASTA file are orthologous to each other. 
 These could be used as gene markers for species tree inference with refined resolution, [more info](https://f1000research.com/articles/9-511).
@@ -177,7 +198,7 @@ Hierarchical Orthologous Groups are groups of orthologs and paralogs, defined at
 So, following files and folders should appear in the folder `out_folder` which was the argument.
 ```
 $ls out_folder
-hogmap  OrthologousGroupsFasta  OrthologousGroups.tsv  rootHOGs.tsv output_hog.orthoxml pickles_temp
+hogmap  OrthologousGroupsFasta  OrthologousGroups.tsv  output_hog.orthoxml  rootHOGs.tsv  species_tree_checked.nwk  temp_output  temp_pickles
 ```
 among which `output_hog.orthoxml` is the final output in [orthoXML format](https://orthoxml.org/0.4/orthoxml_doc_v0.4.html). Its content looks like this
 
@@ -211,11 +232,21 @@ where each line is an orthologous group. Each line corresponds to a FASTA file i
 
 
 Note that some of the output files are symlink (a.k.a a symbolic link), linked to files in the folder `work` created by nextflow pipeline. 
-This means that if you remove or rename the `work` folder, you will not have access to the output files anymore. 
+This means that if you remove or rename the `work` and its parents folder, you will not have access to the output files anymore. 
 
 If you are working on a large scale project, you may need to change the limitation on the number of files opened in linux using `ulimit -n 271072`. 
 
-You can learn about OMA and FastOMA on [OMA Academy](https://oma-stage.vital-it.ch/oma/academy/).  
+You can learn about OMA and FastOMA on [OMA Academy](https://omabrowser.org/oma/academy/).  
+
+
+Regarding temp folders:
+The folder `temp_output` includes `gene_id_dic_xml.pickle` storing mapping between gene name and gene integer ID used for orthoxml format,
+`temp_omamer_rhogs` a folder that includes the fasta files of omamer-based gene families (described [here](https://github.com/DessimozLab/FastOMA#under-the-hood-what-are-fastoma-gene-families)).  
+
+The folder `temp_pickles` includes the pickle file of orthoxml object which are final product of FastOMA for each gene family stored in `temp_omamer_rhogs`. 
+These file can be empty when the gene family doesn't end up as a group (usually with size of 5 Byte). Gene trees and MSAs will be stored in `temp_pickles` 
+if activated (in `_config.py` and fastOMA installed with `pip -e` ). 
+
 
 
 ### using omamer's output
@@ -267,18 +298,41 @@ HUMAN00007;HUMAN00008;HUMAN00009;HUMAN00010;HUMAN00011;HUMAN00012;
 HUMAN00022;HUMAN00023;HUMAN00024;
 HUMAN00027;HUMAN00028;HUMAN00029;HUMAN00030;HUMAN00031;HUMAN00032;HUMAN00033
 HUMAN00034;HUMAN00035
+HUMAN00036
+HUMAN00037
 ```
+
+The selected isforoms will be added as a new column to the input splice files stored as tsv at `out_folder/temp_output/selected_isoforms/`
+
+## Under the hood: what are fastOMA gene families?
+Firstly, those proteins that are mapped to the same OMAdb rootHOG (e.g. HOG:D0066142 for HOG:D0066142.1a.1a) by OMAmer are 
+grouped together to create query rootHOGs (no protein from OMAdb is stored), from now on called rootHOG.
+Then, as OMAmer provide us with alternative mapping, we try to merge those rootHOGs (high chance of split HOGs) that have 
+many shared mappings. The query proteins of these rootHOGs will be stored in only one rootHOG. 
+These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_LXXXXX.fa`. `L` is the release ID of OMADB. 
+Replacing `_` with ':' gives the HOG ID which could be investigated in the [OMA Browser](https://omabrowser.org/oma/hog/HOG:D0114562/Sar/iham/).
+
+There are some cases that only one protein is mapped to one rootHOG, called singleton (which is not good, we are hoping for orthologous groups/pairs).
+Using alternative OMAmer mapping, FastOMA tries to put these to other rootHOGs. Still some will be left. 
+
+FastOMA uses the [linclust](https://github.com/soedinglab/MMseqs2#cluster) software to find new gene families on set of unmapped proteins and singletons.
+These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_clustXXXXX.fa`.
+These are initial gene families that are used in `infer_subhogs` step, which could be split into a few smaller gene families. 
+
+
 
 # Downstream analysis
 
-- High resolution Tree inference
+- High resolution tree inference
 
-- phylostragraphy 
+- Phylostragraphy with pyham 
+
 
 ## Change log
-- Update   v0.1.3: merge rootHOGs  and handle singleton using omamer multi-hits
-- Update   v0.1.2: improve rootHOG inference, splice, OMAmerv2 with multi-hits
-- Release  v0.1.0: improve nextflow pipeline and outputs. 
+- Update  v0.1.4: new gene families with linclust if mmseqs is installed, using quoted protein name to handle species chars, check input first 
+- Update  v0.1.3: merge rootHOGs and handle singleton using omamer multi-hits
+- Update  v0.1.2: improve rootHOG inference, splice, OMAmerv2 with multi-hits
+- Release v0.1.0: improve nextflow pipeline and outputs. 
 - prelease v.0.0.6: use `--fragment-detection` for `infer-subhogs` and `--low-so-detection --fragment-detection`
 - prelease v.0.0.6: using input hogmpa
 - prelease v.0.0.5: adding pip setup.py 

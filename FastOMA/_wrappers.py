@@ -6,7 +6,7 @@ from FastOMA.zoo.wrappers.treebuilders import fasttree
 # from trimmers.trimal import TrimAl
 from ete3 import Tree
 
-
+import subprocess
 
 from ._config import logger_hog
 from . import _config
@@ -55,29 +55,52 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     infere gene tree using fastTree for the input msa
     and write it as orthoxml_to_newick.py file
 
-
     output: gene tree in nwk format
     """
-
+    prot_ids = [i.id for i in msa]
+    assert len(set(prot_ids)) == len(prot_ids), "non uniq fasta record in msa "+str(prot_ids)
+    # since quote is activated, the description of prots will be in the gene tree leaves. so we need to remove that.
+    msa_edited = []
+    for rec in msa:
+        rec.description=""
+        msa_edited.append(rec)
     if _config.tree_tool == "fasttree":
-        wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
+        wrapper_tree = fasttree.Fasttree(msa_edited, datatype="PROTEIN")
         wrapper_tree.options.options['-fastest'].active = True   # .set_value(True)  is wrong.
+        wrapper_tree.options.options['-quote'].active = True
+
         #wrapper_tree.options.options['-quote'].active = True
         #wrapper_tree.options.options['-nt'].active = True
 
-    # todo using more cpus ?
-    # elif _config.tree_tool == "iqtree": # very slow not recommanded
-    #     wrapper_tree = iqtree.Iqtree(msa, datatype="PROTEIN")
-    #     wrapper_tree.options.options['-m'].set_value("LG+I+G")
-    #     wrapper_tree.options.options['-nt'].set_value(1)
+        # todo using more cpus ?
+        # elif _config.tree_tool == "iqtree": # very slow not recommanded
+        #     wrapper_tree = iqtree.Iqtree(msa, datatype="PROTEIN")
+        #     wrapper_tree.options.options['-m'].set_value("LG+I+G")
+        #     wrapper_tree.options.options['-nt'].set_value(1)
 
     result_tree1 = wrapper_tree()
     if wrapper_tree.stderr:
         logger_hog.debug("tree inference stderr " + str(wrapper_tree.stderr))
     time_taken_tree = wrapper_tree.elapsed_time
     result_tree2 = wrapper_tree.result
-    tree_nwk = str(result_tree2["tree"])
-    # print(time_taken_tree)
+    tree_nwk = result_tree2["tree"].as_string(schema='newick') #str(result_tree2["tree"])
+    # using one rooting for all part of the levels , which didn't improve that much
+    # rhogid= gene_tree_file_addr.split("_")[1]
+    # from ete3 import Tree
+    # tree1= Tree("/scratch/smajidi1/relD_merg_single2/t/omamer_rhogs/HOG_"+rhogid+".fa_msa.nwk",format=1)
+    # logger_hog.info("gene tree read from the folder ")
+    # r_outgroup = tree1.get_midpoint_outgroup()
+    # try:
+    #     tree1.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
+    # except:
+    #     pass
+    # genes = [i.id for i in msa]
+    # try:
+    #     tree1.prune(genes)
+    # except:
+    #     logger_hog.warning("issue 1230971  prune issue _wrappers "+str(genes))
+    # tree_nwk= tree1.write(format=1)
+    #(msa, gene_tree_file_addr
 
     # current_time = datetime.now().strftime("%H:%M:%S")
     # for development we write the gene tree, the name of file should be limit in size in linux.
@@ -87,14 +110,24 @@ def infer_gene_tree(msa, gene_tree_file_addr):
 
     if _config.gene_trees_write_all or _config.rooting_method == "mad":
         file_gene_tree = open(gene_tree_file_addr, "w")
-        file_gene_tree.write(tree_nwk)
-        file_gene_tree.write(";\n")
+        file_gene_tree.write(tree_nwk) #file_gene_tree.write(";\n")
         file_gene_tree.close()
 
     return tree_nwk
 
 
+def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
 
+    num_threads = 5
+    command_clust= "mmseqs easy - linclust - -threads" +str(num_threads) + " " +fasta_to_cluster+"singleton_unmapped tmp_linclust"
+
+    logger_hog.debug("linclust rooting started" + command_clust)
+    process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    #if "Error analyzing file" in str(output) or error:
+    #    try:
+
+    return "done"
 
 
 def trim_msa(msa):
@@ -136,7 +169,7 @@ def mad_rooting(input_tree_file_path: str, mad_executable_path: str = "./mad"):
     # Run MAD and ignore the output.
     #os.system(mad_command)
 
-    import subprocess
+
     logger_hog.debug("MAD rooting started")
     #bashCommand = f"mad {gene_tree_address}"
     process = subprocess.Popen(mad_command.split(), stdout=subprocess.PIPE)

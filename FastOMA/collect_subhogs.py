@@ -3,17 +3,16 @@ import xml.etree.ElementTree as ET
 import pickle
 from os import listdir
 from xml.dom import minidom
-# from . import _config
-from ._config import logger_hog
-
-from FastOMA.zoo.hog import extract_flat_groups_at_level
-
 from ete3 import Tree
-# import sys
 import os
-from FastOMA.zoo.hog.convert import orthoxml_to_newick
 from Bio import SeqIO
 from pathlib import Path
+
+from FastOMA.zoo.hog import extract_flat_groups_at_level
+from FastOMA.zoo.hog.convert import orthoxml_to_newick
+
+from ._config import logger_hog
+from . import _config
 
 # This code collect subhogs and writes outputs.
 
@@ -34,6 +33,51 @@ def load_hogs(pickle_folder: Path):
     logger_hog.info("number of pickle files is %d.", cnt)
     logger_hog.debug("number of hogs in all batches is %d", len(hogs_all))
     return hogs_all
+
+
+def max_og_tree(tree, species_dic):
+    for node in tree.traverse("preorder"):
+        # for node in xml_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "attriremoved") and n.attriremoved==True):
+        if not node.is_leaf() and hasattr(node, "Ev") and node.Ev == 'duplication':  # node.name[:3] == "dup"
+            dup_node = node
+            children = dup_node.get_children()
+            list_num_species = []
+            for child in children:
+                child_name_leaves = child.get_leaves()
+                species_list = []
+                for leaf in child_name_leaves:
+                    name = leaf.name
+                    if name[:3] == "no_":
+                        name = leaf.name.split("_")[-1]
+                    if name in species_dic:
+                        species_name = species_dic[name]
+                        species_list.append(species_name)
+                    else:
+                        print("species not in the dic ", name)
+                species_set = set(species_list)
+                list_num_species.append(len(species_set))
+            index_max_species = list_num_species.index(max(list_num_species))
+            # if there are few children with identical number of species, the case would be not a polytomi but two children with one species
+            # num_occurence = [1 for i in list_num_species if i == max(list_num_species)]
+            # if len(num_occurence) > 1:
+            #    print("please check this case with the developer the tool. The tree has polytomy.")
+            child_max_species = children[index_max_species]
+            children_to_remove = [i for i in children if i != child_max_species]
+            for child_to_remove in children_to_remove:
+                for i in child_to_remove.get_leaves():
+                    i.in_og = "no"
+
+    og_prot_list = []
+    for node in tree.traverse("preorder"):
+        if node.is_leaf():
+            if hasattr(node, "in_og") and node.in_og == "no":
+                pass  # print(node.name)
+            else:
+                og_prot_list.append(node.name)
+
+    return og_prot_list
+
+
 
 
 def collect_subhogs():
@@ -66,7 +110,7 @@ def collect_subhogs():
 
 def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file):
     # todo as input argument/option in nextflow
-    protein_format_qfo_dataset_before2022 = True #False
+
     # in benchamrk dataset the output prot names should be short
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchmark, the middle should be written in the file
@@ -86,7 +130,7 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file):
         database_xml = ET.SubElement(species_xml, "database", attrib={"name": "database ", "version": "2023"})
         genes_xml = ET.SubElement(database_xml, "genes")
         for (gene_idx_integer, query_prot_name) in list_prots:
-            if protein_format_qfo_dataset_before2022:
+            if _config.protein_format_qfo_dataset_before2022:
                 # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ   for qfo benchamrk, the middle should be wirtten in the file
                 query_prot_name_pure = query_prot_name.split("|")[1]
             else:
@@ -116,48 +160,7 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
     if output_fasta_groups is None:
         output_fasta_groups = "OrthologousGroupsFasta"
 
-    logger_hog.info("Start writing OG fasta files")
-    def max_og_tree(tree):
-        for node in tree.traverse("preorder"):
-            # for node in xml_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "attriremoved") and n.attriremoved==True):
-            if not node.is_leaf() and hasattr(node, "Ev") and node.Ev == 'duplication':  # node.name[:3] == "dup"
-                dup_node = node
-                children = dup_node.get_children()
-                list_num_species = []
-                for child in children:
-                    child_name_leaves = child.get_leaves()
-                    species_list = []
-                    for leaf in child_name_leaves:
-                        name = leaf.name
-                        if name[:3] == "no_":
-                            name = leaf.name.split("_")[-1]
-                        if name in species_dic:
-                            species_name = species_dic[name]
-                            species_list.append(species_name)
-                        else:
-                            print("species not in the dic ", name)
-                    species_set = set(species_list)
-                    list_num_species.append(len(species_set))
-                index_max_species = list_num_species.index(max(list_num_species))
-                # if there are few children with identical number of species, the case would be not a polytomi but two children with one species
-                # num_occurence = [1 for i in list_num_species if i == max(list_num_species)]
-                # if len(num_occurence) > 1:
-                #    print("please check this case with the developer the tool. The tree has polytomy.")
-                child_max_species = children[index_max_species]
-                children_to_remove = [i for i in children if i != child_max_species]
-                for child_to_remove in children_to_remove:
-                    for i in child_to_remove.get_leaves():
-                        i.in_og = "no"
-
-        og_prot_list = []
-        for node in tree.traverse("preorder"):
-            if node.is_leaf():
-                if hasattr(node, "in_og") and node.in_og == "no":
-                    pass  # print(node.name)
-                else:
-                    og_prot_list.append(node.name)
-
-        return og_prot_list
+    logger_hog.info("Start writing OG fasta files ")
 
     rhog_all_folder = "./omamer_rhogs/" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
     fasta_format = "fa"  # of the rhogs
@@ -168,12 +171,20 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
 
     OGs = {}
     for hog_id, tree_string in trees.items():
-        tree = Tree(tree_string, format=1)
-        og_prot_list = max_og_tree(tree)
+        try:
+            tree = Tree(tree_string, format=1)
+        except:
+            try:
+                tree = Tree(tree_string, format=1, quoted_node_names=True)
+            except:
+                logger_hog.error("Error loading tree", tree_string)
+                raise
+
+        og_prot_list = max_og_tree(tree, species_dic)
         if len(og_prot_list) >= 2: # a group should have at least 1 member/protein
             OGs[hog_id] = og_prot_list
 
-    print("done")
+    logger_hog.info("done extracting trees")
 
     with open(output_file_og_tsv, 'w') as handle:
         for hog_id, og_prot_list in OGs.items():
@@ -181,11 +192,11 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
             handle.write(line_text)
     handle.close()
 
-    print("We wrote the protein families information in the file " + output_file_og_tsv)
+    logger_hog.info("We wrote the protein families information in the file " + output_file_og_tsv)
 
     os.makedirs(output_fasta_groups)
 
-    print("start writing " + str(len(OGs)) + " OGs as fasta files in folder " + output_fasta_groups)
+    logger_hog.info("start writing %d OGs as fasta files in folder %s.", len(OGs), output_fasta_groups)
     for hog_id, og_prot_list in OGs.items():  # hog_id="HOG_0667494_sub10524"
         rhog_id = "_".join(hog_id.split("_")[:2])
 

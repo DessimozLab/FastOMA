@@ -7,7 +7,6 @@ import os
 from ._utils_subhog import logger_hog
 from . import _config
 
-import numpy as np
 
 def parse_proteomes(folder="./"):  # list_oma_species
     """
@@ -26,15 +25,15 @@ def parse_proteomes(folder="./"):  # list_oma_species
             file_name_split = file.split(".")[:-1]
             species_names.append('.'.join(file_name_split))
             fasta_format_keep = fasta_format # last one is stored either fa or fasta
-    prot_recs_lists = {} # key: species name, value is a dic of query protein Biopython records.
-    # 'MYCGE': [SeqRecord(seq=Seq('MDFDK
+    # todo accept all fasta formats in the input prtoeome folder, fasta, fa, fna, ..
+    prot_recs_lists = {} # key: species name, value is a dic of query protein Biopython records. # 'MYCGE': [SeqRecord(seq=Seq('MDFDK
 
     for species_name in species_names:
         prot_address = folder+"/proteome/" + species_name + "."+fasta_format_keep
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
         prot_recs_lists[species_name]=prots_record
 
-    logger_hog.info("The are "+str(len(species_names))+" species in the proteome folder.")
+    logger_hog.info("There are "+str(len(species_names))+" species in the proteome folder.")
     return species_names, prot_recs_lists, fasta_format_keep
 
 
@@ -89,6 +88,7 @@ def parse_hogmap_omamer(species_names, fasta_format_keep,  folder="./"):
     output is dic of dic for all species:
     """
     hogmaps = {}
+    unmapped = {}
     for species_name in species_names:
         hogmap_address = folder + "/hogmap/" + species_name + "."+fasta_format_keep+".hogmap"
         hogmap_file = open(hogmap_address, 'r')
@@ -105,21 +105,24 @@ def parse_hogmap_omamer(species_names, fasta_format_keep,  folder="./"):
                 subfamily_medianseqlen = line_split[9]
 
                 if hogid == "N/A":
-                    continue
-
-                if species_name in hogmaps:
-                    if prot_id in hogmaps[species_name]:
-                        hogmaps[species_name][prot_id].append((hogid, score, seqlen, subfamily_medianseqlen))
-
+                    if species_name in unmapped:
+                        unmapped[species_name].append(prot_id)
                     else:
-                        hogmaps[species_name][prot_id] = [(hogid, score, seqlen, subfamily_medianseqlen)]
+                        unmapped[species_name] = [prot_id]
                 else:
-                    hogmaps[species_name] = {prot_id: [(hogid, score, seqlen, subfamily_medianseqlen)]}
+                    if species_name in hogmaps:
+                        if prot_id in hogmaps[species_name]:
+                            hogmaps[species_name][prot_id].append((hogid, score, seqlen, subfamily_medianseqlen))
+
+                        else:
+                            hogmaps[species_name][prot_id] = [(hogid, score, seqlen, subfamily_medianseqlen)]
+                    else:
+                        hogmaps[species_name] = {prot_id: [(hogid, score, seqlen, subfamily_medianseqlen)]}
 
     logger_hog.info("There are " + str(len(hogmaps)) + " species in the hogmap folder.")
     logger_hog.info("The first species " + species_names[0] + " contains " + str(len(hogmaps[species_names[0]])) + " proteins.")
 
-    return hogmaps
+    return hogmaps, unmapped
 
 
 def group_prots_roothogs(hogmaps):
@@ -134,7 +137,7 @@ def group_prots_roothogs(hogmaps):
         # prot_recs = prot_recs_all[species_name]
 
         for prot_id, prot_map in prots_map.items():
-            # omamer output is sorted based on normcount. but that's ok
+            # omamer output is sorted based on normcount (not family-p). but that's intended by omamer developers
             # this helps me in other functions like handle_singleton in this
             #  this should be commented
             # if len(prot_map)>1:
@@ -171,7 +174,7 @@ def handle_singleton(rhogs_prots,hogmaps):
         prot_maps = hogmaps[species][prot]
         if len(prot_maps) > 1:
             prot_maps2 = prot_maps
-            # omamer output is sorted based on normcount. but that's ok
+            # omamer output is sorted based on normcount. but that's intended by omamer developers
             # family_p	family_count	family_normcount
             scores = [float(i[1]) for i in prot_maps]  # (hogid,score,seqlen,subfamily_medianseqlen)
             hogids = [i[0] for i in prot_maps]
@@ -237,7 +240,7 @@ def handle_singleton(rhogs_prots,hogmaps):
     return rhogs_prots
 
 
-def roothogs_postprocess(hogmaps, rhogs_prots):
+def filter_big_roothogs(hogmaps, rhogs_prots):
 
 
     prots_list_big = []  # as backup
@@ -395,7 +398,7 @@ def cluster_rhogs(candidates_pair):
 
     dic_where = {}
     for idx, cc in enumerate(allcc):
-        dic_where[cc[0]] = idx  # in the begining, each inner list has only on element, a unique hog
+        dic_where[cc[0]] = idx  # in the beginning, each inner list has only on element, a unique hog
 
     # print(len(all_hog_raw),len(all_hog),len(allcc),allcc[:2])
     logger_hog.debug("There are " + str(len(all_hog)) + " all_hog.")
@@ -464,283 +467,121 @@ def merge_rhogs(hogmaps, rhogs_prots):
     return rhogs_prots
 
 
-# import pyoma.browser.db as db
-# def parse_oma_db(oma_database_address):
-#     """
-#    This is in  new branch
-#     orthoxml_to_newick.py function for loading an oma database in hdf5 format using pyoma.browser.db.
-#     output: oma_db, list_oma_species
-#     """
-#     oma_db = db.Database(oma_database_address)
-#     logger_hog.info("OMA data is parsed and its release name is:" + oma_db.get_release_name())
-#
-#     list_oma_species = [z.uniprot_species_code for z in oma_db.tax.genomes.values()]
-#     logger_hog.info("There are "+str(len(list_oma_species))+" species in the OMA database.")
-#     return oma_db, list_oma_species
-#
-#
-# def parse_proteome():  # list_oma_species
-#     """
-#     orthoxml_to_newick.py function for parsing fasta files of proteins located in /proteome/
-#     using Bio.SeqIO.parse
-#     Each fasta file is for one species.  The file name is the species name.
-#     output: query_species_names: list of species name, query_prot_recs: list of Biopython record of species
-#     """
-#     # project_files = listdir(_config.in_folder + "/proteome/")
-#     project_files = listdir("./proteome/")
-#     query_species_names = []
-#     for file in project_files:
-#         fasta_format = file.split(".")[-1]
-#         if fasta_format == "fa" or fasta_format == "fasta":
-#             file_name_split = file.split(".")[:-1]
-#             query_species_names.append('.'.join(file_name_split))
-#             fasta_format_keep = fasta_format
-#
-#     query_prot_recs = []
-#     for query_species_names_idx, query_species_name in enumerate(query_species_names):
-#         prot_address = "./proteome/" + query_species_name + "."+fasta_format_keep
-#         prots_record = list(SeqIO.parse(prot_address, "fasta"))
-#         query_prot_recs.append(prots_record)
-#
-#     query_species_num = len(query_species_names)
-#     logger_hog.info("The are "+str(query_species_num)+" species in the proteome folder.")
-#     # for development
-#     # for species_i in range(query_species_num):
-#     #    species_name_i = query_species_names[species_i]
-#     #    if species_name_i in list_oma_species:
-#     #        logger_hog.error("The species"+species_name_i+" already exists in the oma database, remove/rename it first.")
-#     #        exit()
-#     # The proteins are parsed using  Bio.SeqIO.parse
-#     # the first part of the header line before space
-#     # >tr|A0A2I3FYY2|A0A2I3FYY2_NOMLE Uncharacterized protein OS=Nomascus leucogenys OX=61853 GN=CLPTM1L PE=3 SV=1
-#     # will be ">tr|A0A2I3FYY2|A0A2I3FYY2_NOMLE"
-#     # [i.id for i in query_prot_recs[0] if len(i.id)!=30 and len(i.id)!=22 ] #'sp|O47892|CYB_NOMLE',
-#     return query_species_names, query_prot_recs
-#
-#
-# def add_species_name_gene_id(query_prot_recs, query_species_names):
-#     """
-#     adding the name of species to each protein record
-#         - based on file name
-#     adding gene id number, integer imposed by xml format
-#     output: updated version of input
-#     """
-#     #  _config.in_folder +
-#     gene_id_pickle_file = "./gene_id_dic_xml.pickle"
-#     max_num_prot = int(1e9)
-#     max_num_prot_per_sp = int(1e6)
-#     gene_id_name = {}
-#     for query_species_idx, query_species_name in enumerate(query_species_names):
-#         query_prot_records = query_prot_recs[query_species_idx]
-#         gene_counter = max_num_prot + query_species_idx * max_num_prot_per_sp
-#         gene_id_name[query_species_name] = []
-#         for query_prot_idx, query_prot_record in enumerate(query_prot_records):
-#             gene_idx_integer = gene_counter + query_prot_idx
-#             query_prot_name = query_prot_record.id
-#             if len(query_prot_name) > 230:
-#                 logger_hog.info("We are truncating the prot name as it may be problamatic for mafft, " + str(query_prot_name))
-#                 query_prot_name = query_prot_name[:230]
-#             query_prot_record.id = query_prot_name + "||"+query_species_name+"||"+str(gene_idx_integer)
-#             gene_id_name[query_species_name].append((gene_idx_integer, query_prot_name))
-#     # this is used to create the first part of xml file.
-#     with open(gene_id_pickle_file, 'wb') as handle:
-#         pickle.dump(gene_id_name, handle, protocol=pickle.HIGHEST_PROTOCOL)
-#
-#     return query_prot_recs
-#
-#
-# def parse_hogmap_omamer(query_species_names):
-#     """
-#     orthoxml_to_newick.py function for parsing output of omamer (hogmap files) located in /hogmap/
-#     Each hogmap file correspond to one fasta file of species, with the same name.
-#     Note that some records of fasta may removed in hogmap, becuase of being so short.
-#     hogmap file example:
-#     qseqid hogid overlap family-score subfamily-score qseqlen subfamily-medianseqlen
-#     A0A140TAT7_CIOIN HOG:B0833785.1c.8b 1 0.99 0.9 490 503
-#     output as list of list for all species:
-#     prots_hogmap_name_allspecies, prots_hogmap_hogid_allspecies,
-#     prots_hogmap_subfscore_allspecies, prots_hogmap_seqlen_allspecies,
-#     prots_hogmap_subfmedseqlen_allspecies
-#     The order of species is the same as query_species_names.
-#     """
-#     prots_hogmap_name_allspecies = []
-#     prots_hogmap_hogid_allspecies = []
-#     prots_hogmap_overlp_allspecies = []
-#     prots_hogmap_fscore_allspecies = []
-#     prots_hogmap_seqlen_allspecies = []
-#     prots_hogmap_subfmedseqlen_allspecies = []
-#     for query_species_name in query_species_names:
-#         omamer_output_address =  "./hogmap/" + query_species_name + ".fa.hogmap"
-#         omamer_output_file = open(omamer_output_address, 'r')
-#         prots_hogmap_name = []
-#         prots_hogmap_hogid = []
-#         prots_hogmap_seqlen = []
-#         prots_hogmap_fscore = []
-#         prots_hogmap_overlp = []
-#         prots_hogmap_subfmedseqlen = []
-#         for line in omamer_output_file:
-#             line_strip = line.strip()
-#             if not line_strip.startswith('!') and not line_strip.startswith('qs'):
-#                 line_split = line_strip.split("\t")
-#                 # header of omamer v2
-#                 # qseqid	hogid	hoglevel	family_p	family_count	5)family_normcount	subfamily_score	subfamily_count	8)qseqlen	9)subfamily_medianseqlen	10)qseq_overlap
-#                 prots_hogmap_name.append(line_split[0])
-#                 if len(line_split[1].split(":"))>1:
-#                     prots_hogmap_hogid.append(line_split[1].split(":")[1]) # HOG:B0012312
-#                 else:
-#                     prots_hogmap_hogid.append(line_split[1])  # N/A
-#                 prots_hogmap_overlp.append(line_split[10]) # a value > 100 is good
-#                 prots_hogmap_fscore.append(line_split[3])
-#                 prots_hogmap_seqlen.append(line_split[8])
-#                 prots_hogmap_subfmedseqlen.append(line_split[9])
-#         prots_hogmap_name_allspecies.append(prots_hogmap_name)
-#         prots_hogmap_hogid_allspecies.append(prots_hogmap_hogid)
-#         prots_hogmap_overlp_allspecies.append(prots_hogmap_overlp)
-#         prots_hogmap_fscore_allspecies.append(prots_hogmap_fscore)
-#         prots_hogmap_seqlen_allspecies.append(prots_hogmap_seqlen)
-#         prots_hogmap_subfmedseqlen_allspecies.append(prots_hogmap_subfmedseqlen)
-#
-#     logger_hog.info("There are "+str(len(prots_hogmap_name_allspecies))+" species in the hogmap folder.")
-#     logger_hog.info("The first species "+query_species_names[0]+" contains "+str(len(prots_hogmap_hogid_allspecies[0]))+" proteins.")
-#     logger_hog.info("The first protein of first species is "+prots_hogmap_name_allspecies[0][0])
-#     hogmap_allspecies = (prots_hogmap_name_allspecies, prots_hogmap_hogid_allspecies, prots_hogmap_overlp_allspecies,
-#                          prots_hogmap_fscore_allspecies, prots_hogmap_seqlen_allspecies, prots_hogmap_subfmedseqlen_allspecies)
-#     return hogmap_allspecies
-#
-#
-# def filter_prot_mapped(query_species_names, query_prot_recs, query_prot_names_species_mapped):
-#     """
-#     orthoxml_to_newick.py function for filtering biopython records in query_prot_recs based on hogmaps
-#     The reason is that some very short records of fasta are removed in hogmap.
-#     So, we may loose track of order comparing hogmap and fasta file.
-#     The goal here is to remove those from seq record (of the fasta file).
-#     output: query_prot_recs_filt
-#     """
-#     logger_hog.info("Filtering proteins started.")
-#     query_prot_recs_filt = []
-#     logger_hog.error("warning: we are reporting protes whose names are truncated. Becuase it is not in hogmap.")
-#     for species_idx, query_species_name in enumerate(query_species_names):  # from fasta file
-#         query_prot_recs_i = query_prot_recs[species_idx]
-#         # we added the species name and the as the fasta record using || but this is not done in the hog map
-#         # record.id = 'tr|A0A024FLK4|A0A024FLK4_ORYSJ' || ORYSJ || 1000000
-#         query_prot_names_records = [record.id.split("||")[0] for record in query_prot_recs_i]
-#         # from hogmap file without proteins that are not mapped on any hogs
-#         query_prot_names_species_i = query_prot_names_species_mapped[species_idx]
-#         if len(query_prot_names_species_i) != len(query_prot_recs_i):
-#             query_prot_records_filterd_sp = []
-#             for query_prot_name in query_prot_names_species_i:
-#                 if query_prot_name in query_prot_names_records:
-#                     prot_record_idx = query_prot_names_records.index(query_prot_name)
-#                     prot_record = query_prot_recs_i[prot_record_idx]
-#                     query_prot_records_filterd_sp.append(prot_record)
-#                 else:
-#                     logger_hog.error("Error 1349 " + query_species_name + " " + query_prot_name+". This shouldn't happen many times.")
-#             logger_hog.info("For the species "+query_species_name+", some proteins were ignored by omamer, probably cause prot length .")
-#             logger_hog.info("Before filtering: in hogmap "+str(len(query_prot_names_species_i))+", in proteome "+str(len(query_prot_recs_i)))
-#             logger_hog.info("After filtering: in hogmap "+str(len(query_prot_names_species_i))+" in proteome "+str(len(query_prot_records_filterd_sp)))
-#         else:
-#             query_prot_records_filterd_sp = query_prot_recs_i
-#         query_prot_recs_filt.append(query_prot_records_filterd_sp)
-#     logger_hog.info("For the rest of species, all proteins were mapped using OMAmer.")
-#     return query_prot_recs_filt
-#
-#
-# def group_prots_roothogs(prots_hogmap_hogid_allspecies, query_species_names, query_prot_recs_filt):
-#     """
-#     orthoxml_to_newick.py function for finding those proteins that are mapped to the same rootHOG.
-#     Then, we write each rootHOG as orthoxml_to_newick.py seprate fasta file in the address_rhogs_folder folder
-#     output: rhogid_list, rhogids_prot_records_query
-#     """
-#     # extract rootHOG ID  "B0833755.5c.10g.24e.16c.18b" ->"B0833755"
-#     prots_hogmap_rhogid_allspecies = []
-#     for prots_hogmap_hogid in prots_hogmap_hogid_allspecies:
-#         prots_hogmap_rhogid = []
-#         for prot_hogmap_hogid in prots_hogmap_hogid:
-#             prot_hogmap_rhogid = prot_hogmap_hogid.split(".")[0]
-#             prots_hogmap_rhogid.append(prot_hogmap_rhogid)
-#         prots_hogmap_rhogid_allspecies.append(prots_hogmap_rhogid)
-#     # gathering name of prots from all species,  group them based on rHOG that they mapped on
-#     rhogid_prot_idx_dic = {}
-#     for species_idx in range(len(query_species_names)):
-#         prots_hogmap_rhogid = prots_hogmap_rhogid_allspecies[species_idx]
-#         for prots_hogmap_idx, prot_hogmap_rhogid in enumerate(prots_hogmap_rhogid):
-#             if prot_hogmap_rhogid in rhogid_prot_idx_dic:
-#                 rhogid_prot_idx_dic[prot_hogmap_rhogid].append((species_idx, prots_hogmap_idx))
-#             else:
-#                 rhogid_prot_idx_dic[prot_hogmap_rhogid] = [(species_idx, prots_hogmap_idx)]
-#     # extracting prot records for each rootHOG
-#     rhogids_prot_records_query = []
-#     rhogids_list = []
-#     for rhogid in rhogid_prot_idx_dic.keys():
-#         rhogid_prot_records = []
-#         species_idx_rhogid = []
-#         if rhogid != "N/A" and len(rhogid) >= 1:  # ignore un-mapped prots
-#             rhogids_list.append(rhogid)
-#             rhogid_prot_idx = rhogid_prot_idx_dic[rhogid]
-#             for (species_idx, prots_hogmap_idx) in rhogid_prot_idx:
-#                 prot_record = query_prot_recs_filt[species_idx][prots_hogmap_idx]
-#                 """
-#                 Keep prot seq in hog class. We can write species idx and prot idx to  improve speed of code for omamer tresholidng
-#                 """
-#                 rhogid_prot_records.append(prot_record)
-#                 species_idx_rhogid.append(species_idx)
-#             rhogids_prot_records_query.append(rhogid_prot_records)
-#     logger_hog.info("There are " + str(len(rhogids_list)) + " rhogs, no matter their size.")
-#     return rhogids_list, rhogids_prot_records_query
-#
-#
-# def filter_rhog(rhogids_list, rhogids_prot_records_query, prots_hogmap_fscore_allspecies, query_species_names,  prots_hogmap_name_allspecies):
-#     """
-#     Some of the rhogs are very big. We filter those rhogs where many proteins several tousands are mapped on.
-#     The treshold is set in the _config.py file.
-#     """
-#     logger_hog.info("Filtering rhogs with fscore treshold "+str(_config.omamer_fscore_treshold_big_rhog)+"for rhogs size > "+str(_config.omamer_treshold_big_rhog_szie) )
-#
-#     rhogids_prot_records_query_filt2 = []
-#     rhogids_list_filt = []
-#     for rhogid_idx, rhogid in enumerate(rhogids_list):
-#         rhogid_prot_record_query = rhogids_prot_records_query[rhogid_idx]
-#         if len(rhogid_prot_record_query) < _config.omamer_treshold_big_rhog_szie:
-#             rhogid_prot_record_query_filt2 = rhogid_prot_record_query  # without change for small rhogs
-#         else:
-#             rhogid_prot_record_query_filt = []
-#             for i in range(len(rhogid_prot_record_query)):
-#                 prot_bio_seq = rhogid_prot_record_query[i]
-#                 prot_name_trunc, species_name, prot_idx_xml = prot_bio_seq.id.split("||")
-#                 prot_name = prot_bio_seq.name    # .id is the truncated one but .name is full
-#                 specis_idx = query_species_names.index(species_name)
-#                 prot_list = prots_hogmap_name_allspecies[specis_idx]
-#                 prot_idx = prot_list.index(prot_name)
-#                 fsore = float(prots_hogmap_fscore_allspecies[specis_idx][prot_idx])
-#                 if fsore > _config.omamer_fscore_treshold_big_rhog:
-#                     rhogid_prot_record_query_filt.append(prot_bio_seq)
-#                 else:
-#                     logger_hog.info("we are removing due to filtering rhogs with fscore treshold1 " + str(prot_name))
-#
-#             if len(rhogid_prot_record_query_filt) < _config.omamer_treshold_big_rhog_szie2: # 40 * 1000
-#                     rhogid_prot_record_query_filt2 = rhogid_prot_record_query_filt  # without change for small rhogs
-#             else:
-#                 logger_hog.info("Second round of filtering rhogs with fscore treshold " + str(_config.omamer_fscore_treshold_big_rhog2) + "for rhogs size > " + str(_config.omamer_treshold_big_rhog_szie2))
-#                 rhogid_prot_record_query_filt2 = []
-#                 for i in range(len(rhogid_prot_record_query_filt)):
-#                     prot_bio_seq = rhogid_prot_record_query_filt[i]
-#                     prot_name_trunc, species_name, prot_idx_xml = prot_bio_seq.id.split("||")
-#                     prot_name = prot_bio_seq.name  # .id is the truncated one but .name is full
-#                     specis_idx = query_species_names.index(species_name)
-#                     prot_list = prots_hogmap_name_allspecies[specis_idx]
-#                     prot_idx = prot_list.index(prot_name)
-#                     fsore = float(prots_hogmap_fscore_allspecies[specis_idx][prot_idx])
-#                     if fsore > _config.omamer_fscore_treshold_big_rhog2:
-#                         rhogid_prot_record_query_filt2.append(prot_bio_seq)
-#                     else:
-#                         logger_hog.info("we are removing due to second round of filtering rhogs with fscore treshold2 " + str(prot_name))
-#
-#         if rhogid_prot_record_query_filt2:  # at least one prot in the rhog
-#             rhogids_prot_records_query_filt2.append(rhogid_prot_record_query_filt2)
-#             rhogids_list_filt.append(rhogid)
-#     return rhogids_list_filt, rhogids_prot_records_query_filt2
-#
-#
+def collect_unmapped_singleton(rhogs_prots, unmapped,prot_recs_all,unmapped_singleton_fasta= "singleton_unmapped.fa"):
+    unmapped_recs = []
+    for species_name, prot_names in unmapped.items():
+        for prot_name in prot_names:
+            prot_rec = prot_recs_all[species_name][prot_name]
+            unmapped_recs.append(prot_rec)
+
+    print(len(unmapped_recs))
+    singleton_recs = []
+    for rhogid, sp_prot_list in rhogs_prots.items():
+        if len(sp_prot_list) == 1:
+            species_name = sp_prot_list[0][0]
+            prot_name = sp_prot_list[0][1]
+            prot_rec = prot_recs_all[species_name][prot_name]
+            singleton_recs.append(prot_rec)
+    print(len(singleton_recs))
+
+    singleton_unmapped_recs = unmapped_recs + singleton_recs
+
+    SeqIO.write(singleton_unmapped_recs, unmapped_singleton_fasta , "fasta")
+
+    return len(singleton_unmapped_recs)
+
+
+import subprocess
+
+
+def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
+    num_threads = 10 # todo how to assign more cpu for this step
+    command_clust = _config.mmseqs_executable_path +" easy-linclust --threads " + str(
+        num_threads) + " " + fasta_to_cluster + " singleton_unmapped tmp_linclust"
+
+    logger_hog.debug("linclust rooting started" + command_clust)
+    process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+
+    # if verbose:
+    #    print("output:\n", output)
+    #    print("error:\n", error)
+
+    # if "Error analyzing file" in str(output) or error:
+    #    try:
+
+    return "done"
+
+
+def write_clusters(address_rhogs_folder, min_rhog_size):
+    cluster_output_address = "singleton_unmapped_all_seqs.fasta"
+    cluster_file = open(cluster_output_address, 'r')
+    cluster_dic = {}
+    previous_line_start = " "
+    # parsing memseqs fasta-like format https://github.com/soedinglab/MMseqs2/wiki#cluster-fasta-like-format
+    # >A0A0R4IFW6
+    # >tr|A0A0R4IFW6|A0A0R4IFW6_DANRE||DANRE||1000001584 tr|A0A0R
+    # MSRKTTSKRHYKPSSEIDDAALARKREYW
+    clusters = []
+    cluster = []
+    line_strip = " "
+    # line_number =1
+    for line in cluster_file:
+        line_strip = line.strip()
+        # print(line_number,previous_line_start,line_strip[0],cluster )# "_",previous_line_start,line_strip[0])
+        if previous_line_start == " ":
+            clusters = []
+            cluster = []
+        elif line_strip[0] == ">" and previous_line_start == ">":  # new cluster started at previous line
+            if len(cluster) >= 5:  # more than one records [ID1, seq1,ID2, seq2, newcluster_id]
+                clusters.append(cluster[:-1])  # last item is the id of new cluster
+            cluster = [line_strip]
+        elif line_strip[0] == ">" and previous_line_start != ">":
+            cluster.append(line_strip)
+        elif line_strip[0] != ">":
+            cluster.append(line_strip)
+
+        previous_line_start = line_strip[0]
+        # line_number+=1
+
+    # for last cluster
+    if len(cluster) >= 4:  # more than one records  [ID1, seq1,ID2, seq2]
+        clusters.append(cluster)
+
+    logger_hog.debug("Number of linclust clusters raw is " + str(len(clusters)))
+    # the record id is parsed by mmseqs very ad hoc. so better use the fasta-like file
+    # cluster_output_address = "singleton_unmapped_cluster.tsv"
+    # cluster_file = open(cluster_output_address, 'r')
+    # cluster_dic = {}
+    # for line in cluster_file:
+    #     line_strip = line.strip()
+    #     rep, prot= line_strip.split()
+    #     if rep in cluster_dic:
+    #         cluster_dic[rep].append(prot) # the frist line includ (rep,rep)
+    #     else:
+    #         cluster_dic[rep]=[prot]
+    # cluster_list = []
+    # for rep, prot_list in cluster_dic.items():
+    #     if len(prot_list)>1:
+    #         cluster_list.append(prot_list)
+
+
+    cluster_iter= 1000*10
+    for cluster in clusters:
+        if len(cluster) >= 2 * min_rhog_size:
+            species_names= []     # it seems that genes from same species tend to cluster together, discard such clusters
+            for pr_idi in  range(int(len(cluster)/2)):
+                species_name = cluster[pr_idi*2].split(" ")[0].split("||")[1]
+                species_names.append(species_name)
+            if len(set(species_names))>1:
+                file_idx = open(address_rhogs_folder + "/HOG_clust" + str(cluster_iter) + ".fa", "w")
+                for line in cluster:
+                    file_idx.write(line + "\n")
+                file_idx.close()
+                cluster_iter+=1
+
+    return cluster_iter-1
+
 
 
 def parse_isoform_file(species_names, folder="."):
@@ -764,58 +605,6 @@ def parse_isoform_file(species_names, folder="."):
         isoform_by_gene_all[species_name] = isoform_by_gene
     return isoform_by_gene_all
 
-
-def write_rhog_old(rhogids_list, rhogids_prot_records_query, address_rhogs_folder, min_rhog_size=1, max_rhog_size=1e100,merge_split=0):
-
-    logger_hog.info("Writing Sequences of roothogs are fasta file in " + address_rhogs_folder)
-    if not os.path.exists(address_rhogs_folder):
-        os.mkdir(address_rhogs_folder)
-
-
-    ## under development
-    #merge_split=0
-    rhogid_list = []
-    rhogs_merged = []
-    if merge_split ==1:
-        import pickle
-        try:
-            with open('/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/allcc_cleaned.pickle', 'rb') as handle:
-                allcc_cleaned2 = pickle.load(handle)
-        except:
-            print("no merge split roothog info.")
-
-        for cc in allcc_cleaned2:
-            rhogs_merged += cc
-
-        for cc in allcc_cleaned2:
-            rhogid_prot_rec_query_merged =[ ]
-            for rhogid in cc:
-                if rhogid in rhogids_list:
-                    rhogid_idx = rhogids_list.index(rhogid)
-                    rhogids_prot_record_query = rhogids_prot_records_query[rhogid_idx]
-                    rhogid_prot_rec_query_merged += rhogids_prot_record_query
-                else:
-                    print("not in the list",rhogid)
-            if min_rhog_size <= len(rhogid_prot_rec_query_merged) <= max_rhog_size:
-                SeqIO.write(rhogid_prot_rec_query_merged, address_rhogs_folder + "/HOG_" + rhogid + ".fa", "fasta") # name of lastrhogid
-                rhogid_list.append(rhogid)
-
-    for rhogid_idx, rhogid in enumerate(rhogids_list):
-        if rhogid not in rhogs_merged:
-            rhogid_prot_rec_query = rhogids_prot_records_query[rhogid_idx]
-
-            if min_rhog_size <= len(rhogid_prot_rec_query) <= max_rhog_size:
-                # todo add the release id   to file names  rhogids_list[:2] > ['HOG:C0884658', 'HOG:C0709155']
-                SeqIO.write(rhogid_prot_rec_query, address_rhogs_folder + "/HOG_" + rhogid + ".fa", "fasta")
-                rhogid_list.append(rhogid)
-            else:
-                for prot1 in rhogid_prot_rec_query:
-                    logger_hog.debug("we are removing due to omamer signleton hog |*|" + str(prot1.id))
-
-
-    logger_hog.info("Writing Sequences of roothogs finished." )
-
-    return rhogid_list
 
 
 def find_nonbest_isoform(species_names, isoform_by_gene_all, hogmaps):
@@ -864,15 +653,21 @@ def find_nonbest_isoform(species_names, isoform_by_gene_all, hogmaps):
 
 def write_isoform_selected(isoform_by_gene_all, isoform_selected, prot_recs_lists):
     """
-    write isofort
+    write isoforms
 
     """
+    selected_isoforms_folder= "selected_isoforms/"
+    if not os.path.exists(selected_isoforms_folder):
+        os.mkdir(selected_isoforms_folder)
+
+
+
 
     for species, isoform_selected_sp in isoform_selected.items():
         isoform_by_gene = isoform_by_gene_all[species]
         assert len(isoform_by_gene) == len(isoform_selected_sp)
 
-        file_handle = open(species + "_selected_isoforms.tsv", "w")
+        file_handle = open(selected_isoforms_folder+species + "_selected_isoforms.tsv", "w")
         for gene_idx, isof_list in enumerate(isoform_by_gene):
             isoform_selected_sp_i = isoform_selected_sp[gene_idx]
             file_handle.write(";".join(isof_list) + "\t")
@@ -907,134 +702,3 @@ def handle_splice(hogmaps,isoform_not_selected):
                 hogmaps_selected_isof[species][prot]=hogmap[prot]
 
     return hogmaps_selected_isof
-
-#import os.path
-#
-#
-# def parse_isoform_file(query_species_names):
-#     isoform_by_gene_all = []
-#     for species_idx, query_species_name in enumerate(query_species_names):  # from fasta file
-#
-#         file_splice_name = "./splice/" + query_species_name + ".splice"
-#
-#         if os.path.isfile(file_splice_name):
-#             # from OMArk
-#             isoform_by_gene = list()
-#             with open(file_splice_name) as handle:
-#                 for line in handle.readlines():
-#                     line = line.strip('\n')
-#                     splice = line.split(";")
-#                     isoform_by_gene.append(splice)
-#         else:
-#             isoform_by_gene = []
-#
-#         isoform_by_gene_all.append(isoform_by_gene)
-#     return isoform_by_gene_all
-#
-#
-# def find_nonbest_isoform(hogmap_allspecies_elements, isoform_by_gene_all):
-#     (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_overlp_allspecies,
-#      prots_hogmap_fscore_allspecies, prots_hogmap_seqlen_allspecies,
-#      prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
-#
-#     not_selected_isofroms_all = []
-#     for species_idx in range(len(query_prot_names_species_mapped)):
-#
-#         not_selected_isofroms = []  # when there is no splice file for a species
-#         query_prot_names = query_prot_names_species_mapped[species_idx]
-#         prots_hogmap_hogid = prots_hogmap_hogid_allspecies[species_idx]
-#         prots_hogmap_fscore = prots_hogmap_fscore_allspecies[species_idx]
-#         prots_hogmap_seqlen = prots_hogmap_seqlen_allspecies[species_idx]
-#         prots_hogmap_subfmedseqlen = prots_hogmap_subfmedseqlen_allspecies[species_idx]
-#         not_selected_isofroms_list = []
-#         isoform_list_sp = isoform_by_gene_all[species_idx]
-#         for isoform_list in isoform_list_sp:
-#             score_best = 0
-#             protname_best = isoform_list[0]  # to keep the order if all of the isoforms' omamer score are 'na'
-#             for isoform_name in isoform_list:
-#                 if isoform_name in query_prot_names:
-#                     isof_idx = query_prot_names.index(isoform_name)
-#                     family_score = prots_hogmap_fscore[isof_idx]
-#                     seq_len = prots_hogmap_seqlen[isof_idx]
-#                     subf_med_len = prots_hogmap_subfmedseqlen[isof_idx]
-#                     if family_score != "N/A":
-#                         score = float(family_score) * min(int(seq_len), int(subf_med_len))
-#                         # print(isoform_name,score, family_score,seq_len,subf_med_len)
-#                         if score > score_best:  # when there is a tie, the last one is selected!
-#                             protname_best = isoform_name
-#                             score_best = score
-#             # selected_isofroms.append([protname_best)
-#             # print("*", protname_best, score_best)
-#             not_selected_isofroms_list += [i for i in isoform_list if i != protname_best]
-#         not_selected_isofroms_all.append(not_selected_isofroms_list)
-#
-#     return not_selected_isofroms_all # those isform that are not selected as best (which will be removed )
-
-
-# def select_best_isoform(hogmap_allspecies_elements, isoform_by_gene_all):
-#     (query_prot_names_species_mapped, prots_hogmap_hogid_allspecies, prots_hogmap_overlp_allspecies,
-#      prots_hogmap_fscore_allspecies, prots_hogmap_seqlen_allspecies,
-#      prots_hogmap_subfmedseqlen_allspecies) = hogmap_allspecies_elements
-#
-#     selected_isofroms_all = []
-#     for species_idx in range(len(query_prot_names_species_mapped)):
-#
-#         selected_isofroms = []
-#         query_prot_names = query_prot_names_species_mapped[species_idx]
-#         # prots_hogmap_hogid = prots_hogmap_hogid_allspecies[species_idx]
-#         prots_hogmap_fscore = prots_hogmap_fscore_allspecies[species_idx]
-#         prots_hogmap_seqlen = prots_hogmap_seqlen_allspecies[species_idx]
-#         prots_hogmap_subfmedseqlen = prots_hogmap_subfmedseqlen_allspecies[species_idx]
-#
-#         isoform_list_sp = isoform_by_gene_all[species_idx]
-#         for isoform_list in isoform_list_sp:
-#             score_best = 0
-#             protname_best = isoform_list[0]  # to keep the order if all of the isoforms' omamer score are 'na'
-#             for isoform_name in isoform_list:
-#                 if isoform_name in query_prot_names:
-#                     isof_idx = query_prot_names.index(isoform_name)
-#                     family_score = prots_hogmap_fscore[isof_idx]
-#                     seq_len = prots_hogmap_seqlen[isof_idx]
-#                     subf_med_len = prots_hogmap_subfmedseqlen[isof_idx]
-#                     if family_score != "na":
-#                         score = float(family_score) * min(int(seq_len), int(subf_med_len))
-#                         # print(isoform_name,score, family_score,seq_len,subf_med_len)
-#                         if score > score_best:  # when there is a tie, the last one is selected!
-#                             protname_best = isoform_name
-#                             score_best = score
-#             selected_isofroms.append(protname_best)
-#             # print("*", protname_best, score_best)
-#
-#         selected_isofroms_all.append(selected_isofroms)
-#
-#     return selected_isofroms_all
-#
-
-#
-# def handle_splice(prots_hogmap_hogid_allspecies, query_prot_recs_filt, not_selected_isofroms_all,
-#                   query_prot_names_species_mapped):
-#
-#     query_prot_recs_filt_ = []
-#     prots_hogmap_hogid_allspecies_ = []
-#     for species_idx, query_prot_rec_filt in enumerate(query_prot_recs_filt):
-#         not_selected_isofroms = not_selected_isofroms_all[species_idx]
-#         query_prot_recs_sp = []
-#         prots_hogmap_hogids_ = []
-#         for query_prot in query_prot_rec_filt:
-#             if query_prot.id not in not_selected_isofroms:
-#                 query_prot_recs_sp.append(query_prot)
-#         query_prot_recs_filt_.append(query_prot_recs_sp)
-#
-#         prots_hogmap_hogids = prots_hogmap_hogid_allspecies[species_idx]
-#         query_prot_names = query_prot_names_species_mapped[species_idx]
-#
-#         for prot_idx, prots_hogmap_hogid in enumerate(prots_hogmap_hogids):
-#             query_prot_name = query_prot_names[prot_idx]
-#             if query_prot_name not in not_selected_isofroms:
-#                 prots_hogmap_hogids_.append(prots_hogmap_hogid)
-#
-#         prots_hogmap_hogid_allspecies_.append(prots_hogmap_hogids_)
-#
-#     return prots_hogmap_hogid_allspecies_, query_prot_recs_filt_
-
-

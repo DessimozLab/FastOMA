@@ -8,10 +8,34 @@ params.proteomes = params.proteome_folder + "/*"
 params.hogmap_in = params.input_folder + "/hogmap_in"
 
 params.hogmap_folder = params.output_folder + "/hogmap"
-params.splice_folder = params.output_folder + "/splice"
+params.splice_folder = params.input_folder + "/splice"
 params.species_tree = params.input_folder + "/species_tree.nwk"
-params.pickles_temp = params.output_folder + "/pickles_temp"
+params.species_tree_checked = params.output_folder + "/species_tree_checked.nwk"
+
+params.temp_pickles = params.output_folder + "/temp_pickles"
 params.genetrees_folder = params.output_folder + "/genetrees"
+
+params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
+
+
+process check_input{
+
+
+    publishDir params.output_folder, mode: 'copy'
+    input:
+        path proteome_folder
+        path hogmap_folder
+        path species_tree
+        path omamerdb
+        path splice_folder
+    output:
+        path "species_tree_checked.nwk"
+        val true
+    script:
+        """
+        check-fastoma-input
+        """
+}
 
 
 process omamer_run{
@@ -37,6 +61,11 @@ process omamer_run{
 
 
 process infer_roothogs{
+  publishDir = [
+    path: params.temp_output,
+    mode: 'copy', // pattern: "temp_output", saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
+    ]
+
   input:
     val ready_omamer_run
     path hogmap_folder
@@ -45,6 +74,7 @@ process infer_roothogs{
   output:
     path "omamer_rhogs/*"
     path "gene_id_dic_xml.pickle"
+    path "selected_isoforms" , optional: true
   script:
     """
        infer-roothogs  --logger-level DEBUG
@@ -67,7 +97,7 @@ process batch_roothogs{
 process hog_big{
   cpus  2
   time {20.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
-    input:
+  input:
     each rhogsbig
     path species_tree
   output:
@@ -136,11 +166,11 @@ workflow {
     genetrees_folder = Channel.fromPath(params.genetrees_folder)
     hogmap_in = Channel.fromPath(params.hogmap_in, type:'dir')
 
-    pickles_temp =  Channel.fromPath(params.pickles_temp)
     omamerdb = Channel.fromPath(params.omamer_db)
     proteomes_omamerdb = proteomes.combine(omamerdb)
     proteomes_omamerdb_inputhog = proteomes_omamerdb.combine(hogmap_in)
 
+    (species_tree_checked_, ready_input_check) = check_input(proteome_folder,hogmap_in,species_tree,omamerdb,splice_folder)
     (hogmap, ready_omamer_run) = omamer_run(proteomes_omamerdb_inputhog)
     ready_omamer_run_c = ready_omamer_run.collect()
 

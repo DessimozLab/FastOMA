@@ -37,7 +37,7 @@ def read_msa(input_msa):
         if len(ii):
             coords.append((np.min(ii), np.max(ii)))
         else:
-            logger_hog.warning("issue 1321230 all of the seq is gap "+str(rec))
+            logger_hog.warning("issue 1321230 all of the seq is gap.  "+str(rec))
             coords.append((0, 0))
 
     ids = np.array(ids)
@@ -189,24 +189,26 @@ def find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic):
                         for prot_name in list_leaves:
                             if prot_name.split("||")[1] == species_dubious_sd:
                                 prot_dubious_list.append(prot_name)
-                    try:
-                        subhogs_list = [i.split("|_|")[1] for i in prot_dubious_list]  # subhog id at child level
+                    #try:
+                    subhogs_list = [i.split("|_|")[1][:-1] for i in prot_dubious_list]  # subhog id at child level
+                    #  ["'tr|Q4V8S5|Q4V8S5_DANRE||DANRE||1000020519|_|sub12962'"]
+                    # the last char is ', watch out!
 
-                        # todo check !, is it safe or not!
-                        # if len(set(subhogs_list)) > 1:
-                        #     # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
-                        #     child_size_min_indx = child_size.index(min(child_size))
-                        #     prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
-                        #
-                        # else:
-                        #     logger_hog.debug( "This species (protein from the same subhog) is safe to keep "+ str(node_name)+" "+str(species_dubious_sd))
-                        #     #all of them are from the same subhog, so it doesn't matter, a duplication event doesn't affect when all are from the same subhog at children level
+                    # todo check ! is it safe or not!
+                    # if len(set(subhogs_list)) > 1:
+                    #     # we are removing all sequences of this species on the the side of internal node (gene tree), with least leaves
+                    #     child_size_min_indx = child_size.index(min(child_size))
+                    #     prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
+                    #
+                    # else:
+                    #     logger_hog.debug( "This species (protein from the same subhog) is safe to keep "+ str(node_name)+" "+str(species_dubious_sd))
+                    #     #all of them are from the same subhog, so it doesn't matter, a duplication event doesn't affect when all are from the same subhog at children level
 
-                        child_size_min_indx = child_size.index(min(child_size))
-                        prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx])
+                    child_size_min_indx = child_size.index(min(child_size))
+                    prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx]) # ["'sp|Q9PRL8|ACBP_CHICK||CHICK||1020017457|_|sub10101'"]
 
-                    except:
-                        logger_hog.warning("issue 2495869: prot_dubious_list doesnt include the hog id . so we'll  keep it" + str(gene_tree) + " " + str(prot_dubious_list))
+                    # except:
+                    #    logger_hog.warning("issue 2495869: prot_dubious_list doesnt include the hog id . so we'll  keep it" + str(prot_dubious_list)+ " " +str(gene_tree.write(format=1, format_root_node=True) ) )
 
 
     return prot_dubious_sd_remove_list
@@ -221,7 +223,7 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
     itr_so = 0
     while all_species_dubious_sd_dic_updated:
         logger_hog.debug("These are found with low SO score all_species_dubious_sd_dic " + str(all_species_dubious_sd_dic_updated)+" which are now being handled itr"+str(itr_so)+" .")
-        prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic)
+        prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic_updated)
         if prot_dubious_sd_remove_list:
             rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list)
             gene_tree.prune(rest_leaves, preserve_branch_length=True)
@@ -247,40 +249,6 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
         itr_so += 1
 
     return (gene_tree, hogs_children_level_list)
-
-
-
-# def handle_fragment_sd_old(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list):
-#     #  prot_dubious_sd_list, node_species_tree, genetree_msa_file_addr, hogs_children_level_list
-#
-#     logger_hog.debug("These are  found after removing with msa , all_species_dubious_sd_dic " + str(all_species_dubious_sd_dic)+" which are now being handled.")
-#     prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic)
-#
-#     if prot_dubious_sd_remove_list:
-#         rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list)
-#         gene_tree.prune(rest_leaves, preserve_branch_length=True)
-#         (gene_tree, all_species_dubious_sd_dic2) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr + "_dubious_sd")
-#         if all_species_dubious_sd_dic2:
-#             logger_hog.debug("these are found after removing with sd, all_species_dubious_sd_dic2 " + str(all_species_dubious_sd_dic2))
-#             prot_dubious_sd_remove_list2 = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic2)
-#             if prot_dubious_sd_remove_list2:
-#                 rest_leaves2 = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list2)
-#                 gene_tree.prune(rest_leaves2, preserve_branch_length=True)
-#                 (gene_tree, all_species_dubious_sd_dic3) = _utils_subhog.genetree_sd(node_species_tree, gene_tree,genetree_msa_file_addr + "_dubious_sd_2")
-#                 if all_species_dubious_sd_dic3:
-#                     # todo make it as while to do it for all possible iteration, but there won't many cases for this at least in QFO dataset
-#                     logger_hog.warning( "issue 13954,these are found after removing with sd two times , all_species_dubious_sd_dic3 " + str(all_species_dubious_sd_dic2))
-#
-#         hogs_children_level_list_raw = hogs_children_level_list
-#         logger_hog.debug("** we removed theses sequences "+str(prot_dubious_sd_remove_list))
-#         for prot_dubious_sd_remove in prot_dubious_sd_remove_list:
-#             for hog in hogs_children_level_list_raw:
-#                 if prot_dubious_sd_remove in hog._members:
-#                     result_removing = remove_prot_hog_hierarchy_toleaves(hog, prot_dubious_sd_remove)
-#                     if result_removing == 0:  # the hog is empty
-#                         hogs_children_level_list.remove(hog)
-#
-#     return (gene_tree, hogs_children_level_list)
 
 
 def merge_prots_name_hierarchy_toleaves(hog_host, fragment_name_host, merged_fragment_name):
@@ -402,7 +370,7 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
                 (msa_filt_row_col_new, msa_filt_col, hogs_children_level_list) = _utils_subhog.filter_msa(merged_msa_new, genetree_msa_file_addr+"_merged", hogs_children_level_list)
             if len(msa_filt_row_col_new) > 1 and len(msa_filt_row_col_new[0]) > 3:
                 gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col_new, genetree_msa_file_addr+"_merged_")
-                gene_tree = Tree(gene_tree_raw + ";", format=0)
+                gene_tree = Tree(gene_tree_raw , format=0, quoted_node_names=True) #+ ";"
             else:
                 gene_tree = ""
                 # fragments_remove_list += fragments_list_remove # for now fragments_list_remove include 1 prots
@@ -425,7 +393,6 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
             (gene_tree, all_species_dubious_sd_dic2) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr+"_dubiousMSA.nwk")
 
 
-
         # todo check the following is needed
         # if all_species_dubious_sd_dic2:
         #     # logger_hog.debug("these are  found after removing with msa , all_species_dubious_sd_dic2 "+str(all_species_dubious_sd_dic2))
@@ -433,7 +400,6 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
         # the handle_fragment_sd might have the issue as the gene tree might not contain the subHOG ids
 
         # todo the following was part of this if condition. are they needed
-        #
         # for fragments_set in fragments_set_list:
         #     fragments_list = list(fragments_set)
         #     fragment_host = fragments_list[0]  # host of the new small hog consisting few fragments
