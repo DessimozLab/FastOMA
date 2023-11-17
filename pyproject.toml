@@ -31,7 +31,7 @@ nextflow = [
 
 [project.scripts]
 batch-roothogs = "FastOMA.batch_roothogs:batch_roothogs"
-check-input-fastoma = "FastOMA.check_input_fastoma:check_input_fastoma"
+check-fastoma-input = "FastOMA.check_fastoma_input:check_fastoma_input"
 collect-subhogs = "FastOMA.collect_subhogs:collect_subhogs"
 infer-roothogs = "FastOMA.infer_roothogs:infer_roothogs"
 infer-subhogs = "FastOMA.infer_subhogs:infer_subhogs"

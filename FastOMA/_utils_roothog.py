@@ -1,3 +1,5 @@
+import collections
+import csv
 
 from Bio import SeqIO
 import pickle
@@ -6,9 +8,10 @@ import os
 
 from ._utils_subhog import logger_hog
 from . import _config
+HOGMapData = collections.namedtuple("HOGMapData", ("hogid", "score", "seqlen", "subfamily_medianseqlen"))
 
 
-def parse_proteomes(folder="./"):  # list_oma_species
+def parse_proteomes(folder=None):  # list_oma_species
     """
     parsing fasta files of proteins located in /proteome/
     using Bio.SeqIO.parse
@@ -16,26 +19,29 @@ def parse_proteomes(folder="./"):  # list_oma_species
     All proteoems should be with the same extension.
     output: prot_recs_lists: a dic with key as species name and  its value list of Biopython record of species.
     """
+    if folder is None:
+        folder = "./proteome"
 
-    project_files = listdir(folder+"/proteome/")
-    species_names = [] # query/input species name based on the file name
+    fasta_format_keep = ""
+    project_files = listdir(folder)
+    logger_hog.debug("using '%s' as proteome folder, found %d files", folder, len(project_files))
+    species_names = []  # query/input species name based on the file name
     for file in project_files:
-        fasta_format = file.split(".")[-1]
-        if fasta_format == "fa" or fasta_format == "fasta":
-            file_name_split = file.split(".")[:-1]
-            species_names.append('.'.join(file_name_split))
-            fasta_format_keep = fasta_format # last one is stored either fa or fasta
+        species_name, ext = file.rsplit('.', 1)
+        logger_hog.debug("%s: %s | %s", file, species_name, ext)
+        if ext in ("fa", "fasta"):
+            species_names.append(species_name)
+            fasta_format_keep = ext  # last one is stored either fa or fasta
+
     # todo accept all fasta formats in the input prtoeome folder, fasta, fa, fna, ..
     prot_recs_lists = {} # key: species name, value is a dic of query protein Biopython records. # 'MYCGE': [SeqRecord(seq=Seq('MDFDK
-
     for species_name in species_names:
-        prot_address = folder+"/proteome/" + species_name + "."+fasta_format_keep
+        prot_address = os.path.join(folder, species_name + "." + fasta_format_keep)
         prots_record = list(SeqIO.parse(prot_address, "fasta"))
-        prot_recs_lists[species_name]=prots_record
+        prot_recs_lists[species_name] = prots_record
 
-    logger_hog.info("There are "+str(len(species_names))+" species in the proteome folder.")
+    logger_hog.info("There are %d species in the proteome folder.", len(species_names))
     return species_names, prot_recs_lists, fasta_format_keep
-
 
 
 def add_species_name_prot_id(species_names, prot_recs_lists):
@@ -77,7 +83,7 @@ def add_species_name_prot_id(species_names, prot_recs_lists):
     return prot_recs_all
 
 
-def parse_hogmap_omamer(species_names, fasta_format_keep,  folder="./"):
+def parse_hogmap_omamer(species_names, fasta_format_keep,  folder=None):
     """
      function for parsing output of omamer (hogmap files) located in /hogmap/
     Each hogmap file correspond to one fasta file of species, with the same name.
@@ -87,41 +93,29 @@ def parse_hogmap_omamer(species_names, fasta_format_keep,  folder="./"):
     # sp|O66907|ATPA_AQUAE	HOG:C0886513.1b	Eukaryota	696.5519485850672	187	0.37302594463771466	0.2643067275644273	120	504	551	0.8230616302186878
     output is dic of dic for all species:
     """
+    if folder is None:
+        folder = "./hogmap"
+
     hogmaps = {}
-    unmapped = {}
+    unmapped = collections.defaultdict(list)
     for species_name in species_names:
-        hogmap_address = folder + "/hogmap/" + species_name + "."+fasta_format_keep+".hogmap"
-        hogmap_file = open(hogmap_address, 'r')
-
-        for line in hogmap_file:
-            line_strip = line.strip()
-            if not line_strip.startswith('!') and not line_strip.startswith('qs'):
-                # qseqid	hogid	hoglevel	family_p	family_count	family_normcount	subfamily_score	subfamily_count	qseqlen	subfamily_medianseqlen	qseq_overlap
-                line_split = line_strip.split("\t")
-                prot_id = line_split[0]
-                hogid = line_split[1]
-                score = line_split[3]
-                seqlen = line_split[8]
-                subfamily_medianseqlen = line_split[9]
-
-                if hogid == "N/A":
-                    if species_name in unmapped:
-                        unmapped[species_name].append(prot_id)
-                    else:
-                        unmapped[species_name] = [prot_id]
+        hogmap_address = os.path.join(folder, species_name + "." + fasta_format_keep + ".hogmap")
+        cur_species_hogmap = collections.defaultdict(list)
+        with open(hogmap_address, 'rt') as hogmap_file:
+            reader = csv.DictReader((line for line in hogmap_file if not line.startswith('!')),
+                                    dialect="excel-tab")
+            for row in reader:
+                if row['hogid'] == "N/A":
+                    unmapped[species_name].append(row['qseqid'])
                 else:
-                    if species_name in hogmaps:
-                        if prot_id in hogmaps[species_name]:
-                            hogmaps[species_name][prot_id].append((hogid, score, seqlen, subfamily_medianseqlen))
+                    cur_species_hogmap[row['qseqid']].append(
+                        HOGMapData(row['hogid'], row['family_p'], row['qseqlen'], row['subfamily_medianseqlen']))
+        hogmaps[species_name] = cur_species_hogmap
+        logger_hog.info("hogmap %s: %d proteins mapped to %d hogs, %d not mapped",
+                        species_name, len(cur_species_hogmap), sum(len(x) for x in cur_species_hogmap.values()),
+                        len(unmapped[species_name]))
 
-                        else:
-                            hogmaps[species_name][prot_id] = [(hogid, score, seqlen, subfamily_medianseqlen)]
-                    else:
-                        hogmaps[species_name] = {prot_id: [(hogid, score, seqlen, subfamily_medianseqlen)]}
-
-    logger_hog.info("There are " + str(len(hogmaps)) + " species in the hogmap folder.")
-    logger_hog.info("The first species " + species_names[0] + " contains " + str(len(hogmaps[species_names[0]])) + " proteins.")
-
+    logger_hog.info("There are %d species in the hogmap folder.", len(hogmaps))
     return hogmaps, unmapped
 
 
@@ -583,14 +577,13 @@ def write_clusters(address_rhogs_folder, min_rhog_size):
     return cluster_iter-1
 
 
-
-def parse_isoform_file(species_names, folder="."):
+def parse_isoform_file(species_names, folder=None):
+    if folder is None:
+        folder = "./splice"
     isoform_by_gene_all = {}
 
     for species_name in species_names:  # from fasta file
-
-        file_splice_name = folder + "/splice/" + species_name + ".splice"
-
+        file_splice_name = os.path.join(folder,  species_name + ".splice")
         if os.path.isfile(file_splice_name):
             # from OMArk
             isoform_by_gene = []
@@ -601,10 +594,8 @@ def parse_isoform_file(species_names, folder="."):
                     isoform_by_gene.append(splice)
         else:
             isoform_by_gene = []
-
         isoform_by_gene_all[species_name] = isoform_by_gene
     return isoform_by_gene_all
-
 
 
 def find_nonbest_isoform(species_names, isoform_by_gene_all, hogmaps):
