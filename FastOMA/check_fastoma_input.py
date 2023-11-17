@@ -35,21 +35,23 @@ def check_proteome_files():
     if len(set(fa_fasta))>1:
         logger_hog.warning("We expect that all fasta files are with the same format either fa or fasta, we won't include some of them " + str(proteome_files) )
 
-
-    return 1
+    species_names1= [".".join(i.split(".")[:-1]) for i in proteome_files if  i.endswith(".fa") or i.endswith(".fasta")]
+    return species_names1
 
 
 def check_proteome(species_names,prot_recs_lists):
     # ids_set=set()
+    num_prots_all = 0
     for species_name in species_names:
         num_prots = len(prot_recs_lists[species_name])
+        num_prots_all+=num_prots
         # todo , check duplicated Ids  for seq in prot_recs_lists[species_name]:
         #  if seq.id in ids_set: report duplciated   ids_set.add(seq.id),
         if num_prots <= 2:
             logger_hog.error("The input proteome looks empty or too few proteins or Bio.SeqIO couldn't read it,  in_folder/proteome/" + species_name + "."+fasta_format_keep)
     # todo write new protoems with cleaned record ids, keep the mapping, to be used in orthoxml writing
     # use the mapping back for orhtoxml
-
+    logger_hog.error("There are "+str(num_prots_all)+" proteins in total in the input proteome folder. ")
     return 1
 
 
@@ -201,11 +203,9 @@ def check_fastoma_input():
 
     print(_config.species_tree_address)  # nwk format
 
-    result = check_proteome_files()
+    species_names1 = check_proteome_files()
 
 
-    species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes()  # optional input folder
-    check_proteome(species_names, prot_recs_lists)
     try:
         species_tree = Tree(_config.species_tree_address, format=1)
     except:
@@ -213,14 +213,13 @@ def check_fastoma_input():
             species_tree = Tree(_config.species_tree_address)
             # todo add check fro Phyloxml
         except:
-            logger_hog.error("We have problem with parsing species tree "+str(_config.species_tree_address) + " using ete3 Tree. Maybe there are some special chars.")
-
-
+            logger_hog.error("We have problem with parsing species tree "+str(_config.species_tree_address) + " using ete3 Tree. Is it in the in_folder ? Maybe there are some special chars.")
     check_speciestree_internalnode(species_tree)
-    check_speciestree_leaves(species_tree,species_names)
+    check_speciestree_leaves(species_tree,species_names1)
+    add_internal_node_prune(species_tree,species_names1)
 
-    add_internal_node_prune(species_tree,species_names)
-
+    species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes()  # optional input folder
+    check_proteome(species_names, prot_recs_lists)
     hogmap_files = os.path.exists("./hogmap_in/")
     species_hogmaps =[]
     if hogmap_files:
