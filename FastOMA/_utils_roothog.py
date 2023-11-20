@@ -647,12 +647,9 @@ def write_isoform_selected(isoform_by_gene_all, isoform_selected, prot_recs_list
     write isoforms
 
     """
-    selected_isoforms_folder= "selected_isoforms/"
+    selected_isoforms_folder = "selected_isoforms/"
     if not os.path.exists(selected_isoforms_folder):
         os.mkdir(selected_isoforms_folder)
-
-
-
 
     for species, isoform_selected_sp in isoform_selected.items():
         isoform_by_gene = isoform_by_gene_all[species]

@@ -10,7 +10,6 @@ params.species_tree = params.input_folder + "/species_tree.nwk"
 
 
 
-
 // output subfolder definition
 params.genetrees_folder = params.output_folder + "/genetrees"
 params.hogmap_folder = params.output_folder + "/hogmap"
@@ -20,7 +19,6 @@ params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
 
 
 process check_input{
-
     publishDir params.output_folder, mode: 'copy'
     input:
         path proteome_folder
@@ -30,6 +28,7 @@ process check_input{
         path splice_folder
     output:
         path "species_tree_checked.nwk"
+        val "check_completed"
     script:
         """
         check-fastoma-input --proteomes ${proteome_folder} \
@@ -48,11 +47,10 @@ process omamer_run{
   publishDir params.hogmap_folder, mode: 'copy'
 
   input:
-  tuple path(proteome), path(omamer_db), path(precomputed_hogmap_folder)
+  tuple path(proteome), path(omamer_db), path(precomputed_hogmap_folder), val(ready)
 
   output:
   path "*.hogmap"
-  val true
 
   script:
   """
@@ -68,12 +66,12 @@ process omamer_run{
 process infer_roothogs{
   publishDir = [
     path: params.temp_output,
-    mode: 'copy', // pattern: "temp_output", saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
+    enabled: params.debug_enabled,
+    //mode: 'copy', saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
     ]
 
   input:
-    val ready_omamer_run
-    path hogmap_folder
+    path hogmaps, stageAs: "hogmaps/*"
     path proteome_folder
     path splice_folder
   output:
@@ -83,7 +81,7 @@ process infer_roothogs{
   script:
     """
        infer-roothogs  --proteomes ${proteome_folder} \
-                       --hogmap ${hogmap_folder} \
+                       --hogmap hogmaps \
                        --splice ${splice_folder} \
                        --out-rhog-folder "omamer_rhogs/" \
                        -vv
@@ -170,21 +168,16 @@ workflow {
     proteomes = Channel.fromPath(params.proteome_folder + "/*", type:'any', checkIfExists:true)
     species_tree = Channel.fromPath(params.species_tree, type: "file", checkIfExists:true).first()
 
-    hogmap_folder = Channel.fromPath(params.hogmap_folder, type: "dir")
     splice_folder = Channel.fromPath(params.splice_folder, type: "dir")
-
     genetrees_folder = Channel.fromPath(params.genetrees_folder, type: 'dir')
     hogmap_in = Channel.fromPath(params.hogmap_in, type:'dir')
 
     omamerdb = Channel.fromPath(params.omamer_db)
-    proteomes_omamerdb = proteomes.combine(omamerdb)
-    proteomes_omamerdb_inputhog = proteomes_omamerdb.combine(hogmap_in)
-
     (species_tree_checked_, ready_input_check) = check_input(proteome_folder, hogmap_in, species_tree, omamerdb, splice_folder)
-    (hogmap, ready_omamer_run) = omamer_run(proteomes_omamerdb_inputhog)
-    ready_omamer_run_c = ready_omamer_run.collect()
+    omamer_input_channel = proteomes.combine(omamerdb).combine(hogmap_in).combine(ready_input_check)
+    hogmap = omamer_run(omamer_input_channel)
 
-    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
+    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(hogmap.collect(), proteome_folder, splice_folder)
 
     (rhogs_rest_batches, rhogs_big_batches) = batch_roothogs(omamer_rhogs)
 

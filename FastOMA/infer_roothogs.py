@@ -27,7 +27,7 @@ def infer_roothogs():
     species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes(conf.proteomes)  # optional input folder
     prot_recs_all = _utils_roothog.add_species_name_prot_id(species_names, prot_recs_lists)
 
-    hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(species_names, fasta_format_keep)  # optional input folder
+    hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(species_names, fasta_format_keep, folder=conf.hogmap)  # optional input folder
 
     splice_files = conf.splice is not None and os.path.exists(conf.splice)
     if splice_files:
