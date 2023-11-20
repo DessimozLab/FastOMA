@@ -82,7 +82,7 @@ def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
 
 
 
-def batch_roothogs():
+def fastoma_batch_roothogs():
 
     input_rhog = "./temp_omamer_rhogs/" #
     output_folder_big = "./rhogs_big/"

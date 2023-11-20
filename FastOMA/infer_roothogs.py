@@ -24,7 +24,7 @@ hog and HOG are used interchangeably here.
 
 
 
-def infer_roothogs():
+def fastoma_infer_roothogs():
     _config.set_configs()
 
     # print(_config.in_folder)

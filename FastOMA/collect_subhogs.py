@@ -61,7 +61,7 @@ def max_og_tree(tree,species_dic):
 
 
 
-def collect_subhogs():
+def fastoma_collect_subhogs():
 
 
 

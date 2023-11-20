@@ -51,7 +51,7 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     rhog_i_prot_address = rhogs_fa_folder + "/HOG_" + rhogid+ ".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
     logger_hog.debug("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
-    # the file "species_tree_checked.nwk" is created by the check_fastoma_input.py
+    # the file "species_tree_checked.nwk" is created by the check_input.py
     (species_tree) = _utils_subhog.read_species_tree(_config.species_tree_checked)
 
     (species_tree, species_names_rhog, prot_names_rhog) = _utils_subhog.prepare_species_tree(rhog_i, species_tree, rhogid)

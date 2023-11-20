@@ -13,7 +13,7 @@ from ._utils_subhog import logger_hog
 
 """
 cd in_folder
-python check_fastoma_input.py
+python check_input.py
 """
 
 
@@ -195,7 +195,7 @@ def check_splice(isoform_by_gene_all):
 
 
 
-def check_fastoma_input():
+def fastoma_check_input():
     _config.set_configs()
 
     # print(_config.in_folder)

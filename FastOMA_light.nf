@@ -33,7 +33,7 @@ process check_input{
         val true
     script:
         """
-        check-fastoma-input
+        fastoma-check-input
         """
 }
 
@@ -80,7 +80,7 @@ process infer_roothogs{
         val true         // nextflow-io.github.io/patterns/state-dependency/
     script:
         """
-        infer-roothogs  --logger-level DEBUG
+        fastoma-infer-roothogs  --logger-level DEBUG
         """
 }
 
@@ -97,7 +97,7 @@ process batch_roothogs{
         val true
     script:
         """
-        batch-roothogs
+        fastoma-batch-roothogs
         """
 }
 
@@ -115,7 +115,7 @@ process hog_big{
         val true
     script:
         """
-        infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --species-tree ${rhogsbig_tree_ready[1]} --parallel
+        fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --species-tree ${rhogsbig_tree_ready[1]} --parallel
         """
 }
 temp_pickles =2
@@ -135,7 +135,7 @@ process hog_rest{
         val true
     script:
         """
-        infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]}  --species-tree ${rhogsrest_tree_ready[1]}
+        fastoma-infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]}  --species-tree ${rhogsrest_tree_ready[1]}
         """  // --parrallel False
 }
 
@@ -157,7 +157,7 @@ process collect_subhogs{
         path "rootHOGs.tsv"
     script:
         """
-        collect-subhogs
+        fastoma-collect-subhogs
         """
 }
 
