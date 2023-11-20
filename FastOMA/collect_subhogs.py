@@ -63,6 +63,10 @@ def max_og_tree(tree,species_dic):
 
 def collect_subhogs():
 
+
+
+    # todo this function needs >200 GB of memory for >1500 species. needs some optimisation probably
+
     logger_hog.info("started collecting pickle files ")
 
     # todo as input argument/option in nextflow

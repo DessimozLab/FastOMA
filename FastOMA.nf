@@ -20,7 +20,7 @@ params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
 
 process check_input{
     time {5.h}
-    memory {95.GB}
+    memory {200.GB}
     publishDir params.output_folder, mode: 'copy'
     input:
         path proteome_folder
@@ -64,7 +64,7 @@ process omamer_run{
 process infer_roothogs{
     cpus  10      // useful for linclust
     time {15.h}    // including linclust
-    memory {200.GB}
+    memory {350.GB}
     publishDir = [
         path: params.temp_output,
         mode:  'copy', // pattern: "temp_output", saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
@@ -143,7 +143,7 @@ process hog_rest{
 
 process collect_subhogs{
     time {10.h}
-    memory {200.GB} // orthoxml string can be very huge in memory
+    memory {300.GB} // orthoxml string can be very huge in memory
     publishDir params.output_folder, mode: 'copy'
     input:
         val ready_hog_rest

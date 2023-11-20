@@ -65,8 +65,8 @@ def infer_gene_tree(msa, gene_tree_file_addr):
         msa_edited.append(rec)
     if _config.tree_tool == "fasttree":
         wrapper_tree = fasttree.Fasttree(msa_edited, datatype="PROTEIN")
-        wrapper_tree.options.options['-fastest'].active = True # speed up the neighbor joining phase in fasttree & reduce memory usage  (recommended for >50,000 sequences)
-        # todo we don't really need fastest. re-run qfo
+        wrapper_tree.options.options['-fastest'].active = True  # speed up the neighbor joining phase in fasttree & reduce memory usage  (recommended for >50,000 sequences)
+        #  we don't really need fastest for small dataset and making this False didn't make qfo result better
         wrapper_tree.options.options['-quote'].active = True   # .set_value(True)  doesnt work.
 
         #wrapper_tree.options.options['-quote'].active = True
