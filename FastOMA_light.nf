@@ -1,8 +1,8 @@
 
 // NXF_WRAPPER_STAGE_FILE_THRESHOLD='50000'
 
-params.input_folder = "test_data/in_folder"
-params.output_folder = "./out_folder/"
+params.input_folder = "testdata/in_folder"
+params.output_folder = "out_folder/"
 params.proteome_folder = params.input_folder + "/proteome"
 params.hogmap_in = params.input_folder + "/hogmap_in"
 params.splice_folder = params.input_folder + "/splice"
@@ -70,13 +70,13 @@ if (params.help) {
                                                 for development purpose. All dependencies must be 
                                                 installed in the calling environment.
 
-                                 - slurm-singularity
+                                 - slurm_singularity
                                                 Run pipeline using SLURM job scheduler and 
                                                 singularity containers. This profile can also be a 
                                                 template for other HPC clusters that use different 
                                                 schedulers.
 
-                                 - slurm-conda  Run pipeline using SLURM job scheduler and conda
+                                 - slurm_conda  Run pipeline using SLURM job scheduler and conda
                                                 environment.
                                                    
                                 Profiles are defined in nextflow.config and can be extended or
