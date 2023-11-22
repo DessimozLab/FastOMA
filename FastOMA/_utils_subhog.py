@@ -162,12 +162,24 @@ def get_score_all_root(gtree, stree):
                 max_score = score
                 best_tree = []
             children = gtree.children
-            diameter = abs(1 - (max([gtree.get_distance(l) for l in children[0].get_leaves()]) / max(
-                max([gtree.get_distance(l) for l in children[1].get_leaves()]), 1e-20)))
-            best_tree.append((i, diameter))
+
+            fleaf1 = max([gtree.get_distance(l) for l in children[0].get_leaves()])
+            fleaf2 = max([gtree.get_distance(l) for l in children[1].get_leaves()])
+
+            if max(fleaf1, fleaf2) > 0:
+                ratio = min(fleaf1, fleaf2) / max(fleaf1, fleaf2)
+                best_tree.append((i, ratio))
+            else:
+                ratio=1
+                best_tree.append((i, ratio))
+
+            #diameter = abs(1 - (max([gtree.get_distance(l) for l in children[0].get_leaves()]) / max(
+            #    max([gtree.get_distance(l) for l in children[1].get_leaves()]), 1e-20)))
+            #best_tree.append((i, diameter))
+
     best_tree.sort(key=lambda x: x[1])
     gtree.set_outgroup(gtree & default_root)
-    gtree.set_outgroup(gtree & best_tree[0][0])
+    gtree.set_outgroup(gtree & best_tree[0][0]) # is it the min?
 
     return gtree
 
