@@ -1,0 +1,12 @@
+name: fastoma-env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - omamer
+  - mafft
+  - fasttree
+  - pip
+  - pip:
+    - .
