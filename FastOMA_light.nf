@@ -1,7 +1,7 @@
 
 // NXF_WRAPPER_STAGE_FILE_THRESHOLD='50000'
 
-params.input_folder = "./in_folder/"
+params.input_folder = "test_data/in_folder"
 params.output_folder = "./out_folder/"
 params.proteome_folder = params.input_folder + "/proteome"
 params.hogmap_in = params.input_folder + "/hogmap_in"
@@ -15,6 +15,95 @@ params.genetrees_folder = params.output_folder + "/genetrees"
 params.hogmap_folder = params.output_folder + "/hogmap"
 
 params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
+
+
+
+if (params.help) {
+    log.info """
+    ===========================================
+      FastOMA -- PIPELINE
+    ===========================================
+    Usage:
+    Run the pipeline with default parameters:
+    nexflow run FastOMA.nf
+
+    Run with user parameters:
+    nextflow run FastOMA.nf --input_folder {input.dir}  --output_folder {results.dir}
+
+    Mandatory arguments:
+        --input_folder          Input data folder. Defaults to ${params.input_folder}. This folder
+                                must contain the proteomes (in a subfolder named 'proteome') and 
+                                a species tree file. Optionally the folder might contain 
+                                 - a sub-folder 'splice' containing splicing variant mappings
+                                 - a sub-folder 'hogmap_in' containing precomputed OMAmer
+                                   placement results for all proteomes
+                                
+                                All sub-folders and sub-files can also be placed in orther
+                                locations if you provide alternative values for them (see below on 
+                                optional arguments section).
+
+        --output_folder         Path where all the output should be stored. Defaults to
+                                ${params.output_folder}
+
+
+    Profile selection:
+        -profile                FastOMA can be run using several execution profiles. The default
+                                set of available profiles is
+                                 - docker       Run pipeline using docker containers. Docker needs
+                                                to be installed on your system. Containers will be
+                                                fetched automatically from dockerhub. See also 
+                                                additional options '--container_version' and 
+                                                '--container_name'.
+           
+                                 - singlularity Run pipeline using singularity. Singularity needs 
+                                                to be installed on your system. On HPC clusters, 
+                                                it often needs to be loaded as a seperate module.
+                                                Containers will be fetched automatically from 
+                                                dockerhub. See also additional options 
+                                                '--container_version' and '--container_name'.
+
+                                 - conda        Run pipeline in a conda environment. Conda needs 
+                                                to be installed on your system. The environment
+                                                will be created automatically.
+
+                                 - standard     Run pipeline on your local system. Mainly intended
+                                                for development purpose. All dependencies must be 
+                                                installed in the calling environment.
+
+                                 - slurm-singularity
+                                                Run pipeline using SLURM job scheduler and 
+                                                singularity containers. This profile can also be a 
+                                                template for other HPC clusters that use different 
+                                                schedulers.
+
+                                 - slurm-conda  Run pipeline using SLURM job scheduler and conda
+                                                environment.
+                                                   
+                                Profiles are defined in nextflow.config and can be extended or
+                                adjusted according to your needs.
+
+
+    Additional options:
+        --proteome_folder       Overwrite location of proteomes (default ${params.proteome_folder})
+        --species_tree          Overwrite location of species tree file (newick format). 
+                                Defaults to ${params.species_tree}
+        --splice_folder         Overwrite location of splice file folder. The splice files must be 
+                                named <proteome_file>.splice.
+                                Defaults to ${params.splice_folder}
+        --omamer_db             Path or URL to download the OMAmer database from. 
+                                Defaults to ${params.omamer_db}
+        --hogmap_in             Optional path where precomputed omamer mapping files are located.
+                                Defaults to ${params.hogmap_in}
+
+    Flags:
+        --help                  Display this message
+        --debug_enabled         Store addtional information that might be helpful to debug in case 
+                                of a problem with FastOMA. 
+                                
+    """.stripIndent()
+
+    exit 1
+}
 
 
 
