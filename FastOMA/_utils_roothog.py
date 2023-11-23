@@ -506,7 +506,7 @@ def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
             ratioMax = count_shared / max(rhogs_size[hogi], rhogs_size[hogj])
             ratioMin = count_shared / min(rhogs_size[hogi], rhogs_size[hogj])
 
-            if (mean_scores > 50000000 or  ((ratioMax > _config.mergHOG_ratioMax_thresh or ratioMin >  _config.mergHOG_ratioMin_thresh ) and count_shared > _config.mergHOG_shared_thresh ) )\
+            if (mean_scores > _config.mergHOG_mean_thresh or  ((ratioMax > _config.mergHOG_ratioMax_thresh or ratioMin >  _config.mergHOG_ratioMin_thresh ) and count_shared > _config.mergHOG_shared_thresh ) )\
                     and rhogs_size[hogi] < _config.big_rhog_size / 2 and  rhogs_size[hogj] < _config.big_rhog_size / 2:
                 if rhogs_size[hogi] >= rhogs_size[hogj]:
                     candidates_pair.append((hogi, hogj))  # bigger first
@@ -532,48 +532,48 @@ def cluster_rhogs(candidates_pair):
         cluster_rhogs_list.append(list(cl))
 
     return cluster_rhogs_list
-
-def cluster_rhogs_old(candidates_pair): # doesnt work correctly
-    # init
-    all_hog_raw = []
-    for pair in candidates_pair:
-        all_hog_raw.append(pair[0])
-        all_hog_raw.append(pair[1])
-    all_hog = list(set(all_hog_raw))
-
-    allcc = []  # connected compoenets
-    for hog in all_hog:
-        allcc.append([hog])
-
-    dic_where = {}
-    for idx, cc in enumerate(allcc):
-        dic_where[cc[0]] = idx  # in the beginning, each inner list has only on element, a unique hog
-
-    # print(len(all_hog_raw),len(all_hog),len(allcc),allcc[:2])
-    logger_hog.debug("There are " + str(len(all_hog)) + " all_hog.")
-
-    # print(dic_where)
-    for pair in candidates_pair:
-        # print(pair)
-        idx_0 = dic_where[pair[0]]
-        idx_1 = dic_where[pair[1]]
-
-        dic_where[pair[1]] = idx_0
-
-        # print(idx_0)
-        allcc[idx_0] += allcc[idx_1]
-        allcc[idx_1] = []
-
-        # print(dic_where,allcc)
-
-    cluster_rhogs_list = [i for i in allcc if len(i) > 1]
-    # print(cluster_rhogs_list)
-    logger_hog.debug("There are " + str(len(cluster_rhogs_list)) + " cluster_rhogs.")
-
-    # allcc_cleaned_len = [len(i) for i in cluster_rhogs]
-    # len(allcc),len(cluster_rhogs),np.sum(allcc_cleaned_len)
-
-    return cluster_rhogs_list
+#
+# def cluster_rhogs_old(candidates_pair): # doesnt work correctly
+#     # init
+#     all_hog_raw = []
+#     for pair in candidates_pair:
+#         all_hog_raw.append(pair[0])
+#         all_hog_raw.append(pair[1])
+#     all_hog = list(set(all_hog_raw))
+#
+#     allcc = []  # connected compoenets
+#     for hog in all_hog:
+#         allcc.append([hog])
+#
+#     dic_where = {}
+#     for idx, cc in enumerate(allcc):
+#         dic_where[cc[0]] = idx  # in the beginning, each inner list has only on element, a unique hog
+#
+#     # print(len(all_hog_raw),len(all_hog),len(allcc),allcc[:2])
+#     logger_hog.debug("There are " + str(len(all_hog)) + " all_hog.")
+#
+#     # print(dic_where)
+#     for pair in candidates_pair:
+#         # print(pair)
+#         idx_0 = dic_where[pair[0]]
+#         idx_1 = dic_where[pair[1]] # this will be problametic for sequence of pairs
+#
+#         dic_where[pair[1]] = idx_0
+#
+#         # print(idx_0)
+#         allcc[idx_0] += allcc[idx_1]
+#         allcc[idx_1] = []
+#
+#         # print(dic_where,allcc)
+#
+#     cluster_rhogs_list = [i for i in allcc if len(i) > 1]
+#     # print(cluster_rhogs_list)
+#     logger_hog.debug("There are " + str(len(cluster_rhogs_list)) + " cluster_rhogs.")
+#
+#     # allcc_cleaned_len = [len(i) for i in cluster_rhogs]
+#     # len(allcc),len(cluster_rhogs),np.sum(allcc_cleaned_len)
+#
+#     return cluster_rhogs_list
 
 
 def merge_rhogs(hogmaps, rhogs_prots):
