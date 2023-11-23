@@ -327,7 +327,8 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
             rhogid_written_list.append(rhogid)
         else:
             for prot1 in rhog_recs:
-                logger_hog.debug("we are removing due to omamer signleton hog |*|" + str(prot1.id))
+                a=1
+                #logger_hog.debug("we are removing due to omamer signleton hog |*|" + str(prot1.id))
 
     logger_hog.info("Writing Sequences of " + str(len(rhogid_written_list)) + " roothogs finished.")
 
@@ -335,24 +336,32 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
 
 
 def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
-    threshod_f_score_merging = 70
+
     pair_rhogs_count = {}
     for rhog, prt_prot_maps in hogmaps.items():
         for prot, prot_maps in prt_prot_maps.items():
             # [('HOG:D0017631.5a', '1771.7328874713658', '253', '234'), ('HOG:D0863448', '163.60700392437903', '253', '244'),
             rhogids = []
+            scores = []
             for prot_map in prot_maps:
                 hog, score = prot_map[:2]
-                if float(score) > threshod_f_score_merging:
+                if float(score) > _config.threshod_f_score_merging:
                     rhogid = hog.split(".")[0].split(":")[1]
                     rhogids.append(rhogid)
+                    scores.append(float(score))
             for ii in range(len(rhogids)):
                 for jj in range(ii + 1, len(rhogids)):
                     hogi, hogj = rhogids[ii], rhogids[jj]
+                    score_i, score_j = scores[ii], scores[jj]
                     if (hogi, hogj) in pair_rhogs_count:
-                        pair_rhogs_count[(hogi, hogj)] += 1
+                        pair_rhogs_count[(hogi, hogj)][0].append(score_i)  # += 1
+                        pair_rhogs_count[(hogi, hogj)][1].append(score_j)  # += 1
                     else:
-                        pair_rhogs_count[(hogi, hogj)] = 1
+                        pair_rhogs_count[(hogi, hogj)] = [[score_i], [score_j]]
+
+                    #     pair_rhogs_count[(hogi, hogj)] += 1
+                    # else:
+                    #     pair_rhogs_count[(hogi, hogj)] = 1
 
     print(len(pair_rhogs_count))
     logger_hog.debug("There are " + str(len(pair_rhogs_count)) + " pairs of rhogs.")
@@ -363,13 +372,16 @@ def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
 
     candidates_pair = []
     # dic_pair_ratio = {}
-    for (hogi, hogj), count_shared in pair_rhogs_count.items():
+    for (hogi, hogj), score_shared_lists in pair_rhogs_count.items():
+        count_shared = len(score_shared_lists[0])
+        list_lowest =[min(score_shared_lists[0][ik],score_shared_lists[1][ik]) for ik in range(len(score_shared_lists[0]))]
+        mean_scores = sum(score_shared_lists[0]+score_shared_lists[1])/2*len(score_shared_lists[0])
         if hogi in rhogs_size and hogj in rhogs_size:  # during previous functions, we might
             ratioMax = count_shared / max(rhogs_size[hogi], rhogs_size[hogj])
             ratioMin = count_shared / min(rhogs_size[hogi], rhogs_size[hogj])
 
-            if (ratioMax > _config.mergHOG_ratioMax_thresh or ratioMin >  _config.mergHOG_ratioMin_thresh ) and _config.mergHOG_shared_thresh > 20 and\
-                    rhogs_size[hogi] < _config.big_rhog_size / 2 and  rhogs_size[hogj] < _config.big_rhog_size / 2:
+            if (mean_scores > 50000000 or  ((ratioMax > _config.mergHOG_ratioMax_thresh or ratioMin >  _config.mergHOG_ratioMin_thresh ) and count_shared > _config.mergHOG_shared_thresh ) )\
+                    and rhogs_size[hogi] < _config.big_rhog_size / 2 and  rhogs_size[hogj] < _config.big_rhog_size / 2:
                 if rhogs_size[hogi] >= rhogs_size[hogj]:
                     candidates_pair.append((hogi, hogj))  # bigger first
                 else:

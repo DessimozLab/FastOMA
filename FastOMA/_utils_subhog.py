@@ -177,7 +177,7 @@ def get_score_all_root(gtree, stree):
             #    max([gtree.get_distance(l) for l in children[1].get_leaves()]), 1e-20)))
             #best_tree.append((i, diameter))
 
-    best_tree.sort(key=lambda x: x[1])
+    best_tree.sort(key=lambda x: x[1], reverse=True) # we need highest
     gtree.set_outgroup(gtree & default_root)
     gtree.set_outgroup(gtree & best_tree[0][0]) # is it the min?
 
