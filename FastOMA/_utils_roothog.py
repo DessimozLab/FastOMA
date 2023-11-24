@@ -411,7 +411,7 @@ def filter_big_roothogs(hogmaps, rhogs_prots):
         if len(sp_prot_list_filt) < _config.big_rhog_size:
             sp_prot_list_filt2 = sp_prot_list_filt
 
-        else:  # removing proteins that are mapped to rootHOG (= HOGC123 not the levelsHOGC123.1a) from big rootHOG
+        elif  _config.filter_nonchild_rootHOG :  # removing proteins that are mapped to rootHOG (= HOGC123 not the levelsHOGC123.1a) from big rootHOG
             #hogids2 = []
             sp_prot_list_filt2 = []
             for prot_idx, sp_prot in enumerate(sp_prot_list_filt): #[('UP000192223_224129', 'tr|A0A1W4WAU6|A0A1W4WAU6_AGRPL'), ('UP000192223_224129', 'tr|A0A1W4WU99|A0A1W4WU99_AGRPL'),
@@ -421,9 +421,11 @@ def filter_big_roothogs(hogmaps, rhogs_prots):
                 if len(hogid.split(".")) > 1: # if mapped to subHOG (not to the rootHOG)
                     sp_prot_list_filt2.append(sp_prot)
                     #hogids2.append(hogid)
+        else:
+            sp_prot_list_filt2 = sp_prot_list_filt
 
         logger_hog.info("For big rootHOG " + rhogid + ", " + str(
-            len(sp_prot_list_filt2)) + " proteins left after removing non-child subhogs")
+            len(sp_prot_list_filt2)) + " proteins left after removing non-child subhogs if activate: "+str(_config.filter_nonchild_rootHOG))
         if len(sp_prot_list_filt2):
             rhogs_prots[rhogid] = sp_prot_list_filt2
         else:
@@ -507,7 +509,7 @@ def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
             ratioMin = count_shared / min(rhogs_size[hogi], rhogs_size[hogj])
 
             if (mean_scores > _config.mergHOG_mean_thresh or  ((ratioMax > _config.mergHOG_ratioMax_thresh or ratioMin >  _config.mergHOG_ratioMin_thresh ) and count_shared > _config.mergHOG_shared_thresh ) )\
-                    and rhogs_size[hogi] < _config.big_rhog_size / 2 and  rhogs_size[hogj] < _config.big_rhog_size / 2:
+                    and rhogs_size[hogi] < _config.big_rhog_size / 6 and  rhogs_size[hogj] < _config.big_rhog_size / 6:
                 if rhogs_size[hogi] >= rhogs_size[hogj]:
                     candidates_pair.append((hogi, hogj))  # bigger first
                 else:
@@ -598,14 +600,32 @@ def merge_rhogs(hogmaps, rhogs_prots):
         file_out_merge.write("\n")
     file_out_merge.close()
     counter_merged_prots=0
+    newhost= ""
     for cluster in cluster_rhogs_list:
         #prots = [rhogs_prots[hog] for hog in cluster]
         host_hog = cluster[0]
         rhogs_host_size= len(rhogs_prots[host_hog])
         all_prots = []
+        all_prots2 =[]
         for hog in cluster:
-            all_prots += rhogs_prots[hog]
-            del rhogs_prots[hog]
+            # todo check, create smallers clusters
+            if len(all_prots) < _config.big_rhog_size:
+                all_prots += rhogs_prots[hog]
+                del rhogs_prots[hog]
+            else:
+                if newhost:
+                    if len(all_prots2) < _config.big_rhog_size:
+                        all_prots2 += rhogs_prots[hog]
+                        del rhogs_prots[hog]
+                    else:
+                        print("cluster is very big "+str(len(cluster)))
+                else:
+                    newhost = hog
+
+        if newhost:
+            all_prots_uniq2 = list(set(all_prots2))  # there might be repeated prots
+            rhogs_prots[newhost] = all_prots_uniq2
+
         all_prots_uniq = list(set(all_prots))  # there might be repeated prots
         rhogs_prots[host_hog] = all_prots_uniq
         # merging D0562038 and D0559070
@@ -861,3 +881,113 @@ def handle_splice(hogmaps,isoform_not_selected):
                 hogmaps_selected_isof[species][prot]=hogmap[prot]
 
     return hogmaps_selected_isof
+
+
+
+
+
+def find_outgroup_species(species_tree):
+    dic_outgroup_species = {}
+    outgroup_species = []
+
+    for node in species_tree.traverse():
+        if node.is_leaf() or node.is_root():
+            continue
+
+        parent_node = node.up
+        outgroup_leaves = []
+        if parent_node:
+            grandparent_node = parent_node.up
+            if grandparent_node:
+                # parent_node, grandparent_node,grandparent_node.children
+                great_grandparent_node = grandparent_node.up
+                if great_grandparent_node:
+                    if great_grandparent_node.children:
+                        very_distant_cousins = [i for i in great_grandparent_node.children if i != grandparent_node]
+                        for i in very_distant_cousins:
+                            outgroup_leaves += i.get_leaves()  # a list
+                if grandparent_node.children and len(outgroup_leaves) <= 5:
+                    distant_cousins = [i for i in grandparent_node.children if i != parent_node]
+                    for i in distant_cousins:
+                        outgroup_leaves += i.get_leaves()  # a list
+
+            if parent_node.children and len(outgroup_leaves) <= 5:
+                cousins = [i for i in parent_node.children if i != node]
+                for i in cousins:
+                    outgroup_leaves += i.get_leaves()  # a list
+
+        if outgroup_leaves:
+            outgroup_species = [i.name for i in outgroup_leaves][:5]
+
+        # print(node.name, outgroup_species)
+        dic_outgroup_species[node.name] = outgroup_species
+
+    return dic_outgroup_species
+
+
+def find_outgroup_prot(dic_outgroup_species, rhog_prot):
+    dic_prot_sp = {}
+    for sp, prot in rhog_prot:
+        if sp in dic_prot_sp:
+            dic_prot_sp[sp].append(prot)
+        else:
+            dic_prot_sp[sp] = [prot]
+
+    dic_outgroup_prot = {}
+    for tax, outgroup_species in dic_outgroup_species.items():
+        outgroup_prots = []
+        for sp in outgroup_species:
+            prot_list = dic_prot_sp[sp]
+            if len(prot_list) > 1:
+                outgroup_prots.append((sp, prot_list[0]))
+                outgroup_prots.append((sp, prot_list[1]))
+            else:
+                outgroup_prots.append((sp, prot_list[0]))
+
+        dic_outgroup_prot[tax] = outgroup_prots
+
+    return dic_outgroup_prot
+
+
+def write_outgroups(dic_outgroup_prot, rhogid, address_outgorup,prot_recs_all):
+    dic_rhog_recs = {}
+    for tax, outgroup_prot in dic_outgroup_prot.items():
+        rhog_recs = []
+        for (species_name, prot_name) in outgroup_prot:
+            prot_rec = prot_recs_all[species_name][prot_name]
+            rhog_recs.append(prot_rec)
+        dic_rhog_recs[tax] = rhog_recs
+
+    for tax, rhog_recs in dic_rhog_recs.items():
+        SeqIO.write(rhog_recs, address_outgorup + "/outgroup_" + str(rhogid) + "_" + tax + ".fa", "fasta")
+
+    return 1
+
+
+def write_outgroups_all(rhogs_prots,prot_recs_all):
+    from ete3 import Tree
+    sp_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/qfo/qfo_run_raw/in_folder/"
+    address_outgorup = "./outgroup/"
+    if not os.path.exists(address_outgorup):
+        os.mkdir(address_outgorup)
+
+    print("start working on  outgroup generation for rhogs  "+str(len(rhogs_prots)))
+    for rhog, rhog_prot in rhogs_prots.items():
+        if len(rhog_prot) > 2:
+            # print(rhog)
+            species_tree = Tree(sp_folder + "species_tree.nwk", format=1)
+            list_species = list(set([i[0] for i in rhog_prot]))
+            species_tree.prune(list_species)
+            # species_tree.write(format=1)
+            # if len(species_tree)>2:
+            #    counter+=1
+            dic_outgroup_species = find_outgroup_species(species_tree)
+            dic_outgroup_species
+
+            dic_outgroup_prot = find_outgroup_prot(dic_outgroup_species, rhog_prot)
+
+            # print(len(dic_outgroup_prot))
+
+            write_outgroups(dic_outgroup_prot, rhog, address_outgorup,prot_recs_all)
+    print("done writing")
+    return 1

@@ -24,6 +24,23 @@ def merge_msa(list_msas, gene_tree_file_addr):
     logger_hog.debug(str(list_msas[:4])+"...")
     logger_hog.debug("max length is "+ str(max([len(i[0]) for i in list_msas]))+" .")
 
+    if _config.add_outgroup:
+        try:
+            address_outgroup = "/scratch/smajidi1/qfo/23Nov/outgroup_v1/outgroup/"
+            gene_tree_file_addr_split = gene_tree_file_addr.split("_")
+            hogid = gene_tree_file_addr_split[1]
+            tax= gene_tree_file_addr_split[2]
+
+            outgroup_seqs = list(SeqIO.parse(address_outgroup+"outgroup_"+str(hogid)+"_"+tax[:-4]+".fa", "fasta"))
+            list_msas +=outgroup_seqs
+            logger_hog.debug("outgroups added "+ str(len(outgroup_seqs))+" .")
+            logger_hog.debug("now  added " + str(len(list_msas)) + " proteins.")
+            # later for merging with mafft  it needs to be MSA
+
+        except:
+
+            logger_hog.debug(" no outgourp for "+address_outgroup+"outgroup_"+str(hogid)+"_"+tax+".fa")
+
     #logger_hog.debug("we are mergin subhogs"+len(list_msas))
     # logger_hog.debug(str(list_msas[0][0].id ) + "\n")
     # SeqIO.write(list_msas ?? , gene_tree_file_addr + ".unaligned.fa", "fasta")
@@ -31,10 +48,12 @@ def merge_msa(list_msas, gene_tree_file_addr):
     # todo using more cpus ?  (now a bit better using --thread -1)
     # sometimes better not to merge and remove gapps and do from scratch!
     wrapper_mafft_merge = mafft.Mafft(list_msas, datatype="PROTEIN")
-    if len(list_msas) < _config.num_msas_merge_mafft:
-        wrapper_mafft_merge.options['--merge'].active = True
-    else:
-        wrapper_mafft_merge.options['--merge'].active = False
+    # todo add merge
+    # if len(list_msas) < _config.num_msas_merge_mafft:
+    #     wrapper_mafft_merge.options['--merge'].active = True
+    # else:
+    #     wrapper_mafft_merge.options['--merge'].active = False
+
     # wrapper_mafft_merge.options['--anysymbol'].active = True
     wrapper_mafft_merge.options['--anysymbol'].set_value(True)
     wrapper_mafft_merge.options['--thread'].set_value(-1) # -1 uses a largely appropriate number of threads in each step, after automatically counting the number of physical cores the computer has.

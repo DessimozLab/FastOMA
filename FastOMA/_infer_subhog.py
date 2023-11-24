@@ -305,13 +305,24 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all):
     if len(msa_filt_row_col) > 1 and len(msa_filt_row_col[0]) > 1:
 
         gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, genetree_msa_file_addr)
+
         try:
             gene_tree = Tree(gene_tree_raw + ";", format=0)   #
+            if _config.add_outgroup:
+                species_this_node = [i.name for i in node_species_tree.get_leaves()]
+                gene_names = [i.name for i in gene_tree.get_leaves()]
+                gene_names_good = [i for i in gene_names if i.split("||")[1] in species_this_node]
+                gene_tree.prune(gene_names_good, preserve_branch_length=True)
+
         except:
             try:
                 gene_tree = Tree(gene_tree_raw + ";", format=0, quoted_node_names=True)  #
+                if _config.add_outgroup:
+                    species_this_node = [i.name for i in node_species_tree.get_leaves()]
+                    gene_names = [i.name for i in gene_tree.get_leaves()]
+                    gene_names_good = [i for i in gene_names if i.split("||")[1] in species_this_node]
+                    gene_tree.prune(gene_names_good, preserve_branch_length=True)
             except:
-
                 print("error")
         logger_hog.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+rhogid+", level: "+str(node_species_tree.name))
 
@@ -323,6 +334,7 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all):
         # when the prot dubious is removed during trimming
         if len(gene_tree) > 1: # e.g. "('sp|O67547|SUCD_AQUAE||AQUAE||1002000005|_|sub10001':0.329917,'tr|O84829|O84829_CHLTR||CHLTR||1001000005|_|sub10002':0.329917);"
             (gene_tree, all_species_dubious_sd_dic) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list)
+
             if _config.low_so_detection and all_species_dubious_sd_dic:
                 (gene_tree, hogs_children_level_list) = _utils_frag_SO_detection.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list)
 

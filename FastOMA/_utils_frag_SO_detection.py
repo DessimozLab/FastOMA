@@ -371,6 +371,12 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
             if len(msa_filt_row_col_new) > 1 and len(msa_filt_row_col_new[0]) > 3:
                 gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col_new, genetree_msa_file_addr+"_merged_")
                 gene_tree = Tree(gene_tree_raw , format=0, quoted_node_names=True) #+ ";"
+                if _config.add_outgroup:
+                    species_this_node = [i.name for i in node_species_tree.get_leaves()]
+                    gene_names = [i.name for i in gene_tree.get_leaves()]
+                    gene_names_good = [i for i in gene_names if i.split("||")[1] in species_this_node]
+                    gene_tree.prune(gene_names_good, preserve_branch_length=True)
+
             else:
                 logger_hog.warning("** issue 861956")
                 gene_tree = ""

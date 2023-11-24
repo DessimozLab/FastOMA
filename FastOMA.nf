@@ -104,7 +104,7 @@ process batch_roothogs{
 
 process hog_big{
     cpus  6
-    time {72.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
+    time {10.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
     memory {200.GB}
     publishDir params.temp_pickles
     input:
@@ -124,7 +124,7 @@ temp_pickles =2
 
 
 process hog_rest{
-    time {10.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
+    time {3.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
     memory {95.GB}
     publishDir params.temp_pickles
     input:
