@@ -254,7 +254,6 @@ def parse_hogmap_omamer(species_names, fasta_format_keep,  folder="./"):
 def group_prots_roothogs(hogmaps):
     """
     function for finding those proteins that are mapped to the same rootHOG.
-
     output: rhogs_dic
     """
 
@@ -466,6 +465,7 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
 def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
 
     pair_rhogs_count = {}
+    rhogs_size = {}
     for rhog, prt_prot_maps in hogmaps.items():
         for prot, prot_maps in prt_prot_maps.items():
             # [('HOG:D0017631.5a', '1771.7328874713658', '253', '234'), ('HOG:D0863448', '163.60700392437903', '253', '244'),
@@ -475,18 +475,35 @@ def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
                 hog, score = prot_map[:2]
                 if float(score) > _config.threshod_f_score_merging:
                     rhogid = hog.split(".")[0].split(":")[1]
+                    if not rhogid in rhogs_size:
+                        rhogs_size[rhogid]  = 0
+                    rhogs_size[rhogid] += 1
                     rhogids.append(rhogid)
+                    #rhogids.append(rhogid)
                     scores.append(float(score))
+
             for ii in range(len(rhogids)):
                 for jj in range(ii + 1, len(rhogids)):
                     hogi, hogj = rhogids[ii], rhogids[jj]
-                    score_i, score_j = scores[ii], scores[jj]
-                    if (hogi, hogj) in pair_rhogs_count:
-                        pair_rhogs_count[(hogi, hogj)][0].append(score_i)  # += 1
-                        pair_rhogs_count[(hogi, hogj)][1].append(score_j)  # += 1
+                    # Below Yannis made it so the pair of HOG is ordered in alphabetic order, it makes it so (HOG:D0017631,HOG:D0863448) is considered the same as (HOG:D0863448,HOG:D0017631)
+                    pair = tuple(sorted((hogi, hogj)))
+                    if pair[0]==hogi:
+                        score_i, score_j = scores[ii], scores[jj]
                     else:
-                        pair_rhogs_count[(hogi, hogj)] = [[score_i], [score_j]]
+                        score_j, score_i = scores[ii], scores[jj]
 
+                    if pair in pair_rhogs_count:
+                        pair_rhogs_count[pair][0].append(score_i)  # += 1
+                        pair_rhogs_count[pair][1].append(score_j)  # += 1
+                    else:
+                        pair_rhogs_count[pair] = [[score_i], [score_j]]
+
+                    # score_i, score_j = scores[ii], scores[jj]
+                    # if (hogi, hogj) in pair_rhogs_count:
+                    #     pair_rhogs_count[(hogi, hogj)][0].append(score_i)  # += 1
+                    #     pair_rhogs_count[(hogi, hogj)][1].append(score_j)  # += 1
+                    # else:
+                    #     pair_rhogs_count[(hogi, hogj)] = [[score_i], [score_j]]
                     #     pair_rhogs_count[(hogi, hogj)] += 1
                     # else:
                     #     pair_rhogs_count[(hogi, hogj)] = 1
@@ -494,9 +511,9 @@ def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
     print(len(pair_rhogs_count))
     logger_hog.debug("There are " + str(len(pair_rhogs_count)) + " pairs of rhogs.")
 
-    rhogs_size = {}
-    for rhog, list_prot in rhogs_prots.items():
-        rhogs_size[rhog] = len(list_prot)
+    #rhogs_size = {}
+    #for rhog, list_prot in rhogs_prots.items():
+    #    rhogs_size[rhog] = len(list_prot)
 
     candidates_pair = []
     # dic_pair_ratio = {}
@@ -599,24 +616,38 @@ def merge_rhogs(hogmaps, rhogs_prots):
             file_out_merge.write(cluster_i+"\t")
         file_out_merge.write("\n")
     file_out_merge.close()
+
     counter_merged_prots=0
     newhost= ""
     for cluster in cluster_rhogs_list:
+        if len(cluster)>30:
+            print(len(cluster))
         #prots = [rhogs_prots[hog] for hog in cluster]
-        host_hog = cluster[0]
-        rhogs_host_size= len(rhogs_prots[host_hog])
+         #  cluster[0] #
+        found = False
+        while not found and len(cluster)>0:
+            host_hog = min(cluster)
+            if host_hog in rhogs_prots:
+                found = True
+                rhogs_host_size = len(rhogs_prots[host_hog])
+            else:
+                # logger print rhog
+                cluster.remove(host_hog)
+
         all_prots = []
         all_prots2 =[]
         for hog in cluster:
             # todo check, create smallers clusters
             if len(all_prots) < _config.big_rhog_size:
-                all_prots += rhogs_prots[hog]
-                del rhogs_prots[hog]
+                if hog in rhogs_prots:
+                    all_prots += rhogs_prots[hog]
+                    del rhogs_prots[hog]
             else:
                 if newhost:
                     if len(all_prots2) < _config.big_rhog_size:
-                        all_prots2 += rhogs_prots[hog]
-                        del rhogs_prots[hog]
+                        if hog in rhogs_prots:
+                            all_prots2 += rhogs_prots[hog]
+                            del rhogs_prots[hog]
                     else:
                         print("cluster is very big "+str(len(cluster)))
                 else:

@@ -35,11 +35,11 @@ add_outgroup = False
 rooting_method = "midpoint" #"Nevers_rooting" #"midpoint"#"midpoint"  # "midpoint" "mad"
 
 
-gene_trees_write = True
-msa_write = True
-gene_trees_write_all = True
-msa_write_all = True
-keep_subhog_each_pickle = True
+gene_trees_write = False
+msa_write = False
+gene_trees_write_all = False
+msa_write_all = False
+keep_subhog_each_pickle = False
 
 big_rhog_size = 50 * 1000
 omamer_family_threshold = 0

@@ -32,11 +32,11 @@ def fastoma_infer_roothogs():
     # import sys
     # sys.exit(0)
 
-    #folder = "/scratch/smajidi1/euk_omamer200.dev8_2/test/hogmap/FastOMA-main/testdata/in_folder/"
-    species_names, prot_recs_lists,fasta_format_keep = _utils_roothog.parse_proteomes() # optional input folder
+    folder = "/scratch/smajidi1/qfo/23Nov/merging_v5/work/00/f7751409536d34dd1ba3192b79d6d1"
+    species_names, prot_recs_lists,fasta_format_keep = _utils_roothog.parse_proteomes(folder) # optional input folder
     prot_recs_all = _utils_roothog.add_species_name_prot_id(species_names, prot_recs_lists)
 
-    hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(species_names,fasta_format_keep) # optional input folder
+    hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(species_names,fasta_format_keep,folder) # optional input folder
 
     splice_files =  os.path.exists("./splice/")
     if splice_files:
