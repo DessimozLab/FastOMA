@@ -16,6 +16,7 @@ from . import _config
 
 # This code collect subhogs and writes outputs.
 
+
 def load_hogs(pickle_folder: Path):
     hogs_all = []
     cnt = 0
@@ -78,8 +79,6 @@ def max_og_tree(tree, species_dic):
     return og_prot_list
 
 
-
-
 def fastoma_collect_subhogs():
     import argparse
     parser = argparse.ArgumentParser(description="collecting all computed HOGs and combine into a single orthoxml")
@@ -105,7 +104,7 @@ def fastoma_collect_subhogs():
     if conf.roothog_tsv is not None:
         write_roothogs(conf.out, conf.roothog_tsv)
     if conf.marker_groups_fasta is not None:
-        write_group_files(conf.out, conf.roothogs_folder, conf.marker_groups_fasta)
+        write_group_files(Path(conf.out), Path(conf.roothogs_folder), conf.marker_groups_fasta)
 
 
 def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file):
@@ -159,12 +158,12 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
         output_file_og_tsv = "OrthologousGroups.tsv"
     if output_fasta_groups is None:
         output_fasta_groups = "OrthologousGroupsFasta"
+    output_fasta_groups = Path(output_fasta_groups)
+
 
     logger_hog.info("Start writing OG fasta files ")
 
-    rhog_all_folder = "./omamer_rhogs/" #sys.argv[2] + "/"  # "out_folder/rhogs_all/"
     fasta_format = "fa"  # of the rhogs
-
 
     trees, species_dic = orthoxml_to_newick(orthoxml, return_gene_to_species=True)
     logger_hog.info("We extracted %d trees in NHX format from the input HOG orthoxml %s", len(trees),  orthoxml)
@@ -181,7 +180,7 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
                 raise
 
         og_prot_list = max_og_tree(tree, species_dic)
-        if len(og_prot_list) >= 2: # a group should have at least 1 member/protein
+        if len(og_prot_list) >= 2:  # a group should have at least 1 member/protein
             OGs[hog_id] = og_prot_list
 
     logger_hog.info("done extracting trees")
@@ -190,29 +189,31 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
         for hog_id, og_prot_list in OGs.items():
             line_text = str(hog_id) + "\t" + str(og_prot_list)[1:-1] + "\n"
             handle.write(line_text)
-    handle.close()
 
-    logger_hog.info("We wrote the protein families information in the file " + output_file_og_tsv)
+    logger_hog.info("We wrote the protein families information in the file %s", output_file_og_tsv)
 
-    os.makedirs(output_fasta_groups)
-
+    output_fasta_groups.mkdir(parents=True, exist_ok=True)
     logger_hog.info("start writing %d OGs as fasta files in folder %s.", len(OGs), output_fasta_groups)
     for hog_id, og_prot_list in OGs.items():  # hog_id="HOG_0667494_sub10524"
         rhog_id = "_".join(hog_id.split("_")[:2])
 
-        omamer_rhogs_all_address = rhog_all_folder + rhog_id + "." + fasta_format
-        omamer_rhogs_all_prots = list(SeqIO.parse(omamer_rhogs_all_address, "fasta"))
+        rhog_fasta = roothog_folder / (rhog_id + "." + fasta_format)
+        omamer_rhogs_all_prots = list(SeqIO.parse(rhog_fasta, "fasta"))
 
         og_prots = []
         og_prot_list = OGs[hog_id]
         for rhogs_prot in omamer_rhogs_all_prots:
-            if rhogs_prot.id.split("||")[0] in og_prot_list:
+            prot_id = rhogs_prot.id
+            if _config.protein_format_qfo_dataset_before2022:
+                prot_id = prot_id.split('|')[1]
+
+            if prot_id in og_prot_list:
                 sp = rhogs_prot.id.split("||")[1]
                 rhogs_prot.description += " [" + sp + "]"
                 og_prots.append(rhogs_prot)
 
         og_id = "OG_" + hog_id  # one OG per rootHOG      # "/HOG_"+ rhogid
-        SeqIO.write(og_prots, output_fasta_groups + og_id + ".fa", "fasta")
+        SeqIO.write(og_prots, output_fasta_groups / (og_id + ".fa"), "fasta")
     logger_hog.info("writing done")
 
 
@@ -237,3 +238,5 @@ def write_roothogs(orthoxml, out):
     logger_hog.info("We wrote the protein families information in the file %s", out)
 
 
+if __name__ == "__main__":
+    fastoma_collect_subhogs()
