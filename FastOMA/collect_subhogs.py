@@ -80,7 +80,7 @@ def max_og_tree(tree, species_dic):
 
 
 
-def collect_subhogs():
+def fastoma_collect_subhogs():
     import argparse
     parser = argparse.ArgumentParser(description="collecting all computed HOGs and combine into a single orthoxml")
     parser.add_argument('--pickle-folder', required=True,

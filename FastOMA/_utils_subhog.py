@@ -79,6 +79,109 @@ def read_species_tree(species_tree_address):
 
     return species_tree
 
+## Nevers rooting
+def get_ancestors_set(tree):
+    full_lineage = {}
+    if tree.is_leaf():
+        full_lineage[tree.name] = [tree.name]
+    else:
+        for c in tree.children:
+            full_lineage = full_lineage | get_ancestors_set(c)
+        for k, v in full_lineage.items():
+            full_lineage[k] = v + [tree.name]
+
+    return full_lineage
+
+
+def get_tax_score_from_species_tree(species_tree):
+    pair_score = dict()
+    species_lineage = get_ancestors_set(species_tree)
+    dict_set = {k: set(v) for k, v in species_lineage.items()}
+
+    sorted_keys = sorted(dict_set.keys())
+    for i in range(len(sorted_keys)):
+        key_a = sorted_keys[i]
+        for j in range(i, len(sorted_keys)):
+            key_b = sorted_keys[j]
+            pair_score[(key_a, key_b)] = len(dict_set[key_a].intersection(dict_set[key_b]))
+    return pair_score
+
+
+def convert_gene_tree(gene_tree):
+    for l in gene_tree.get_leaves():
+        l.species = l.name.split('||')[1]
+
+
+def get_full_score_tree(gene_tree, full_lineage):
+    lineage = None
+    score = 0
+    if gene_tree.is_leaf():
+        lineage = full_lineage[gene_tree.species]
+
+    else:
+        for c in gene_tree.children:
+            cscore, clineage = get_full_score_tree(c, full_lineage)
+
+            score += cscore
+
+            if lineage:
+                lineage = lineage.intersection(clineage)
+            else:
+                lineage = clineage
+
+        score += len(lineage)
+    return score, lineage
+
+
+def get_score_all_root(gtree, stree):
+    max_score = 0
+    best_tree = [None]
+
+    lineage = get_ancestors_set(stree)
+    lineage = {k: set(v) for k, v in lineage.items()}
+    convert_gene_tree(gtree)
+
+    edge = 0
+    ancestor = []
+    default_root = gtree.get_leaves()[0].name
+    gtree.set_outgroup(gtree & default_root)
+    for node in gtree.traverse():
+        if not node.is_root() and node.name != default_root:
+            if not node.is_leaf():
+                node.name = str(edge)
+
+            ancestor.append(node.name)
+            edge += 1
+    for i in ancestor:
+        gtree.set_outgroup(gtree & default_root)
+        gtree.set_outgroup(gtree & i)
+        score, _ = get_full_score_tree(gtree, lineage)
+
+        if score >= max_score:
+            if score > max_score:
+                max_score = score
+                best_tree = []
+            children = gtree.children
+
+            fleaf1 = max([gtree.get_distance(l) for l in children[0].get_leaves()])
+            fleaf2 = max([gtree.get_distance(l) for l in children[1].get_leaves()])
+
+            if max(fleaf1, fleaf2) > 0:
+                ratio = min(fleaf1, fleaf2) / max(fleaf1, fleaf2)
+                best_tree.append((i, ratio))
+            else:
+                ratio=1
+                best_tree.append((i, ratio))
+
+            #diameter = abs(1 - (max([gtree.get_distance(l) for l in children[0].get_leaves()]) / max(
+            #    max([gtree.get_distance(l) for l in children[1].get_leaves()]), 1e-20)))
+            #best_tree.append((i, diameter))
+
+    best_tree.sort(key=lambda x: x[1], reverse=True) # we need highest
+    gtree.set_outgroup(gtree & default_root)
+    gtree.set_outgroup(gtree & best_tree[0][0]) # is it the min?
+
+    return gtree
 
 def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list=[]):
 
@@ -88,6 +191,11 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
             gene_tree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
         except:
             pass
+    elif  _config.rooting_method == "Nevers_rooting":
+        logger_hog.info("Nevers_rooting started for " +str(gene_tree.write(format=1, format_root_node=True)))
+        species= Tree("/work/FAC/FBM/DBC/cdessim2/default/smajidi1/qfo/qfo_run_raw/in_folder/species_tree.nwk",format=1)
+        gene_tree  = get_score_all_root(gene_tree, species)
+        logger_hog.info("Nevers_rooting finished for " + str(gene_tree.write(format=1, format_root_node=True)))
 
     elif _config.rooting_method == "mad":
         gene_tree = _wrappers.mad_rooting(genetree_msa_file_addr) # todo check with qouted gene tree
@@ -545,3 +653,4 @@ def find_outlier_leaves(tree: PhyloTree):
             outliers.append(leaf)
     print('+++', distances_agg, q3, q1, iqr, threshold, outliers)
     return outliers
+

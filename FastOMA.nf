@@ -20,7 +20,7 @@ params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
 
 process check_input{
     time {5.h}
-    memory {95.GB}
+    memory {200.GB}
     publishDir params.output_folder, mode: 'copy'
     input:
         path proteome_folder
@@ -33,7 +33,7 @@ process check_input{
         val true
     script:
         """
-        check-fastoma-input
+        fastoma-check-input
         """
 }
 
@@ -64,7 +64,7 @@ process omamer_run{
 process infer_roothogs{
     cpus  10      // useful for linclust
     time {15.h}    // including linclust
-    memory {200.GB}
+    memory {350.GB}
     publishDir = [
         path: params.temp_output,
         mode:  'copy', // pattern: "temp_output", saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
@@ -81,7 +81,7 @@ process infer_roothogs{
         val true         // nextflow-io.github.io/patterns/state-dependency/
     script:
         """
-        infer-roothogs  --logger-level DEBUG
+        fastoma-infer-roothogs  --logger-level DEBUG
         """
 }
 
@@ -98,13 +98,13 @@ process batch_roothogs{
         val true
     script:
         """
-        batch-roothogs
+        fastoma-batch-roothogs
         """
 }
 
 process hog_big{
     cpus  6
-    time {72.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
+    time {10.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
     memory {200.GB}
     publishDir params.temp_pickles
     input:
@@ -116,7 +116,7 @@ process hog_big{
         val true
     script:
         """
-        infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --species-tree ${rhogsbig_tree_ready[1]} --parallel
+        fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --species-tree ${rhogsbig_tree_ready[1]} --parallel
         """
 }
 temp_pickles =2
@@ -124,7 +124,7 @@ temp_pickles =2
 
 
 process hog_rest{
-    time {10.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
+    time {3.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
     memory {95.GB}
     publishDir params.temp_pickles
     input:
@@ -136,14 +136,14 @@ process hog_rest{
         val true
     script:
         """
-        infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]}  --species-tree ${rhogsrest_tree_ready[1]}
+        fastoma-infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]}  --species-tree ${rhogsrest_tree_ready[1]}
         """  // --parrallel False
 }
 
 
 process collect_subhogs{
     time {10.h}
-    memory {200.GB} // orthoxml string can be very huge in memory
+    memory {300.GB} // orthoxml string can be very huge in memory
     publishDir params.output_folder, mode: 'copy'
     input:
         val ready_hog_rest
@@ -158,7 +158,7 @@ process collect_subhogs{
         path "rootHOGs.tsv"
     script:
         """
-        collect-subhogs
+        fastoma-collect-subhogs
         """
 }
 

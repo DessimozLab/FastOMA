@@ -32,14 +32,14 @@ if (params.help) {
 
     Mandatory arguments:
         --input_folder          Input data folder. Defaults to ${params.input_folder}. This folder
-                                must contain the proteomes (in a subfolder named 'proteome') and 
-                                a species tree file. Optionally the folder might contain 
+                                must contain the proteomes (in a subfolder named 'proteome') and
+                                a species tree file. Optionally the folder might contain
                                  - a sub-folder 'splice' containing splicing variant mappings
                                  - a sub-folder 'hogmap_in' containing precomputed OMAmer
                                    placement results for all proteomes
-                                
+
                                 All sub-folders and sub-files can also be placed in orther
-                                locations if you provide alternative values for them (see below on 
+                                locations if you provide alternative values for them (see below on
                                 optional arguments section).
 
         --output_folder         Path where all the output should be stored. Defaults to
@@ -51,55 +51,55 @@ if (params.help) {
                                 set of available profiles is
                                  - docker       Run pipeline using docker containers. Docker needs
                                                 to be installed on your system. Containers will be
-                                                fetched automatically from dockerhub. See also 
-                                                additional options '--container_version' and 
+                                                fetched automatically from dockerhub. See also
+                                                additional options '--container_version' and
                                                 '--container_name'.
-           
-                                 - singlularity Run pipeline using singularity. Singularity needs 
-                                                to be installed on your system. On HPC clusters, 
+
+                                 - singlularity Run pipeline using singularity. Singularity needs
+                                                to be installed on your system. On HPC clusters,
                                                 it often needs to be loaded as a seperate module.
-                                                Containers will be fetched automatically from 
-                                                dockerhub. See also additional options 
+                                                Containers will be fetched automatically from
+                                                dockerhub. See also additional options
                                                 '--container_version' and '--container_name'.
 
-                                 - conda        Run pipeline in a conda environment. Conda needs 
+                                 - conda        Run pipeline in a conda environment. Conda needs
                                                 to be installed on your system. The environment
                                                 will be created automatically.
 
                                  - standard     Run pipeline on your local system. Mainly intended
-                                                for development purpose. All dependencies must be 
+                                                for development purpose. All dependencies must be
                                                 installed in the calling environment.
 
                                  - slurm_singularity
-                                                Run pipeline using SLURM job scheduler and 
-                                                singularity containers. This profile can also be a 
-                                                template for other HPC clusters that use different 
+                                                Run pipeline using SLURM job scheduler and
+                                                singularity containers. This profile can also be a
+                                                template for other HPC clusters that use different
                                                 schedulers.
 
                                  - slurm_conda  Run pipeline using SLURM job scheduler and conda
                                                 environment.
-                                                   
+
                                 Profiles are defined in nextflow.config and can be extended or
                                 adjusted according to your needs.
 
 
     Additional options:
         --proteome_folder       Overwrite location of proteomes (default ${params.proteome_folder})
-        --species_tree          Overwrite location of species tree file (newick format). 
+        --species_tree          Overwrite location of species tree file (newick format).
                                 Defaults to ${params.species_tree}
-        --splice_folder         Overwrite location of splice file folder. The splice files must be 
+        --splice_folder         Overwrite location of splice file folder. The splice files must be
                                 named <proteome_file>.splice.
                                 Defaults to ${params.splice_folder}
-        --omamer_db             Path or URL to download the OMAmer database from. 
+        --omamer_db             Path or URL to download the OMAmer database from.
                                 Defaults to ${params.omamer_db}
         --hogmap_in             Optional path where precomputed omamer mapping files are located.
                                 Defaults to ${params.hogmap_in}
 
     Flags:
         --help                  Display this message
-        --debug_enabled         Store addtional information that might be helpful to debug in case 
-                                of a problem with FastOMA. 
-                                
+        --debug_enabled         Store addtional information that might be helpful to debug in case
+                                of a problem with FastOMA.
+
     """.stripIndent()
 
     exit 1
@@ -120,7 +120,7 @@ process check_input{
         val "check_completed"
     script:
         """
-        check-fastoma-input --proteomes ${proteome_folder} \
+        fastoma-check-input --proteomes ${proteome_folder} \
                             --species-tree ${species_tree} \
                             --out-tree species_tree_checked.nwk \
                             --splice ${splice_folder} \
@@ -169,11 +169,11 @@ process infer_roothogs{
     path "selected_isoforms" , optional: true
   script:
     """
-       infer-roothogs  --proteomes ${proteome_folder} \
-                       --hogmap hogmaps \
-                       --splice ${splice_folder} \
-                       --out-rhog-folder "omamer_rhogs/" \
-                       -vv
+       fastoma-infer-roothogs  --proteomes ${proteome_folder} \
+                               --hogmap hogmaps \
+                               --splice ${splice_folder} \
+                               --out-rhog-folder "omamer_rhogs/" \
+                               -vv
     """
 }
 
@@ -186,7 +186,10 @@ process batch_roothogs{
     path "rhogs_big/*" , optional: true
   script:
     """
-        batch-roothogs --input-roothogs omamer_rhogs/ --out-big rhogs_big --out-rest rhogs_rest -vvv
+        fastoma-batch-roothogs --input-roothogs omamer_rhogs/ \
+                               --out-big rhogs_big \
+                               --out-rest rhogs_rest \
+                               -vv
     """
 }
 
@@ -202,11 +205,11 @@ process hog_big{
     path "gene_trees/*.nwk" , optional: true  // gene trees  if write True
   script:
     """
-        infer-subhogs  --input-rhog-folder ${rhogsbig}  \
-                       --species-tree ${species_tree} \
-                       --fragment-detection \
-                       --low-so-detection \
-                       --parallel
+        fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig}  \
+                               --species-tree ${species_tree} \
+                               --fragment-detection \
+                               --low-so-detection \
+                               --parallel
     """
 }
 
@@ -220,11 +223,11 @@ process hog_rest{
     path "gene_trees/*.nwk" , optional: true  // gene trees  if write True
   script:
     """
-        infer-subhogs  --input-rhog-folder ${rhogsrest}  \
-                       --species-tree ${species_tree} \
-                       --fragment-detection \
-                       --low-so-detection
-                       #--out pickle_hogs
+        fastoma-infer-subhogs --input-rhog-folder ${rhogsrest}  \
+                              --species-tree ${species_tree} \
+                              --fragment-detection \
+                              --low-so-detection
+                              #--out pickle_hogs
     """
 }
 
@@ -242,13 +245,13 @@ process collect_subhogs{
     path "rootHOGs.tsv"
   script:
     """
-        collect-subhogs --pickle-folder pickle_folders/ \
-                        --roothogs-folder omamer_rhogs/ \
-                        --gene-id-pickle-file gene_id_dic_xml.pickle \
-                        --out output_hog.orthoxml \
-                        --marker-groups-fasta OrthologousGroups.tsv \
-                        --roothog-tsv rootHOGs.tsv \
-                        -vv
+        fastoma-collect-subhogs --pickle-folder pickle_folders/ \
+                                --roothogs-folder omamer_rhogs/ \
+                                --gene-id-pickle-file gene_id_dic_xml.pickle \
+                                --out output_hog.orthoxml \
+                                --marker-groups-fasta OrthologousGroups.tsv \
+                                --roothog-tsv rootHOGs.tsv \
+                                -vv
     """
 }
 

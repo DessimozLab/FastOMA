@@ -1,4 +1,3 @@
-
 import sys
 from ete3 import Tree
 import os
@@ -28,21 +27,29 @@ def check_proteome_files(proteome_folder):
         logger.warning("We expect that all fasta files are with the same format either fa or fasta, we won't include some of them %s.", proteome_files)
         return False
 
-    return True
+    species_names = [os.path.splitext(i)[0] for i in proteome_files if i.endswith(".fa") or i.endswith(".fasta")]
+    return species_names
 
 
 def check_proteome(species_names, prot_recs_lists, proteome_folder):
+    # ids_set=set()
     isOk = True
+    num_prots_all = 0
     for species_name in species_names:
         num_prots = len(prot_recs_lists[species_name])
+        num_prots_all += num_prots
+        # todo , check duplicated Ids  for seq in prot_recs_lists[species_name]:
+        #  if seq.id in ids_set: report duplciated   ids_set.add(seq.id),
         if num_prots <= 2:
             logger.error("The input proteome looks empty or too few proteins or Bio.SeqIO couldn't read it, %s/%s.fa", proteome_folder, species_name)
             isOk = False
+    # todo write new protoems with cleaned record ids, keep the mapping, to be used in orthoxml writing
+    # use the mapping back for orhtoxml
+    logger.info("There are %d proteins in total in the input proteome folder.", num_prots_all)
     return isOk
 
 
 def check_hogmap_files(hogmap_folder):
-
     hogmap_files = os.listdir(hogmap_folder)
     logger.info("There are %d files in the hogmap folder.", len(hogmap_files))
     not_hogmap = [i for i in hogmap_files if not i.endswith(".hogmap")]
@@ -52,7 +59,6 @@ def check_hogmap_files(hogmap_folder):
 
     species_hogmaps = ["".join(i.split(".")[:-2]) for i in hogmap_files if i.endswith(".hogmap")]
     logger.info("There are "+str(len(species_hogmaps))+" hogmaps.")
-
     return species_hogmaps
 
 
@@ -176,11 +182,7 @@ def check_splice(isoform_by_gene_all):
     return 1
 
 
-
-
-
-
-def check_fastoma_input():
+def fastoma_check_input():
     import argparse
     parser = argparse.ArgumentParser(description="checking parameters for FastOMA")
     parser.add_argument("--proteomes", required=True, help="Path to the folder containing the input proteomes")
@@ -194,18 +196,12 @@ def check_fastoma_input():
     logger.setLevel(level=30 - 10 * min(conf.v, 2))
     logger.debug("Arguments: %s", conf)
 
-    proteomes_ok = check_proteome_files(conf.proteomes)
-    if not proteomes_ok:
+    species_names = check_proteome_files(conf.proteomes)
+    if not species_names:
         logger.error("Halting FastOMA because of invalid proteome input data")
         sys.exit(1)
 
 
-    species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes(conf.proteomes)
-    if not check_proteome(species_names, prot_recs_lists, conf.proteomes):
-        logger.error("Halting FastOMA because of invalid proteome input data")
-        sys.exit(1)
-
-    #check species tree
     try:
         species_tree = Tree(conf.species_tree, format=1)
     except:
@@ -216,13 +212,16 @@ def check_fastoma_input():
             logger.error("We have problem with parsing species tree %s using ete3 Tree. Maybe there are some special chars.", conf.species_tree)
             sys.exit(1)
 
-
     check_speciestree_internalnode(species_tree)
     if not check_speciestree_leaves(species_tree, species_names):
         logger.error("Halting FastOMA because of invalid species tree")
         sys.exit(1)
-
     add_internal_node_prune(species_tree, species_names, conf.out_tree)
+
+    species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes(conf.proteomes)
+    if not check_proteome(species_names, prot_recs_lists, conf.proteomes):
+        logger.error("Halting FastOMA because of invalid proteome input data")
+        sys.exit(1)
 
     hogmap_files = conf.hogmap is not None and os.path.exists(conf.hogmap)
     species_hogmaps = []

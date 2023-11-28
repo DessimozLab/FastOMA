@@ -8,7 +8,7 @@ from . import _config
 from ._config import logger_hog
 
 
-def infer_subhogs():
+def fastoma_infer_subhogs():
     _config.set_configs()
     logger_hog.debug("logger_level is "+str(_config.logger_level))
     logger_hog.debug("input_rhog_folder is " + str(_config.input_rhog_folder))

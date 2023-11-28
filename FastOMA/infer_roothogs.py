@@ -12,7 +12,7 @@ hog and HOG are used interchangeably here.
 """
 
 
-def infer_roothogs():
+def fastoma_infer_roothogs():
     import argparse
     parser = argparse.ArgumentParser(description="checking parameters for FastOMA")
     parser.add_argument("--proteomes", required=True, help="Path to the folder containing the input proteomes")

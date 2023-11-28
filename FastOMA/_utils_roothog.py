@@ -7,8 +7,134 @@ from os import listdir
 import os
 
 from ._utils_subhog import logger_hog
+from .zoo.unionfind import UnionFind
 from . import _config
 HOGMapData = collections.namedtuple("HOGMapData", ("hogid", "score", "seqlen", "subfamily_medianseqlen"))
+
+import collections
+
+"""UnionFind.py
+
+Union-find data structure. Based on Josiah Carlson's code,
+http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/215912
+with significant additional changes by D. Eppstein and
+Adrian Altenhoff.
+"""
+
+
+class UnionFind(object):
+    """Union-find data structure.
+
+    Each unionFind instance X maintains a family of disjoint sets of
+    hashable objects, supporting the following two methods:
+
+    - X[item] returns a name for the set containing the given item.
+      Each set is named by an arbitrarily-chosen one of its members; as
+      long as the set remains unchanged it will keep the same name. If
+      the item is not yet part of a set in X, a new singleton set is
+      created for it.
+
+    - X.union(item1, item2, ...) merges the sets containing each item
+      into a single larger set.  If any item is not yet part of a set
+      in X, it is added to X as one of the members of the merged set.
+    """
+
+    def __init__(self, elements=None):
+        """Create a new union-find structure.
+
+        If elements is not None, the structure gets initialized
+        with each element as a singleton component.
+
+        :param elements: an iterable to initialize the structure.
+        """
+
+        self.weights = {}
+        self.parents = {}
+        if elements is not None:
+            for elem in iter(elements):
+                self.parents[elem] = elem
+                self.weights[elem] = 1
+
+    def __getitem__(self, obj):
+        """return the name of set which contains obj.
+
+        :param obj: the query object
+
+        :SeeAlso: :meth:`find`"""
+        return self.find(obj)
+
+    def find(self, obj):
+        """Find and return the name of the set containing the obj.
+
+        If the object is not found in any set, a new singleton set
+        is created that holds only this object until it is further merged."""
+
+        # check for previously unknown obj. If unknown, add it
+        # as a new cluster
+        if obj not in self.parents:
+            self.parents[obj] = obj
+            self.weights[obj] = 1
+            return obj
+
+        # find path of objects leading to the root
+        path = [obj]
+        root = self.parents[obj]
+        while root != path[-1]:
+            path.append(root)
+            root = self.parents[root]
+
+        # compress the path and return
+        for ancestor in path:
+            self.parents[ancestor] = root
+        return root
+
+    def remove(self, obj):
+        """Remove an object from the sets.
+
+        Removes an object entirly from the datastructure. The
+        containing set will shrink by this one element.
+
+        :Note: If one tries to accessed it afterwards using
+            :meth:`find`, it will be created newly and put as a
+            singleton.
+        """
+        if obj not in self.parents:
+            return
+        comp = self.find(obj)
+        self.weights[comp] -= 1
+        self.parents.pop(obj)
+
+    def __iter__(self):
+        """Iterate through all items ever found or unioned by this structure."""
+        return iter(self.parents)
+
+    def union(self, *objects):
+        """Find the sets containing the objects and merge them.
+
+        any number of objects can be passed to this method and
+        all of them will be merged into one set containing at
+        least these objects.
+
+        :param objects: the objects to be merged. they have to be all
+            hashable. If they haven't been initialy added to the UnionFind
+            datastructre at instantiation time, they are added at this point
+            in time.
+        """
+        roots = [self[x] for x in objects]
+        heaviest = max([(self.weights[r], r) for r in roots], key=lambda x: x[0])[1]
+        for r in roots:
+            if r != heaviest:
+                self.weights[heaviest] += self.weights[r]
+                self.parents[r] = heaviest
+
+    def get_components(self):
+        """return a list of sets corresponding to the connected
+        components of the structure."""
+        comp_dict = collections.defaultdict(set)
+        for elem in iter(self):
+            comp_dict[self[elem]].add(elem)
+        comp = list(comp_dict.values())
+        return comp
 
 
 def parse_proteomes(folder=None):  # list_oma_species
@@ -53,7 +179,7 @@ def add_species_name_prot_id(species_names, prot_recs_lists):
     """
     prot_idx_name_pickle_file = "./gene_id_dic_xml.pickle"
     start_num_prot = int(1e9)
-    start_num_prot_per_sp = int(1e6)
+    start_num_prot_per_sp = int(1e6) #
     prot_recs_all = {} # {'MYCGE': {'sp|P47500|RF1_MYCGE||MYCGE||1000000001': SeqRecord(seq=
     prot_idx_name = {} # {'MYCGE': [(1000000001, 'sp|P47500|RF1_MYCGE'),(1000000002, 'sp|P13927|EFTU_MYCGE'),
     species_idx = -1
@@ -122,7 +248,6 @@ def parse_hogmap_omamer(species_names, fasta_format_keep,  folder=None):
 def group_prots_roothogs(hogmaps):
     """
     function for finding those proteins that are mapped to the same rootHOG.
-
     output: rhogs_dic
     """
 
@@ -279,7 +404,7 @@ def filter_big_roothogs(hogmaps, rhogs_prots):
         if len(sp_prot_list_filt) < _config.big_rhog_size:
             sp_prot_list_filt2 = sp_prot_list_filt
 
-        else:  # removing proteins that are mapped to rootHOG (= HOGC123 not the levelsHOGC123.1a) from big rootHOG
+        elif  _config.filter_nonchild_rootHOG :  # removing proteins that are mapped to rootHOG (= HOGC123 not the levelsHOGC123.1a) from big rootHOG
             #hogids2 = []
             sp_prot_list_filt2 = []
             for prot_idx, sp_prot in enumerate(sp_prot_list_filt): #[('UP000192223_224129', 'tr|A0A1W4WAU6|A0A1W4WAU6_AGRPL'), ('UP000192223_224129', 'tr|A0A1W4WU99|A0A1W4WU99_AGRPL'),
@@ -289,9 +414,11 @@ def filter_big_roothogs(hogmaps, rhogs_prots):
                 if len(hogid.split(".")) > 1: # if mapped to subHOG (not to the rootHOG)
                     sp_prot_list_filt2.append(sp_prot)
                     #hogids2.append(hogid)
+        else:
+            sp_prot_list_filt2 = sp_prot_list_filt
 
         logger_hog.info("For big rootHOG " + rhogid + ", " + str(
-            len(sp_prot_list_filt2)) + " proteins left after removing non-child subhogs")
+            len(sp_prot_list_filt2)) + " proteins left after removing non-child subhogs if activate: "+str(_config.filter_nonchild_rootHOG))
         if len(sp_prot_list_filt2):
             rhogs_prots[rhogid] = sp_prot_list_filt2
         else:
@@ -321,7 +448,8 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
             rhogid_written_list.append(rhogid)
         else:
             for prot1 in rhog_recs:
-                logger_hog.debug("we are removing due to omamer signleton hog |*|" + str(prot1.id))
+                a=1
+                #logger_hog.debug("we are removing due to omamer signleton hog |*|" + str(prot1.id))
 
     logger_hog.info("Writing Sequences of " + str(len(rhogid_written_list)) + " roothogs finished.")
 
@@ -329,41 +457,70 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
 
 
 def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
-    threshod_f_score_merging = 70
+
     pair_rhogs_count = {}
+    rhogs_size = {}
     for rhog, prt_prot_maps in hogmaps.items():
         for prot, prot_maps in prt_prot_maps.items():
             # [('HOG:D0017631.5a', '1771.7328874713658', '253', '234'), ('HOG:D0863448', '163.60700392437903', '253', '244'),
             rhogids = []
+            scores = []
             for prot_map in prot_maps:
                 hog, score = prot_map[:2]
-                if float(score) > threshod_f_score_merging:
+                if float(score) > _config.threshod_f_score_merging:
                     rhogid = hog.split(".")[0].split(":")[1]
+                    if not rhogid in rhogs_size:
+                        rhogs_size[rhogid]  = 0
+                    rhogs_size[rhogid] += 1
                     rhogids.append(rhogid)
+                    #rhogids.append(rhogid)
+                    scores.append(float(score))
+
             for ii in range(len(rhogids)):
                 for jj in range(ii + 1, len(rhogids)):
                     hogi, hogj = rhogids[ii], rhogids[jj]
-                    if (hogi, hogj) in pair_rhogs_count:
-                        pair_rhogs_count[(hogi, hogj)] += 1
+                    # Below Yannis made it so the pair of HOG is ordered in alphabetic order, it makes it so (HOG:D0017631,HOG:D0863448) is considered the same as (HOG:D0863448,HOG:D0017631)
+                    pair = tuple(sorted((hogi, hogj)))
+                    if pair[0]==hogi:
+                        score_i, score_j = scores[ii], scores[jj]
                     else:
-                        pair_rhogs_count[(hogi, hogj)] = 1
+                        score_j, score_i = scores[ii], scores[jj]
+
+                    if pair in pair_rhogs_count:
+                        pair_rhogs_count[pair][0].append(score_i)  # += 1
+                        pair_rhogs_count[pair][1].append(score_j)  # += 1
+                    else:
+                        pair_rhogs_count[pair] = [[score_i], [score_j]]
+
+                    # score_i, score_j = scores[ii], scores[jj]
+                    # if (hogi, hogj) in pair_rhogs_count:
+                    #     pair_rhogs_count[(hogi, hogj)][0].append(score_i)  # += 1
+                    #     pair_rhogs_count[(hogi, hogj)][1].append(score_j)  # += 1
+                    # else:
+                    #     pair_rhogs_count[(hogi, hogj)] = [[score_i], [score_j]]
+                    #     pair_rhogs_count[(hogi, hogj)] += 1
+                    # else:
+                    #     pair_rhogs_count[(hogi, hogj)] = 1
 
     print(len(pair_rhogs_count))
     logger_hog.debug("There are " + str(len(pair_rhogs_count)) + " pairs of rhogs.")
 
-    rhogs_size = {}
-    for rhog, list_prot in rhogs_prots.items():
-        rhogs_size[rhog] = len(list_prot)
+    #rhogs_size = {}
+    #for rhog, list_prot in rhogs_prots.items():
+    #    rhogs_size[rhog] = len(list_prot)
 
     candidates_pair = []
     # dic_pair_ratio = {}
-    for (hogi, hogj), count_shared in pair_rhogs_count.items():
+    for (hogi, hogj), score_shared_lists in pair_rhogs_count.items():
+        count_shared = len(score_shared_lists[0])
+        list_lowest =[min(score_shared_lists[0][ik],score_shared_lists[1][ik]) for ik in range(len(score_shared_lists[0]))]
+        mean_scores = sum(score_shared_lists[0]+score_shared_lists[1])/2*len(score_shared_lists[0])
         if hogi in rhogs_size and hogj in rhogs_size:  # during previous functions, we might
             ratioMax = count_shared / max(rhogs_size[hogi], rhogs_size[hogj])
             ratioMin = count_shared / min(rhogs_size[hogi], rhogs_size[hogj])
 
-            if (ratioMax > _config.mergHOG_ratioMax_thresh or ratioMin >  _config.mergHOG_ratioMin_thresh ) and _config.mergHOG_shared_thresh > 20 and\
-                    rhogs_size[hogi] < _config.big_rhog_size / 2 and  rhogs_size[hogj] < _config.big_rhog_size / 2:
+            if (mean_scores > _config.mergHOG_mean_thresh or  ((ratioMax > _config.mergHOG_ratioMax_thresh or ratioMin >  _config.mergHOG_ratioMin_thresh ) and count_shared > _config.mergHOG_shared_thresh ) )\
+                    and rhogs_size[hogi] < _config.big_rhog_size / 6 and  rhogs_size[hogj] < _config.big_rhog_size / 6:
                 if rhogs_size[hogi] >= rhogs_size[hogj]:
                     candidates_pair.append((hogi, hogj))  # bigger first
                 else:
@@ -377,48 +534,59 @@ def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
 
     return candidates_pair
 
-
 def cluster_rhogs(candidates_pair):
-    # init
-    all_hog_raw = []
+    cluster_rhogs_obj = UnionFind()
     for pair in candidates_pair:
-        all_hog_raw.append(pair[0])
-        all_hog_raw.append(pair[1])
-    all_hog = list(set(all_hog_raw))
+        cluster_rhogs_obj.union(pair[0], pair[1])
+    cluster_rhogs_sets = cluster_rhogs_obj.get_components()
 
-    allcc = []  # connected compoenets
-    for hog in all_hog:
-        allcc.append([hog])
-
-    dic_where = {}
-    for idx, cc in enumerate(allcc):
-        dic_where[cc[0]] = idx  # in the beginning, each inner list has only on element, a unique hog
-
-    # print(len(all_hog_raw),len(all_hog),len(allcc),allcc[:2])
-    logger_hog.debug("There are " + str(len(all_hog)) + " all_hog.")
-
-    # print(dic_where)
-    for pair in candidates_pair:
-        # print(pair)
-        idx_0 = dic_where[pair[0]]
-        idx_1 = dic_where[pair[1]]
-
-        dic_where[pair[1]] = idx_0
-
-        # print(idx_0)
-        allcc[idx_0] += allcc[idx_1]
-        allcc[idx_1] = []
-
-        # print(dic_where,allcc)
-
-    cluster_rhogs_list = [i for i in allcc if len(i) > 1]
-    # print(cluster_rhogs_list)
-    logger_hog.debug("There are " + str(len(cluster_rhogs_list)) + " cluster_rhogs.")
-
-    # allcc_cleaned_len = [len(i) for i in cluster_rhogs]
-    # len(allcc),len(cluster_rhogs),np.sum(allcc_cleaned_len)
+    cluster_rhogs_list = [ ]
+    for cl in cluster_rhogs_sets:
+        cluster_rhogs_list.append(list(cl))
 
     return cluster_rhogs_list
+#
+# def cluster_rhogs_old(candidates_pair): # doesnt work correctly
+#     # init
+#     all_hog_raw = []
+#     for pair in candidates_pair:
+#         all_hog_raw.append(pair[0])
+#         all_hog_raw.append(pair[1])
+#     all_hog = list(set(all_hog_raw))
+#
+#     allcc = []  # connected compoenets
+#     for hog in all_hog:
+#         allcc.append([hog])
+#
+#     dic_where = {}
+#     for idx, cc in enumerate(allcc):
+#         dic_where[cc[0]] = idx  # in the beginning, each inner list has only on element, a unique hog
+#
+#     # print(len(all_hog_raw),len(all_hog),len(allcc),allcc[:2])
+#     logger_hog.debug("There are " + str(len(all_hog)) + " all_hog.")
+#
+#     # print(dic_where)
+#     for pair in candidates_pair:
+#         # print(pair)
+#         idx_0 = dic_where[pair[0]]
+#         idx_1 = dic_where[pair[1]] # this will be problametic for sequence of pairs
+#
+#         dic_where[pair[1]] = idx_0
+#
+#         # print(idx_0)
+#         allcc[idx_0] += allcc[idx_1]
+#         allcc[idx_1] = []
+#
+#         # print(dic_where,allcc)
+#
+#     cluster_rhogs_list = [i for i in allcc if len(i) > 1]
+#     # print(cluster_rhogs_list)
+#     logger_hog.debug("There are " + str(len(cluster_rhogs_list)) + " cluster_rhogs.")
+#
+#     # allcc_cleaned_len = [len(i) for i in cluster_rhogs]
+#     # len(allcc),len(cluster_rhogs),np.sum(allcc_cleaned_len)
+#
+#     return cluster_rhogs_list
 
 
 def merge_rhogs(hogmaps, rhogs_prots):
@@ -427,8 +595,12 @@ def merge_rhogs(hogmaps, rhogs_prots):
     candidates_pair = find_rhog_candidate_pairs(hogmaps, rhogs_prots)
 
     cluster_rhogs_list = cluster_rhogs(candidates_pair)
+    num_rhog_g1 = 0
+    for rhg, list_pr in rhogs_prots.items():
+        if len(list_pr) > 1:
+            num_rhog_g1 += 1
 
-    logger_hog.debug("There are " + str(len(rhogs_prots)) + " rhogs before merging.")
+    logger_hog.debug("There are " + str(num_rhog_g1) + " rhogs (size>1) before merging.")
     print(len(rhogs_prots))
 
     file_out_merge =  open("merging_rhogs.txt","w")
@@ -438,15 +610,47 @@ def merge_rhogs(hogmaps, rhogs_prots):
             file_out_merge.write(cluster_i+"\t")
         file_out_merge.write("\n")
     file_out_merge.close()
+
     counter_merged_prots=0
+    newhost= ""
     for cluster in cluster_rhogs_list:
+        if len(cluster)>30:
+            print(len(cluster))
         #prots = [rhogs_prots[hog] for hog in cluster]
-        host_hog = cluster[0]
-        rhogs_host_size= len(rhogs_prots[host_hog])
+         #  cluster[0] #
+        found = False
+        while not found and len(cluster)>0:
+            host_hog = min(cluster)
+            if host_hog in rhogs_prots:
+                found = True
+                rhogs_host_size = len(rhogs_prots[host_hog])
+            else:
+                # logger print rhog
+                cluster.remove(host_hog)
+
         all_prots = []
+        all_prots2 =[]
         for hog in cluster:
-            all_prots += rhogs_prots[hog]
-            del rhogs_prots[hog]
+            # todo check, create smallers clusters
+            if len(all_prots) < _config.big_rhog_size:
+                if hog in rhogs_prots:
+                    all_prots += rhogs_prots[hog]
+                    del rhogs_prots[hog]
+            else:
+                if newhost:
+                    if len(all_prots2) < _config.big_rhog_size:
+                        if hog in rhogs_prots:
+                            all_prots2 += rhogs_prots[hog]
+                            del rhogs_prots[hog]
+                    else:
+                        print("cluster is very big "+str(len(cluster)))
+                else:
+                    newhost = hog
+
+        if newhost:
+            all_prots_uniq2 = list(set(all_prots2))  # there might be repeated prots
+            rhogs_prots[newhost] = all_prots_uniq2
+
         all_prots_uniq = list(set(all_prots))  # there might be repeated prots
         rhogs_prots[host_hog] = all_prots_uniq
         # merging D0562038 and D0559070
@@ -456,7 +660,13 @@ def merge_rhogs(hogmaps, rhogs_prots):
         # otherwise, merging didn't help
 
     print(len(rhogs_prots),counter_merged_prots)
-    logger_hog.debug("There are " + str(len(rhogs_prots)) + " rhogs by merging "+str(counter_merged_prots)+" proteins in total.")
+
+    num_rhog_g1 = 0
+    for rhg, list_pr in rhogs_prots.items():
+        if len(list_pr) > 1:
+            num_rhog_g1 += 1
+
+    logger_hog.debug("There are " + str(num_rhog_g1) + " rhogs (size>1)   by merging "+str(counter_merged_prots)+" proteins in total.")
 
     return rhogs_prots
 
@@ -690,3 +900,113 @@ def handle_splice(hogmaps,isoform_not_selected):
                 hogmaps_selected_isof[species][prot]=hogmap[prot]
 
     return hogmaps_selected_isof
+
+
+
+
+
+def find_outgroup_species(species_tree):
+    dic_outgroup_species = {}
+    outgroup_species = []
+
+    for node in species_tree.traverse():
+        if node.is_leaf() or node.is_root():
+            continue
+
+        parent_node = node.up
+        outgroup_leaves = []
+        if parent_node:
+            grandparent_node = parent_node.up
+            if grandparent_node:
+                # parent_node, grandparent_node,grandparent_node.children
+                great_grandparent_node = grandparent_node.up
+                if great_grandparent_node:
+                    if great_grandparent_node.children:
+                        very_distant_cousins = [i for i in great_grandparent_node.children if i != grandparent_node]
+                        for i in very_distant_cousins:
+                            outgroup_leaves += i.get_leaves()  # a list
+                if grandparent_node.children and len(outgroup_leaves) <= 5:
+                    distant_cousins = [i for i in grandparent_node.children if i != parent_node]
+                    for i in distant_cousins:
+                        outgroup_leaves += i.get_leaves()  # a list
+
+            if parent_node.children and len(outgroup_leaves) <= 5:
+                cousins = [i for i in parent_node.children if i != node]
+                for i in cousins:
+                    outgroup_leaves += i.get_leaves()  # a list
+
+        if outgroup_leaves:
+            outgroup_species = [i.name for i in outgroup_leaves][:5]
+
+        # print(node.name, outgroup_species)
+        dic_outgroup_species[node.name] = outgroup_species
+
+    return dic_outgroup_species
+
+
+def find_outgroup_prot(dic_outgroup_species, rhog_prot):
+    dic_prot_sp = {}
+    for sp, prot in rhog_prot:
+        if sp in dic_prot_sp:
+            dic_prot_sp[sp].append(prot)
+        else:
+            dic_prot_sp[sp] = [prot]
+
+    dic_outgroup_prot = {}
+    for tax, outgroup_species in dic_outgroup_species.items():
+        outgroup_prots = []
+        for sp in outgroup_species:
+            prot_list = dic_prot_sp[sp]
+            if len(prot_list) > 1:
+                outgroup_prots.append((sp, prot_list[0]))
+                outgroup_prots.append((sp, prot_list[1]))
+            else:
+                outgroup_prots.append((sp, prot_list[0]))
+
+        dic_outgroup_prot[tax] = outgroup_prots
+
+    return dic_outgroup_prot
+
+
+def write_outgroups(dic_outgroup_prot, rhogid, address_outgorup,prot_recs_all):
+    dic_rhog_recs = {}
+    for tax, outgroup_prot in dic_outgroup_prot.items():
+        rhog_recs = []
+        for (species_name, prot_name) in outgroup_prot:
+            prot_rec = prot_recs_all[species_name][prot_name]
+            rhog_recs.append(prot_rec)
+        dic_rhog_recs[tax] = rhog_recs
+
+    for tax, rhog_recs in dic_rhog_recs.items():
+        SeqIO.write(rhog_recs, address_outgorup + "/outgroup_" + str(rhogid) + "_" + tax + ".fa", "fasta")
+
+    return 1
+
+
+def write_outgroups_all(rhogs_prots,prot_recs_all):
+    from ete3 import Tree
+    sp_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/qfo/qfo_run_raw/in_folder/"
+    address_outgorup = "./outgroup/"
+    if not os.path.exists(address_outgorup):
+        os.mkdir(address_outgorup)
+
+    print("start working on  outgroup generation for rhogs  "+str(len(rhogs_prots)))
+    for rhog, rhog_prot in rhogs_prots.items():
+        if len(rhog_prot) > 2:
+            # print(rhog)
+            species_tree = Tree(sp_folder + "species_tree.nwk", format=1)
+            list_species = list(set([i[0] for i in rhog_prot]))
+            species_tree.prune(list_species)
+            # species_tree.write(format=1)
+            # if len(species_tree)>2:
+            #    counter+=1
+            dic_outgroup_species = find_outgroup_species(species_tree)
+            dic_outgroup_species
+
+            dic_outgroup_prot = find_outgroup_prot(dic_outgroup_species, rhog_prot)
+
+            # print(len(dic_outgroup_prot))
+
+            write_outgroups(dic_outgroup_prot, rhog, address_outgorup,prot_recs_all)
+    print("done writing")
+    return 1
