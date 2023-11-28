@@ -51,7 +51,7 @@ def folder_1h_rhog(roothog_path: Path, output_folder_big: Path, output_folder_re
                 rest_hogs.add_hog(hog)
 
 
-def batch_roothogs():
+def fastoma_batch_roothogs():
     import argparse
     parser = argparse.ArgumentParser(description="Analyse roothog families and create batches for analysis")
     parser.add_argument('--input-roothogs', required=True, help="folder where input roothogs are stored")
