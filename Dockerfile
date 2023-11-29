@@ -34,6 +34,7 @@ RUN apt-get update \
        fasttree \
        libxml2 \
        mafft \
+       procps \
     && apt-get -y autoremove \
     && apt-get -y autoclean \
     && rm -rf /var/lib/apt/lists/*

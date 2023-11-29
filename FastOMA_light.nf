@@ -106,6 +106,27 @@ if (params.help) {
 }
 
 
+log.info """
+===========================================
+  FastOMA -- PIPELINE
+===========================================
+
+ Project : ${workflow.projectDir}
+ Git info: ${workflow.repository} - ${workflow.revision} [${workflow.commitId}]
+ Cmd line: ${workflow.commandLine}
+ Manifest's pipeline version: ${workflow.manifest.version}
+
+Parameters:
+   input_folder              ${params.input_folder}
+   proteome folder           ${params.proteome}
+   species_tree              ${params.species_tree}
+   splice_folder             ${params.splice_folder}        (optional)
+   omamer_db                 ${params.omamer_db}
+   hogmap_in                 ${params.hogmap_in}            (optional)
+   
+   debug_enabled             ${params.debug_enabled}
+""".stripIndent()
+
 
 process check_input{
     publishDir params.output_folder, mode: 'copy'
@@ -278,6 +299,14 @@ workflow {
     channel.empty().concat(pickle_big_rhog, pickle_rest_rhog).set{ all_rhog_pickle }
 
     (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(all_rhog_pickle.collect(), gene_id_dic_xml, omamer_rhogs)
-    orthoxml_file.view{" output orthoxml file ${it}"}
 
 }
+
+//workflow.onComplete {
+//    println "Completed at    : $workflow.complete"
+//    println "Duration        : $workflow.duration"
+//    println "Output in       : $params.output_folder"
+//    println "Nextflow report : $params.statsdir"
+//	println ( workflow.success ? "Done!" : "Oops .. something went wrong" )
+//}
+
