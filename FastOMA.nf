@@ -1,216 +1,324 @@
+import groovy.json.JsonBuilder;
 
 // NXF_WRAPPER_STAGE_FILE_THRESHOLD='50000'
 
-params.input_folder = "./in_folder/"
-params.output_folder = "./out_folder/"
+params.input_folder = "testdata/in_folder"
+params.output_folder = "out_folder/"
 params.proteome_folder = params.input_folder + "/proteome"
-params.proteomes = params.proteome_folder + "/*"
 params.hogmap_in = params.input_folder + "/hogmap_in"
-
-params.hogmap_folder = params.output_folder + "/hogmap"
 params.splice_folder = params.input_folder + "/splice"
 params.species_tree = params.input_folder + "/species_tree.nwk"
-params.species_tree_checked = params.output_folder + "/species_tree_checked.nwk"
 
-params.temp_pickles = params.output_folder + "/temp_pickles"
+
+
+// output subfolder definition
 params.genetrees_folder = params.output_folder + "/genetrees"
+params.hogmap_folder = params.output_folder + "/hogmap"
 
 params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
 
 
+
+if (params.help) {
+    log.info """
+    ===========================================
+      FastOMA -- PIPELINE
+    ===========================================
+    Usage:
+    Run the pipeline with default parameters:
+    nexflow run FastOMA.nf
+
+    Run with user parameters:
+    nextflow run FastOMA.nf --input_folder {input.dir}  --output_folder {results.dir}
+
+    Mandatory arguments:
+        --input_folder          Input data folder. Defaults to ${params.input_folder}. This folder
+                                must contain the proteomes (in a subfolder named 'proteome') and
+                                a species tree file. Optionally the folder might contain
+                                 - a sub-folder 'splice' containing splicing variant mappings
+                                 - a sub-folder 'hogmap_in' containing precomputed OMAmer
+                                   placement results for all proteomes
+
+                                All sub-folders and sub-files can also be placed in orther
+                                locations if you provide alternative values for them (see below on
+                                optional arguments section).
+
+        --output_folder         Path where all the output should be stored. Defaults to
+                                ${params.output_folder}
+
+
+    Profile selection:
+        -profile                FastOMA can be run using several execution profiles. The default
+                                set of available profiles is
+                                 - docker       Run pipeline using docker containers. Docker needs
+                                                to be installed on your system. Containers will be
+                                                fetched automatically from dockerhub. See also
+                                                additional options '--container_version' and
+                                                '--container_name'.
+
+                                 - singlularity Run pipeline using singularity. Singularity needs
+                                                to be installed on your system. On HPC clusters,
+                                                it often needs to be loaded as a seperate module.
+                                                Containers will be fetched automatically from
+                                                dockerhub. See also additional options
+                                                '--container_version' and '--container_name'.
+
+                                 - conda        Run pipeline in a conda environment. Conda needs
+                                                to be installed on your system. The environment
+                                                will be created automatically.
+
+                                 - standard     Run pipeline on your local system. Mainly intended
+                                                for development purpose. All dependencies must be
+                                                installed in the calling environment.
+
+                                 - slurm_singularity
+                                                Run pipeline using SLURM job scheduler and
+                                                singularity containers. This profile can also be a
+                                                template for other HPC clusters that use different
+                                                schedulers.
+
+                                 - slurm_conda  Run pipeline using SLURM job scheduler and conda
+                                                environment.
+
+                                Profiles are defined in nextflow.config and can be extended or
+                                adjusted according to your needs.
+
+
+    Additional options:
+        --proteome_folder       Overwrite location of proteomes (default ${params.proteome_folder})
+        --species_tree          Overwrite location of species tree file (newick format).
+                                Defaults to ${params.species_tree}
+        --splice_folder         Overwrite location of splice file folder. The splice files must be
+                                named <proteome_file>.splice.
+                                Defaults to ${params.splice_folder}
+        --omamer_db             Path or URL to download the OMAmer database from.
+                                Defaults to ${params.omamer_db}
+        --hogmap_in             Optional path where precomputed omamer mapping files are located.
+                                Defaults to ${params.hogmap_in}
+
+    Flags:
+        --help                  Display this message
+        --debug_enabled         Store addtional information that might be helpful to debug in case
+                                of a problem with FastOMA.
+        --report                Produce nextflow report and timeline and store in in
+                                $params.statdir
+
+    """.stripIndent()
+
+    exit 1
+}
+
+
+log.info """
+===========================================
+  FastOMA -- PIPELINE
+===========================================
+
+ Project : ${workflow.projectDir}
+ Git info: ${workflow.repository} - ${workflow.revision} [${workflow.commitId}]
+ Cmd line: ${workflow.commandLine}
+ Manifest's pipeline version: ${workflow.manifest.version}
+
+Parameters:
+   input_folder              ${params.input_folder}
+   proteome folder           ${params.proteome_folder}
+   species_tree              ${params.species_tree}
+   splice_folder             ${params.splice_folder}
+   omamer_db                 ${params.omamer_db}
+   hogmap_in                 ${params.hogmap_in}
+   
+   debug_enabled             ${params.debug_enabled}
+   report                    ${params.report}
+""".stripIndent()
+
+
 process check_input{
-    time {5.h}
-    memory {200.GB}
-    publishDir params.output_folder, mode: 'copy'
-    input:
-        path proteome_folder
-        path hogmap_folder
-        path species_tree
-        path omamerdb
-        path splice_folder
-    output:
-        path "species_tree_checked.nwk"
-        val true
-    script:
-        """
-        fastoma-check-input
-        """
+  label "process_single"
+  publishDir params.output_folder, mode: 'copy'
+
+  input:
+    path proteome_folder
+    path hogmap_folder
+    path species_tree
+    path omamerdb
+    path splice_folder
+  output:
+    path "species_tree_checked.nwk"
+    val "check_completed"
+  script:
+    """
+    fastoma-check-input --proteomes ${proteome_folder} \
+                        --species-tree ${species_tree} \
+                        --out-tree species_tree_checked.nwk \
+                        --splice ${splice_folder} \
+                        --hogmap ${hogmap_folder} \
+                        --omamer_db ${omamerdb} \
+                        -vv
+    """
 }
 
 
 process omamer_run{
-    time {5.h}
-    memory {95.GB}
-    publishDir params.hogmap_folder, mode: 'copy'
-    input:
-        path proteomes_omamerdb_inputhog
-        val ready_input_check_c
-    output:
-        path "*.hogmap"
-        val true
-    script: //todo this if condition can be done as part of nextflow, so it won't submit job for cp
-        """
-            if [ -f ${proteomes_omamerdb_inputhog[2]}/${proteomes_omamerdb_inputhog[0]}.hogmap ]
-        then
-            cp ${proteomes_omamerdb_inputhog[2]}/${proteomes_omamerdb_inputhog[0]}.hogmap  ${proteomes_omamerdb_inputhog[0]}.hogmap
-        else
-            omamer search -n 10 --db ${proteomes_omamerdb_inputhog[1]} --query ${proteomes_omamerdb_inputhog[0]} --out ${proteomes_omamerdb_inputhog[0]}.hogmap
-        fi
-        """  // --nthreads 10
+  label "process_single"
+  tag "$proteome"
+  publishDir params.hogmap_folder, mode: 'copy'
+
+  input:
+  tuple path(proteome), path(omamer_db), path(precomputed_hogmap_folder), val(ready)
+
+  output:
+  path "*.hogmap"
+
+  script:
+  """
+    if [ -f ${precomputed_hogmap_folder}/${proteome}.hogmap ] ; then
+        cp ${precomputed_hogmap_folder}/${proteome}.hogmap  ${proteome}.hogmap
+    else
+        omamer search --db ${omamer_db} --query ${proteome} --out ${proteome}.hogmap
+    fi
+  """
 }
 
 
-
 process infer_roothogs{
-    cpus  10      // useful for linclust
-    time {15.h}    // including linclust
-    memory {350.GB}
-    publishDir = [
-        path: params.temp_output,
-        mode:  'copy', // pattern: "temp_output", saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
-        ]
-    input:
-        val ready_omamer_run
-        path hogmap_folder
-        path proteome_folder
-        path splice_folder
-    output:
-        path "temp_omamer_rhogs"
-        path "gene_id_dic_xml.pickle"
-        path "selected_isoforms" , optional: true  // SPECIESNAME_selected_isoforms.tsv
-        val true         // nextflow-io.github.io/patterns/state-dependency/
-    script:
-        """
-        fastoma-infer-roothogs  --logger-level DEBUG
-        """
+  label "process_single"
+  publishDir = [
+    path: params.temp_output,
+    enabled: params.debug_enabled,
+  ]
+
+  input:
+    path hogmaps, stageAs: "hogmaps/*"
+    path proteome_folder
+    path splice_folder
+  output:
+    path "omamer_rhogs/*"
+    path "gene_id_dic_xml.pickle"
+    path "selected_isoforms" , optional: true
+  script:
+    """
+       fastoma-infer-roothogs  --proteomes ${proteome_folder} \
+                               --hogmap hogmaps \
+                               --splice ${splice_folder} \
+                               --out-rhog-folder "omamer_rhogs/" \
+                               -vv
+    """
 }
 
 
 process batch_roothogs{
-    time {15.h}    // including linclust
-    memory {95.GB}
-    input:
-        val ready_infer_roothogs
-        path "temp_omamer_rhogs"
-    output:
-        path "rhogs_rest/*", optional: true
-        path "rhogs_big/*" , optional: true
-        val true
-    script:
-        """
-        fastoma-batch-roothogs
-        """
+  input:
+    path rhogs, stageAs: "omamer_rhogs/*"
+  output:
+    path "rhogs_rest/*", optional: true
+    path "rhogs_big/*" , optional: true
+  script:
+    """
+        fastoma-batch-roothogs --input-roothogs omamer_rhogs/ \
+                               --out-big rhogs_big \
+                               --out-rest rhogs_rest \
+                               -vv
+    """
 }
 
 process hog_big{
-    cpus  6
-    time {10.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
-    memory {200.GB}
-    publishDir params.temp_pickles
-    input:
-        val rhogsbig_tree_ready
-    output:
-        path "*.pickle"
-        path "*.fa", optional: true   // msa         if write True
-        path "*.nwk", optional: true  // gene trees  if write True
-        val true
-    script:
-        """
-        fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig_tree_ready[0]} --species-tree ${rhogsbig_tree_ready[1]} --parallel
-        """
+  label "process_high"
+
+  input:
+    each rhogsbig
+    path species_tree
+  output:
+    path "pickle_hogs"
+    path "msa/*.fa" , optional: true          // msa         if write True
+    path "gene_trees/*.nwk" , optional: true  // gene trees  if write True
+  script:
+    """
+        fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig}  \
+                               --species-tree ${species_tree} \
+                               --fragment-detection \
+                               --low-so-detection \
+                               --parallel
+    """
 }
-temp_pickles =2
-
-
 
 process hog_rest{
-    time {3.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
-    memory {95.GB}
-    publishDir params.temp_pickles
-    input:
-        val rhogsrest_tree_ready
-    output:
-        path "*.pickle"
-        path "*.fa" , optional: true   // msa         if write True
-        path "*.nwk" , optional: true  // gene trees  if write True
-        val true
-    script:
-        """
-        fastoma-infer-subhogs  --input-rhog-folder ${rhogsrest_tree_ready[0]}  --species-tree ${rhogsrest_tree_ready[1]}
-        """  // --parrallel False
+  label "process_single"
+
+  input:
+    each rhogsrest
+    path species_tree
+  output:
+    path "pickle_hogs"
+    path "msa/*.fa" , optional: true          // msa         if write True
+    path "gene_trees/*.nwk" , optional: true  // gene trees  if write True
+  script:
+    """
+        fastoma-infer-subhogs --input-rhog-folder ${rhogsrest}  \
+                              --species-tree ${species_tree} \
+                              --fragment-detection \
+                              --low-so-detection
+                              #--out pickle_hogs
+    """
 }
 
 
 process collect_subhogs{
-    time {10.h}
-    memory {300.GB} // orthoxml string can be very huge in memory
-    publishDir params.output_folder, mode: 'copy'
-    input:
-        val ready_hog_rest
-        val ready_hog_big
-        path "temp_pickles"   // this is the folder includes pickles_rhogs
-        path "gene_id_dic_xml.pickle"
-        path "temp_omamer_rhogs"
-    output:
-        path "output_hog.orthoxml"
-        path "OrthologousGroupsFasta"
-        path "OrthologousGroups.tsv"
-        path "rootHOGs.tsv"
-    script:
-        """
-        fastoma-collect-subhogs
-        """
+  publishDir params.output_folder, mode: 'copy'
+  input:
+    path pickles, stageAs: "pickle_folders/?"
+    path "gene_id_dic_xml.pickle"
+    path rhogs, stageAs: "omamer_rhogs/*"
+  output:
+    path "output_hog.orthoxml"
+    path "OrthologousGroupsFasta"
+    path "OrthologousGroups.tsv"
+    path "rootHOGs.tsv"
+  script:
+    """
+        fastoma-collect-subhogs --pickle-folder pickle_folders/ \
+                                --roothogs-folder omamer_rhogs/ \
+                                --gene-id-pickle-file gene_id_dic_xml.pickle \
+                                --out output_hog.orthoxml \
+                                --marker-groups-fasta OrthologousGroups.tsv \
+                                --roothog-tsv rootHOGs.tsv \
+                                -vv
+    """
 }
-
-
-
 
 workflow {
-    proteomes = Channel.fromPath(params.proteomes,  type:'any' ,checkIfExists:true)
-    proteome_folder = Channel.fromPath(params.proteome_folder)
-    hogmap_folder = Channel.fromPath(params.hogmap_folder)
-    splice_folder = Channel.fromPath(params.splice_folder)
-    temp_output = Channel.fromPath(params.temp_output)
-    genetrees_folder = Channel.fromPath(params.genetrees_folder)
-    hogmap_in = Channel.fromPath(params.hogmap_in)
+    proteome_folder = Channel.fromPath(params.proteome_folder, type: "dir", checkIfExists:true).first()
+    proteomes = Channel.fromPath(params.proteome_folder + "/*", type:'any', checkIfExists:true)
+    species_tree = Channel.fromPath(params.species_tree, type: "file", checkIfExists:true).first()
 
-    temp_pickles =  Channel.fromPath(params.temp_pickles)
-    omamerdb = Channel.fromPath(params.input_folder+"/omamerdb.h5")
-    species_tree = Channel.fromPath(params.species_tree)
-    species_tree_checked = Channel.fromPath(params.species_tree_checked)
+    splice_folder = Channel.fromPath(params.splice_folder, type: "dir")
+    genetrees_folder = Channel.fromPath(params.genetrees_folder, type: 'dir')
+    hogmap_in = Channel.fromPath(params.hogmap_in, type:'dir')
 
-    (species_tree_checked_, ready_input_check) = check_input(proteome_folder,hogmap_in,species_tree,omamerdb,splice_folder)
-    ready_input_check_c = ready_input_check.collect()
-    //species_tree_checked.view{"species_tree_checked ${it}"}
+    omamerdb = Channel.fromPath(params.omamer_db)
+    (species_tree_checked_, ready_input_check) = check_input(proteome_folder, hogmap_in, species_tree, omamerdb, splice_folder)
+    omamer_input_channel = proteomes.combine(omamerdb).combine(hogmap_in).combine(ready_input_check)
+    hogmap = omamer_run(omamer_input_channel)
 
-    proteomes_omamerdb = proteomes.combine(omamerdb)
-    proteomes_omamerdb_inputhog = proteomes_omamerdb.combine(hogmap_in) // proteomes_omamerdb_inputhog.view{" rhogsbig ${it}"}
-    //proteomes_omamerdb_inputhog_inputcheck =  proteomes_omamerdb_inputhog.combine(ready_input_check_c)
-    (hogmap, ready_omamer_run)= omamer_run(proteomes_omamerdb_inputhog,ready_input_check_c)
-    ready_omamer_run_c = ready_omamer_run.collect()
-    (temp_omamer_rhogs, gene_id_dic_xml,selected_isoforms, ready_infer_roothogs) = infer_roothogs(ready_omamer_run_c, hogmap_folder, proteome_folder, splice_folder)
-    ready_infer_roothogs_c = ready_infer_roothogs.collect()
+    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(hogmap.collect(), proteome_folder, splice_folder)
 
-    (rhogs_rest_list, rhogs_big_list, ready_batch_roothogs) = batch_roothogs(ready_infer_roothogs_c, temp_omamer_rhogs)
-    ready_batch_roothogs_c = ready_batch_roothogs.collect()
+    (rhogs_rest_batches, rhogs_big_batches) = batch_roothogs(omamer_rhogs)
 
+    (pickle_big_rhog, msa_out_big, genetrees_out_rest) = hog_big(rhogs_big_batches.flatten(), species_tree)
+    (pickle_rest_rhog,  msas_out_rest, genetrees_out_test) = hog_rest(rhogs_rest_batches.flatten(), species_tree)
+    channel.empty().concat(pickle_big_rhog, pickle_rest_rhog).set{ all_rhog_pickle }
 
-    rhogsbig = rhogs_big_list.flatten()
-    rhogsbig_tree =  rhogsbig.combine(species_tree_checked)
-    rhogsbig_tree_ready = rhogsbig_tree.combine(ready_batch_roothogs)   //     rhogsbig_tree_ready.view{"rhogsbig_tree_ready ${it}"}
-    (pickle_big_rhog, msas_out, genetrees_out, ready_hog_big) = hog_big(rhogsbig_tree_ready)
-
-    rhogsrest = rhogs_rest_list.flatten()
-    rhogsrest_tree =  rhogsrest.combine(species_tree_checked)
-    rhogsrest_tree_ready = rhogsrest_tree.combine(ready_batch_roothogs_c)
-    (pickle_rest_rhog,  msas_out_rest, genetrees_out_test, ready_hog_rest) = hog_rest(rhogsrest_tree_ready)
-
-    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(ready_hog_rest.collect(), ready_hog_big.collect(), temp_pickles, gene_id_dic_xml, temp_omamer_rhogs)
-    // temp_omamer_rhogs.view{" output omamer_rhogs ${it}"}
-    // orthoxml_file.view{" output orthoxml file ${it}"}
+    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(all_rhog_pickle.collect(), gene_id_dic_xml, omamer_rhogs)
 
 }
 
+workflow.onComplete {
+    def String report = ( params.report ? "\nNextflow report : ${params.statsdir}" : "");
+    println ""
+    println "Completed at    : $workflow.complete"
+    println "Duration        : $workflow.duration"
+    println "Processes       : $workflow.workflowStats.succeedCount (success), $workflow.workflowStats.failedCount (failed)"
+    println "Output in       : $params.output_folder" + report
+    println ( workflow.success ? "Done!" : "Oops .. something went wrong" )
+}
 
 
-// todo: check input files very beginning (before omamer starts) e.g all species are in the species tree. No species chars in fasta record.
