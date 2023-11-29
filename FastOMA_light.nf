@@ -133,31 +133,34 @@ Parameters:
 
 
 process check_input{
-    publishDir params.output_folder, mode: 'copy'
-    input:
-        path proteome_folder
-        path hogmap_folder
-        path species_tree
-        path omamerdb
-        path splice_folder
-    output:
-        path "species_tree_checked.nwk"
-        val "check_completed"
-    script:
-        """
-        fastoma-check-input --proteomes ${proteome_folder} \
-                            --species-tree ${species_tree} \
-                            --out-tree species_tree_checked.nwk \
-                            --splice ${splice_folder} \
-                            --hogmap ${hogmap_folder} \
-                            --omamer_db ${omamerdb} \
-                            -vv
-        """
+  label "process_single"
+  publishDir params.output_folder, mode: 'copy'
+
+  input:
+    path proteome_folder
+    path hogmap_folder
+    path species_tree
+    path omamerdb
+    path splice_folder
+  output:
+    path "species_tree_checked.nwk"
+    val "check_completed"
+  script:
+    """
+    fastoma-check-input --proteomes ${proteome_folder} \
+                        --species-tree ${species_tree} \
+                        --out-tree species_tree_checked.nwk \
+                        --splice ${splice_folder} \
+                        --hogmap ${hogmap_folder} \
+                        --omamer_db ${omamerdb} \
+                        -vv
+    """
 }
 
 
 process omamer_run{
-  time {4.h}
+  label "process_single"
+  tag "$proteome"
   publishDir params.hogmap_folder, mode: 'copy'
 
   input:
@@ -178,11 +181,11 @@ process omamer_run{
 
 
 process infer_roothogs{
+  label "process_single"
   publishDir = [
     path: params.temp_output,
     enabled: params.debug_enabled,
-    //mode: 'copy', saveAs: { filename -> filename.equals('temp_omamer_rhogs') ? null : filename }
-    ]
+  ]
 
   input:
     path hogmaps, stageAs: "hogmaps/*"
@@ -219,8 +222,8 @@ process batch_roothogs{
 }
 
 process hog_big{
-  cpus  2
-  time {20.h}     // for very big rhog it might need more, or you could re-run and add `-resume`
+  label "process_high"
+
   input:
     each rhogsbig
     path species_tree
@@ -239,6 +242,8 @@ process hog_big{
 }
 
 process hog_rest{
+  label "process_single"
+
   input:
     each rhogsrest
     path species_tree
