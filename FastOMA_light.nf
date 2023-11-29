@@ -1,3 +1,4 @@
+import groovy.json.JsonBuilder;
 
 // NXF_WRAPPER_STAGE_FILE_THRESHOLD='50000'
 
@@ -99,6 +100,8 @@ if (params.help) {
         --help                  Display this message
         --debug_enabled         Store addtional information that might be helpful to debug in case
                                 of a problem with FastOMA.
+        --report                Produce nextflow report and timeline and store in in
+                                $params.statdir
 
     """.stripIndent()
 
@@ -118,13 +121,14 @@ log.info """
 
 Parameters:
    input_folder              ${params.input_folder}
-   proteome folder           ${params.proteome}
+   proteome folder           ${params.proteome_folder}
    species_tree              ${params.species_tree}
-   splice_folder             ${params.splice_folder}        (optional)
+   splice_folder             ${params.splice_folder}
    omamer_db                 ${params.omamer_db}
-   hogmap_in                 ${params.hogmap_in}            (optional)
+   hogmap_in                 ${params.hogmap_in}
    
    debug_enabled             ${params.debug_enabled}
+   report                    ${params.report}
 """.stripIndent()
 
 
@@ -302,11 +306,14 @@ workflow {
 
 }
 
-//workflow.onComplete {
-//    println "Completed at    : $workflow.complete"
-//    println "Duration        : $workflow.duration"
-//    println "Output in       : $params.output_folder"
-//    println "Nextflow report : $params.statsdir"
-//	println ( workflow.success ? "Done!" : "Oops .. something went wrong" )
-//}
+workflow.onComplete {
+    def String report = ( params.report ? "\nNextflow report : ${params.statsdir}" : "");
+    println ""
+    println "Completed at    : $workflow.complete"
+    println "Duration        : $workflow.duration"
+    println "Processes       : $workflow.workflowStats.succeedCount (success), $workflow.workflowStats.failedCount (failed)"
+    println "Output in       : $params.output_folder" + report
+    println ( workflow.success ? "Done!" : "Oops .. something went wrong" )
+}
+
 
