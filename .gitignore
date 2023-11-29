@@ -1,0 +1,8 @@
+.nextflow*
+work/
+.idea/
+dist/
+archive
+.git
+.gitignore
+__pycache__

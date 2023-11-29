@@ -54,9 +54,22 @@ The details of output are described [below](https://github.com/DessimozLab/FastO
 In summary, you need to 1) install FastOMA and its prerequisites (below), and  2) put the input files in the folder `in_folder` 
 and 3) run FastOMA using the nextflow recipe `FastOMA_light.nf`. 
 ```
-nextflow  FastOMA_light.nf  --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
+nextflow run FastOMA_light.nf -profile docker --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
 ```
-The script `FastOMA_light.nf` is tailored for a few species. To run FastOMA with hundreds of species, please use `FastOMA.nf`. 
+The script `FastOMA_light.nf` is tailored for a few species. To run FastOMA with hundreds of species, please use `FastOMA.nf`.
+
+## More details on how to run
+We provide for every commit of the repository a docker image for FastOMA on dockerhub. You can specify the container as 
+part of the nextflow command with the parameter `container_version`. If you want to use the container of the current 
+git checkout version, you can specify this in the following way:
+
+```bash
+nextflow run FastOMA.nf -profile docker \
+    --container_version "sha-$(git rev-list --max-count=1 --abbrev-commit HEAD)" \
+    --input_folder testdata/in_folder \
+    --output_folder myresult/
+```
+
 
 
 # How to install FastOMA

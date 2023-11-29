@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "FastOMA"
+dynamic = ["version"]
+description = "FastOMA - a package to infer orthology information among proteomes"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+authors = [
+    { name = "Sina Majidian", email = "sina.majidian@gmail.com" },
+    { name = "Adrian Altenhoff", email = "adrian.altenhoff@inf.ethz.ch" }
+]
+dependencies = [
+    "biopython ~=1.81",
+    "DendroPy ~=4.3",
+    "ete3 ~=3.1",
+    "lxml ~=4.3",
+    "omamer ~=2.0",
+    "pyham ~=1.1",
+    "pyparsing ",
+]
+
+[project.optinal-dependencies]
+nextflow = [
+    "nextflow"
+]
+
+
+[project.scripts]
+fastoma-batch-roothogs = "FastOMA.batch_roothogs:fastoma_batch_roothogs"
+fastoma-check-input = "FastOMA.check_input:fastoma_check_input"
+fastoma-collect-subhogs = "FastOMA.collect_subhogs:fastoma_collect_subhogs"
+fastoma-infer-roothogs = "FastOMA.infer_roothogs:fastoma_infer_roothogs"
+fastoma-infer-subhogs = "FastOMA.infer_subhogs:fastoma_infer_subhogs"
+
+[project.urls]
+Homepage = "https://github.com/DessimozLab/FastOMA"
+
+[tool.hatch.version]
+path = "FastOMA/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/FastOMA",
+]

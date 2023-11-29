@@ -1,72 +1,64 @@
-
-
 import sys
 from ete3 import Tree
 import os
 import collections
+import argparse
 
 from . import _config
 from . import _utils_roothog
-from ._utils_subhog import logger_hog
+logger = _config.logger_hog
 
 
+def check_proteome_files(proteome_folder):
+    proteome_files = os.listdir(proteome_folder)
+    logger.info("There are %d files in the proteome folder.", len(proteome_files))
 
-"""
-cd in_folder
-python check_input.py
-"""
-
-
-def check_proteome_files():
-
-    proteome_files = os.listdir("./proteome/")
-    logger_hog.info("There are " + str(len(proteome_files)) + " files in the proteome folder. ")
-
-    not_fa = [i for i in proteome_files if not (i.endswith(".fa") or i.endswith(".fasta") )]
+    not_fa = [i for i in proteome_files if not (i.endswith(".fa") or i.endswith(".fasta"))]
     if not_fa:
-        logger_hog.warning("We expect that only fa/fasta files are in the proteome folder. Better to remove these " + str(not_fa) )
+        logger.warning("We expect that only fa/fasta files are in the proteome folder. Better to remove these %s", not_fa)
 
-    fa_fasta = [i.split(".")[-1] for i in proteome_files if  i.endswith(".fa") or i.endswith(".fasta")]
-    if len(fa_fasta)<=2:
-        logger_hog.error("There are not enough proteomes in the folder ")
-        logger_hog.error("Check input failed. FastOMA halted!")
-        sys.exit(1)
+    fa_fasta = [i.split(".")[-1] for i in proteome_files if i.endswith(".fa") or i.endswith(".fasta")]
+    if len(fa_fasta) <= 2:
+        logger.error("There are not enough proteomes in the folder ")
+        logger.error("Check input failed. FastOMA halted!")
+        return False
 
-    if len(set(fa_fasta))>1:
-        logger_hog.warning("We expect that all fasta files are with the same format either fa or fasta, we won't include some of them " + str(proteome_files) )
+    if len(set(fa_fasta)) > 1:
+        logger.warning("We expect that all fasta files are with the same format either fa or fasta, we won't include some of them %s.", proteome_files)
+        return False
 
-    species_names1= [".".join(i.split(".")[:-1]) for i in proteome_files if  i.endswith(".fa") or i.endswith(".fasta")]
-    return species_names1
+    species_names = [os.path.splitext(i)[0] for i in proteome_files if i.endswith(".fa") or i.endswith(".fasta")]
+    return species_names
 
 
-def check_proteome(species_names,prot_recs_lists):
+def check_proteome(species_names, prot_recs_lists, proteome_folder):
     # ids_set=set()
+    isOk = True
     num_prots_all = 0
     for species_name in species_names:
         num_prots = len(prot_recs_lists[species_name])
-        num_prots_all+=num_prots
+        num_prots_all += num_prots
         # todo , check duplicated Ids  for seq in prot_recs_lists[species_name]:
         #  if seq.id in ids_set: report duplciated   ids_set.add(seq.id),
         if num_prots <= 2:
-            logger_hog.error("The input proteome looks empty or too few proteins or Bio.SeqIO couldn't read it,  in_folder/proteome/" + species_name + "."+fasta_format_keep)
+            logger.error("The input proteome looks empty or too few proteins or Bio.SeqIO couldn't read it, %s/%s.fa", proteome_folder, species_name)
+            isOk = False
     # todo write new protoems with cleaned record ids, keep the mapping, to be used in orthoxml writing
     # use the mapping back for orhtoxml
-    logger_hog.error("There are "+str(num_prots_all)+" proteins in total in the input proteome folder. ")
-    return 1
+    logger.info("There are %d proteins in total in the input proteome folder.", num_prots_all)
+    return isOk
 
 
-
-def check_hogmap_files():
-
-    hogmap_files = os.listdir("./hogmap_in/")
-    logger_hog.info("There are " + str(len(hogmap_files)) + " files in the hogmap folder. ")
-    not_hogmap = [i for i in hogmap_files if not i.endswith(".hogmap") ]
+def check_hogmap_files(hogmap_folder):
+    hogmap_files = os.listdir(hogmap_folder)
+    logger.info("There are %d files in the hogmap folder.", len(hogmap_files))
+    not_hogmap = [i for i in hogmap_files if not i.endswith(".hogmap")]
     if not_hogmap:
-        logger_hog.warning("We expect that only hogmap files are in the hogmap_in folder. Better to remove these " + str(not_hogmap) )
+        logger.warning("We expect that only hogmap files are in the %s folder. Better to remove these %s",
+                       hogmap_folder, not_hogmap)
 
-    species_hogmaps = ["".join(i.split(".")[:-2]) for i in hogmap_files if  i.endswith(".hogmap")]
-    logger_hog.info("There are "+str(len(species_hogmaps))+" hogmaps.")
-
+    species_hogmaps = ["".join(i.split(".")[:-2]) for i in hogmap_files if i.endswith(".hogmap")]
+    logger.info("There are "+str(len(species_hogmaps))+" hogmaps.")
     return species_hogmaps
 
 
@@ -78,63 +70,63 @@ def check_speciestree_internalnode(species_tree):
         if not node.is_leaf():
             internal_node_name = []
             if (not node.name) or len(node.name) < 1:
-                logger_hog.warning("one of the internal node in species tree doesn't have a name. we'll update the species tree.")
+                logger.warning("one of the internal node in species tree doesn't have a name. we'll update the species tree.")
             else:
                 internal_node_name.append(node.name)
 
     if len(internal_node_name) != len(set(internal_node_name)):
-        logger_hog.warning("All the internal node names should be unique. One of the internal node is repeated:")
-        logger_hog.warning([item for item, count in collections.Counter(internal_node_name).items() if count > 1])
-        logger_hog.warning("We'll change the internal node names.")
-
-
-
+        logger.warning("All the internal node names should be unique. One of the internal node is repeated:")
+        logger.warning([item for item, count in collections.Counter(internal_node_name).items() if count > 1])
+        logger.warning("We'll change the internal node names.")
     return 1
 
-def check_speciestree_leaves(species_tree,species_names):
 
+def check_speciestree_leaves(species_tree, species_names):
     leaves_name = [i.name for i in species_tree.get_leaves()]
-    logger_hog.info("The species tree has " + str(len(leaves_name))+" leaves.")
-    if len(set(leaves_name))!=len(leaves_name):
-        logger_hog.error("Leaves name should be unique in the species tree. You may try ete3 prune")
-        logger_hog.error("Check input failed. FastOMA halted!")
-        sys.exit(1)
+    logger.info("The species tree has %d leaves.", len(leaves_name))
+    if len(set(leaves_name)) != len(leaves_name):
+        logger.error("Leaves name should be unique in the species tree. You may try ete3 prune")
+        logger.error("Check input failed. FastOMA halted!")
+        return False
 
-    species_names_not_intree = [i for i in species_names if i not in  leaves_name]
+    species_names_not_intree = [i for i in species_names if i not in leaves_name]
     if species_names_not_intree:
-        logger_hog.error("These species are not in the species tree "+ str(species_names_not_intree))
-        logger_hog.error("This is a tree template:  ((AQUAE,CHLTR)inter1,MYCGE)inter2; for proteome folder with these three files:  AQUAE.fa  CHLTR.fa  MYCGE.fa. ")
-        logger_hog.error("Check input failed. FastOMA halted!")
-        sys.exit(1)
-    leaves_tree_not_proteome = [i for i in leaves_name  if i not in species_names]
+        logger.error("These species are not in the species tree:\n %s", "\n ".join(species_names_not_intree))
+        logger.error("This is a tree template:  ((AQUAE,CHLTR)inter1,MYCGE)inter2; for proteome folder with these three files:  AQUAE.fa  CHLTR.fa  MYCGE.fa. ")
+        logger.error("Check input failed. FastOMA halted!")
+        return False
+
+    leaves_tree_not_proteome = [i for i in leaves_name if i not in species_names]
     if leaves_tree_not_proteome:
-        logger_hog.warning("there are "+str(len(leaves_tree_not_proteome))+" leaves in the species tree that there is no proteome. So we will discard them.")
+        logger.warning("there are %d leaves in the species tree that there is no proteome. So we will discard them.", len(leaves_tree_not_proteome))
+    return True
 
-    return 1
 
-def check_omamer_db(omamerdb_adress="omamerdb.h5"):
+def check_omamer_db(omamerdb_adress=None):
+    if omamerdb_adress is None:
+        logger.warning("omamer_db not passed. will assume you know what you are doing.")
+        return True
 
-    if  os.path.exists(omamerdb_adress):
+    if os.path.exists(omamerdb_adress):
         if os.path.getsize(omamerdb_adress) > 10000:  # 3 bytes
             omamerdb = True
             # todo we can do some checks on version omamer v2
         else:
-            logger_hog.warning("The omamer db looks very small. are you sure it is correct?"+omamerdb_adress)
+            logger.warning("The omamer db looks very small. are you sure it is correct?"+omamerdb_adress)
             omamerdb = False
     else:
         omamerdb =False
-        logger_hog.info("OMAmer db does not exist.")
+        logger.info("OMAmer db does not exist.")
 
     return omamerdb
 
 
-def add_internal_node_prune(species_tree,species_names):
-
+def add_internal_node_prune(species_tree, species_names, out_fname):
     # add name for the internal, if no name is provided, removintg special chars
     counter_internal = 0
     node_names = set()
     for node in species_tree.traverse(strategy="postorder"):
-        if not node.is_leaf() :
+        if not node.is_leaf():
             node_name = node.name
 
             if len(node_name) < 3 or node_name in node_names:
@@ -142,27 +134,26 @@ def add_internal_node_prune(species_tree,species_names):
                     node.name = "internal_" + str(counter_internal)
                     counter_internal += 1
                     node_names.add(node.name)
-                    logger_hog.debug("The internal node name was too small or repeated "+node_name+" which is changed to "+node.name)
-            elif not all(e.isalnum() or e=="_" or e=="-"  for e in node_name):  #any(not c.isalnum() for c in node_name):
-                node_name_new = ''.join(e for e in node_name if e.isalnum() or e=="_" or e=="-") # removing special chars
+                    logger.debug("The internal node name was too small or repeated "+node_name+" which is changed to "+node.name)
+            elif not all(e.isalnum() or e in ("_", "-") for e in node_name):  #any(not c.isalnum() for c in node_name):
+                node_name_new = ''.join(e for e in node_name if e.isalnum() or e in ("_", "-"))  # removing special chars
                 if node_name_new in node_names:
-                    node.name =node_name_new+"_"+str(counter_internal)
+                    node_name_new += "_" + str(counter_internal)
                     counter_internal += 1
-                else:
-                    node.name=node_name_new
-
+                logger.debug("The internal node name has special chars or repeated '%s' which is changed to '%s'",
+                             node.name, node_name_new)
+                node.name = node_name_new
                 node_names.add(node.name)
-                logger_hog.debug("The internal node name has special chars or repeated " + node_name + " which is changed to " + node.name)
             else:
                 node_names.add(node_name)
 
-    logger_hog.info("The species tree has " + str(len(species_tree)) + " leaves")
-    species_tree.prune(species_names) # , preserve_branch_length=True)
-    logger_hog.info("After pruning, the species tree has " + str(len(species_tree)) + " leaves")
+    logger.info("The species tree has %d leaves", len(species_tree))
+    species_tree.prune(species_names)  # , preserve_branch_length=True)
+    logger.info("After pruning, the species tree has %d leaves", len(species_tree))
 
-    species_tree_output= "./species_tree_checked.nwk"
-    species_tree.write(format=1, format_root_node=True, outfile=species_tree_output)
-    logger_hog.debug("The new species tree is written "+species_tree_output)
+    species_tree_output = "./species_tree_checked.nwk"
+    species_tree.write(format=1, format_root_node=True, outfile=out_fname)
+    logger.debug("The new species tree is written %s", out_fname)
 
     return species_tree
 
@@ -180,76 +171,83 @@ def check_splice(isoform_by_gene_all):
                     total_isoforms+=len(isoform)
                     total_genes+=1
 
-    logger_hog.debug("For "+str(spliced_species_num)+"  species, out of "+str(len(isoform_by_gene_all))+" , we have splice files.")
+    logger.debug("For "+str(spliced_species_num)+"  species, out of "+str(len(isoform_by_gene_all))+" , we have splice files.")
     if total_genes ==0:
-        logger_hog.debug("It seems that in all of the splice files, each line has only one item. Make sure that the splitter in each line is semicolon ; ")
+        logger.debug("It seems that in all of the splice files, each line has only one item. Make sure that the splitter in each line is semicolon ; ")
         sys.exit(1)
 
-    logger_hog.debug("In total, for "+ str(total_genes)+" genes, we have " + str(total_isoforms)+"  splices.")
+    logger.debug("In total, for "+ str(total_genes)+" genes, we have " + str(total_isoforms)+"  splices.")
 
     # make sys back
     return 1
 
 
-
-
-
-
 def fastoma_check_input():
-    _config.set_configs()
+    import argparse
+    parser = argparse.ArgumentParser(description="checking parameters for FastOMA")
+    parser.add_argument("--proteomes", required=True, help="Path to the folder containing the input proteomes")
+    parser.add_argument("--species-tree", required=True, help="Path to the input species tree file in newick format")
+    parser.add_argument("--out-tree", required=True, help="Path to output file for sanitised species tree. ")
+    parser.add_argument("--splice", help="Path to the folder containing the splice information files")
+    parser.add_argument("--hogmap", help="Path to the folder containing the hogmap files")
+    parser.add_argument("--omamer_db", help="Path to the omamer database")
+    parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
+    conf = parser.parse_args()
+    logger.setLevel(level=30 - 10 * min(conf.v, 2))
+    logger.debug("Arguments: %s", conf)
 
-    # print(_config.in_folder)
-    print(_config.logger_level)
-
-    print(_config.species_tree_address)  # nwk format
-
-    species_names1 = check_proteome_files()
+    species_names = check_proteome_files(conf.proteomes)
+    if not species_names:
+        logger.error("Halting FastOMA because of invalid proteome input data")
+        sys.exit(1)
 
 
     try:
-        species_tree = Tree(_config.species_tree_address, format=1)
+        species_tree = Tree(conf.species_tree, format=1)
     except:
         try:
-            species_tree = Tree(_config.species_tree_address)
+            species_tree = Tree(conf.species_tree)
             # todo add check fro Phyloxml
         except:
-            logger_hog.error("We have problem with parsing species tree "+str(_config.species_tree_address) + " using ete3 Tree. Is it in the in_folder ? Maybe there are some special chars.")
+            logger.error("We have problem with parsing species tree %s using ete3 Tree. Maybe there are some special chars.", conf.species_tree)
+            sys.exit(1)
+
     check_speciestree_internalnode(species_tree)
-    check_speciestree_leaves(species_tree,species_names1)
-    add_internal_node_prune(species_tree,species_names1)
+    if not check_speciestree_leaves(species_tree, species_names):
+        logger.error("Halting FastOMA because of invalid species tree")
+        sys.exit(1)
+    add_internal_node_prune(species_tree, species_names, conf.out_tree)
 
-    species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes()  # optional input folder
-    check_proteome(species_names, prot_recs_lists)
-    hogmap_files = os.path.exists("./hogmap_in/")
-    species_hogmaps =[]
+    species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes(conf.proteomes)
+    if not check_proteome(species_names, prot_recs_lists, conf.proteomes):
+        logger.error("Halting FastOMA because of invalid proteome input data")
+        sys.exit(1)
+
+    hogmap_files = conf.hogmap is not None and os.path.exists(conf.hogmap)
+    species_hogmaps = []
     if hogmap_files:
-        species_hogmaps = check_hogmap_files()
+        species_hogmaps = check_hogmap_files(conf.hogmap)
 
-    #print("species_hogmaps",species_hogmaps)
-    #print("species_names",species_names)
     hogmap_complete = False
     if set(species_hogmaps) == set(species_names):
         hogmap_complete = True
 
-    # print("hogmap_complete", hogmap_complete)
-    omamerdb = check_omamer_db()
+    omamerdb = check_omamer_db(conf.omamer_db)
 
     if not(omamerdb or hogmap_complete):
-        logger_hog.error("OMAmer db does not exit and no hogmap provided. ")
-        logger_hog.error("Check input failed. FastOMA halted!")
+        logger.error("OMAmer db does not exist and no hogmap provided.")
+        logger.error("Check input failed. FastOMA halted!")
         sys.exit(1)
     else:
-        logger_hog.info("OMAmer db or hogmap exist. It looks ok. ")
+        logger.info("OMAmer db or hogmap exist. It looks ok.")
 
-    #todo  check splice file format . if the name matches with the proteome files.
-    splice_files = os.path.exists("./splice/")
+    # todo  check splice file format . if the name matches with the proteome files.
+    splice_files = conf.splice is not None and os.path.exists(conf.splice)
     if splice_files:
-        logger_hog.debug("splice folder exist. Let's see its inside.")
-        isoform_by_gene_all = _utils_roothog.parse_isoform_file(species_names)
+        logger.debug("splice folder exist. Let's see its inside.")
+        isoform_by_gene_all = _utils_roothog.parse_isoform_file(species_names, conf.splice)
         check_splice(isoform_by_gene_all)
     else:
-        logger_hog.info("Splice folder doesn't exist and that's ok.")
-
-
-    logger_hog.info("Input check finished ! ")
+        logger.info("Splice folder doesn't exist and that's ok.")
+    logger.info("Input check finished ! ")
 

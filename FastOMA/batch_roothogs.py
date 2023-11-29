@@ -1,91 +1,66 @@
-
-
-import os
-from os import makedirs
 import shutil
-from os import listdir
-
 from . import _config
+from pathlib import Path
+logger = _config.logger_hog
 
 
-def list_rhog_fastas(address_rhogs_folder):
-    """
-     create orthoxml_to_newick.py list of rootHOG IDs  stored in the folder of rHOG .
-     input: folder address
-     output: list of rhog Id (integer)
-    """
-    rhog_files = listdir(address_rhogs_folder)
-    rhogid_list= []
-    for rhog_file in rhog_files:
-        if rhog_file.split(".")[-1] == "fa" and rhog_file.split("_")[0] == "HOG":
-            rhogid = rhog_file.split(".")[0].split("_")[1]
-            rhogid_list.append(rhogid)
+class BatchBuilder:
+    def __init__(self, outdir: Path, max_size: int):
+        self.outdir = outdir
+        self.max_size = max_size
 
-    return rhogid_list
+    def __enter__(self):
+        self.cur_batch = []
+        self.cur_size = 0
+        self.counter = 0
+        self.outdir.mkdir(parents=True, exist_ok=True)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if len(self.cur_batch) > 0:
+            self._flush()
+
+    def add_hog(self, hog_file: Path):
+        self.cur_batch.append(hog_file)
+        self.cur_size += hog_file.stat().st_size
+        logger.debug("adding %s with size %d to batch %d", hog_file, hog_file.stat().st_size, self.counter)
+        if self.cur_size > self.max_size:
+            self._flush()
+            self.counter += 1
+
+    def _flush(self):
+        batch_dir = self.outdir / str(self.counter)
+        batch_dir.mkdir()
+        for fn in self.cur_batch:
+            shutil.copy(fn, batch_dir)
+        logger.debug("creating batch %s with %d families; total size of files is %d",
+                     batch_dir, len(self.cur_batch), self.cur_size)
+        self.cur_size = 0
+        self.cur_batch = []
 
 
-
-def folder_1h_rhog(address_rhogs_folder, output_folder_big, output_folder_rest):
-
-    # in_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/working_nfp/"
-
-    #work_fldor_out = in_folder
-
-    rhogid_list = list_rhog_fastas(address_rhogs_folder)
-    len(rhogid_list)
-    dic_rhognum_size = {}
-    for rhogid in rhogid_list[2:]:
-        rhog_i_prot_address = address_rhogs_folder + "/HOG_" + rhogid + ".fa"
-        # rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
-        rhog_i_size = os.path.getsize(rhog_i_prot_address)
-        dic_rhognum_size[rhogid] = rhog_i_size
-    len(dic_rhognum_size)
-
-    # to have at least one big and one rest rhog, this makes nextflow pipline easier,
-    # otherwise we need if condition  collect_subhogs won't satisfy if one of them is empty
-
-    list_list_rest_rhog = [[rhogid_list[0]],[]]  # each insid list should take around 1h
-    list_list_rest_size = [[],[]]
-    list_list_big = [rhogid_list[1]]
-
-    for rhognum, size in dic_rhognum_size.items():
-        # print(rhognum, size)
-        if size > _config.big_rhog_filesize_thresh:
-            list_list_big.append(rhognum)
-        else:
-            if sum(list_list_rest_size[-1]) < _config.sum_list_rhogs_filesize_thresh:
-                list_list_rest_rhog[-1].append(rhognum)
-                list_list_rest_size[-1].append(size)
+def folder_1h_rhog(roothog_path: Path, output_folder_big: Path, output_folder_rest: Path):
+    # create a list of hogs in descending filesize order
+    hog_size_tuples = sorted([(f, f.stat().st_size) for f in roothog_path.rglob("*.fa")], key=lambda x: -x[1])
+    with BatchBuilder(output_folder_big, 1) as big_hogs, \
+            BatchBuilder(output_folder_rest, _config.sum_list_rhogs_filesize_thresh) as rest_hogs:
+        for hog, fsize in hog_size_tuples:
+            if fsize > _config.big_rhog_filesize_thresh:
+                big_hogs.add_hog(hog)
             else:
-                list_list_rest_rhog.append([rhognum])
-                list_list_rest_size.append([size])
-
-    # makedirs(work_fldor_out+"rhogs_rest")
-    for folder_id, list_rhog in enumerate(list_list_rest_rhog):
-        # print(folder_id)
-        # output_folder_rest = work_fldor_out + "/rhogs_rest/"
-        makedirs( output_folder_rest + str(folder_id))
-        for rhogid in list_rhog:
-            name = "HOG_" + rhogid + ".fa"
-            folder_rest =output_folder_rest + str(folder_id) + "/"
-            shutil.copy(address_rhogs_folder + name, folder_rest + name)
-
-    # makedirs(work_fldor_out+"rhogs_big")
-    #  output_folder_big = work_fldor_out + "rhogs_big/"
-    for folder_id, rhogid in enumerate(list_list_big):
-        name = "HOG_" + rhogid + ".fa"
-        folder_big = output_folder_big + "b" + str(folder_id) + "/"
-        makedirs(folder_big)
-        shutil.copy(address_rhogs_folder + name, folder_big + name)
-
-    return 1
-
+                rest_hogs.add_hog(hog)
 
 
 def fastoma_batch_roothogs():
+    import argparse
+    parser = argparse.ArgumentParser(description="Analyse roothog families and create batches for analysis")
+    parser.add_argument('--input-roothogs', required=True, help="folder where input roothogs are stored")
+    parser.add_argument('--out-big', required=True, help="folder where the big single family hogs should be stored")
+    parser.add_argument('--out-rest', required=True, help="folder where the remaining families should be stored in"
+                                                          "batch subfolder structure.")
+    parser.add_argument('-v', default=0, action="count", help="incrase verbosity")
+    conf = parser.parse_args()
+    logger.setLevel(level=30 - 10 * min(conf.v, 2))
 
-    input_rhog = "./temp_omamer_rhogs/" #
-    output_folder_big = "./rhogs_big/"
-    output_folder_rest = "./rhogs_rest/"
-    folder_1h_rhog(input_rhog, output_folder_big, output_folder_rest)
+    folder_1h_rhog(Path(conf.input_roothogs), Path(conf.out_big), Path(conf.out_rest))
 

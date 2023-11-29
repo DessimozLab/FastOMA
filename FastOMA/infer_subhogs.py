@@ -45,7 +45,7 @@ def fastoma_infer_subhogs():
     if inferhog_concurrent_on:
         print("parallelization for subhog inference is on.")
 
-    pickles_rhog_folder = "./" # pickles_temp/ pickle_rhogs
+    pickles_rhog_folder = "./pickle_hogs" # pickles_temp/ pickle_rhogs
     if not os.path.exists(pickles_rhog_folder):
         os.makedirs(pickles_rhog_folder)
 
