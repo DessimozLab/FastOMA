@@ -192,7 +192,7 @@ process infer_roothogs{
     path proteome_folder
     path splice_folder
   output:
-    path "omamer_rhogs/*"
+    path "omamer_rhogs"
     path "gene_id_dic_xml.pickle"
     path "selected_isoforms" , optional: true
   script:
@@ -200,7 +200,7 @@ process infer_roothogs{
        fastoma-infer-roothogs  --proteomes ${proteome_folder} \
                                --hogmap hogmaps \
                                --splice ${splice_folder} \
-                               --out-rhog-folder "omamer_rhogs/" \
+                               --out-rhog-folder "omamer_rhogs" \
                                -vv
     """
 }
@@ -208,7 +208,7 @@ process infer_roothogs{
 
 process batch_roothogs{
   input:
-    path rhogs, stageAs: "omamer_rhogs/*"
+    path rhogs //, stageAs: "omamer_rhogs/"
   output:
     path "rhogs_rest/*", optional: true
     path "rhogs_big/*" , optional: true
@@ -267,7 +267,7 @@ process collect_subhogs{
   input:
     path pickles, stageAs: "pickle_folders/?"
     path "gene_id_dic_xml.pickle"
-    path rhogs, stageAs: "omamer_rhogs/*"
+    path rhogs //, stageAs: "omamer_rhogs/*"
   output:
     path "output_hog.orthoxml"
     path "OrthologousGroupsFasta"
