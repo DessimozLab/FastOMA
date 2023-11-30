@@ -52,11 +52,11 @@ The details of output are described [below](https://github.com/DessimozLab/FastO
 
 # How to run FastOMA
 In summary, you need to 1) install FastOMA and its prerequisites (below), and  2) put the input files in the folder `in_folder` 
-and 3) run FastOMA using the nextflow recipe `FastOMA_light.nf`. 
+and 3) run FastOMA using the nextflow recipe `FastOMA.nf`. 
 ```
-nextflow run FastOMA_light.nf -profile docker --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
+nextflow run FastOMA.nf -profile docker --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
 ```
-The script `FastOMA_light.nf` is tailored for a few species. To run FastOMA with hundreds of species, please use `FastOMA.nf`.
+The script `FastOMA.nf` is tailored for a few species. To run FastOMA with hundreds of species, please use `FastOMA.nf`.
 
 ## More details on how to run
 We provide for every commit of the repository a docker image for FastOMA on dockerhub. You can specify the container as 
@@ -154,9 +154,9 @@ $ tree ../testdata/in_folder
 Finally, run the package using nextflow as below:
 ```
 # cd FastOMA/testdata
-nextflow ../FastOMA_light.nf  --input_folder in_folder   --output_folder out_folder  -with-report
+nextflow ../FastOMA.nf  --input_folder in_folder   --output_folder out_folder  -with-report
 ```
-The script `FastOMA_light.nf` is tailored for a few species. In real case scenario, please use `FastOMA.nf`.  
+The script `FastOMA.nf` is tailored for a few species. In real case scenario, please use `FastOMA.nf`.  
 The only difference between these two scripts is the amount of CPU and memory assigned to each job. 
 
 
@@ -329,6 +329,7 @@ These are initial gene families that are used in `infer_subhogs` step, which cou
 
 
 ## Change log
+- Update  v0.1.5: docker, add help, clean nextflow 
 - Update  v0.1.4: new gene families with linclust if mmseqs is installed, using quoted protein name to handle species chars, check input first 
 - Update  v0.1.3: merge rootHOGs and handle singleton using omamer multi-hits
 - Update  v0.1.2: improve rootHOG inference, splice, OMAmerv2 with multi-hits
