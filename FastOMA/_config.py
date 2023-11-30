@@ -26,8 +26,8 @@ overlap_fragments = 0.15
 
 mergHOG_ratioMax_thresh = 0.8
 mergHOG_ratioMin_thresh = 0.9
-mergHOG_shared_thresh = 70
-threshod_f_score_merging = 50
+mergHOG_shared_thresh = 50
+threshod_f_score_merging = 70
 mergHOG_mean_thresh=5000*1000
 
 
