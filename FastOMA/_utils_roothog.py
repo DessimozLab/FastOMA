@@ -518,8 +518,8 @@ def find_rhog_candidate_pairs(hogmaps, rhogs_prots):
         if hogi in rhogs_size and hogj in rhogs_size:  # during previous functions, we might
             ratioMax = count_shared / max(rhogs_size[hogi], rhogs_size[hogj])
             ratioMin = count_shared / min(rhogs_size[hogi], rhogs_size[hogj])
-
-            if (mean_scores > _config.mergHOG_mean_thresh or  ((ratioMax > _config.mergHOG_ratioMax_thresh or ratioMin >  _config.mergHOG_ratioMin_thresh ) and count_shared > _config.mergHOG_shared_thresh ) )\
+            #mean_scores > _config.mergHOG_mean_thresh or
+            if ( max(rhogs_size[hogi], rhogs_size[hogj]) <  _config.big_rhog_size / 6 and ((ratioMax > _config.mergHOG_ratioMax_thresh or ratioMin >  _config.mergHOG_ratioMin_thresh ) and count_shared > _config.mergHOG_shared_thresh ) )\
                     and rhogs_size[hogi] < _config.big_rhog_size / 6 and  rhogs_size[hogj] < _config.big_rhog_size / 6:
                 if rhogs_size[hogi] >= rhogs_size[hogj]:
                     candidates_pair.append((hogi, hogj))  # bigger first
