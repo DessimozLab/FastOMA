@@ -1,18 +1,17 @@
-
-import xml.etree.ElementTree as ET
-import pickle
-from os import listdir
-from xml.dom import minidom
-from ete3 import Tree
 import os
-from Bio import SeqIO
+import pickle
+import xml.etree.ElementTree as ET
 from pathlib import Path
+from xml.dom import minidom
 
-from FastOMA.zoo.hog import extract_flat_groups_at_level
-from FastOMA.zoo.hog.convert import orthoxml_to_newick
+from Bio import SeqIO
+from ete3 import Tree
 
-from ._config import logger_hog
 from . import _config
+from ._config import logger_hog
+from .transformer import header_transformer
+from .zoo.hog import extract_flat_groups_at_level
+from .zoo.hog.convert import orthoxml_to_newick
 
 # This code collect subhogs and writes outputs.
 
@@ -96,18 +95,27 @@ def fastoma_collect_subhogs():
                              "this argument will be generated that contains single copy groups, i.e. groups which have " 
                              "at most one gene per species. Useful as phylogenetic marker genes to reconstruct species "
                              "trees.")
+    parser.add_argument('--id-transform', choices=("UniProt", "noop"), default="noop",
+                        help="""ID transformer from fasta files to orthoxml / OrthologGroup
+                             protein IDs. By default, no transformation will be done. 
+                             Existing values are:
+                               noop:      No transformation - entire ID of fasta header
+                               UniProt:   '>sp|P68250|1433B_BOVIN' --> P68250""")
     conf = parser.parse_args()
     logger_hog.setLevel(level=30 - 10 * min(conf.v, 2))
     logger_hog.debug(conf)
+    id_transformer = header_transformer(conf.id_transform)
 
-    write_hog_orthoxml(conf.pickle_folder, conf.out, conf.gene_id_pickle_file)
+    write_hog_orthoxml(conf.pickle_folder, conf.out, conf.gene_id_pickle_file, id_transformer)
     if conf.roothog_tsv is not None:
         write_roothogs(conf.out, conf.roothog_tsv)
     if conf.marker_groups_fasta is not None:
-        write_group_files(Path(conf.out), Path(conf.roothogs_folder), conf.marker_groups_fasta)
+        write_group_files(Path(conf.out), Path(conf.roothogs_folder),
+                          conf.marker_groups_fasta,
+                          id_transformer=id_transformer)
 
 
-def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file):
+def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_transformer):
     # todo as input argument/option in nextflow
 
     # in benchamrk dataset the output prot names should be short
@@ -129,12 +137,8 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file):
         database_xml = ET.SubElement(species_xml, "database", attrib={"name": "database ", "version": "2023"})
         genes_xml = ET.SubElement(database_xml, "genes")
         for (gene_idx_integer, query_prot_name) in list_prots:
-            if _config.protein_format_qfo_dataset_before2022:
-                # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ   for qfo benchamrk, the middle should be wirtten in the file
-                query_prot_name_pure = query_prot_name.split("|")[1]
-            else:
-                query_prot_name_pure = query_prot_name
-            gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
+            prot_id = id_transformer.transform(query_prot_name)
+            gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": prot_id})
     logger_hog.debug("gene_xml is created.")
 
     #  #### create the groups of orthoxml   ####
@@ -153,7 +157,7 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file):
     logger_hog.info("orthoxml is written in %s", output_xml_name)
 
 
-def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=None, output_fasta_groups=None):
+def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=None, output_fasta_groups=None, id_transformer=None):
     if output_file_og_tsv is None:
         output_file_og_tsv = "OrthologousGroups.tsv"
     if output_fasta_groups is None:
@@ -186,9 +190,10 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
     logger_hog.info("done extracting trees")
 
     with open(output_file_og_tsv, 'w') as handle:
+        handle.write("Group\tProtein\n")
         for hog_id, og_prot_list in OGs.items():
-            line_text = str(hog_id) + "\t" + str(og_prot_list)[1:-1] + "\n"
-            handle.write(line_text)
+            for prot in og_prot_list:
+                handle.write(f"OG_{hog_id}\t{prot}\n")
 
     logger_hog.info("We wrote the protein families information in the file %s", output_file_og_tsv)
 
@@ -203,12 +208,10 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
         og_prots = []
         og_prot_list = OGs[hog_id]
         for rhogs_prot in omamer_rhogs_all_prots:
-            prot_id = rhogs_prot.id
-            if _config.protein_format_qfo_dataset_before2022:
-                prot_id = prot_id.split('|')[1]
-
+            orig_id, sp, *rest = rhogs_prot.id.split("||")
+            prot_id = id_transformer.transform(orig_id)
             if prot_id in og_prot_list:
-                sp = rhogs_prot.id.split("||")[1]
+                rhogs_prot.id = prot_id
                 rhogs_prot.description += " [" + sp + "]"
                 og_prots.append(rhogs_prot)
 
@@ -218,23 +221,17 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
 
 
 def write_roothogs(orthoxml, out):
-    # import sys
-    # input_orthoxml = output_xml_name
     if out is None:
         out = "rootHOGs.tsv"
 
-    toplevel_groups = []
-    for grp in extract_flat_groups_at_level(orthoxml):
-        toplevel_groups.append(set(g.xref for g in grp))
-
-    logger_hog.info("We extracted %d protein families from the input HOG orthoxml %s", len(toplevel_groups), orthoxml)
-    logger_hog.info("The first one contain %d proteins.", len(toplevel_groups[0]))
-
-    with open(out, 'w') as handle:
-        for toplevel_group_idx, toplevel_group in enumerate(toplevel_groups):
-            line_text = str(toplevel_group_idx)+"\t"+str(toplevel_group)[1:-1]+"\n"
-            handle.write(line_text)
-
+    nr_prot_in_groups = 0
+    with open(out, 'wt') as fh:
+        fh.write("Group\tProtein\n")
+        for nr, grp in enumerate(extract_flat_groups_at_level(orthoxml)):
+            for gene in grp:
+                fh.write(f"{nr+1}\t{gene.xref}\n")
+                nr_prot_in_groups += 1
+    logger_hog.info("Nr roothogs: %d; nr proteins in all roothogs: %d", nr+1, nr_prot_in_groups)
     logger_hog.info("We wrote the protein families information in the file %s", out)
 
 

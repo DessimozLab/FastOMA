@@ -8,6 +8,7 @@ params.proteome_folder = params.input_folder + "/proteome"
 params.hogmap_in = params.input_folder + "/hogmap_in"
 params.splice_folder = params.input_folder + "/splice"
 params.species_tree = params.input_folder + "/species_tree.nwk"
+params.fasta_header_id_transformer = "noop"
 
 
 
@@ -95,6 +96,13 @@ if (params.help) {
                                 Defaults to ${params.omamer_db}
         --hogmap_in             Optional path where precomputed omamer mapping files are located.
                                 Defaults to ${params.hogmap_in}
+        --fasta_header_id_transformer
+                                choice of transformers of input proteome fasta header
+                                to reported IDs in output files (e.g. orthoxml files)
+                                Defaults to '${params.fasta_header_id_transformer}', and can be set to
+                                  - noop         : no transformation (input header == output header)
+                                  - UniProt      : extract accession from uniprot header
+                                                   e.g. '>sp|P68250|1433B_BOVIN' --> 'P68250'
 
     Flags:
         --help                  Display this message
@@ -126,6 +134,7 @@ Parameters:
    splice_folder             ${params.splice_folder}
    omamer_db                 ${params.omamer_db}
    hogmap_in                 ${params.hogmap_in}
+   fasta_header_id_transformer  ${params.fasta_header_id_transformer}
    
    debug_enabled             ${params.debug_enabled}
    report                    ${params.report}
