@@ -17,8 +17,6 @@ input_rhog_folder = "./"
 species_tree_address = "species_tree.nwk"
 species_tree_checked = "species_tree_checked.nwk"
 
-protein_format_qfo_dataset_before2022 = True
-
 fragment_detection_msa_merge = True  # if this is false and fragment_detection_msa -> we'll remove both fragments in orthology analsys at parent level but report it in orthoxml Dubiousfragment
 
 threshold_dubious_sd = 1/10
