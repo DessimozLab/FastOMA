@@ -184,8 +184,10 @@ def get_score_all_root(gtree, stree):
     return gtree
 
 def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list=[]):
+    if _config.add_outgroup:
+        pass # midpoint rooting is done in _wrapper afrer adding the outgroup once
 
-    if _config.rooting_method == "midpoint":
+    elif _config.rooting_method == "midpoint":
         r_outgroup = gene_tree.get_midpoint_outgroup()
         try:
             gene_tree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
@@ -199,11 +201,12 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
 
     elif _config.rooting_method == "mad":
         gene_tree = _wrappers.mad_rooting(genetree_msa_file_addr) # todo check with qouted gene tree
-    # elif _config.rooting_method == "outlier":
-    #     gene_tree = PhyloTree(gene_tree_raw + ";", format=0)
-    #     outliers = find_outlier_leaves(gene_tree)
-    #     r_outgroup = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
-    #     gene_tree.set_outgroup(r_outgroup)
+
+    elif _config.rooting_method == "outlier":  # todo need check with new gene tree
+        gene_tree = PhyloTree(gene_tree_raw + ";", format=0)
+        outliers = find_outlier_leaves(gene_tree)
+        r_outgroup = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
+        gene_tree.set_outgroup(r_outgroup)
     else:
         logger_hog.warning("rooting method not found !!   * * * * *  *")
 
@@ -211,7 +214,7 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
     if _config.label_SD_internal == "species_overlap":
         (gene_tree, all_species_dubious_sd_dic) = label_sd_internal_nodes(gene_tree)
 
-    elif _config.label_SD_internal == "reconcilation":
+    elif _config.label_SD_internal == "reconcilation": # todo need check with new gene tree
         node_species_tree_nwk_string = node_species_tree.write(format=1)
         node_species_tree_PhyloTree = PhyloTree(node_species_tree_nwk_string, format=1)
         gene_tree_nwk_string = gene_tree.write(format=1, format_root_node=True)
