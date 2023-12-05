@@ -228,6 +228,7 @@ def write_roothogs(orthoxml, out):
     with open(out, 'wt') as fh:
         fh.write("Group\tProtein\n")
         for nr, grp in enumerate(extract_flat_groups_at_level(orthoxml)):
+            # todo instead of integer nr, use HOGid
             for gene in grp:
                 fh.write(f"{nr+1}\t{gene.xref}\n")
                 nr_prot_in_groups += 1
