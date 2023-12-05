@@ -167,6 +167,7 @@ class HOG:
                     paralog_element = ET.Element('paralogGroup')
                     #property_element = ET.SubElement(paralog_element, "property", attrib={"name": "TaxRange", "value": str(self._tax_now)})
                     property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value": "DubiousMergedfragment"})
+                    #todo is it happening in output?
                     # property_element = ET.SubElement(paralog_element, "property", attrib={"TaxRange": str(self._tax_now), "Type": "DubiousMergedfragment"})
                     list_member_first_fragments = list_member_first.split("_|_")
                     for fragment in list_member_first_fragments:
