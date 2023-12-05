@@ -56,3 +56,6 @@ def fastoma_infer_roothogs():
             logger.debug(" linclust is done %s", result_linclust)
             num_clusters = _utils_roothog.write_clusters(conf.out_rhog_folder, min_rhog_size)
             logger.debug("we wrote %d new clusters with linclust ", num_clusters)
+
+    #if _config.add_outgroup: # already done
+    #   _utils_roothog.write_outgroups_all(rhogs_prots,prot_recs_all)
