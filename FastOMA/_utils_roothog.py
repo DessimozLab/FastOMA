@@ -327,6 +327,11 @@ def handle_singleton(rhogs_prots,hogmaps):
                 dic_singlton_remained[rhogid] = [(species, prot)]
     logger_hog.debug("These are associated to " + str(len(dic_singlton_remained)) + " HOGs considering all multi-hits.")
 
+    prots_rhogs_dic = {}
+    for rhog, sp_prots in rhogs_prots.items():
+        if len(sp_prots) == 1:
+            prots_rhogs_dic[sp_prots[0]] = rhog
+
     count_new_rhogids = 0
     count_updated_rhogids = 0
     already_grouped = []
@@ -340,6 +345,11 @@ def handle_singleton(rhogs_prots,hogmaps):
                     count_updated_rhogids += 1
                 else:
                     count_new_rhogids += 1
+                #remove singleton from rhogs_prots
+                for spec_prot in spec_prot_list:
+                    rhogid_ii = prots_rhogs_dic[spec_prot]
+                    del rhogs_prots[rhogid_ii]
+
                 rhogs_prots[rhogid] = spec_prot_list
                 already_grouped += spec_prot_list
     logger_hog.debug("We updated " + str(count_updated_rhogids) + " and created  " + str(
@@ -606,8 +616,11 @@ def merge_rhogs(hogmaps, rhogs_prots):
     file_out_merge =  open("merging_rhogs.txt","w")
     file_out_merge.write("#first column is the host hog, the rest will be merged here.\n")
     for cluster in cluster_rhogs_list:
+        cluster_host = min(cluster) # write the host rhog as the first element
+        file_out_merge.write(cluster_host + "\t")
         for cluster_i in cluster:
-            file_out_merge.write(cluster_i+"\t")
+            if cluster_i != cluster_host:
+                file_out_merge.write(cluster_i+"\t")
         file_out_merge.write("\n")
     file_out_merge.close()
 
