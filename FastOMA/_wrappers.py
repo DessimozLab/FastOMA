@@ -26,19 +26,18 @@ def merge_msa(list_msas, gene_tree_file_addr):
 
     if _config.add_outgroup:
         try:
-            address_outgroup = "/scratch/smajidi1/qfo/23Nov/outgroup_v1/outgroup/"
+            address_outgroup = "/scratch/smajidi1/qfo/dec3/outgroup_v3/"
             gene_tree_file_addr_split = gene_tree_file_addr.split("_")
             hogid = gene_tree_file_addr_split[1]
             tax= gene_tree_file_addr_split[2]
 
             outgroup_seqs = list(SeqIO.parse(address_outgroup+"outgroup_"+str(hogid)+"_"+tax[:-4]+".fa", "fasta"))
-            list_msas +=outgroup_seqs
+            list_msas += outgroup_seqs
             logger_hog.debug("outgroups added "+ str(len(outgroup_seqs))+" .")
-            logger_hog.debug("now  added " + str(len(list_msas)) + " proteins.")
+            logger_hog.debug("now  list_msas " + str(len(list_msas)) + " proteins.")
             # later for merging with mafft  it needs to be MSA
 
         except:
-
             logger_hog.debug(" no outgourp for "+address_outgroup+"outgroup_"+str(hogid)+"_"+tax+".fa")
 
     #logger_hog.debug("we are mergin subhogs"+len(list_msas))
