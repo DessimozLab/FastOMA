@@ -1,7 +1,7 @@
 
-from FastOMA.infer_roothogs import infer_roothogs
+from FastOMA.infer_roothogs import fastoma_infer_roothogs
 
-from FastOMA.infer_subhogs import infer_subhogs
+from FastOMA.infer_subhogs import fastoma_infer_subhogs
 
 
 # --low-so-detection --fragment-detection
@@ -9,8 +9,8 @@ from FastOMA.infer_subhogs import infer_subhogs
 # --input-rhog-folder ./bb/ --parrallel True  --species-tree species_tree.nwk
 
 #a=2
-infer_subhogs()
-#infer_roothogs()
+#fastoma_infer_subhogs()
+fastoma_infer_roothogs()
 
 #
 # from FastOMA.zoo.hog import transform
