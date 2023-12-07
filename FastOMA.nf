@@ -290,7 +290,7 @@ process collect_subhogs{
                                 --out output_hog.orthoxml \
                                 --marker-groups-fasta OrthologousGroups.tsv \
                                 --roothog-tsv rootHOGs.tsv \
-                                -vv  --id-transform UniProt
+                                -vv
     """
 }
 
