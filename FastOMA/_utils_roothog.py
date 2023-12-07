@@ -1,5 +1,6 @@
 import collections
 import csv
+import networkx as nx
 
 from Bio import SeqIO
 import pickle
@@ -292,17 +293,17 @@ def handle_singleton(rhogs_prots,hogmaps):
     for (species, prot) in query_singleton_rhog:
         prot_maps = hogmaps[species][prot]
         if len(prot_maps) > 1:
-            prot_maps2 = prot_maps
+            #prot_maps2 = prot_maps
             # omamer output is sorted based on normcount. but that's intended by omamer developers
             # family_p	family_count	family_normcount
             scores = [float(i[1]) for i in prot_maps]  # (hogid,score,seqlen,subfamily_medianseqlen)
             hogids = [i[0] for i in prot_maps]
-            for hogid in hogids[1:]:  # the 0-index is already checked and is a singleton
+            rhogid0 = hogids[0].split(".")[0].split(":")[1]  # 'HOG:D0903929.1a'
+            for idx, hogid in enumerate(hogids[1:]):  # the 0-index is already checked and is a singleton
                 rhogid = hogid.split(".")[0].split(":")[1]
                 if rhogid in rhogs_prots:
-                    if len(rhogs_prots[rhogid]) > 1:
+                    if len(rhogs_prots[rhogid]) > 1 and scores[idx+1] >  _config.threshod_f_score_merging: # todo  check
                         rhogs_prots[rhogid].append((species, prot))
-                        rhogid0 = hogids[0].split(".")[0].split(":")[1]  # 'HOG:D0903929.1a'
                         del rhogs_prots[rhogid0]
                         query_singleton_rhog_solved.append((species, prot))
                         break
@@ -319,12 +320,14 @@ def handle_singleton(rhogs_prots,hogmaps):
         prot_maps = hogmaps[species][prot]
         scores = [float(i[1]) for i in prot_maps]  # (hogid,score,seqlen,subfamily_medianseqlen)
         hogids = [i[0] for i in prot_maps]
-        for hogid in hogids[1:]:
-            rhogid = hogid.split(".")[0].split(":")[1]
-            if rhogid in dic_singlton_remained:
-                dic_singlton_remained[rhogid].append((species, prot))
-            else:
-                dic_singlton_remained[rhogid] = [(species, prot)]
+        for idx, hogid in enumerate(hogids[1:]):  # the 0-index is already checked and is a singleton
+        #for hogid in hogids[1:]:
+            if scores[idx+1] >  _config.threshod_f_score_merging :
+                rhogid = hogid.split(".")[0].split(":")[1]
+                if rhogid in dic_singlton_remained:
+                    dic_singlton_remained[rhogid].append((species, prot))
+                else:
+                    dic_singlton_remained[rhogid] = [(species, prot)]
     logger_hog.debug("These are associated to " + str(len(dic_singlton_remained)) + " HOGs considering all multi-hits.")
 
     prots_rhogs_dic = {}
@@ -599,6 +602,105 @@ def cluster_rhogs(candidates_pair):
 #     return cluster_rhogs_list
 
 
+
+def merge_rhogs2(hogmaps, rhogs_prots):
+    logger_hog.debug("started merging  ")
+
+    candidates_pair = find_rhog_candidate_pairs(hogmaps, rhogs_prots)
+
+    print("There are " + str(len(candidates_pair)) + " candidate pairs of rhogs for merging.")
+    cluster_rhogs_list = cluster_rhogs(candidates_pair)
+
+    print("There are " + str(len(cluster_rhogs_list)) + " clusters.")
+
+    cluster_rhogs_list = cluster_rhogs_nx(cluster_rhogs_list, candidates_pair)
+
+    print("There are " + str(len(cluster_rhogs_list)) + " selected clusters.")
+
+    #cluster_rhogs_list = cluster_rhogs(candidates_pair)
+
+
+
+    num_rhog_g1 = 0
+    for rhg, list_pr in rhogs_prots.items():
+        if len(list_pr) > 1:
+            num_rhog_g1 += 1
+
+    logger_hog.debug("There are " + str(num_rhog_g1) + " rhogs (size>1) before merging.")
+    print(len(rhogs_prots))
+
+    file_out_merge =  open("merging_rhogs.txt","w")
+    file_out_merge.write("#first column is the host hog, the rest will be merged here.\n")
+    for cluster in cluster_rhogs_list:
+        cluster_host = min(cluster) # write the host rhog as the first element
+        file_out_merge.write(cluster_host + "\t")
+        for cluster_i in cluster:
+            if cluster_i != cluster_host:
+                file_out_merge.write(cluster_i+"\t")
+        file_out_merge.write("\n")
+    file_out_merge.close()
+
+    counter_merged_prots=0
+    newhost= ""
+    for cluster in cluster_rhogs_list:
+        if len(cluster)>30:
+            print(len(cluster))
+        #prots = [rhogs_prots[hog] for hog in cluster]
+         #  cluster[0] #
+        found = False
+        while not found and len(cluster)>0:
+            host_hog = min(cluster)
+            if host_hog in rhogs_prots:
+                found = True
+                rhogs_host_size = len(rhogs_prots[host_hog])
+            else:
+                # logger print rhog
+                cluster.remove(host_hog)
+
+        all_prots = []
+        all_prots2 =[]
+        for hog in cluster:
+            # todo check, create smallers clusters
+            if len(all_prots) < _config.big_rhog_size:
+                if hog in rhogs_prots:
+                    all_prots += rhogs_prots[hog]
+                    del rhogs_prots[hog]
+            else:
+                if newhost:
+                    if len(all_prots2) < _config.big_rhog_size:
+                        if hog in rhogs_prots:
+                            all_prots2 += rhogs_prots[hog]
+                            del rhogs_prots[hog]
+                    else:
+                        print("cluster is very big "+str(len(cluster)))
+                else:
+                    newhost = hog
+
+        if newhost:
+            all_prots_uniq2 = list(set(all_prots2))  # there might be repeated prots
+            rhogs_prots[newhost] = all_prots_uniq2
+
+        all_prots_uniq = list(set(all_prots))  # there might be repeated prots
+        rhogs_prots[host_hog] = all_prots_uniq
+        # merging D0562038 and D0559070
+        # tr | C3ZG56 | C3ZG56_BRAFL HOG: D0562038, tr | H2Y1V7 | H2Y1V7_CIOIN HOG: D0562038, tr | C3ZG56 | C3ZG56_BRAFL HOG: D0559070, tr | H2Y1V7 | H2Y1V7_CIOIN HOG: D0559070
+        if len(all_prots_uniq) > rhogs_host_size:
+            counter_merged_prots += len(all_prots_uniq)
+        # otherwise, merging didn't help
+
+    print(len(rhogs_prots),counter_merged_prots)
+
+    num_rhog_g1 = 0
+    for rhg, list_pr in rhogs_prots.items():
+        if len(list_pr) > 1:
+            num_rhog_g1 += 1
+
+    logger_hog.debug("There are " + str(num_rhog_g1) + " rhogs (size>1)   by merging "+str(counter_merged_prots)+" proteins in total.")
+
+    return rhogs_prots
+
+
+
 def merge_rhogs(hogmaps, rhogs_prots):
     logger_hog.debug("started merging  ")
 
@@ -852,7 +954,7 @@ def find_nonbest_isoform(species_names, isoform_by_gene_all, hogmaps):
                         family_score = float(prot_maps[0][1])
                         seq_len = prot_maps[0][2]
                         subf_med_len = prot_maps[0][3]
-                    score_isof = float(family_score) * min(int(seq_len), int(subf_med_len))
+                    score_isof = float(family_score) # for omamer v2 fscore is enough * min(int(seq_len), int(subf_med_len))
                     # print(isoform_name, score_isof,score_isof_best)
 
                     if score_isof >= score_isof_best:  # when there is a tie, the last one is selected!
@@ -1023,3 +1125,84 @@ def write_outgroups_all(rhogs_prots,prot_recs_all):
             write_outgroups(dic_outgroup_prot, rhog, address_outgorup,prot_recs_all)
     print("done writing")
     return 1
+
+
+
+def cluster_rhogs_nx(cluster_rhogs_list,candidates_pair):
+    count=0
+    candidates_pair = set(candidates_pair)
+    new_cluster = []
+    for c in cluster_rhogs_list:
+        count+=1
+
+        G = nx.Graph()
+        for i in range(len(c)):
+            pairA = c[i]
+
+            if not G.has_node(pairA):
+                G.add_node(pairA)
+            for j in range(i+1, len(c)):
+
+                pairB = c[j]
+                if not G.has_node(pairB):
+                    G.add_node(pairB)
+                if (pairA,pairB) in candidates_pair or (pairB,pairA) in candidates_pair:
+                    G.add_edge(pairA,pairB)
+        density = nx.density(G)
+
+        newG = HCS(G)
+        clusters = [ list(x) for x in nx.connected_components(newG) if len(x)>1]
+        new_cluster += clusters
+    return new_cluster
+
+def highly_connected(G, E):
+    """Checks if the graph G is highly connected
+
+    Highly connected means, that splitting the graph G into subgraphs needs more than 0.5*|V| edge deletions
+    This definition can be found in Section 2 of the publication.
+
+    :param G: Graph G
+    :param E: Edges needed for splitting G
+    :return: True if G is highly connected, otherwise False
+    """
+
+    return len(E) >= len(G.nodes) / 2
+
+
+def remove_edges(G, E):
+    """Removes all edges E from G
+
+    Iterates over all edges in E and removes them from G
+    :param G: Graph to remove edges from
+    :param E: One or multiple Edges
+    :return: Graph with edges removed
+    """
+
+    for edge in E:
+        G.remove_edge(*edge)
+    return G
+
+
+def HCS(G):
+    """Basic HCS Algorithm
+https://github.com/53RT/Highly-Connected-Subgraphs-Clustering-HCS/blob/master/hcs.py
+    cluster labels, removed edges are stored in global variables
+
+    :param G: Input graph
+    :return: Either the input Graph if it is highly connected, otherwise a Graph composed of
+    Subgraphs that build clusters
+    """
+
+    E = nx.algorithms.connectivity.cuts.minimum_edge_cut(G)
+
+    if not highly_connected(G, E):
+        G = remove_edges(G, E)
+        sub_graphs = [G.subgraph(c).copy() for c in nx.connected_components(G)]
+
+        if len(sub_graphs) == 2:
+            H = HCS(sub_graphs[0])
+            _H = HCS(sub_graphs[1])
+
+            G = nx.compose(H, _H)
+
+    return G
