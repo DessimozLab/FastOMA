@@ -26,7 +26,7 @@ def merge_msa(list_msas, gene_tree_file_addr):
 
     if _config.add_outgroup:
         try:
-            address_outgroup = "/scratch/smajidi1/qfo/dec3/outgroup_v3/"
+            address_outgroup = "/scratch/smajidi1/qfo/outgroup_v3/"
             gene_tree_file_addr_split = gene_tree_file_addr.split("_")
             hogid = gene_tree_file_addr_split[1]
             tax= gene_tree_file_addr_split[2]
@@ -38,7 +38,7 @@ def merge_msa(list_msas, gene_tree_file_addr):
             # later for merging with mafft  it needs to be MSA
 
         except:
-            logger_hog.debug(" no outgourp for "+address_outgroup+"outgroup_"+str(hogid)+"_"+tax+".fa")
+            logger_hog.debug(" no outgroup for "+address_outgroup+"outgroup_"+str(hogid)+"_"+tax+".fa")
 
     #logger_hog.debug("we are mergin subhogs"+len(list_msas))
     # logger_hog.debug(str(list_msas[0][0].id ) + "\n")
@@ -102,23 +102,27 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     time_taken_tree = wrapper_tree.elapsed_time
     result_tree2 = wrapper_tree.result
     tree_nwk = result_tree2["tree"].as_string(schema='newick') #str(result_tree2["tree"])
-    # using one rooting for all part of the levels , which didn't improve that much
-    # rhogid= gene_tree_file_addr.split("_")[1]
-    # from ete3 import Tree
-    # tree1= Tree("/scratch/smajidi1/relD_merg_single2/t/omamer_rhogs/HOG_"+rhogid+".fa_msa.nwk",format=1)
-    # logger_hog.info("gene tree read from the folder ")
-    # r_outgroup = tree1.get_midpoint_outgroup()
-    # try:
-    #     tree1.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
-    # except:
-    #     pass
-    # genes = [i.id for i in msa]
-    # try:
-    #     tree1.prune(genes)
-    # except:
-    #     logger_hog.warning("issue 1230971  prune issue _wrappers "+str(genes))
-    # tree_nwk= tree1.write(format=1)
-    #(msa, gene_tree_file_addr
+    if _config.add_outgroup:
+
+        # using one rooting for all part of the levels , which didn't improve that much
+        # rhogid= gene_tree_file_addr.split("_")[1]
+        # from ete3 import Tree
+        # tree1= Tree("/scratch/smajidi1/relD_merg_single2/t/omamer_rhogs/HOG_"+rhogid+".fa_msa.nwk",format=1)
+        # logger_hog.info("gene tree read from the folder ")
+
+        tree1=Tree(tree_nwk,format=1)
+        r_outgroup = tree1.get_midpoint_outgroup()
+        try:
+            tree1.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
+        except:
+            logger_hog.warning("issue 123092371  outgroup not set_outgroup "+str(r_outgroup))
+        genes = ["'"+i.id+"'" for i in msa]
+        try:
+            tree1.prune(genes)
+        except:
+            logger_hog.warning("issue 1230971  prune issue _wrappers "+str(genes))
+        tree_nwk= tree1.write(format=1)
+        #(msa, gene_tree_file_addr
 
     # current_time = datetime.now().strftime("%H:%M:%S")
     # for development we write the gene tree, the name of file should be limit in size in linux.
@@ -137,7 +141,7 @@ def infer_gene_tree(msa, gene_tree_file_addr):
 def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
 
     num_threads = 5
-    command_clust= "mmseqs easy - linclust - -threads" +str(num_threads) + " " +fasta_to_cluster+"singleton_unmapped tmp_linclust"
+    command_clust= "mmseqs easy-linclust --threads" +str(num_threads) + " " +fasta_to_cluster+"singleton_unmapped tmp_linclust"
 
     logger_hog.debug("linclust rooting started" + command_clust)
     process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
