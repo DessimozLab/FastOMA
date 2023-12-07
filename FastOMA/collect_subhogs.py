@@ -2,37 +2,60 @@ import os
 import pickle
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from xml.dom import minidom
+from datetime import datetime
+
 
 from Bio import SeqIO
 from ete3 import Tree
 
 from . import _config
 from ._config import logger_hog
+from ._utils_subhog import read_species_tree
 from .transformer import header_transformer
 from .zoo.hog import extract_flat_groups_at_level
 from .zoo.hog.convert import orthoxml_to_newick
+from . import __version__ as fastoma_version
 
 # This code collect subhogs and writes outputs.
 
 
-def load_hogs(pickle_folder: Path):
-    hogs_all = []
+def iter_hogs(pickle_folder: Path):
     cnt = 0
+    nr_hogs = 0
     logger_hog.info("reading pickle files from %s", pickle_folder)
     for root, dirs, files in os.walk(pickle_folder, followlinks=True):
         for f in files:
             if f.startswith('file_') and f.endswith('.pickle'):
                 with open(os.path.join(root, f), 'rb') as handle:
                     cur = pickle.load(handle)
-                hogs_all.extend(cur)
+                nr_hogs += len(cur)
+                yield from cur
                 cnt += 1
                 if cnt % 500 == 0:
                     logger_hog.info("read %d batch pickle files so far, resulting in %d roothogs so far",
-                                    cnt, len(hogs_all))
+                                    cnt, nr_hogs)
     logger_hog.info("number of pickle files is %d.", cnt)
-    logger_hog.debug("number of hogs in all batches is %d", len(hogs_all))
-    return hogs_all
+    logger_hog.debug("number of hogs in all batches is %d", nr_hogs)
+
+
+def convert_speciestree_to_orthoxml_taxonomy(tree:Tree):
+    cur_id = 1
+    name2id = {}
+    root = ET.Element("taxonomy")
+    for node in tree.traverse(strategy="preorder"):
+        try:
+            parent_xml = node.up.in_xml
+        except AttributeError:
+            parent_xml = root
+        xml_node = ET.SubElement(parent_xml, "taxon", {'id': str(cur_id), 'name': node.name})
+        name2id[node.name] = cur_id
+        node.add_feature('in_xml', xml_node)
+        cur_id += 1
+    return root, name2id
+
+
+def update_hogids(fam, hog):
+    return hog
 
 
 def max_og_tree(tree, species_dic):
@@ -95,6 +118,8 @@ def fastoma_collect_subhogs():
                              "this argument will be generated that contains single copy groups, i.e. groups which have " 
                              "at most one gene per species. Useful as phylogenetic marker genes to reconstruct species "
                              "trees.")
+    parser.add_argument('--species-tree', required=True,
+                        help="Path to the species tree used to infer the hogs")
     parser.add_argument('--id-transform', choices=("UniProt", "noop"), default="noop",
                         help="""ID transformer from fasta files to orthoxml / OrthologGroup
                              protein IDs. By default, no transformation will be done. 
@@ -106,7 +131,8 @@ def fastoma_collect_subhogs():
     logger_hog.debug(conf)
     id_transformer = header_transformer(conf.id_transform)
 
-    write_hog_orthoxml(conf.pickle_folder, conf.out, conf.gene_id_pickle_file, id_transformer)
+    write_hog_orthoxml(conf.pickle_folder, conf.out, conf.gene_id_pickle_file,
+                       id_transformer=id_transformer, species_tree=conf.species_tree)
     if conf.roothog_tsv is not None:
         write_roothogs(conf.out, conf.roothog_tsv)
     if conf.marker_groups_fasta is not None:
@@ -115,36 +141,46 @@ def fastoma_collect_subhogs():
                           id_transformer=id_transformer)
 
 
-def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_transformer):
+def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_transformer, species_tree):
     # todo as input argument/option in nextflow
 
     # in benchamrk dataset the output prot names should be short
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchmark, the middle should be written in the file
 
-    orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "OMA",
-                                                   "originVersion": "Nov 2021", "version": "0.3"})  #
+    orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/",
+                                                   "origin": "FastOMA "+fastoma_version,
+                                                   "originVersion": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                   "version": "0.5"})  #
 
     with open(gene_id_pickle_file, 'rb') as handle:
         gene_id_name = pickle.load(handle)
         # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
     logger_hog.debug("We read the gene_id_name dictionary with %d items", len(gene_id_name))
+
+    speciestree = read_species_tree(species_tree)
+    taxonomy, name2taxid = convert_speciestree_to_orthoxml_taxonomy(speciestree)
     logger_hog.debug("Now creating the header of orthoxml")
 
    #  #### create the header of orthoxml ####
     for query_species_name, list_prots in gene_id_name.items():
-        species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": query_species_name, "NCBITaxId": "1"})
+        species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": query_species_name, "taxonId": str(name2taxid[query_species_name]), "NCBITaxId": "0"})
         database_xml = ET.SubElement(species_xml, "database", attrib={"name": "database ", "version": "2023"})
         genes_xml = ET.SubElement(database_xml, "genes")
         for (gene_idx_integer, query_prot_name) in list_prots:
             prot_id = id_transformer.transform(query_prot_name)
             gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": prot_id})
     logger_hog.debug("gene_xml is created.")
+    orthoxml_file.append(taxonomy)
+
+    scores = ET.SubElement(orthoxml_file, "scores")
+    ET.SubElement(scores, "scoreDef", {"id": "CompletenessScore",
+                                       "desc": "Fraction of expected species with genes in the (Sub)HOG"})
 
     #  #### create the groups of orthoxml   ####
     groups_xml = ET.SubElement(orthoxml_file, "groups")
-    for hogs_a_rhog_xml in load_hogs(Path(pickle_folder)):
-        groups_xml.append(hogs_a_rhog_xml)
+    for fam, hogs_a_rhog_xml in enumerate(iter_hogs(Path(pickle_folder)), start=1):
+        groups_xml.append(update_hogids(fam, hogs_a_rhog_xml))
     logger_hog.debug("converting the xml object to string.")
     with open(output_xml_name, 'wb') as fh:
         ET.indent(orthoxml_file, space='  ', level=0)

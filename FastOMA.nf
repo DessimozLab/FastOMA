@@ -277,6 +277,7 @@ process collect_subhogs{
     path pickles, stageAs: "pickle_folders/?"
     path "gene_id_dic_xml.pickle"
     path rhogs //, stageAs: "omamer_rhogs/*"
+    path species_tree
   output:
     path "output_hog.orthoxml"
     path "OrthologousGroupsFasta"
@@ -290,6 +291,7 @@ process collect_subhogs{
                                 --out output_hog.orthoxml \
                                 --marker-groups-fasta OrthologousGroups.tsv \
                                 --roothog-tsv rootHOGs.tsv \
+                                --species-tree ${species_tree} \
                                 -vv
     """
 }
@@ -316,7 +318,7 @@ workflow {
     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test) = hog_rest(rhogs_rest_batches.flatten(), species_tree)
     channel.empty().concat(pickle_big_rhog, pickle_rest_rhog).set{ all_rhog_pickle }
 
-    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(all_rhog_pickle.collect(), gene_id_dic_xml, omamer_rhogs)
+    (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(all_rhog_pickle.collect(), gene_id_dic_xml, omamer_rhogs, species_tree)
 
 }
 
