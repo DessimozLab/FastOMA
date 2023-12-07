@@ -41,7 +41,7 @@ def fastoma_infer_roothogs():
 
     rhogs_prots = _utils_roothog.group_prots_roothogs(hogmaps)
     rhogs_prots = _utils_roothog.handle_singleton(rhogs_prots, hogmaps)
-    rhogs_prots = _utils_roothog.merge_rhogs(hogmaps, rhogs_prots)
+    rhogs_prots = _utils_roothog.merge_rhogs2(hogmaps, rhogs_prots)
     rhogs_prots = _utils_roothog.filter_big_roothogs(hogmaps, rhogs_prots)
 
 
