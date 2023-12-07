@@ -217,7 +217,7 @@ process infer_roothogs{
 
 process batch_roothogs{
   input:
-    path rhogs //, stageAs: "omamer_rhogs/"
+    path rhogs
   output:
     path "rhogs_rest/*", optional: true
     path "rhogs_big/*" , optional: true

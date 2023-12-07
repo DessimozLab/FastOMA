@@ -146,14 +146,10 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
     for hogs_a_rhog_xml in load_hogs(Path(pickle_folder)):
         groups_xml.append(hogs_a_rhog_xml)
     logger_hog.debug("converting the xml object to string.")
-
-    xml_str = minidom.parseString(ET.tostring(orthoxml_file)).toprettyxml(indent="   ")
-    # print(xml_str[:-1000])
-    logger_hog.debug("writing orthoxml started")
-    with open(output_xml_name, "w") as file_xml:
-        file_xml.write(xml_str)
-    file_xml.close()
-
+    with open(output_xml_name, 'wb') as fh:
+        ET.indent(orthoxml_file, space='  ', level=0)
+        orthoxml = ET.ElementTree(orthoxml_file)
+        orthoxml.write(fh, encoding="utf-8", xml_declaration=True, )
     logger_hog.info("orthoxml is written in %s", output_xml_name)
 
 
@@ -227,9 +223,9 @@ def write_roothogs(orthoxml, out):
     nr_prot_in_groups = 0
     with open(out, 'wt') as fh:
         fh.write("Group\tProtein\n")
-        for nr, grp in enumerate(extract_flat_groups_at_level(orthoxml)):
+        for nr, (grp, grp_id) in enumerate(extract_flat_groups_at_level(orthoxml, return_group_id=True)):
             for gene in grp:
-                fh.write(f"{nr+1}\t{gene.xref}\n")
+                fh.write(f"{grp_id}\t{gene.xref}\n")
                 nr_prot_in_groups += 1
     logger_hog.info("Nr roothogs: %d; nr proteins in all roothogs: %d", nr+1, nr_prot_in_groups)
     logger_hog.info("We wrote the protein families information in the file %s", out)

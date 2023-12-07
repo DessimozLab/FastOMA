@@ -1,4 +1,3 @@
-
 from ..utils import auto_open
 import collections
 from time import time
@@ -47,11 +46,12 @@ Gene = collections.namedtuple("Gene", "xref species internal_id")
 
 
 class GroupExtractor(object):
-    def __init__(self, target_clade:TaxLevel, gene_attr="protId"):
+    def __init__(self, target_clade:TaxLevel, gene_attr="protId", return_group_id=False):
         self.processed_stats = {'last': time(), 'processed_toplevel': 0}
         self.target_clade = target_clade
         self.gene_attr = gene_attr
         self.genes = {}
+        self.return_group_id = return_group_id
 
     def add_genome_genes(self, genome_node):
         genome_name = genome_node.get('name', None)
@@ -81,10 +81,15 @@ class GroupExtractor(object):
 
     def merge_children(self, node):
         genes = self._collect_genes(node)
+        og = node.get('id')
         node.clear()
         node.text = genes
+        if og:
+            node.set('id', og)
 
     def get_group(self, node):
+        if self.return_group_id:
+            return node.text, node.get('id', '')
         return node.text
 
     def analyze_and_yield_groups(self, node, is_toplevel=False):
@@ -92,7 +97,10 @@ class GroupExtractor(object):
         if self.target_clade.all_in_clade(genes):
             if is_toplevel:
                 logger.debug("dumping toplevel hog with {} genes (hog_id: {})".format(len(genes), node.get('id')))
-                yield genes
+                if self.return_group_id:
+                    yield genes, node.get('id')
+                else:
+                    yield genes
             else:
                 node.clear()
                 node.text = genes
@@ -102,7 +110,10 @@ class GroupExtractor(object):
                     continue
                 if self.target_clade.all_in_clade(group.text):
                     logger.debug("found hog with {} genes".format(len(group.text)))
-                    yield group.text
+                    if self.return_group_id:
+                        yield group.text, group.get('id')
+                    else:
+                        yield group.text
             node.clear()
             node.text = genes
 
@@ -150,7 +161,7 @@ def parse_orthoxml(fh, processor:GroupExtractor):
                 elem.clear()
 
 
-def extract_flat_groups_at_level(f, protein_attribute="protId", level=None):
+def extract_flat_groups_at_level(f, protein_attribute="protId", level=None, return_group_id=False):
     """Iterates over the groups defined in an orthoxml file at a specific taxonomic level.
 
     This function yields groups of Genes defined in an orthoxml file for a specific
@@ -170,11 +181,11 @@ def extract_flat_groups_at_level(f, protein_attribute="protId", level=None):
     :Example:
     >>> toplevel_groups = []
     >>> oxml = "tests/coverage_test_files/simpleEx.orthoxml"
-    >>> for grp in extract_flat_groups_at_level(oxml):
-    >>>     toplevel_groups.append(set(g.xref for g in grp))
-    [{"XENTR1", "CANFA1", "HUMAN1", "PANTR1", "MOUSE1", "RATNO1"},
-     {"HUMAN2", "PANTR2", "CANFA2", "MOUSE2"},
-     {"XENTR3", "MOUSE4", "MOUSE3", "CANFA3", "PANTR4", "PANTR3", "HUMAN3"}]
+    >>> for grp, grp_id in extract_flat_groups_at_level(oxml, return_group_id=True):
+    ...     toplevel_groups.append((set(g.xref for g in grp), grp_id))
+    [({"XENTR1", "CANFA1", "HUMAN1", "PANTR1", "MOUSE1", "RATNO1"}, "1"),
+     ({"HUMAN2", "PANTR2", "CANFA2", "MOUSE2"}, "2"),
+     ({"XENTR3", "MOUSE4", "MOUSE3", "CANFA3", "PANTR4", "PANTR3", "HUMAN3"}, "3")]
 
 
     :param f: filehandle of filename containing the orthoxml file.
@@ -182,17 +193,19 @@ def extract_flat_groups_at_level(f, protein_attribute="protId", level=None):
                               and that should be returned as xref attribute of the Gene.
                               The default value is the `protId` attribute.
     :param level: a `TaxLevel` instance.
+    :param return_group_id: whether or not a tuple ([members], group_id) or simply
+                            the [members] should be yield by the function for every group.
+                            For backward compability reasons, the default value is False.
     """
     if level is not None:
         if not isinstance(level, TaxLevel):
             raise ValueError("level argument should be a TaxLevel instance.")
-    processor = GroupExtractor(target_clade=level, gene_attr=protein_attribute)
+    processor = GroupExtractor(target_clade=level, gene_attr=protein_attribute, return_group_id=return_group_id)
     if isinstance(f, (str, bytes, Path)):
         with auto_open(f, 'rt') as fh:
             yield from parse_orthoxml(fh, processor)
     else:
         yield from parse_orthoxml(f, processor)
-
 
 
 
