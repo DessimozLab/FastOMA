@@ -279,18 +279,19 @@ process collect_subhogs{
     path rhogs //, stageAs: "omamer_rhogs/*"
     path species_tree
   output:
-    path "output_hog.orthoxml"
+    path "FastOMA_HOGs.orthoxml"
     path "OrthologousGroupsFasta"
     path "OrthologousGroups.tsv"
-    path "rootHOGs.tsv"
+    path "RootHOGs.tsv"
+    path "RootHOGsFasta"
   script:
     """
         fastoma-collect-subhogs --pickle-folder pickle_folders/ \
                                 --roothogs-folder omamer_rhogs/ \
                                 --gene-id-pickle-file gene_id_dic_xml.pickle \
-                                --out output_hog.orthoxml \
+                                --out FastOMA_HOGs.orthoxml \
                                 --marker-groups-fasta OrthologousGroups.tsv \
-                                --roothog-tsv rootHOGs.tsv \
+                                --roothog-tsv RootHOGs.tsv \
                                 --species-tree ${species_tree} \
                                 -vv
     """
