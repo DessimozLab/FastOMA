@@ -20,7 +20,8 @@ dependencies = [
     "lxml ~=4.3",
     "omamer ~=2.0",
     "pyham ~=1.1",
-    "pyparsing ",
+    "pyparsing",
+    "networkx",
 ]
 
 [project.optinal-dependencies]
