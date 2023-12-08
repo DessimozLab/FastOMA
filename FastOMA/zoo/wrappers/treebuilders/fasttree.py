@@ -144,6 +144,8 @@ def get_default_options():
         # Specify the number of rate categories of sites. Default 20.
         IntegerOption('-cat', 20, active=False),
 
+        IntegerOption('-seed',1234, active=False),
+
         # Specify starting tree
         StringOption('-intree', '', active=False),
 

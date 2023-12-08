@@ -277,6 +277,9 @@ def get_default_options():
         # Default: BLOSUM62
         IntegerOption('--jtt', 100, active=False),
 
+        IntegerOption('--randomseed', 1234, active=True),
+
+
         # Transmembrane PAM number (Jones et al. 1994) matrix is used. number>0.
         # Default: BLOSUM62
         IntegerOption('--tm', 100, active=False),

@@ -56,6 +56,9 @@ def merge_msa(list_msas, gene_tree_file_addr):
     # wrapper_mafft_merge.options['--anysymbol'].active = True
     wrapper_mafft_merge.options['--anysymbol'].set_value(True)
     wrapper_mafft_merge.options['--thread'].set_value(-1) # -1 uses a largely appropriate number of threads in each step, after automatically counting the number of physical cores the computer has.
+    # --randomseed
+    wrapper_mafft_merge.options['--randomseed'].set_value(_config.seed_random)
+
     merged = wrapper_mafft_merge()
     time_duration = wrapper_mafft_merge.elapsed_time
     # print(time_duration)
@@ -86,6 +89,10 @@ def infer_gene_tree(msa, gene_tree_file_addr):
         wrapper_tree.options.options['-fastest'].active = True  # speed up the neighbor joining phase in fasttree & reduce memory usage  (recommended for >50,000 sequences)
         #  we don't really need fastest for small dataset and making this False didn't make qfo result better
         wrapper_tree.options.options['-quote'].active = True   # .set_value(True)  doesnt work.
+        wrapper_tree.options.options['-seed'].set_value(_config.seed_random)
+
+
+
 
         #wrapper_tree.options.options['-quote'].active = True
         #wrapper_tree.options.options['-nt'].active = True
