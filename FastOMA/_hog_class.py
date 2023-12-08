@@ -3,6 +3,10 @@ import xml.etree.ElementTree as ET
 from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 from random import sample
+import random
+from . import _config
+
+random.seed(_config.seed_random)
 import itertools
 
 from . import _utils_subhog
