@@ -1,5 +1,8 @@
+import collections
+import gzip
 import os
 import pickle
+import string
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from datetime import datetime
@@ -12,7 +15,7 @@ from . import _config
 from ._config import logger_hog
 from ._utils_subhog import read_species_tree
 from .transformer import header_transformer
-from .zoo.hog import extract_flat_groups_at_level
+from .zoo.hog import extract_flat_groups_at_level, extract_marker_groups_at_level
 from .zoo.hog.convert import orthoxml_to_newick
 from . import __version__ as fastoma_version
 
@@ -54,51 +57,47 @@ def convert_speciestree_to_orthoxml_taxonomy(tree:Tree):
     return root, name2id
 
 
-def update_hogids(fam, hog):
+def update_hogids(fam, hog, name2taxid):
+
+    dupCnt = collections.defaultdict(int)
+    def _getNextSubId(idx):
+        """helper method to return the next number at a given depth of
+        duplication (idx)"""
+        dupCnt[idx - 1] += 1
+        return dupCnt[idx - 1]
+
+    def _encodeParalogClusterId(prefix, nr):
+        letters = []
+        while nr // 26 > 0:
+            letters.append(string.ascii_lowercase[nr % 26])
+            nr = nr // 26 - 1
+        letters.append(string.ascii_lowercase[nr % 26])
+        return prefix + ''.join(letters[::-1])
+
+    def _annotateGroupR(node: ET.ElementTree, og: str, idx: int = 0):
+        """create the og attributes at the orthologGroup elements
+        according to the naming schema of LOFT. ParalogGroup elements
+        do not get own attributes (not possible in the xml schema),
+        but propagate their sub-names for the subsequent orthologGroup
+        elements."""
+        if node.tag == "orthologGroup":
+            taxrange = node.find('./property[@name="TaxRange"]')
+            taxid = name2taxid[taxrange.get('value')]
+            node.set('id', f"{og}_{taxid}")
+            node.set('taxonId', str(taxid))
+            for child in node:
+                _annotateGroupR(child, og, idx)
+        elif node.tag == "paralogGroup":
+            idx += 1
+            nextOG = f"{og}.{_getNextSubId(idx)}"
+            for i, child in enumerate(list(node)):
+                _annotateGroupR(child, _encodeParalogClusterId(nextOG, i), idx)
+
+    omamer_roothog_id = ":".join(hog.get('id').split("_")[0:2])
+    fam_elem = ET.Element("property", {"name": "OMAmerRootHOG", "value": omamer_roothog_id})
+    hog.insert(1, fam_elem)
+    _annotateGroupR(hog, "HOG:{:07d}".format(fam))
     return hog
-
-
-def max_og_tree(tree, species_dic):
-    for node in tree.traverse("preorder"):
-        # for node in xml_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "attriremoved") and n.attriremoved==True):
-        if not node.is_leaf() and hasattr(node, "Ev") and node.Ev == 'duplication':  # node.name[:3] == "dup"
-            dup_node = node
-            children = dup_node.get_children()
-            list_num_species = []
-            for child in children:
-                child_name_leaves = child.get_leaves()
-                species_list = []
-                for leaf in child_name_leaves:
-                    name = leaf.name
-                    if name[:3] == "no_":
-                        name = leaf.name.split("_")[-1]
-                    if name in species_dic:
-                        species_name = species_dic[name]
-                        species_list.append(species_name)
-                    else:
-                        print("species not in the dic ", name)
-                species_set = set(species_list)
-                list_num_species.append(len(species_set))
-            index_max_species = list_num_species.index(max(list_num_species))
-            # if there are few children with identical number of species, the case would be not a polytomi but two children with one species
-            # num_occurence = [1 for i in list_num_species if i == max(list_num_species)]
-            # if len(num_occurence) > 1:
-            #    print("please check this case with the developer the tool. The tree has polytomy.")
-            child_max_species = children[index_max_species]
-            children_to_remove = [i for i in children if i != child_max_species]
-            for child_to_remove in children_to_remove:
-                for i in child_to_remove.get_leaves():
-                    i.in_og = "no"
-
-    og_prot_list = []
-    for node in tree.traverse("preorder"):
-        if node.is_leaf():
-            if hasattr(node, "in_og") and node.in_og == "no":
-                pass  # print(node.name)
-            else:
-                og_prot_list.append(node.name)
-
-    return og_prot_list
 
 
 def fastoma_collect_subhogs():
@@ -112,7 +111,9 @@ def fastoma_collect_subhogs():
     parser.add_argument('--out', required=False, default="output_hog.orthoxml", help="output filename in orthoxml")
     parser.add_argument('-v', action="count", default=0)
     parser.add_argument('--roothog-tsv', default=None, required=False,
-                        help="If specified, a tsv file with the given path will be produced containing the roothog asignments as TSV file.")
+                        help="If specified, a tsv file with the given path will be produced containing the roothog "
+                             "assignments as TSV file. In addition, a folder named RootHOGsFasta will be generated"
+                             "with one fasta file per inferred RootHOG.")
     parser.add_argument('--marker-groups-fasta', default=None, required=False,
                         help="If specified, a folder named OrthologousFasta and a TSV file with the name provided in "
                              "this argument will be generated that contains single copy groups, i.e. groups which have " 
@@ -134,10 +135,12 @@ def fastoma_collect_subhogs():
     write_hog_orthoxml(conf.pickle_folder, conf.out, conf.gene_id_pickle_file,
                        id_transformer=id_transformer, species_tree=conf.species_tree)
     if conf.roothog_tsv is not None:
-        write_roothogs(conf.out, conf.roothog_tsv)
+        write_roothogs(Path(conf.out), Path(conf.roothogs_folder),
+                       output_file_roothog_tsv=conf.roothog_tsv,
+                       id_transformer=id_transformer)
     if conf.marker_groups_fasta is not None:
         write_group_files(Path(conf.out), Path(conf.roothogs_folder),
-                          conf.marker_groups_fasta,
+                          output_file_og_tsv=conf.marker_groups_fasta,
                           id_transformer=id_transformer)
 
 
@@ -165,7 +168,7 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
    #  #### create the header of orthoxml ####
     for query_species_name, list_prots in gene_id_name.items():
         species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": query_species_name, "taxonId": str(name2taxid[query_species_name]), "NCBITaxId": "0"})
-        database_xml = ET.SubElement(species_xml, "database", attrib={"name": "database ", "version": "2023"})
+        database_xml = ET.SubElement(species_xml, "database", attrib={"name": "database", "version": "2023"})
         genes_xml = ET.SubElement(database_xml, "genes")
         for (gene_idx_integer, query_prot_name) in list_prots:
             prot_id = id_transformer.transform(query_prot_name)
@@ -180,7 +183,7 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
     #  #### create the groups of orthoxml   ####
     groups_xml = ET.SubElement(orthoxml_file, "groups")
     for fam, hogs_a_rhog_xml in enumerate(iter_hogs(Path(pickle_folder)), start=1):
-        groups_xml.append(update_hogids(fam, hogs_a_rhog_xml))
+        groups_xml.append(update_hogids(fam, hogs_a_rhog_xml, name2taxid))
     logger_hog.debug("converting the xml object to string.")
     with open(output_xml_name, 'wb') as fh:
         ET.indent(orthoxml_file, space='  ', level=0)
@@ -189,82 +192,81 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
     logger_hog.info("orthoxml is written in %s", output_xml_name)
 
 
+def callback_group_and_omamer(node):
+    omamer_node = node.find('./{http://orthoXML.org/2011/}property[@name="OMAmerRootHOG"]')
+    omamer = omamer_node.get('value') if omamer_node is not None else 'n/a'
+    return {"group_id": node.get('id', 'n/a').split('_')[0],
+            "omamer_roothog": omamer}
+
+
 def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=None, output_fasta_groups=None, id_transformer=None):
     if output_file_og_tsv is None:
         output_file_og_tsv = "OrthologousGroups.tsv"
     if output_fasta_groups is None:
         output_fasta_groups = "OrthologousGroupsFasta"
     output_fasta_groups = Path(output_fasta_groups)
-
-
-    logger_hog.info("Start writing OG fasta files ")
-
-    fasta_format = "fa"  # of the rhogs
-
-    trees, species_dic = orthoxml_to_newick(orthoxml, return_gene_to_species=True)
-    logger_hog.info("We extracted %d trees in NHX format from the input HOG orthoxml %s", len(trees),  orthoxml)
-
-    OGs = {}
-    for hog_id, tree_string in trees.items():
-        try:
-            tree = Tree(tree_string, format=1)
-        except:
-            try:
-                tree = Tree(tree_string, format=1, quoted_node_names=True)
-            except:
-                logger_hog.error("Error loading tree", tree_string)
-                raise
-
-        og_prot_list = max_og_tree(tree, species_dic)
-        if len(og_prot_list) >= 2:  # a group should have at least 1 member/protein
-            OGs[hog_id] = og_prot_list
-
-    logger_hog.info("done extracting trees")
-
-    with open(output_file_og_tsv, 'w') as handle:
-        handle.write("Group\tProtein\n")
-        for hog_id, og_prot_list in OGs.items():
-            for prot in og_prot_list:
-                handle.write(f"OG_{hog_id}\t{prot}\n")
-
-    logger_hog.info("We wrote the protein families information in the file %s", output_file_og_tsv)
-
     output_fasta_groups.mkdir(parents=True, exist_ok=True)
-    logger_hog.info("start writing %d OGs as fasta files in folder %s.", len(OGs), output_fasta_groups)
-    for hog_id, og_prot_list in OGs.items():  # hog_id="HOG_0667494_sub10524"
-        rhog_id = "_".join(hog_id.split("_")[:2])
 
-        rhog_fasta = roothog_folder / (rhog_id + "." + fasta_format)
-        omamer_rhogs_all_prots = list(SeqIO.parse(rhog_fasta, "fasta"))
+    logger_hog.info("Start writing OG tsv and fasta files")
+    fasta_format = "fa"  # of the rhogs
+    nr_prot_in_groups, nr_groups = 0, 0
+    with open(output_file_og_tsv, 'w') as tsv:
+        tsv.write("Group\tProtein\n")
+        for grp, meta in extract_marker_groups_at_level(orthoxml, protein_attribute="protId", callback=callback_group_and_omamer):
+            group_members = {g.xref for g in grp}
+            group_name = meta['group_id'].replace("HOG:", "OG_")
+            nr_prot_in_groups += len(grp)
+            nr_groups += 1
+            for gene in group_members:
+                tsv.write(f"{group_name}\t{gene}\n")
 
-        og_prots = []
-        og_prot_list = OGs[hog_id]
-        for rhogs_prot in omamer_rhogs_all_prots:
-            orig_id, sp, *rest = rhogs_prot.id.split("||")
-            prot_id = id_transformer.transform(orig_id)
-            if prot_id in og_prot_list:
-                rhogs_prot.id = prot_id
-                rhogs_prot.description += " [" + sp + "]"
-                og_prots.append(rhogs_prot)
-
-        og_id = "OG_" + hog_id  # one OG per rootHOG      # "/HOG_"+ rhogid
-        SeqIO.write(og_prots, output_fasta_groups / (og_id + ".fa"), "fasta")
-    logger_hog.info("writing done")
+            _write_group_fasta(fasta_format, group_members, group_name, id_transformer, meta, output_fasta_groups,
+                               roothog_folder)
+    logger_hog.info("writing of %s done. created %d groups containing %d proteins in total",
+                    output_file_og_tsv, nr_groups, nr_prot_in_groups)
 
 
-def write_roothogs(orthoxml, out):
-    if out is None:
-        out = "rootHOGs.tsv"
+def write_roothogs(orthoxml: Path, roothog_folder: Path, output_file_roothog_tsv=None, output_fasta_groups=None, id_transformer=None):
+    if output_file_roothog_tsv is None:
+        output_file_roothog_tsv = "RootHOGs.tsv"
+    if output_fasta_groups is None:
+        output_fasta_groups = "RootHOGsFasta"
+    output_fasta_groups = Path(output_fasta_groups)
+    output_fasta_groups.mkdir(parents=True, exist_ok=True)
 
-    nr_prot_in_groups = 0
-    with open(out, 'wt') as fh:
-        fh.write("Group\tProtein\n")
-        for nr, (grp, grp_id) in enumerate(extract_flat_groups_at_level(orthoxml, return_group_id=True)):
-            for gene in grp:
-                fh.write(f"{grp_id}\t{gene.xref}\n")
-                nr_prot_in_groups += 1
-    logger_hog.info("Nr roothogs: %d; nr proteins in all roothogs: %d", nr+1, nr_prot_in_groups)
-    logger_hog.info("We wrote the protein families information in the file %s", out)
+    logger_hog.info("Start writing RootHOG tsv and fasta files")
+    fasta_format = "fa"  # of the rhogs
+    nr_prot_in_groups, nr_groups = 0, 0
+    with open(output_file_roothog_tsv, 'wt') as tsv:
+        tsv.write("RootHOG\tProtein\n")
+        for grp, meta in extract_flat_groups_at_level(orthoxml, callback=callback_group_and_omamer):
+            group_members = {g.xref for g in grp}
+            group_name = meta['group_id']
+            nr_prot_in_groups += len(grp)
+            nr_groups += 1
+            for gene in group_members:
+                tsv.write(f"{group_name}\t{gene}\n")
+
+            _write_group_fasta(fasta_format, group_members, group_name, id_transformer, meta, output_fasta_groups,
+                               roothog_folder)
+
+    logger_hog.info("writing of %s done. created %d groups containing %d proteins in total",
+                    output_file_roothog_tsv, nr_groups, nr_prot_in_groups)
+
+
+def _write_group_fasta(fasta_format, group_members, group_name, id_transformer, meta, output_fasta_groups,
+                       roothog_folder):
+    group_seqs = []
+    rhog_fasta = roothog_folder / (meta['omamer_roothog'].replace(':', '_') + "." + fasta_format)
+    for rec in SeqIO.parse(rhog_fasta, "fasta"):
+        orig_id, sp, *rest = rec.id.split("||")
+        protid = id_transformer.transform(orig_id)
+        if protid in group_members:
+            rec.id = protid
+            rec.description += " [" + sp + "]"
+            group_seqs.append(rec)
+    with gzip.open(output_fasta_groups / (group_name + "." + fasta_format + ".gz"), 'wt') as fa_out:
+        SeqIO.write(group_seqs, fa_out, "fasta")
 
 
 if __name__ == "__main__":
