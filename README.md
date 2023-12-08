@@ -111,7 +111,7 @@ FastOMA-0.0.6
 
 You can check your installation with running one of submodules of FastOMa
 ``` 
-infer-roothogs --version
+fastoma-infer-roothogs --version
 ```
 
 You can make sure that omamer and nextflow is installed with running  

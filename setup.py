@@ -19,7 +19,7 @@ setup(
     version=__version__,
     author='',
     email='',
-    url='https://github.com/DessimozLab/gethog3',
+    url='https://github.com/DessimozLab/FastOMA',
     description=desc,
     packages=find_packages(),
     install_requires=requirements,
