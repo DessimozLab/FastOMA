@@ -90,7 +90,7 @@ class GroupExtractor(object):
         for c in to_rem:
             try:
                 node.remove(c)
-            except KeyError:
+            except ValueError:
                 logger.warning("cannot remove element %s", c)
         return genes
 
