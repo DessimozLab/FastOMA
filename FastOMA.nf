@@ -293,7 +293,7 @@ process collect_subhogs{
                                 --marker-groups-fasta OrthologousGroups.tsv \
                                 --roothog-tsv RootHOGs.tsv \
                                 --species-tree ${species_tree} \
-                                -vv
+                                -vv  --id-transform UniProt
     """
 }
 
