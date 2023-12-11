@@ -244,8 +244,6 @@ process hog_big{
     """
         fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig}  \
                                --species-tree ${species_tree} \
-                               --fragment-detection \
-                               --low-so-detection \
                                --parallel
     """
 }
@@ -263,9 +261,7 @@ process hog_rest{
   script:
     """
         fastoma-infer-subhogs --input-rhog-folder ${rhogsrest}  \
-                              --species-tree ${species_tree} \
-                              --fragment-detection \
-                              --low-so-detection
+                              --species-tree ${species_tree}
                               #--out pickle_hogs
     """
 }
