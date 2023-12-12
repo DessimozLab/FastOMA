@@ -299,12 +299,13 @@ process extract_pairwise_ortholog_relations {
   publishDir params.output_folder, mode: 'copy'
   input:
     path orthoxml
+    val nr_species
   output:
     path "orthologs.tsv.gz"
   script:
     """
         fastoma-helper -vv pw-rel --orthoxml $orthoxml \
-                                  --out orthologs.tsv \
+                                  --out orthologs.tsv.gz \
                                   --type ortholog
     """
 }
@@ -322,6 +323,7 @@ workflow {
     (species_tree_checked, ready_input_check) = check_input(proteome_folder, hogmap_in, species_tree, omamerdb, splice_folder)
     omamer_input_channel = proteomes.combine(omamerdb).combine(hogmap_in).combine(ready_input_check)
     hogmap = omamer_run(omamer_input_channel)
+    nr_species = hogmap.count()
 
     (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(hogmap.collect(), proteome_folder, splice_folder)
 
@@ -332,7 +334,11 @@ workflow {
     channel.empty().concat(pickle_big_rhog, pickle_rest_rhog).set{ all_rhog_pickle }
 
     (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(all_rhog_pickle.collect(), gene_id_dic_xml, omamer_rhogs, species_tree_checked, params.fasta_header_id_transformer)
-    extract_pairwise_ortholog_relations(orthoxml_file)
+    c = hogmap.count().branch{ n->
+        TRUE: n<=25
+        FALSE: n>25
+    }
+    extract_pairwise_ortholog_relations(orthoxml_file, c.TRUE)
 }
 
 workflow.onComplete {
