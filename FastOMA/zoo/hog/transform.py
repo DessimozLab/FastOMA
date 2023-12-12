@@ -42,7 +42,7 @@ class BaseRelationExtractor(with_metaclass(ABCMeta, object)):
 
     def _extract_pw(self, node):
         if self.is_leaf(node):
-            return set([self.leaf_label(node)])
+            return {self.leaf_label(node)}
         elif self.is_internal_node(node):
             nodes_of_children = [self._extract_pw(child) for child in self.get_children(node)]
             if self.shall_extract_from_node(node):
@@ -73,8 +73,18 @@ class BaseRelationExtractor(with_metaclass(ABCMeta, object)):
 
 
 class OrthoXmlRelationExtractor(BaseRelationExtractor):
-    def __init__(self, fh):
+    def __init__(self, fh, id_attribute=None, **kwargs):
         super(OrthoXmlRelationExtractor, self).__init__(fh)
+        if id_attribute is not None:
+            self.geneRef_to_id = {}
+            ns = "{http://orthoXML.org/2011/}"
+            for g in self.obj.findall(f'./{ns}species/{ns}database/{ns}genes/{ns}gene'):
+                try:
+                    self.geneRef_to_id[g.get('id')] = g.get(id_attribute)
+                except AttributeError:
+                    raise KeyError(f"gene {g} does not have an attribute '{id_attribute}'")
+        else:
+            self.geneRef_to_id = None
 
     def default_node_list(self):
         return self.obj.find(".//{http://orthoXML.org/2011/}groups")
@@ -86,7 +96,10 @@ class OrthoXmlRelationExtractor(BaseRelationExtractor):
         return lxml.etree.QName(node).localname in ('orthologGroup', 'paralogGroup')
 
     def leaf_label(self, leaf):
-        return leaf.get('id')
+        res = leaf.get('id')
+        if self.geneRef_to_id:
+            res = self.geneRef_to_id[res]
+        return res
 
     def is_leaf(self, node):
         return lxml.etree.QName(node).localname == "geneRef"
@@ -149,6 +162,11 @@ def iter_pairwise_relations(obj, rel_type=None, node=None, **kwargs):
         Defaults to the root of the tree or the <groups> tag
         respectively.
 
+    :param id_attribute: applies only for orthoxml files. If parameter
+        is provided, instead of the internal geneRef-id, the value that
+        is stored in the gene under the given attribute is returned. So
+        meaningful values can be `protId` or `geneId`.
+
     :param kwargs: additional arguments that are passed. So far
         none will be used. Foreseen examples would be a callback
         function on leaf nodes.
@@ -164,7 +182,7 @@ def iter_pairwise_relations(obj, rel_type=None, node=None, **kwargs):
         [('2', '3'), ('2', '4')]
     """
     if hasattr(obj, 'docinfo') and obj.docinfo.root_name == "orthoXML":
-        parser = OrthoXmlRelationExtractor(obj)
+        parser = OrthoXmlRelationExtractor(obj, **kwargs)
     elif isinstance(obj, dpy.Tree):
         parser = TreeRelationExtractor(obj)
 

@@ -24,7 +24,7 @@ dependencies = [
     "networkx",
 ]
 
-[project.optinal-dependencies]
+[project.optional-dependencies]
 nextflow = [
     "nextflow"
 ]
@@ -36,6 +36,7 @@ fastoma-check-input = "FastOMA.check_input:fastoma_check_input"
 fastoma-collect-subhogs = "FastOMA.collect_subhogs:fastoma_collect_subhogs"
 fastoma-infer-roothogs = "FastOMA.infer_roothogs:fastoma_infer_roothogs"
 fastoma-infer-subhogs = "FastOMA.infer_subhogs:fastoma_infer_subhogs"
+fastoma-helper = "FastOMA.helper_scripts:main"
 
 [project.urls]
 Homepage = "https://github.com/DessimozLab/FastOMA"
