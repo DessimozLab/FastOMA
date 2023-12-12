@@ -39,6 +39,8 @@ gene_trees_write_all = False
 msa_write_all = False
 keep_subhog_each_pickle = False
 
+seed_random=1234
+
 big_rhog_size = 50 * 1000
 omamer_family_threshold = 0
 
