@@ -230,8 +230,81 @@ process batch_roothogs{
     """
 }
 
+
+def getMaxFileSize = { Path folderPath ->
+    def maxFileSize = 0L // Initialize maximum file size
+
+    def traverseFolder = { Path currentPath ->
+        def currentFile = currentPath.toFile()
+
+        if (currentFile.isDirectory()) {
+            def files = currentFile.listFiles()
+            if (files) {
+                files.each { file ->
+                    if (file.isDirectory()) {
+                        traverseFolder(file.toPath()) // Recursively traverse subdirectories
+                    } else {
+                        def fileSize = file.length()
+                        if (fileSize > maxFileSize) {
+                            maxFileSize = fileSize // Update maximum file size if larger
+                        }
+                    }
+                }
+            }
+        } else {
+            def fileSize = currentFile.length()
+            if (fileSize > maxFileSize) {
+                maxFileSize = fileSize // Update maximum file size if larger
+            }
+        }
+    }
+
+    traverseFolder(folderPath)
+    return maxFileSize
+}
+
+// function to check maximum resources
+def check_max(obj, type) {
+    if (type == 'memory') {
+        try {
+            if (obj.compareTo(params.max_memory as nextflow.util.MemoryUnit) == 1)
+                return params.max_memory as nextflow.util.MemoryUnit
+            else
+                return obj
+        } catch (all) {
+            println "   ### ERROR ###   Max memory '${params.max_memory}' is not valid! Using default value: $obj"
+            return obj
+        }
+    } else if (type == 'time') {
+        try {
+            if (obj.compareTo(params.max_time as nextflow.util.Duration) == 1)
+                return params.max_time as nextflow.util.Duration
+            else
+                return obj
+        } catch (all) {
+            println "   ### ERROR ###   Max time '${params.max_time}' is not valid! Using default value: $obj"
+            return obj
+        }
+    } else if (type == 'cpus') {
+        try {
+            return Math.min( obj, params.max_cpus as int )
+        } catch (all) {
+            println "   ### ERROR ###   Max cpus '${params.max_cpus}' is not valid! Using default value: $obj"
+            return obj
+        }
+    }
+}
+
+def mem_cat(filesize){
+    if (filesize < 1000000) return 6.GB;
+    else if (filesize < 2000000) return 15.GB;
+    else if (filesize < 5000000) return 30.GB;
+    else return 50.GB;
+}
+
 process hog_big{
-  label "process_high"
+  cpus { check_max( 6, "cpus") }
+  memory { check_max( mem_cat(getMaxFileSize(rhogsbig)) * task.attempt, "memory")}
 
   input:
     each rhogsbig
