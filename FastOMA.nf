@@ -296,15 +296,22 @@ def check_max(obj, type) {
 }
 
 def mem_cat(filesize){
-    if (filesize < 1000000) return 6.GB;
-    else if (filesize < 2000000) return 15.GB;
-    else if (filesize < 5000000) return 30.GB;
-    else return 50.GB;
+    if (filesize < 1000000) return 12.GB;
+    else if (filesize < 2000000) return 20.GB;
+    else if (filesize < 5000000) return 32.GB;
+    else return 64.GB;
+}
+
+def time_cat(filesize){
+    if (filesize < 1000000) return 4.h;
+    else if (filesize < 20000000) return 24.h;
+    else return 72.h;
 }
 
 process hog_big{
-  cpus { check_max( 6, "cpus") }
-  memory { check_max( mem_cat(getMaxFileSize(rhogsbig)) * task.attempt, "memory")}
+  cpus { check_max( 4, "cpus") }
+  memory { check_max( mem_cat(getMaxFileSize(rhogsbig)) * task.attempt, "memory") }
+  time { check_max( time_cat(getMaxFileSize(rhogsbig)) * task.attempt, "time") }
 
   input:
     each rhogsbig
