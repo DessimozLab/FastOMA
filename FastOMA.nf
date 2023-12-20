@@ -295,27 +295,32 @@ def check_max(obj, type) {
     }
 }
 
-def mem_cat(filesize){
-    if (filesize < 1000000) return 12.GB;
-    else if (filesize < 2000000) return 20.GB;
-    else if (filesize < 5000000) return 32.GB;
-    else return 64.GB;
+def mem_cat(filesize, nr_genomes){
+    def fac = 1;
+    if (nr_genomes > 500) fac = 2;
+    if (filesize < 1000000) return 12.GB * fac;
+    else if (filesize < 2000000) return 20.GB * fac;
+    else if (filesize < 5000000) return 32.GB * fac;
+    else return 64.GB * fac;
 }
 
-def time_cat(filesize){
-    if (filesize < 1000000) return 4.h;
-    else if (filesize < 20000000) return 24.h;
-    else return 72.h;
+def time_cat(filesize, nr_genomes){
+    def fac = 1;
+    if (nr_genomes > 500) fac = 2;
+    if (filesize < 1000000) return 4.h * fac;
+    else if (filesize < 20000000) return 24.h * fac;
+    else return 72.h * fac;
 }
 
 process hog_big{
   cpus { check_max( 4, "cpus") }
-  memory { check_max( mem_cat(getMaxFileSize(rhogsbig)) * task.attempt, "memory") }
-  time { check_max( time_cat(getMaxFileSize(rhogsbig)) * task.attempt, "time") }
+  memory { check_max( mem_cat(getMaxFileSize(rhogsbig), nr_species as int) * task.attempt, "memory") }
+  time { check_max( time_cat(getMaxFileSize(rhogsbig), nr_species as int) * task.attempt, "time") }
 
   input:
     each rhogsbig
     path species_tree
+    val nr_species
   output:
     path "pickle_hogs"
     path "msa/*.fa" , optional: true          // msa         if write True
@@ -409,7 +414,7 @@ workflow {
 
     (rhogs_rest_batches, rhogs_big_batches) = batch_roothogs(omamer_rhogs)
 
-    (pickle_big_rhog, msa_out_big, genetrees_out_rest) = hog_big(rhogs_big_batches.flatten(), species_tree_checked)
+    (pickle_big_rhog, msa_out_big, genetrees_out_rest) = hog_big(rhogs_big_batches.flatten(), species_tree_checked, nr_species)
     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test) = hog_rest(rhogs_rest_batches.flatten(), species_tree_checked)
     channel.empty().concat(pickle_big_rhog, pickle_rest_rhog).set{ all_rhog_pickle }
 
