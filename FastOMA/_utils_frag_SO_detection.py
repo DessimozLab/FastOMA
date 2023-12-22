@@ -186,11 +186,15 @@ def find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic):
                     for node_child in node_children:
                         list_leaves = [i.name for i in node_child.get_leaves()]
                         child_size.append(len(list_leaves))
+                        dubious_children = []
                         for prot_name in list_leaves:
                             if prot_name.split("||")[1] == species_dubious_sd:
-                                prot_dubious_list.append(prot_name)
+                                #prot_dubious_list.append(prot_name)
+                                dubious_children.append(prot_name)
+                        prot_dubious_list.append(dubious_children)
+
                     #try:
-                    subhogs_list = [i.split("|_|")[1][:-1] for i in prot_dubious_list]  # subhog id at child level
+                    # subhogs_list = [i.split("|_|")[1][:-1] for i in prot_dubious_list]  # subhog id at child level
                     #  ["'tr|Q4V8S5|Q4V8S5_DANRE||DANRE||1000020519|_|sub12962'"]
                     # the last char is ', watch out!
 
