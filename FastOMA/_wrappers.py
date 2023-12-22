@@ -26,7 +26,7 @@ def merge_msa(list_msas, gene_tree_file_addr):
 
     if _config.add_outgroup:
         try:
-            address_outgroup = "/scratch/smajidi1/qfo/outgroup_v3/"
+            address_outgroup = "/scratch/smajidi1/qfo/outgroup_v4/"
             gene_tree_file_addr_split = gene_tree_file_addr.split("_")
             hogid = gene_tree_file_addr_split[1]
             tax= gene_tree_file_addr_split[2]

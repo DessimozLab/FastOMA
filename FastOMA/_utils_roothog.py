@@ -1072,11 +1072,14 @@ def find_outgroup_prot(dic_outgroup_species, rhog_prot):
         outgroup_prots = []
         for sp in outgroup_species:
             prot_list = dic_prot_sp[sp]
-            if len(prot_list) > 1:
-                outgroup_prots.append((sp, prot_list[0]))
-                outgroup_prots.append((sp, prot_list[1]))
-            else:
-                outgroup_prots.append((sp, prot_list[0]))
+            for prot in prot_list:
+                outgroup_prots.append((sp, prot))
+
+            # if len(prot_list) > 1:
+            #     outgroup_prots.append((sp, prot_list[0]))
+            #     outgroup_prots.append((sp, prot_list[1]))
+            # else:
+            #     outgroup_prots.append((sp, prot_list[0]))
 
         dic_outgroup_prot[tax] = outgroup_prots
 

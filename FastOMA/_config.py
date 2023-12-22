@@ -29,7 +29,7 @@ threshod_f_score_merging = 70
 mergHOG_mean_thresh=5000*1000
 
 
-add_outgroup = False
+add_outgroup = True
 rooting_method = "midpoint" #"Nevers_rooting" #"midpoint"#"midpoint"  # "midpoint" "mad"
 
 
