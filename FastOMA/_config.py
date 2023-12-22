@@ -30,14 +30,15 @@ mergHOG_mean_thresh=5000*1000
 
 
 add_outgroup = True
+outgroup_ready = True
 rooting_method = "midpoint" #"Nevers_rooting" #"midpoint"#"midpoint"  # "midpoint" "mad"
 
 
-gene_trees_write = False
-msa_write = False
-gene_trees_write_all = False
-msa_write_all = False
-keep_subhog_each_pickle = False
+gene_trees_write = True
+msa_write = True
+gene_trees_write_all = True
+msa_write_all = True
+keep_subhog_each_pickle = True
 
 seed_random=1234
 
