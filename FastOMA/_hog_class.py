@@ -80,8 +80,8 @@ class HOG:
             assert False
 
     def __repr__(self):
-        return "HOGobj:" + self._hogid + ",size=" + str(
-            len(self._members))+", taxLeast=" + str(self._tax_least) + ", taxNow= " + str(self._tax_now)
+        return "<HOGobj:" + self._hogid + ",size=" + str(
+            len(self._members))+", taxLeast=" + str(self._tax_least) + ", taxNow= " + str(self._tax_now)+">"
 
     def get_members(self):
         return set(self._members)
@@ -89,7 +89,7 @@ class HOG:
     def get_dubious_members(self):
         return self._dubious_members
 
-    def remove_prot_from_hog(self, prot_to_remove):
+    def remove_prot_from_hog(self, prot_to_remove): # recursive should happen elsewher, self._subhog (children subhogs)
         prot_members_hog_old = self._members
         assert prot_members_hog_old
         prot_members_hog_edited = prot_members_hog_old - set([prot_to_remove])
@@ -97,6 +97,36 @@ class HOG:
         msa_old = self._msa     #  we may want to edit the msa of children level to be consistent
         msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id != prot_to_remove])
         self._msa = msa_edited
+        if len(prot_members_hog_edited) == 0:  # hog should be removed, no members is left
+            return 0
+        return 1
+
+    # def remove_protlist_from_hog(self, protlist_to_remove):
+    #     # recursive should happen elsewher, self._subhog (children subhogs
+    #     prot_members_hog_old = self._members
+    #     assert prot_members_hog_old
+    #     prot_members_hog_edited = prot_members_hog_old - set(protlist_to_remove)
+    #     self._members = prot_members_hog_edited # self._members.remove(prot_to_remove)    # discard
+    #     msa_old = self._msa     #  we may want to edit the msa of children level to be consistent
+    #     msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id not in protlist_to_remove])
+    #     self._msa = msa_edited
+    #     if len(prot_members_hog_edited) == 0:  # hog should be removed, no members is left
+    #         return 0
+    #     return 1
+
+    def prune(self, protlist_to_keep):
+        prot_members_hog_old = self._members
+        assert prot_members_hog_old
+        prot_members_hog_edited = set([i for i in prot_members_hog_old if i in protlist_to_keep ])
+        prot_not_inmember = [i for i in protlist_to_keep if i  not in prot_members_hog_old]
+        if prot_not_inmember:
+            logger_hog.warning("Some proteins are not in the subhog"+str(self._hogid)+":"+str(prot_not_inmember))
+        self._members = prot_members_hog_edited # self._members.remove(prot_to_remove)    # discard
+        msa_old = self._msa     #  we may want to edit the msa of children level to be consistent
+        msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id in protlist_to_keep])
+        self._msa = msa_edited
+        hogid_old = self._hogid
+        self._hogid = hogid_old +"_2"
         if len(prot_members_hog_edited) == 0:  # hog should be removed, no members is left
             return 0
         return 1

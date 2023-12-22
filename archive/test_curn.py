@@ -9,8 +9,8 @@ from FastOMA.infer_subhogs import fastoma_infer_subhogs
 # --input-rhog-folder ./bb/ --parrallel True  --species-tree species_tree.nwk
 
 #a=2
-#fastoma_infer_subhogs()
-fastoma_infer_roothogs()
+fastoma_infer_subhogs()
+#fastoma_infer_roothogs()
 
 #
 # from FastOMA.zoo.hog import transform
