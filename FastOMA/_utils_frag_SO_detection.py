@@ -227,7 +227,11 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
     itr_so = 0
     while all_species_dubious_sd_dic_updated and itr_so< 10: # todo future parameter 10
         logger_hog.debug("These are found with low SO score all_species_dubious_sd_dic " + str(all_species_dubious_sd_dic_updated)+" which are now being handled itr"+str(itr_so)+" .")
-        prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic_updated)
+        prot_dubious_sd_remove_list_nested = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic_updated)
+        prot_dubious_sd_remove_list = []
+        for prot_list in prot_dubious_sd_remove_list_nested:
+            prot_dubious_sd_remove_list += prot_list
+
         if prot_dubious_sd_remove_list:
             rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list)
             gene_tree.prune(rest_leaves, preserve_branch_length=True)
