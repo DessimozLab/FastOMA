@@ -209,7 +209,7 @@ def find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic):
                     #     #all of them are from the same subhog, so it doesn't matter, a duplication event doesn't affect when all are from the same subhog at children level
 
                     child_size_min_indx = child_size.index(min(child_size))
-                    prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx]) # ["'sp|Q9PRL8|ACBP_CHICK||CHICK||1020017457|_|sub10101'"]
+                    prot_dubious_sd_remove_list += prot_dubious_list[child_size_min_indx] # ["'sp|Q9PRL8|ACBP_CHICK||CHICK||1020017457|_|sub10101'"]
 
                     # except:
                     #    logger_hog.warning("issue 2495869: prot_dubious_list doesnt include the hog id . so we'll  keep it" + str(prot_dubious_list)+ " " +str(gene_tree.write(format=1, format_root_node=True) ) )
@@ -227,10 +227,7 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
     itr_so = 0
     while all_species_dubious_sd_dic_updated and itr_so< 10: # todo future parameter 10
         logger_hog.debug("These are found with low SO score all_species_dubious_sd_dic " + str(all_species_dubious_sd_dic_updated)+" which are now being handled itr"+str(itr_so)+" .")
-        prot_dubious_sd_remove_list_nested = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic_updated)
-        prot_dubious_sd_remove_list = []
-        for prot_list in prot_dubious_sd_remove_list_nested:
-            prot_dubious_sd_remove_list += prot_list
+        prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic_updated)
 
         if prot_dubious_sd_remove_list:
             rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list)
