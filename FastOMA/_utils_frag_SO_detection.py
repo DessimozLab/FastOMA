@@ -186,11 +186,15 @@ def find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic):
                     for node_child in node_children:
                         list_leaves = [i.name for i in node_child.get_leaves()]
                         child_size.append(len(list_leaves))
+                        dubious_children = []
                         for prot_name in list_leaves:
                             if prot_name.split("||")[1] == species_dubious_sd:
-                                prot_dubious_list.append(prot_name)
+                                #prot_dubious_list.append(prot_name)
+                                dubious_children.append(prot_name)
+                        prot_dubious_list.append(dubious_children)
+
                     #try:
-                    subhogs_list = [i.split("|_|")[1][:-1] for i in prot_dubious_list]  # subhog id at child level
+                    # this need change, prot_dubious_list is now a list of list  subhogs_list = [i.split("|_|")[1][:-1] for i in prot_dubious_list]  # subhog id at child level
                     #  ["'tr|Q4V8S5|Q4V8S5_DANRE||DANRE||1000020519|_|sub12962'"]
                     # the last char is ', watch out!
 
@@ -205,7 +209,8 @@ def find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic):
                     #     #all of them are from the same subhog, so it doesn't matter, a duplication event doesn't affect when all are from the same subhog at children level
 
                     child_size_min_indx = child_size.index(min(child_size))
-                    prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx]) # ["'sp|Q9PRL8|ACBP_CHICK||CHICK||1020017457|_|sub10101'"]
+                    #prot_dubious_sd_remove_list.append(prot_dubious_list[child_size_min_indx]) # ["'sp|Q9PRL8|ACBP_CHICK||CHICK||1020017457|_|sub10101'"]
+                    prot_dubious_sd_remove_list += prot_dubious_list[child_size_min_indx]
 
                     # except:
                     #    logger_hog.warning("issue 2495869: prot_dubious_list doesnt include the hog id . so we'll  keep it" + str(prot_dubious_list)+ " " +str(gene_tree.write(format=1, format_root_node=True) ) )
