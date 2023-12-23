@@ -384,6 +384,23 @@ def remove_protlist_hog_hierarchy_toleaves(hog_ii, protlist_to_remove):
     return result_removing
 
 
+def keep_prots_hog_hierarchy_toleaves(hog_ii, prots_tokeep):
+
+    for subhog in hog_ii._subhogs:
+        prots_intser= subhog._members.intersection((set(prots_tokeep)))
+        if prots_intser:
+            result_removing0 = keep_prots_hog_hierarchy_toleaves(subhog, prots_intser)
+        else:
+            subhog._members = set([])
+
+    result_pruning = hog_ii.prune(prots_tokeep)
+    subhogs_old = hog_ii._subhogs
+    hog_ii._subhogs = [i for i in subhogs_old if len(i._members)]  # for getting rid of  empty subhogs #  hogID=HOG_0026884_sub12868,len=0, tax_least=Ardeidae
+
+    return result_pruning
+
+
+
 def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid, merged_msa):
     """
     merge subhogs based on the gene tree specieciaton node of gene tree by creating inter-HOG graph (implicitley )
@@ -416,7 +433,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     else:
         all_prots_genetree = all_prots_genetree_raw1
     # todo how about merged split genes, they have _|_ inside
-
+    unused_split_hogs =[]
     for node in gene_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "processed") and n.processed==True):
 
         if not node.is_leaf() and node.name[0] == "S":
@@ -476,21 +493,28 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                         print(subhog_members_intree, "\n", subhog_members_SpeciaionNode, "\n", subhog)
 
                         prot_list_notintheSpeciaionNode = [i for i in subhog._members if i not in subhog_members_SpeciaionNode]
-                        subhog_copy = copy.deepcopy(subhog)
-                        #this is not recursive subhog.remove_protlist_from_hog(prot_list_notintheSpeciaionNode) # this includes prots not sub-sampled (not in genetree but in member)
+                        subhog_2 = copy.deepcopy(subhog)
+                        # this is not recursive subhog.remove_protlist_from_hog(prot_list_notintheSpeciaionNode) # this includes prots not sub-sampled (not in genetree but in member)
                         for prot_ii in prot_list_notintheSpeciaionNode:
                             result_removing = _utils_frag_SO_detection.remove_prot_hog_hierarchy_toleaves(subhog, prot_ii)
-                            if result_removing == 0:  # the hog is empty
-                                print("warning it is emoty!"+str(subhog)) #hogs_children_level_list.remove(subhog)
+                            if result_removing == 0:   # the hog is empty
+                                print("warning it is empty!"+str(subhog)) #hogs_children_level_list.remove(subhog)
                         print("the current one is shrunk to" + str(subhog))
-                        subhog_copy.prune(prot_list_notintheSpeciaionNode) # create a new subHOG and keep it with prots in prot_list_notintheSpeciaionNode
-                        print("the rest are here " + str(subhog))
-                        hogs_this_level_list.append(subhog_copy) # but this should be used for merging purpuses
+                        results_keep = keep_prots_hog_hierarchy_toleaves(subhog_2, prot_list_notintheSpeciaionNode)
+                        #subhog_copy.prune(prot_list_notintheSpeciaionNode) # create a new subHOG and keep it with prots in prot_list_notintheSpeciaionNode
+                        print("the rest are here " + str(subhog_2))
+                        unused_split_hogs.append(subhog_2) # but this should be used for merging purpuses
 
 
                 taxnomic_range = node_species_tree.name
                 num_species_tax_speciestree = len(node_species_tree.get_leaves())
                 # num_species_tax   is the number of species exist in the species tree at this clade
+
+                # in the next round when it tries to merge rest of genes in subhog_2
+                # it should use from unused_split_hogs
+                # need to add a check  subHOG_to_be_merged_uniq
+                # for sure in another speciecaion node
+
                 HOG_this_node = HOG(set(subHOG_to_be_merged_uniq), taxnomic_range, rhogid, merged_msa, num_species_tax_speciestree)
                 if len(HOG_this_node._msa) == 1:
                     logger_hog.warning("issue 1258313"+str(HOG_this_node)+str(HOG_this_node._msa)+" "+node.name  )
