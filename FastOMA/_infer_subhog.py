@@ -542,6 +542,9 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
         if subHOG._hogid not in subhogs_id_children_assigned:  # print("here", subHOG)
             hogs_this_level_list.append(subHOG)
     # if len(hogs_this_level_list)==1:  hogs_this_level_list = [hogs_this_level_list]
+    # those protiens in the subhog that are not in a speciesation node
+    hogs_this_level_list += unused_split_hogs
+
 
     for hog_j in hogs_this_level_list:
         hog_j._tax_now = node_species_tree.name
