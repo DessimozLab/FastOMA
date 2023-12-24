@@ -24,7 +24,7 @@ class HOG:
         # or  2) orthoxml_to_newick.py set of intances of class HOG   wit orthoxml_to_newick.py big msa
         # those variable starting with _ are local to the class, should not access directly  (although it is possbile)
         self._rhogid = rhogid
-        self.__class__._hogid_iter += 1
+        self.__class__._hogid_iter += 1 # todo does this numbering work in paralell? since when it uses the pickle files, numbering re-starts _hogid_iter = 10000
         # 0070124
         #todo add release id,
         self._hogid = "HOG_" + self._rhogid+ "_sub" + str(self.__class__._hogid_iter)
@@ -126,7 +126,13 @@ class HOG:
         msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id in protlist_to_keep])
         self._msa = msa_edited
         hogid_old = self._hogid
-        self._hogid = hogid_old +"_2"
+        if "__" in hogid_old:
+            assert len(hogid_old.split("__")) < 3, "issue 13413057"
+            itr = hogid_old.split("__")[1] # expecting no "__" in the subhogID
+            itr_int = int(itr)
+            self._hogid = hogid_old.split("__")[0] + "__"+str(itr_int+1)
+        else:
+            self._hogid = hogid_old +"__1"
         if len(prot_members_hog_edited) == 0:  # hog should be removed, no members is left
             return 0
         return 1

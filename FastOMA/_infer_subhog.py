@@ -463,7 +463,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
             # todo this piece of code could be neater, for extracting connected component of inter-hog graph
             subHOG_to_be_merged = []
             for node_leave_name in node_leaves_name:  # print(node_leave_name)
-                for subHOG in hogs_children_level_list:
+                for subHOG in hogs_children_level_list: # number of subhogs is getting bigger by append(subhog_2) due to split subHOGs variable , but total # genes is constant.
                     subHOG_members = subHOG._members
                     if node_leave_name in subHOG_members:  # could be improved
                         if subHOG._hogid not in subHOG_to_be_merged_set_other_Snodes_flattned_temp:
@@ -481,7 +481,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
 
             elif len(subHOG_to_be_merged_uniq)>1:
 
-                print("here")
+                #print("here")
 
                 for subhog in subHOG_to_be_merged_uniq:
                     subhog_members_intree = set([i for i in subhog._members if i in all_prots_genetree])
@@ -503,17 +503,12 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                         results_keep = keep_prots_hog_hierarchy_toleaves(subhog_2, prot_list_notintheSpeciaionNode)
                         #subhog_copy.prune(prot_list_notintheSpeciaionNode) # create a new subHOG and keep it with prots in prot_list_notintheSpeciaionNode
                         print("the rest are here " + str(subhog_2))
-                        unused_split_hogs.append(subhog_2) # but this should be used for merging purpuses
+                        hogs_children_level_list.append(subhog_2) # but this should be used for merging purpuses
 
 
                 taxnomic_range = node_species_tree.name
                 num_species_tax_speciestree = len(node_species_tree.get_leaves())
                 # num_species_tax   is the number of species exist in the species tree at this clade
-
-                # in the next round when it tries to merge rest of genes in subhog_2
-                # it should use from unused_split_hogs
-                # need to add a check  subHOG_to_be_merged_uniq
-                # for sure in another speciecaion node
 
                 HOG_this_node = HOG(set(subHOG_to_be_merged_uniq), taxnomic_range, rhogid, merged_msa, num_species_tax_speciestree)
                 if len(HOG_this_node._msa) == 1:
@@ -562,4 +557,6 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     # logger_hog.debug(str(len(hogs_this_level_list))+" hogs are inferred at the level "+node_species_tree.name+": "+' '.join(
     #     [str(i) for i in prot_list_sbuhog_short]))
 
-    return hogs_this_level_list
+
+    return c
+
