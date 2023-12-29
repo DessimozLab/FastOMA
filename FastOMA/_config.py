@@ -24,7 +24,7 @@ overlap_fragments = 0.15
 
 mergHOG_ratioMax_thresh = 0.8
 mergHOG_ratioMin_thresh = 0.9
-mergHOG_shared_thresh = 50
+mergHOG_shared_thresh = 10
 threshod_f_score_merging = 70
 mergHOG_mean_thresh=5000*1000
 
@@ -33,11 +33,11 @@ add_outgroup = False
 rooting_method = "midpoint" #"Nevers_rooting" #"midpoint"#"midpoint"  # "midpoint" "mad"
 
 
-gene_trees_write = False
-msa_write = False
-gene_trees_write_all = False
-msa_write_all = False
-keep_subhog_each_pickle = False
+gene_trees_write = True
+msa_write = True
+gene_trees_write_all = True
+msa_write_all = True
+keep_subhog_each_pickle = True
 
 seed_random=1234
 

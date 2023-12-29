@@ -405,11 +405,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     """
     merge subhogs based on  speciation nodes in the gene tree by implicitely creating inter-HOG graph
     """
-
-    #subhogs_id_children_assigned = []  # the same as  subHOG_to_be_merged_all_id
     hogs_this_level_list = []
-    #subHOG_to_be_merged_set_other_Snodes = []
-    #subHOG_to_be_merged_set_other_Snodes_flattned_temp = []
 
     all_prots_genetree_raw0 = [i.name for i in gene_tree.get_leaves()]
     all_prots_genetree_raw1 = [i.split("|_|")[0] for i in all_prots_genetree_raw0]
@@ -491,7 +487,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     for hog_j in hogs_this_level_list:
         hog_j._tax_now = node_species_tree.name
 
-    return hogs_this_level_list
+    return hogs_this_level_list #for i in hogs_this_level_list: print(i, [j.split("||")[0].split("|")[2] for j in i._members], "\n")
 
 
 
