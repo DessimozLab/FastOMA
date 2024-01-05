@@ -1,126 +1,99 @@
-__author__ = 'admin'
+from ..utils import auto_open
+import collections
+from time import time
+import xml.etree.ElementTree as etree
+from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
-# import lxml.etree as etree
-from FastOMA.zoo.familyanalyzer.orthoxmlquery import OrthoXMLQuery
-import FastOMA.zoo.familyanalyzer as fa
-
-# To parse the orthoxml and get the related etree object: etree.parse(fn_orthoxml) denote here by XML
-# To get the root of your etree object: etree_object.getroot() denote here by XML_root
-# The orthoxml is using two ids:
-#   - The internal id denotes by the tag "id" which is found in the mapping in the beginning of the orthoxml and inside the orthologous groups
-#   - The external id denotes by the tag "protId"(sometimes with the tag "geneId" or BOTH) which is found only in the begining of the orthoxml
-
-def get_mapping_orthoxml(XML_root):
-
-    map_ext_2_int = {}
-    map_int_2_ext = {}
-
-    for el in OrthoXMLQuery.getInputGenes(XML_root, species=None):
-        int_id = None
-        ext_id = []
-        for _idtag,_id in el.attrib.items():
-            if _idtag == "id":
-                int_id = _id
-            else:
-                ext_id.append(str(_id))
-
-        if int_id != None and ext_id != []:
-            map_ext_2_int[frozenset(ext_id)] = str(int_id)
-            map_int_2_ext[str(int_id)] = ext_id
-
-    return map_ext_2_int, map_int_2_ext
-
-def get_all_hogs(XML_root):
-    '''
-    Return a list of HOGs (etree object)
-    '''
-    return OrthoXMLQuery.getToplevelOrthologGroups(XML_root)
-
-def get_hog_by_id(XML_root, hog_id):
-    '''
-    Return the HOG of interest (etree object)
-    '''
-    for OG_etree in OrthoXMLQuery.getToplevelOrthologGroups(XML_root):
-        if int(OG_etree.get("id")) == int(hog_id):
-            return OG_etree
-
-def get_hogs_by_id(XML_root, list_hog_id):
-    '''
-    Return HOGs of interest (etree object)
-    '''
-    list_hog = []
-    for OG_etree in OrthoXMLQuery.getToplevelOrthologGroups(XML_root):
-        if int(OG_etree.get("id")) in list_hog_id:
-            list_hog.append(OG_etree)
-    return list_hog
+Gene = collections.namedtuple("Gene", "xref species internal_id")
 
 
-def get_hogs_with_query_genes(XML_root, list_genes_you_want_to_look, use_internal_id = False, return_hog_etree = False):
-    '''
-    XML_root: root of the etree element
-    list_genes_you_want_to_look: list of the genes external id
-    use_internal_id: if the list of genes given is composed of internal id
-    return_hog_etree: return the etree element of the hod instead of the id
-    ext_id: external id use to parse the orthoxml
+class SpeciesAnalyser:
+    def __init__(self, gene_attr="protId"):
+        self.gene_attr = gene_attr
+        self.genes = {}
+        self.nr_genes_per_species = collections.defaultdict(int)
 
-    return: each gene with its related HOG id (dictionnary)
+    def add_genome_genes(self, genome_node):
+        genome_name = genome_node.get('name', None)
+        if genome_name is None:
+            genome_name = genome_node.get("NCBITaxId")
 
-    Protips: list(set(gene_with_its_HOG.values())) will return the list of hogs return
+        generef_2_xref = {}
+        for gene in genome_node.findall('.//{http://orthoXML.org/2011/}gene'):
+            gene_id = gene.get('id')
+            gene_prot_id = gene.get(self.gene_attr)
+            generef_2_xref[gene_id] = Gene(gene_prot_id, genome_name, gene_id)
+            self.nr_genes_per_species[genome_name] += 1
+        self.genes.update(generef_2_xref)
 
-    '''
-    map_ext_2_int, map_int_2_ext = get_mapping_orthoxml(XML_root)
-    gene_with_its_HOG = {} # keys:gene & values:hog
+    def gene_in_group(self, gene_id):
+        self.genes.pop(gene_id)
 
-    if use_internal_id == False:
-        list_genes_int = []
-        for ext_id in list_genes_you_want_to_look:
-            for ext_id_keys in map_ext_2_int.keys():
-                if str(ext_id) in ext_id_keys:
-                    list_genes_int.append(str(map_ext_2_int[ext_id_keys]))
-    else:
-        list_genes_int = []
-        for intid in list_genes_you_want_to_look:
-            list_genes_int.append(str(intid))
-    for OG_etree in get_all_hogs(XML_root):
-        OG_genes = [ gene_etree for gene_etree in OG_etree.getiterator() if gene_etree.tag == "{http://orthoXML.org/2011/}geneRef" ]
-        for gene_etree in OG_genes:
-            if str(gene_etree.get("id")) in list_genes_int:
-                if return_hog_etree:
-                    gene_with_its_HOG[str(map_int_2_ext[gene_etree.get("id")])]=OG_etree
-                else:
-                    gene_with_its_HOG[str(map_int_2_ext[gene_etree.get("id")])]=OG_etree.get("id")
-    return gene_with_its_HOG
+    def get_singletons(self):
+        return self.genes
 
-def get_size_all_HOGs(XML_root):
-    '''
-    XML_root: root of the etree element
-    return: dictionary key:hog_id and value:number of genes
-    '''
-    OGs = {}
-    for OG_etree in get_all_hogs(XML_root):
-        OG_genes = [ gene_etree for gene_etree in OG_etree.getiterator() if gene_etree.tag == "{http://orthoXML.org/2011/}geneRef" ]
-        OGs[OG_etree.get("id")]= len(OG_genes)
-    return OGs
+    def summary(self):
+        single = collections.defaultdict(int)
+        for g in self.genes.values():
+            single[g.species] += 1
+        return [{'species': g, 'genes': self.nr_genes_per_species[g], 'not_in_group': single[g]}
+                for g in self.nr_genes_per_species]
 
 
-def get_speciesTree(fn_orthoxml):
-    '''
-    Extract from a orthoxml the species tree based on the internal topology
-    :param XML: orthoxml file
-    :return: newick string
-    '''
-    op = fa.OrthoXMLParser(fn_orthoxml)
-    tax = fa.TaxonomyFactory.newTaxonomy(op)
-    op.augmentTaxonomyInfo(tax)
-    return tax.newick()
+def parse_orthoxml(fh, genome_watcher: SpeciesAnalyser):
+    taxonomy = {}
+    og_level = 0
+
+    def collect_genes(elem):
+        genes = 0
+        for child in elem.iter():
+            if child == elem:
+                continue
+            if child.tag == "{http://orthoXML.org/2011/}geneRef":
+                genes += 1
+                if genome_watcher is not None:
+                    genome_watcher.gene_in_group(child.get('id'))
+            elif child.tag == "{http://orthoXML.org/2011/}orthologGroup":
+                genes += child.text
+        elem.clear()
+        elem.text = genes
+        return genes
+
+    logger.info("start mapping of orthoxml formatted input file")
+    for event, elem in etree.iterparse(fh, events=('start', 'end')):
+        if event == "start":
+            if elem.tag == "{http://orthoXML.org/2011/}orthoXML":
+                if elem.get('version') != "0.5":
+                    raise RuntimeError(f"Expecting orthoXML version 0.5, but is {elem.get('version')}")
+            elif elem.tag == '{http://orthoXML.org/2011/}orthologGroup':
+                og_level += 1
+        elif event == 'end':
+            if elem.tag == "{http://orthoXML.org/2011/}orthologGroup":
+                og_level -= 1
+                data = {'id': elem.get('id'), 'level': taxonomy[elem.get('taxonId')]}
+                for child in elem.findall('./{http://orthoXML.org/2011/}score'):
+                    data[child.get('id')] = float(child.get('value'))
+                data['nr_members'] = collect_genes(elem)
+                data['is_roothog'] = og_level == 0
+                yield data
+                if og_level == 0:
+                    elem.clear()
+            elif elem.tag == "{http://orthoXML.org/2011/}species":
+                if genome_watcher is not None:
+                    genome_watcher.add_genome_genes(elem)
+                elem.clear()
+            elif elem.tag == "{http://orthoXML.org/2011/}taxon":
+                taxonomy[elem.get('id')] = elem.get('name')
 
 
-def get_list_species(XML_root):
-    '''
-    return a list of species contains into an orthoxml.
-
-    :XML_root: root of the etree element
-    :return: list of species
-    '''
-    species = [ e.get("name") for e in XML_root.getiterator() if e.tag == "{http://orthoXML.org/2011/}species" ]
-    return species
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--orthoxml", required=True)
+    conf = parser.parse_args()
+    genome_coverage_stats = SpeciesAnalyser()
+    with open(conf.orthoxml, 'rt') as xml:
+        for group in parse_orthoxml(xml, genome_coverage_stats):
+            print(group)
