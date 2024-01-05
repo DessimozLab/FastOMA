@@ -42,7 +42,7 @@ keep_subhog_each_pickle = False
 seed_random=1234
 
 big_rhog_size = 50 * 1000
-omamer_family_threshold = 0
+omamer_family_threshold = 95
 
 subsampling_hogclass = True
 hogclass_max_num_seq = 20  # 40 subsampling in msa # ver very 2
