@@ -28,6 +28,12 @@ dependencies = [
 nextflow = [
     "nextflow"
 ]
+report = [
+    "papermill",
+    "jupyter",
+    "matplotlib",
+    "seaborn",
+]
 
 
 [project.scripts]
@@ -47,4 +53,9 @@ path = "FastOMA/__init__.py"
 [tool.hatch.build.targets.sdist]
 include = [
     "/FastOMA",
+]
+
+[tool.hatch.envs.default]
+features = [
+    "report",
 ]

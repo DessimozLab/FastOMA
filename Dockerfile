@@ -18,7 +18,7 @@ WORKDIR /src
 RUN pip install --upgrade hatch pip
 COPY pyproject.toml .
 RUN python -m venv /app \
-    && hatch dep show requirements > requirements.txt \
+    && hatch dep show requirements --all > requirements.txt \
     && /app/bin/pip install -r requirements.txt
 
 COPY . .
