@@ -403,16 +403,16 @@ process fastoma_report {
     path proteome_folder
     path species_tree_checked
   output:
-    path report.jpynb
-    path report.html
-    path *.html
+    path "report.ipynb"
+    path "report.html"
+    path "*.html"
 
   script:
     """
-    papermill -p output_folder="./" \
-              -p proteome_folder="${proteome_folder}" \
-              FastOMA/fastoma_notebook_stat.ipynb \
-              report.ipynb
+    papermill ${workflow.projectDir}/FastOMA/fastoma_notebook_stat.ipynb \
+              report.ipynb \
+              -p output_folder "./" \
+              -p proteome_folder "$proteome_folder"
 
     jupyter nbconvert --to html report.ipynb
     """
