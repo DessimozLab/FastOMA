@@ -395,6 +395,29 @@ process extract_pairwise_ortholog_relations {
     """
 }
 
+
+process fastoma_report {
+  publishDir params.output_folder, mode: 'copy'
+  input:
+    path orthoxml
+    path proteome_folder
+    path species_tree_checked
+  output:
+    path "report.ipynb"
+    path "report.html"
+    path "*.html"
+
+  script:
+    """
+    papermill ${workflow.projectDir}/FastOMA/fastoma_notebook_stat.ipynb \
+              report.ipynb \
+              -p output_folder "./" \
+              -p proteome_folder "$proteome_folder"
+
+    jupyter nbconvert --to html report.ipynb
+    """
+}
+
 workflow {
     proteome_folder = Channel.fromPath(params.proteome_folder, type: "dir", checkIfExists:true).first()
     proteomes = Channel.fromPath(params.proteome_folder + "/*", type:'any', checkIfExists:true)
@@ -424,6 +447,7 @@ workflow {
         FALSE: n>25
     }
     extract_pairwise_ortholog_relations(orthoxml_file, c.TRUE)
+    fastoma_report(orthoxml_file, proteome_folder, species_tree_checked)
 }
 
 workflow.onComplete {
