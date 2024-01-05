@@ -24,7 +24,7 @@ overlap_fragments = 0.15
 
 mergHOG_ratioMax_thresh = 0.8
 mergHOG_ratioMin_thresh = 0.9
-mergHOG_shared_thresh = 50
+mergHOG_shared_thresh = 10
 threshod_f_score_merging = 70
 mergHOG_mean_thresh=5000*1000
 
@@ -42,7 +42,7 @@ keep_subhog_each_pickle = False
 seed_random=1234
 
 big_rhog_size = 50 * 1000
-omamer_family_threshold = 95
+omamer_family_threshold = 95 # for big rhog
 
 subsampling_hogclass = True
 hogclass_max_num_seq = 20  # 40 subsampling in msa # ver very 2
@@ -63,8 +63,8 @@ rooting_mad_executable_path = "mad"  # /work/FAC/FBM/DBC/cdessim2/default/smajid
 mmseqs_executable_path ="mmseqs"
 
 
-inferhog_tresh_ratio_gap_row =0.3 # 0.6   # to have more proteins in the ortho groups 0.1
-inferhog_tresh_ratio_gap_col =0.5  # 0.6   # ver very 0.8
+inferhog_tresh_ratio_gap_row =0.3    # to have more proteins in the ortho groups 0.1
+inferhog_tresh_ratio_gap_col =0.5    #  0.1
 inferhog_min_cols_msa_to_filter = 50 #300 #50  # used for msa before gene tree inference and  saving msa in hog class
 
 inferhog_filter_all_msas_row = True
