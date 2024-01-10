@@ -5,19 +5,19 @@ FastOMA is a scalable software package to infer orthology relationship.
 # Input and Output: 
 
 ### Input: 
-1- Sets of protein sequences in FASTA format (with `.fa` extension) in the folder `proteome`.
-The name of each fasta file is the name of species. Please make sure that the name of fasta records do not contain special characters including `||`. 
+1. Sets of protein sequences in FASTA format (with `.fa` extension) in the folder `proteome`.
+The name of each fasta file is the name of species. Please make sure that the name of fasta records do not contain special characters including `||`.
 
-
-2- The omamer database which you can download [this](https://omabrowser.org/All/LUCA-v2.0.0.h5) 
-which is from [OMA browser](https://omabrowser.org/oma/current/). 
-This file is `13 Gb` containing all the gene families of the Tree of Life or you can download it for a subset of them, e.g. Primates (352MB). 
-
-3- Rooted Species tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
-A rough species tree is enough and it does not need to be binary. Besides, we do not need branch lengths. 
+2. Rooted Species tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
+A rough species tree is enough, and it does not need to be binary (fully resolved). Besides, we do not need branch lengths. 
 Note that the name of leaves of the tree (species name) should be the same as the file name of FASTAs (without `.fa` extension) (item 1). 
 And there shouldn't be any repeated names in leaves names and internal node names. The tree should not be with quotation.  
 
+3. The omamer database which is available for download from the [OMA browser](https://omabrowser.org/oma/current/).
+The FastOMA workflow will automatically download the omamer database for LUCA if the argument `--omamer_db` is not
+provided on the command line. The argument can be a local file (e.g. a previously downloaded omamer database file) or 
+a URL to an alternative omamer database, e.g. a subset of the LUCA database which is smaller. However, we recommend 
+to use the LUCA database if possible. 
 
 
 You can see an example in the [testdata](https://github.com/sinamajidian/FastOMA/tree/master/testdata/in_folder) folder.
@@ -28,35 +28,40 @@ $ cat species_tree.nwk
 ((AQUAE,CHLTR)inter1,MYCGE)inter2;
 ```
 
-Besides, the internal node should not contain any special character (e.g. `\`  `/` or space).
+Besides, the internal node should not contain any special character (e.g. `\`  `/` or `space`).
 The reason is that FastOMA write some files whose names contain the internal node's name. 
 If the species tree does not have label for some/all internal nodes, FastOMA labels them sequentially.  
 
 
-### Input check:
-
-After installing FastOMA, you can have a initial check for your input dataset by running the following in the folder `in_folder`:
-
-```
-cd in_folder
-check-fastoma-input
-```
-
-
 
 ### Main output:
-Orthology information as HOG strcutre in [OrthoXML](https://orthoxml.org/) format
+Orthology information as HOG structure in [OrthoXML](https://orthoxml.org/) format
 which can be used with [PyHAM](https://github.com/DessimozLab/pyham).
-The details of output are described [below](https://github.com/DessimozLab/FastOMA#expected-output-structure-for-test-data).
+The details of output are described [below](#expected-output-structure-for-test-data).
+
+Additionally, FastOMA generates TSV files for rootlevel HOGs (deepest level) and 
+marker genes groups (one gene per species maximum) together with dumps of fasta 
+files (one per rootlevel HOG / marker gene). 
 
 
 # How to run FastOMA
-In summary, you need to 1) install FastOMA and its prerequisites (below), and  2) put the input files in the folder `in_folder` 
-and 3) run FastOMA using the nextflow recipe `FastOMA.nf`. 
+
+FastOMA is implemented as a [nextflow-workflow](https://www.nextflow.io/). As such, FastOMA can be run without 
+any installation steps given the system supports running either docker containers, singularity containers or has conda 
+installed.
+
+```bash
+nextflow run dessimozlab/FastOMA -profile docker --input_folder /path/to/in_folder --output_folder /path/to/out_folder
 ```
-nextflow run FastOMA.nf -profile docker --input_folder /path/to/in_folder   --output_folder /path/to/out_folder 
-```
-The script `FastOMA.nf` is tailored for a few species. To run FastOMA with hundreds of species, please use `FastOMA.nf`.
+
+Nextflow will automatically fetch the [dessimozlab/FastOMA](https://github.com/dessimozlab/FastOMA) repository and starts 
+the `FastOMA.nf` workflow. The `-profile` argument must be used to specify the profile to use. We support `docker`, 
+`singularity` and `conda` which then automatically set up the necessary tools by downloading the required containers or creating 
+a conda environment with the necessary dependencies.
+
+See also [How to install FastOMA](#how-to-install-FastOMA) for additional ways how to install and run FastOMA. Note also the 
+section on the different [profiles](#using-different-nextflow-profiles).
+
 
 ## More details on how to run
 We provide for every commit of the repository a docker image for FastOMA on dockerhub. You can specify the container as 
@@ -71,65 +76,101 @@ nextflow run FastOMA.nf -profile docker \
 ```
 
 
-
 # How to install FastOMA
 
-## prerequisites
+## Running workflow directly
 
-First, we create a fresh [conda](https://docs.conda.io/en/latest/miniconda.html) environment.
-```
-conda create --name FastOMA python=3.9
-conda activate FastOMA
-python -m pip install --upgrade pip
-```
-You may use conda to install [fasttree](http://www.microbesonline.org/fasttree/), [mafft](http://mafft.cbrc.jp/alignment/software/). and [openjdk](https://jdk.java.net/java-se-ri/17) (the alternative for Java 11< version <17 which is needed for nextflow). 
-```  
-conda install -c bioconda mafft fasttree
-conda install -c conda-forge openjdk=16
+The FastOMA workflow can be run directly using nextflow's ability to fetch a workflow from github. A specific version
+can be selected by specifying the `-r` option to nextflow to select a specific version of FastOMA:
+
+```bash
+nextflow run desimozlab/FastOMA -r 0.2.0 -profile conda 
 ```
 
-## How to install FastOMA 
-First, download the FastOMA package:
-```
-wget https://github.com/DessimozLab/FastOMA/archive/refs/heads/main.zip
-unzip main.zip
-mv FastOMA-main FastOMA
-```
-Then install it
-```
-ls FastOMA/setup.py
-python -m pip install -e FastOMA 
+This will fetch version 0.2.0 from github and run the FastOMA workflow using the conda profile.
+
+## Cloning the FastOMA repo and running from there
+
+```bash
+git clone https://github.com/DessimozLab/FastOMA.git
+cd FastOMA
+nextflow run FastOMA.nf -profile docker --container_version "sha-$(git rev-list --max-count=1 --abbrev-commit HEAD)" ...
 ```
 
-The output would be 
-```
-...
-Running setup.py develop for FastOMA
-Successfully installed Cython-3.0.1 DendroPy-4.6.1  biopython-1.81 blosc2-2.0.0 ete3-3.1.3 future-0.18.3 humanfriendly-10.0 llvmlite-0.40.1 lxml-4.9.3 msgpack-1.0.5 nextflow-23.4.3 numba-0.57.1 numexpr-2.8.5 numpy-1.24.4 omamer-0.2.6 packaging-23.1 pandas-2.0.3 property-manager-3.0 py-cpuinfo-9.0.0 pyparsing-3.1.1 pysais-1.1.0 python-dateutil-2.8.2 pytz-2023.3 scipy-1.11.2 six-1.16.0 tables-3.8.0 tqdm-4.66.1 tzdata-2023.3 verboselogs-1.7
-FastOMA-0.0.6
-```
+## Manual installation (for development) in python virtual environment
 
-You can check your installation with running one of submodules of FastOMa
-``` 
-fastoma-infer-roothogs --version
-```
+- install [mafft](https://mafft.cbrc.jp/alignment/software) and [FastTree](http://www.microbesonline.org/fasttree/) and ensure the software is accessible on the PATH.
+- install python >= 3.9
+- create virtual environment, activate it and install FastOMA with additional extras inside it:
+  ```bash
+  python3 -m venv .venv
+  source .venv/bin/activate
+  pip install FastOMA[report,nextflow] 
+  ```
+  You can also install FastOMA from a clone of the repository in editable mode with `pip install -e .[report,nextflow]`.
 
-You can make sure that omamer and nextflow is installed with running  
-``` 
-omamer -h
-nextflow -h
-```
-
-If it doesn't work, you may need to have the following for nextflow to work.
-```
-JAVA_HOME="/path/to/jdk-17"
-NXF_JAVA_HOME="/path/to/jdk-17"
-export PATH="/path/to/jdk-17/bin:$PATH"
-```
-You can always make sure whether you are using the python that you intended to use with `which python`  and `which python3`.
-If you face any difficulty during installation, feel free to create a [github issue](https://github.com/DessimozLab/FastOMA/issues), we'll try to solve it toghter.
+- run pipeline including with some testdata:
+  ```bash
+  nextflow run FastOMA.nf -profile standard --input_folder testdata/in_folder --output_folder output -with-report
+  ```
 
 
+## Manual installation in conda/mamba environment
+In the FastOMA repository, we provide a conda environment file that can be used to generate a conda / mamba 
+environment:
+```
+git clone https://github.com/DessimozLab/FastOMA.git
+
+mamba env create -n FastOMA -f environment_conda.yml
+mamba activate FastOMA
+```
+
+Afterwards, you can run the workflow using nextflow (which is installed as part of the conda environment)
+
+```
+nextflow run FastOMA.nf -profile standard|slurm --input_folder /path/to/input_folder --output_folder /path/to/output
+```
+
+not that you should use either the profile `standard` or `slurm` such the nextflow executor will use the activated environment.
+
+# Using different nextflow profiles
+
+Nextflow provides support to run a workflow on different infrastructures. Selection of this is done using the `-profile` argument. 
+For FastOMA, we've implemented the following profiles below. Additional ones can also be created by specifying them in the `nextflow.config` file.
+
+## Docker
+With `-profile docker` one can use docker as an execution platform. It requires docker to be installed on the system. The pipeline 
+will automatically fetch missing containers from dockerhub (e.g. dessimozlab/fastoma) if not found locally. By default, the version
+`latest` is used by the pipeline, however we provide images for any branch and release as well; even for every recent commit.
+One can select the desired container via the `--container_version` argument
+
+```
+nextflow run FastOMA.nf -profile docker \
+    --container_version "sha-$(git rev-list --max-count=1 --abbrev-commit HEAD)" \
+    --input_folder testdata/in_folder \
+    --output_folder myresult/
+```
+This will use the container that is tagged with the current commit id. Similarly, one could also use 
+`--container_version "0.2.0"` to use the container with version `dessimozlab/fastoma:0.2.0` from dockerhub.
+
+## Singularity
+With `-profile singularity` singularity containers will be used to run the workflow. It requires singularity to 
+be installed on your system. The containers are automatically pulled from dockerhub and converted to singularity 
+containers. The same options as for [Docker](#docker) will be available.
+
+## Conda
+with `-profile conda`, the FastOMA workflow will create a conda environment which contains the necessary 
+dependencies and use this environment to run the workflow steps. Note that this environment does not need 
+to be activated manually. If you prefer to install the dependencies inside a conda or mamba environment 
+yourself, this can be achieved as described in [](#manual-installation-for-development-in-python-virtual-environment).
+
+## Slurm (with singularity/conda)
+On a HPC system you typically run processes using a scheduler system such as slurm or LSF. We provide 
+profiles `-profile slurm`, `-profile slurm_singularity` and `-profile slurm_conda` to run FastOMA with 
+the respective engine using [slurm](https://slurm.schedmd.com/overview.html) as a scheduler system. 
+If you need a different scheduler, it is quite straight forward to 
+set it up in `nextflow.config` based on the existing profiles and the documentation of 
+[nextflow executors](https://www.nextflow.io/docs/latest/executor.html).
 
 # How to run FastOMA on the test data
 Then, cd to the `testdata` folder and download the omamer database and change its name to `omamerdb.h5`.
@@ -154,11 +195,13 @@ $ tree ../testdata/in_folder
 Finally, run the package using nextflow as below:
 ```
 # cd FastOMA/testdata
-nextflow ../FastOMA.nf  --input_folder in_folder   --output_folder out_folder  -with-report
+nextflow run ../FastOMA.nf  \
+         --input_folder in_folder  \
+         --omamer_db testdata/in_folder/omamer_db.h5 \
+         --output_folder out_folder \
+         --report \
+         -profile standard
 ```
-The script `FastOMA.nf` is tailored for a few species. In real case scenario, please use `FastOMA.nf`.  
-The only difference between these two scripts is the amount of CPU and memory assigned to each job. 
-
 
 Note that to have a comprehensive test, we set the default value of needed cpus as 10.
 
@@ -177,54 +220,89 @@ After few minutes, the run for test data finishes.
 The first step is to run [OMAmer](https://github.com/DessimozLab/omamer) for finding the putative gene families (putative rootHOG) based on  kmer similarity.
 Next, we write them in FASTA files, which could be used to run next steps in parrallel on each FASTA gene family.
 Then, to have similar size jobs, we batch these FASTA files either as one big roothog (per job `hog_big`) or a few hundreds together as one job `hog_rest`.
-These are decided based on the FASTA file size. Finally once all jobs of `hog_big` and `hog_rest` are done, we `collect_subhog` and save all outputs.  
-
+These are decided based on the FASTA file size. Finally, once all jobs of `hog_big` and `hog_rest` are done, we `collect_subhog` and save all outputs.  
 
 If the run interrupted, by adding `-resume` to the nextflow commond line, you might be able to continue your previous nextflow job.
 
 
 ## expected output structure for test data
 
-The output of FastOMA includes four files 
-(`OrthologousGroupsFasta.tsv`, `rootHOGs.tsv`, `output_hog.orthoxml` and `species_tree_checked.nwk`) and four folders
-(`hogmap`, `OrthologousGroupsFasta`, `temp_pickles` and `temp_output`).
+The output of FastOMA includes several output files regarding orthology inference
+(`OrthologousGroups.tsv`, `RootHOGs.tsv`, `FastOMA_HOGs.orthoxml`, `orthologs.tsv.gz` and `species_tree_checked.nwk`),
+a jupyter notebook based report about the dataset (`report.ipynb` and `report.html`) and four folders
+(`hogmap`, `OrthologousGroupsFasta`, `RootHOGsFasta` and `stats`).
   
 The `hogmap` folder includes the output of [OMAmer](https://github.com/DessimozLab/omamer); each file corresponds to an input proteome.
 The folder `OrthologousGroupsFasta` includes FASTA files, and all proteins inside each FASTA file are orthologous to each other. 
 These could be used as gene markers for species tree inference with refined resolution, [more info](https://f1000research.com/articles/9-511).
-Note that Orthologous Groups are groups of strict orthologs, with at most 1 representative per species.
-Hierarchical Orthologous Groups are groups of orthologs and paralogs, defined at each taxonomic level.
+Note that OrthologousGroups are groups of strict orthologs, with at most 1 representative per species.
+Hierarchical Orthologous Groups are groups of orthologs and paralogs, defined at each taxonomic level. The file 
+`FastOMA_HOGs.orthoxml` contains all the nested groups in orthoxml format. The `RootHOGs.tsv` and `RootHOGsFasta/` files contains
+the groups at the deepest level.
 
 So, following files and folders should appear in the folder `out_folder` which was the argument.
 ```
-$ls out_folder
-hogmap  OrthologousGroupsFasta  OrthologousGroups.tsv  output_hog.orthoxml  rootHOGs.tsv  species_tree_checked.nwk  temp_output  temp_pickles
+$tree out_folder
+├── FastOMA_HOGs.orthoxml
+├── hogmap
+│   ├── AQUAE.fa.hogmap
+│   ├── CHLTR.fa.hogmap
+│   └── MYCGE.fa.hogmap
+├── OrthologousGroupsFasta
+│   ├── OG_0000001.fa.gz
+│   ├── OG_0000002.fa.gz
+│   ├── OG_0000003.fa.gz
+│         ├ ...
+├── OrthologousGroups.tsv
+├── orthologs.tsv.gz
+├── phylostratigraphy.html
+├── report.html
+├── report.ipynb
+├── RootHOGsFasta
+│   ├── HOG:0000001.fa.gz
+│   ├── HOG:0000002.fa.gz
+│   ├── HOG:0000003.fa.gz
+│   ├ ...
+├── RootHOGs.tsv
+├── species_tree_checked.nwk
+└── stats
+    ├── pipeline_dag_<date>.html
+    ├── report_<date>.html
+    ├── timeline_<date>.html
+    └── trace_<date>.txt
 ```
-among which `output_hog.orthoxml` is the final output in [orthoXML format](https://orthoxml.org/0.4/orthoxml_doc_v0.4.html). Its content looks like this
+among which `FastOMA_HOGs.orthoxml` is the final output in [orthoXML format](https://orthoxml.org/0.4/orthoxml_doc_v0.4.html). Its content looks like this
 
 ```
-<?xml version="1.0" ?>
-<orthoXML xmlns="http://orthoXML.org/2011/" origin="OMA" originVersion="Nov 2021" version="0.3">
-   <species name="MYCGE" NCBITaxId="1">
-      <database name="QFO database " version="2020">
-         <genes>
-            <gene id="1000000000" protId="sp|P47500|RF1_MYCGE"/>
-            <gene id="1000000001" protId="sp|P13927|EFTU_MYCGE"/>
-            <gene id="1000000002" protId="sp|P47639|ATPB_MYCGE"/>
+<?xml version='1.0' encoding='utf-8'?>
+<orthoXML xmlns="http://orthoXML.org/2011/" origin="FastOMA 0.1.6" originVersion="2024-01-10 17:36:45" version="0.5">
+  <species name="MYCGE" taxonId="5" NCBITaxId="0">
+    <database name="database" version="2023">
+      <genes>
+        <gene id="1000000001" protId="sp|P47500|RF1_MYCGE" />
+        <gene id="1000000002" protId="sp|P13927|EFTU_MYCGE" />
+        <gene id="1000000003" protId="sp|P47639|ATPB_MYCGE" />
             
  ...
-      <orthologGroup id="HOG:B0885011_sub10003">
-         <property name="TaxRange" value="inter1"/>
-         <geneRef id="1002000004"/>
-         <geneRef id="1001000004"/>
+    <orthologGroup id="HOG:0000001_1" taxonId="1">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:D0900115" />
+      <property name="TaxRange" value="inter2" />
+      <geneRef id="1000000005" />
+      <orthologGroup id="HOG:0000001_2" taxonId="2">
+        <score id="CompletenessScore" value="1.0" />
+        <property name="TaxRange" value="inter1" />
+        <geneRef id="1002000010" />
+        <geneRef id="1001000009" />
       </orthologGroup>
-   </groups>
+    </orthologGroup>
+  </groups>
 </orthoXML>
 ```
 
 If you are interested in specific gene in specific species, and wants to know 
-proteins that are in the gene family, you can find its protein ID in the file `rootHOGs.tsv` using grep. 
-The first column of this file `rootHOGs.tsv` shows the rootHOG ID which could be searched on the [OMA browser](https://omabrowser.org/). 
+proteins that are in the gene family, you can find its protein ID in the file `RootHOGs.tsv` using grep. 
+The first column of this file `RootHOGs.tsv` shows the rootHOG ID which could be searched on the [OMA browser](https://omabrowser.org/). 
 Note that some of the input genes might not appear in this file. 
 
 To find list of genes that are orthologous to your gene of interest, you can search in the file `OrthologousGroups.tsv` 
@@ -329,6 +407,7 @@ These are initial gene families that are used in `infer_subhogs` step, which cou
 
 
 ## Change log
+- Update  v0.1.6: adding dynamic resources, additional and improved output
 - Update  v0.1.5: docker, add help, clean nextflow 
 - Update  v0.1.4: new gene families with linclust if mmseqs is installed, using quoted protein name to handle species chars, check input first 
 - Update  v0.1.3: merge rootHOGs and handle singleton using omamer multi-hits
