@@ -14,13 +14,12 @@ Note that the name of leaves of the tree (species name) should be the same as th
 And there shouldn't be any repeated names in leaves names and internal node names. The tree should not be with quotation.  
 
 3. The omamer database which is available for download from the [OMA browser](https://omabrowser.org/oma/current/).
-The FastOMA workflow will automatically download the omamer database for LUCA if the argument `--omamer_db` is not
+The FastOMA workflow will automatically download the omamer database for LUCA (7.7 GB) if the argument `--omamer_db` is not
 provided on the command line. The argument can be a local file (e.g. a previously downloaded omamer database file) or 
-a URL to an alternative omamer database, e.g. a subset of the LUCA database which is smaller. However, we recommend 
-to use the LUCA database if possible. 
+a URL to an alternative omamer database, e.g. a subset of the LUCA database which is smaller, like Primates with this [link](https://omabrowser.org/All/Primates-v2.0.0.h5) which is ~100MB. However, to have a broader reference gene families, we recommend to use the LUCA database if possible. 
 
 
-You can see an example in the [testdata](https://github.com/sinamajidian/FastOMA/tree/master/testdata/in_folder) folder.
+You can see an example in the [testdata](https://github.com/DessimozLab/FastOMA/tree/main/testdata/in_folder) folder.
 ```
 $ ls proteome
 AQUAE.fa  CHLTR.fa  MYCGE.fa
@@ -30,7 +29,8 @@ $ cat species_tree.nwk
 
 Besides, the internal node should not contain any special character (e.g. `\`  `/` or `space`).
 The reason is that FastOMA write some files whose names contain the internal node's name. 
-If the species tree does not have label for some/all internal nodes, FastOMA labels them sequentially.  
+If the species tree does not have label for some/all internal nodes, FastOMA labels them sequentially. 
+The updated tree will be stored in the output folder named as `species_tree_checked.nwk`.
 
 
 
@@ -63,7 +63,7 @@ See also [How to install FastOMA](#how-to-install-FastOMA) for additional ways h
 section on the different [profiles](#using-different-nextflow-profiles).
 
 
-## More details on how to run
+### More details on how to run
 We provide for every commit of the repository a docker image for FastOMA on dockerhub. You can specify the container as 
 part of the nextflow command with the parameter `container_version`. If you want to use the container of the current 
 git checkout version, you can specify this in the following way:
@@ -78,18 +78,19 @@ nextflow run FastOMA.nf -profile docker \
 
 # How to install FastOMA
 
-## Running workflow directly
+There are four ways to run/install FastOMA detailed below:
 
-The FastOMA workflow can be run directly using nextflow's ability to fetch a workflow from github. A specific version
-can be selected by specifying the `-r` option to nextflow to select a specific version of FastOMA:
+### 1. Running workflow directly
+
+The FastOMA workflow can be run directly without any installation using nextflow's ability to fetch a workflow from github. A specific version can be selected by specifying the `-r` option to nextflow to select a specific version of FastOMA:
 
 ```bash
 nextflow run desimozlab/FastOMA -r 0.2.0 -profile conda 
 ```
 
-This will fetch version 0.2.0 from github and run the FastOMA workflow using the conda profile.
+This will fetch version 0.2.0 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
 
-## Cloning the FastOMA repo and running from there
+### 2. Cloning the FastOMA repo and running from there
 
 ```bash
 git clone https://github.com/DessimozLab/FastOMA.git
@@ -97,7 +98,7 @@ cd FastOMA
 nextflow run FastOMA.nf -profile docker --container_version "sha-$(git rev-list --max-count=1 --abbrev-commit HEAD)" ...
 ```
 
-## Manual installation (for development) in python virtual environment
+### 3. Manual installation (for development) in python virtual environment
 
 - install [mafft](https://mafft.cbrc.jp/alignment/software) and [FastTree](http://www.microbesonline.org/fasttree/) and ensure the software is accessible on the PATH.
 - install python >= 3.9
@@ -115,7 +116,7 @@ nextflow run FastOMA.nf -profile docker --container_version "sha-$(git rev-list 
   ```
 
 
-## Manual installation in conda/mamba environment
+### 4. Manual installation in conda/mamba environment
 In the FastOMA repository, we provide a conda environment file that can be used to generate a conda / mamba 
 environment:
 ```
@@ -130,15 +131,15 @@ Afterwards, you can run the workflow using nextflow (which is installed as part 
 ```
 nextflow run FastOMA.nf -profile standard|slurm --input_folder /path/to/input_folder --output_folder /path/to/output
 ```
+Note that you should use either the profile `standard` or `slurm` such the nextflow executor will use the activated environment.
 
-not that you should use either the profile `standard` or `slurm` such the nextflow executor will use the activated environment.
 
-# Using different nextflow profiles
+## Using different nextflow profiles
 
 Nextflow provides support to run a workflow on different infrastructures. Selection of this is done using the `-profile` argument. 
 For FastOMA, we've implemented the following profiles below. Additional ones can also be created by specifying them in the `nextflow.config` file.
 
-## Docker
+### Docker
 With `-profile docker` one can use docker as an execution platform. It requires docker to be installed on the system. The pipeline 
 will automatically fetch missing containers from dockerhub (e.g. dessimozlab/fastoma) if not found locally. By default, the version
 `latest` is used by the pipeline, however we provide images for any branch and release as well; even for every recent commit.
@@ -153,18 +154,18 @@ nextflow run FastOMA.nf -profile docker \
 This will use the container that is tagged with the current commit id. Similarly, one could also use 
 `--container_version "0.2.0"` to use the container with version `dessimozlab/fastoma:0.2.0` from dockerhub.
 
-## Singularity
+### Singularity
 With `-profile singularity` singularity containers will be used to run the workflow. It requires singularity to 
 be installed on your system. The containers are automatically pulled from dockerhub and converted to singularity 
 containers. The same options as for [Docker](#docker) will be available.
 
-## Conda
+### Conda
 with `-profile conda`, the FastOMA workflow will create a conda environment which contains the necessary 
 dependencies and use this environment to run the workflow steps. Note that this environment does not need 
 to be activated manually. If you prefer to install the dependencies inside a conda or mamba environment 
 yourself, this can be achieved as described in [](#manual-installation-for-development-in-python-virtual-environment).
 
-## Slurm (with singularity/conda)
+### Slurm (with singularity/conda)
 On a HPC system you typically run processes using a scheduler system such as slurm or LSF. We provide 
 profiles `-profile slurm`, `-profile slurm_singularity` and `-profile slurm_conda` to run FastOMA with 
 the respective engine using [slurm](https://slurm.schedmd.com/overview.html) as a scheduler system. 
@@ -172,16 +173,18 @@ If you need a different scheduler, it is quite straight forward to
 set it up in `nextflow.config` based on the existing profiles and the documentation of 
 [nextflow executors](https://www.nextflow.io/docs/latest/executor.html).
 
+
 # How to run FastOMA on the test data
-Then, cd to the `testdata` folder and download the omamer database and change its name to `omamerdb.h5`.
+First, cd to the `testdata` folder and download the omamer database (optional) and change its name to `omamerdb.h5`.
 ```
 cd FastOMA/testdata
 wget https://omabrowser.org/All/Primates-v2.0.0.h5     # 105MB
 mv Primates-v2.0.0.h5    in_folder/omamerdb.h5 
 ```
-(This is for the test however, I would suggest downloading the `LUCA-v2.0.0.h5` instead of `Primates-v2.0.0.h5` for your real analysis.). Check the item 2 in the [input section](https://github.com/sinamajidian/FastOMA#input) for details.
+(This is for the test however, I would suggest downloading the `LUCA-v2.0.0.h5` instead of `Primates-v2.0.0.h5` for your real analysis.).
+Check the item 2 in the [input section](https://github.com/sinamajidian/FastOMA#input) for details.
 
-Now we have such a structure in our  testdata folder.
+Now we have such a structure in our testdata folder.
 ``` 
 $ tree ../testdata/in_folder
    ├── omamerdb.h5
@@ -205,7 +208,7 @@ nextflow run ../FastOMA.nf  \
 
 Note that to have a comprehensive test, we set the default value of needed cpus as 10.
 
-## expected log for test data
+## Expected log for test data
 After few minutes, the run for test data finishes. 
 ```
 [] process > check_input ()     [100%] 1 of 1 ✔
@@ -224,8 +227,12 @@ These are decided based on the FASTA file size. Finally, once all jobs of `hog_b
 
 If the run interrupted, by adding `-resume` to the nextflow commond line, you might be able to continue your previous nextflow job.
 
+Pro-tip. Nextflow creat a folder named `work` for storing its temprorary files. The characters in the bracket of the nextflow log (not shown here) are the short form of the folder address in `work/`
+where the last task of such job were done.
+e.g `[3f/2efg] process > check_input (1)` you can `cd work/3f/2efg` then use tab to complete the folder name, then you can see the temporary files of `check_input` task. In such folder there are some hidden files `.command.log/sh/run`.f
 
-## expected output structure for test data
+
+## Expected output structure for test data
 
 The output of FastOMA includes several output files regarding orthology inference
 (`OrthologousGroups.tsv`, `RootHOGs.tsv`, `FastOMA_HOGs.orthoxml`, `orthologs.tsv.gz` and `species_tree_checked.nwk`),
@@ -327,7 +334,7 @@ if activated (in `_config.py` and fastOMA installed with `pip -e` ).
 
 
 
-### using omamer's output
+### Using omamer's output
 The first step of the FastOMA pipele is to run [OMAmer](https://github.com/DessimozLab/omamer). If you already have the hogmap files, you can put them in the `in_folder/hogmap_in`.
 Then your structure of files will be 
 ```
@@ -349,7 +356,7 @@ Let's save the planet together with
 [green computational Biology](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009324). 
 
 
-## Run on a cluster 
+### Run on a cluster 
 For running on a SLURM cluster you can add `-c ../nextflow_slurm.config`  to the commond line.
 
 ```
@@ -362,7 +369,7 @@ nextflow ../FastOMA.nf  -c ../nextflow_slurm.config   --input_folder in_folder  
 
 You may need to re-run nextflow command line by adding `-resume`, if the allocated time is not enough for your dataset.
 
-You may need to increase the number of opoened files in your system with `ulimit -n 131072` or higher.
+You may need to increase the number of opoened files in your system with `ulimit -n 131072` or higher as nextflow generates hundreds of files depending on the size of your input dataset.
 
 
 ## Handle splice files
@@ -397,13 +404,6 @@ FastOMA uses the [linclust](https://github.com/soedinglab/MMseqs2#cluster) softw
 These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_clustXXXXX.fa`.
 These are initial gene families that are used in `infer_subhogs` step, which could be split into a few smaller gene families. 
 
-
-
-# Downstream analysis
-
-- High resolution tree inference
-
-- Phylostragraphy with pyham 
 
 
 ## Change log
