@@ -1,29 +1,18 @@
 
 
+
+###  How to use:  python  filter_orthoxml_completeness.py  FastOMA_HOGs.orthoxml  0.3  
+
+import sys
 import logging
 logging.basicConfig(level=logging.DEBUG)
-
-
-print("started 1 ")
-
-
-#python  /work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/FastOMA/utils/filter_orthoxml_completeness.py  output_hog_.orthoxml 0.3  CompletenessScore
-
 from FastOMA.zoo.hog import filter_orthoxml_file, HOGFilter
 
-# folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/run_1june/"
-# input_orthoxml_add = folder+"out_folder/test5"
-#
-# folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_qfo/run24may_xmlscore/"
-# input_orthoxml_add = folder+"out_folder/output_hog_.orthoxml"
-folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/gethog3_eukaryota/run_1june/"
+print("started ")
 
-orthoxml_path=folder+"out_folder/output_hog_.orthoxml_scientific.orthoxml_edited"
-input_orthoxml_add = orthoxml_path
-threshold_filt = 0.3
+input_orthoxml_add = sys.argv[1]
+threshold_filt = float(sys.argv[2])
 
-
-#threshold_filt = 0.6
 score_type = "CompletenessScore"
 
 
