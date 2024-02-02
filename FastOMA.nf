@@ -183,7 +183,7 @@ process omamer_run{
     if [ -f ${precomputed_hogmap_folder}/${proteome}.hogmap ] ; then
         cp ${precomputed_hogmap_folder}/${proteome}.hogmap  ${proteome}.hogmap
     else
-        omamer search --db ${omamer_db} --query ${proteome} --out ${proteome}.hogmap
+        omamer search -n 10 --db ${omamer_db} --query ${proteome} --out ${proteome}.hogmap
     fi
   """
 }
