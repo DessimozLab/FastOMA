@@ -206,7 +206,9 @@ nextflow run ../FastOMA.nf  \
          -profile standard
 ```
 
-Note that to have a comprehensive test, we set the default value of needed cpus as 10.
+Note that to have a comprehensive test, we set the default value of needed cpus as 10. 
+If you face `.command.sh: line 2: papermill: command not found`, note that the orthology inference is finished and you have them in output folder and you may want to install `pip install -e .[report]` to have `papermill` generating the report and run the last step.
+
 
 ## Expected log for test data
 After few minutes, the run for test data finishes. 
