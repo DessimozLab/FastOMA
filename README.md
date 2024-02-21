@@ -200,7 +200,7 @@ Finally, run the package using nextflow as below:
 # cd FastOMA/testdata
 nextflow run ../FastOMA.nf  \
          --input_folder in_folder  \
-         --omamer_db testdata/in_folder/omamer_db.h5 \
+         --omamer_db in_folder/omamerdb.h5 \
          --output_folder out_folder \
          --report \
          -profile standard
