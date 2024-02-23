@@ -642,13 +642,14 @@ def merge_rhogs2(hogmaps, rhogs_prots):
 
     counter_merged_prots=0
     newhost= ""
+    rhogs_host_size = 0
     for cluster in cluster_rhogs_list:
         if len(cluster)>30:
             print(len(cluster))
         #prots = [rhogs_prots[hog] for hog in cluster]
          #  cluster[0] #
         found = False
-        rhogs_host_size = 0
+
         while not found and len(cluster)>0:
             host_hog = min(cluster)
             if host_hog in rhogs_prots:
