@@ -36,10 +36,23 @@ def check_proteome(species_names, prot_recs_lists, proteome_folder):
     isOk = True
     num_prots_all = 0
     for species_name in species_names:
-        num_prots = len(prot_recs_lists[species_name])
+        prot_recs_list = prot_recs_lists[species_name]
+        prot_recs_ids = [prot_rec.id for prot_rec in prot_recs_list]
+        if len(prot_recs_ids)!= len(set(prot_recs_ids)):
+            logger.error("It seems that at least of the protein id in fasta file %s is repeated. Note that only part of a fasta record before space is considered.",species_name)
+            logger.error("Check input failed. FastOMA halted!")
+            return False
+        for prot_rec_id in prot_recs_ids:
+            if len(prot_rec_id)>60:   # todo 85 is the limit without considering ||s.
+                logger.error("The protein ID %s is too long in species %s.fa, which should be changed. Please make sure it will be still unique. ",prot_rec_id,species_name) # (root cause issue due to truncatation by fastTree)
+                logger.error("Check input failed. FastOMA halted!")
+                return False
+
+
+        num_prots = len(prot_recs_list) # >EP00159_Fonticula_alba_P004948_XP_009497064.1_small_nuclear_ribonucleoprotein_B_and_B'_Fonticula_alba||691883||1155004948
         num_prots_all += num_prots
-        # todo , check duplicated Ids  for seq in prot_recs_lists[species_name]:
-        #  if seq.id in ids_set: report duplciated   ids_set.add(seq.id),
+        # todo , check duplicated Ids should it be done on all species ?
+
         if num_prots <= 2:
             logger.error("The input proteome looks empty or too few proteins or Bio.SeqIO couldn't read it, %s/%s.fa", proteome_folder, species_name)
             isOk = False
