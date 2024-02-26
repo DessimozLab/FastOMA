@@ -409,6 +409,11 @@ process fastoma_report {
 
   script:
     """
+    if ! papermill --version ; then 
+        >&2 echo "papermill dependency not found!"
+        >&2 echo "Ensure you have installed fastoma with the 'report' feature\n (e.g. pip install fastoma[report])"
+        exit 1
+    fi
     papermill ${workflow.projectDir}/FastOMA/fastoma_notebook_stat.ipynb \
               report.ipynb \
               -p output_folder "./" \
