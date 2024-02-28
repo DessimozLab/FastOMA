@@ -238,14 +238,16 @@ def write_roothogs(orthoxml: Path, roothog_folder: Path, output_file_roothog_tsv
     fasta_format = "fa"  # of the rhogs
     nr_prot_in_groups, nr_groups = 0, 0
     with open(output_file_roothog_tsv, 'wt') as tsv:
-        tsv.write("RootHOG\tProtein\n")
+        tsv.write("RootHOG\tProtein\tOMAmerRootHOG\n")
         for grp, meta in extract_flat_groups_at_level(orthoxml, callback=callback_group_and_omamer):
             group_members = {g.xref for g in grp}
             group_name = meta['group_id']
+            # this is the id of the merged roothogs from the placement step
+            omamer_roothog = meta['omamer_roothog']
             nr_prot_in_groups += len(grp)
             nr_groups += 1
             for gene in group_members:
-                tsv.write(f"{group_name}\t{gene}\n")
+                tsv.write(f"{group_name}\t{gene}\t{omamer_roothog}\n")
 
             _write_group_fasta(fasta_format, group_members, group_name, id_transformer, meta, output_fasta_groups,
                                roothog_folder)
