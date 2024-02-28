@@ -90,8 +90,8 @@ class GroupExtractor(object):
         for c in to_rem:
             try:
                 node.remove(c)
-            except ValueError:
-                logger.warning("cannot remove element %s", c)
+            except ValueError as e:
+                logger.warning("cannot remove element %s: %s", c, e)
         return genes
 
     def merge_children(self, node):
