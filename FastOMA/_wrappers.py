@@ -1,4 +1,3 @@
-
 from Bio import SeqIO
 from .zoo.wrappers.aligners import mafft
 from .zoo.wrappers.treebuilders import fasttree
@@ -7,12 +6,24 @@ from ete3 import Tree
 
 import subprocess
 
-from ._config import logger_hog
-from . import _config
+import logging
+
+seed_random=1234 # Also in _hog_class.py
+tree_tool = "fasttree"  #  "fasttree"  "iqtree"  # todo iqtree is very slow and not tested properly
+rooting_mad_executable_path = "mad"  # it could be also a full address ends with mad like  /user/myfolder/mad
+# mmseqs_executable_path ="mmseqs" # todo move run_linclust to _wrapper.py
+gene_trees_write_all = False
+
+logger_level = "DEBUG"            # DEBUG INFO  # TRACE  DEBUG INFO  WARN  ERROR  FATAL
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger("hog")
+if logger_level == "INFO":
+    logger.setLevel(logging.INFO)
+if logger_level == "DEBUG":
+    logger.setLevel(logging.DEBUG)
 
 
-
-def merge_msa(list_msas, gene_tree_file_addr):
+def merge_msa(list_msas, gene_tree_file_addr, conf_infer_subhhogs):
     """
     merge orthoxml_to_newick.py list of MSAs (multiple sequnce aligmnet)
     by run mafft on them.
@@ -20,28 +31,12 @@ def merge_msa(list_msas, gene_tree_file_addr):
 
     output: merged (msa)
     """
-    logger_hog.debug("Number of items in list_msas "+str(len(list_msas)))
-    logger_hog.debug(str(list_msas[:4])+"...")
-    logger_hog.debug("max length is "+ str(max([len(i[0]) for i in list_msas]))+" .")
+    logger.debug("Number of items in list_msas "+str(len(list_msas)))
+    logger.debug(str(list_msas[:4])+"...")
+    logger.debug("max length is "+ str(max([len(i[0]) for i in list_msas]))+" .")
 
-    if _config.add_outgroup:
-        try:
-            address_outgroup = "/scratch/smajidi1/qfo/outgroup_v3/"
-            gene_tree_file_addr_split = gene_tree_file_addr.split("_")
-            hogid = gene_tree_file_addr_split[1]
-            tax= gene_tree_file_addr_split[2]
-
-            outgroup_seqs = list(SeqIO.parse(address_outgroup+"outgroup_"+str(hogid)+"_"+tax[:-4]+".fa", "fasta"))
-            list_msas += outgroup_seqs
-            logger_hog.debug("outgroups added "+ str(len(outgroup_seqs))+" .")
-            logger_hog.debug("now  list_msas " + str(len(list_msas)) + " proteins.")
-            # later for merging with mafft  it needs to be MSA
-
-        except:
-            logger_hog.debug(" no outgroup for "+address_outgroup+"outgroup_"+str(hogid)+"_"+tax+".fa")
-
-    #logger_hog.debug("we are mergin subhogs"+len(list_msas))
-    # logger_hog.debug(str(list_msas[0][0].id ) + "\n")
+    #logger.debug("we are mergin subhogs"+len(list_msas))
+    # logger.debug(str(list_msas[0][0].id ) + "\n")
     # SeqIO.write(list_msas ?? , gene_tree_file_addr + ".unaligned.fa", "fasta")
 
     # todo using more cpus ?  (now a bit better using --thread -1)
@@ -57,46 +52,39 @@ def merge_msa(list_msas, gene_tree_file_addr):
     wrapper_mafft_merge.options['--anysymbol'].set_value(True)
     wrapper_mafft_merge.options['--thread'].set_value(-1) # -1 uses a largely appropriate number of threads in each step, after automatically counting the number of physical cores the computer has.
     # --randomseed
-    wrapper_mafft_merge.options['--randomseed'].set_value(_config.seed_random)
+    wrapper_mafft_merge.options['--randomseed'].set_value(seed_random)
 
     merged = wrapper_mafft_merge()
-    time_duration = wrapper_mafft_merge.elapsed_time
+    # time_duration = wrapper_mafft_merge.elapsed_time
     # print(time_duration)
-    #logger_hog.info \
-    #    (str(len(list_msas)) + " msas are merged with length of "+ str(len(merged)) + "  " + str (len(merged[0])))
-    if _config.msa_write:
+    # logger.info(str(len(list_msas)) + " msas are merged with length of "+ str(len(merged)) + "  " + str (len(merged[0])))
+    if conf_infer_subhhogs.msa_write:
         SeqIO.write(merged, gene_tree_file_addr + "_msa.fa", "fasta")
 
     return merged
 
 
-def infer_gene_tree(msa, gene_tree_file_addr):
+def infer_gene_tree(msa, gene_tree_file_addr, conf_infer_subhhogs):
     """
     infere gene tree using fastTree for the input msa
     and write it as orthoxml_to_newick.py file
 
     output: gene tree in nwk format
     """
-    prot_ids = [i.id for i in msa]
-    #assert len(set(prot_ids)) == len(prot_ids), "non uniq fasta record in msa "+str(prot_ids)
+    # prot_ids = [i.id for i in msa]
+    # assert len(set(prot_ids)) == len(prot_ids), "non uniq fasta record in msa "+str(prot_ids)
     # since quote is activated, the description of prots will be in the gene tree leaves. so we need to remove that.
     msa_edited = []
     for rec in msa:
         rec.description = ""
         msa_edited.append(rec)
-    if _config.tree_tool == "fasttree":
+    if tree_tool == "fasttree":
         wrapper_tree = fasttree.Fasttree(msa_edited, datatype="PROTEIN")
         wrapper_tree.options.options['-fastest'].active = True  # speed up the neighbor joining phase in fasttree & reduce memory usage  (recommended for >50,000 sequences)
         #  we don't really need fastest for small dataset and making this False didn't make qfo result better
         wrapper_tree.options.options['-quote'].active = True   # .set_value(True)  doesnt work.
-        wrapper_tree.options.options['-seed'].set_value(_config.seed_random)
-
-
-
-
-        #wrapper_tree.options.options['-quote'].active = True
+        wrapper_tree.options.options['-seed'].set_value(seed_random)
         #wrapper_tree.options.options['-nt'].active = True
-
         # todo using more cpus ?
         # elif _config.tree_tool == "iqtree": # very slow not recommanded
         #     wrapper_tree = iqtree.Iqtree(msa, datatype="PROTEIN")
@@ -105,31 +93,10 @@ def infer_gene_tree(msa, gene_tree_file_addr):
 
     result_tree1 = wrapper_tree()
     if wrapper_tree.stderr:
-        logger_hog.debug("tree inference stderr " + str(wrapper_tree.stderr))
+        logger.debug("tree inference stderr " + str(wrapper_tree.stderr))
     time_taken_tree = wrapper_tree.elapsed_time
     result_tree2 = wrapper_tree.result
     tree_nwk = result_tree2["tree"].as_string(schema='newick') #str(result_tree2["tree"])
-    if _config.add_outgroup:
-
-        # using one rooting for all part of the levels , which didn't improve that much
-        # rhogid= gene_tree_file_addr.split("_")[1]
-        # from ete3 import Tree
-        # tree1= Tree("/scratch/smajidi1/relD_merg_single2/t/omamer_rhogs/HOG_"+rhogid+".fa_msa.nwk",format=1)
-        # logger_hog.info("gene tree read from the folder ")
-
-        tree1=Tree(tree_nwk,format=1)
-        r_outgroup = tree1.get_midpoint_outgroup()
-        try:
-            tree1.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
-        except:
-            logger_hog.warning("issue 123092371  outgroup not set_outgroup "+str(r_outgroup))
-        genes = ["'"+i.id+"'" for i in msa]
-        try:
-            tree1.prune(genes)
-        except:
-            logger_hog.warning("issue 1230971  prune issue _wrappers "+str(genes))
-        tree_nwk= tree1.write(format=1)
-        #(msa, gene_tree_file_addr
 
     # current_time = datetime.now().strftime("%H:%M:%S")
     # for development we write the gene tree, the name of file should be limit in size in linux.
@@ -137,7 +104,7 @@ def infer_gene_tree(msa, gene_tree_file_addr):
     # instead -> hash thing
     # ??? hashlib.md5(original_name).hexdig..it()
 
-    if _config.gene_trees_write_all or _config.rooting_method == "mad":
+    if gene_trees_write_all or conf_infer_subhhogs.rooting_method == "mad":
         file_gene_tree = open(gene_tree_file_addr, "w")
         file_gene_tree.write(tree_nwk) #file_gene_tree.write(";\n")
         file_gene_tree.close()
@@ -150,7 +117,7 @@ def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
     num_threads = 5
     command_clust= "mmseqs easy-linclust --threads" +str(num_threads) + " " +fasta_to_cluster+"singleton_unmapped tmp_linclust"
 
-    logger_hog.debug("linclust rooting started" + command_clust)
+    logger.debug("linclust rooting started" + command_clust)
     process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     #if "Error analyzing file" in str(output) or error:
@@ -174,7 +141,7 @@ def trim_msa(msa):
     return msa_out
 
 
-def mad_rooting(input_tree_file_path: str, mad_executable_path: str = "./mad"):
+def mad_rooting(input_tree_file_path: str): # , mad_executable_path: str = "./mad"
     """
     Rooting a tree using MAD algorithm.
     :param input_tree_file_path: path to the input tree file.
@@ -192,12 +159,12 @@ def mad_rooting(input_tree_file_path: str, mad_executable_path: str = "./mad"):
 
     """
     # Create the command to run MAD.
-    mad_command = f"{_config.rooting_mad_executable_path} -i {input_tree_file_path}"
+    mad_command = f"{rooting_mad_executable_path} -i {input_tree_file_path}"
     # Run MAD and ignore the output.
     #os.system(mad_command)
 
 
-    logger_hog.debug("MAD rooting started")
+    logger.debug("MAD rooting started")
     #bashCommand = f"mad {gene_tree_address}"
     process = subprocess.Popen(mad_command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
@@ -222,5 +189,5 @@ def mad_rooting(input_tree_file_path: str, mad_executable_path: str = "./mad"):
         rooted_tree = Tree(trees[0])
     else:#Rooted tree written to 'tree_672375_Theria.nwk.rooted'
         rooted_tree = Tree(input_tree_file_path + ".rooted")
-    logger_hog.debug("MAD rooting finished")
+    logger.debug("MAD rooting finished")
     return rooted_tree

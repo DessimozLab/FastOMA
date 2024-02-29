@@ -1,7 +1,13 @@
+
 import shutil
-from . import _config
 from pathlib import Path
-logger = _config.logger_hog
+from ._wrappers import logger
+
+
+big_rhog_filesize_thresh = 400 * 1000
+sum_list_rhogs_filesize_thresh = 2 * 1e6
+
+
 
 
 class BatchBuilder:
@@ -43,9 +49,9 @@ def folder_1h_rhog(roothog_path: Path, output_folder_big: Path, output_folder_re
     # create a list of hogs in descending filesize order
     hog_size_tuples = sorted([(f, f.stat().st_size) for f in roothog_path.rglob("*.fa")], key=lambda x: -x[1])
     with BatchBuilder(output_folder_big, 1) as big_hogs, \
-            BatchBuilder(output_folder_rest, _config.sum_list_rhogs_filesize_thresh) as rest_hogs:
+            BatchBuilder(output_folder_rest, sum_list_rhogs_filesize_thresh) as rest_hogs:
         for hog, fsize in hog_size_tuples:
-            if fsize > _config.big_rhog_filesize_thresh:
+            if fsize > big_rhog_filesize_thresh:
                 big_hogs.add_hog(hog)
             else:
                 rest_hogs.add_hog(hog)

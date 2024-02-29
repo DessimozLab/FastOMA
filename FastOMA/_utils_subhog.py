@@ -15,10 +15,12 @@ import sys
 from os import listdir
 
 
-from ._config import logger_hog
-from . import _config
+from ._wrappers import logger
 from . import _wrappers
 
+msa_write_all = False
+automated_trimAL = False
+label_SD_internal = "species_overlap"  # todo the other option "reconciliation" hasn't been tested properly
 
 """
 fragments in the code mean poorly annotated genes that should be one gene.
@@ -47,7 +49,7 @@ def read_species_tree(species_tree_address):
 
     output (species_tree)
     """
-    # logger_hog.info(species_tree_address)
+    # logger.info(species_tree_address)
     # print(round(os.path.getsize(species_tree_address)/1000),"kb")
     format_tree = species_tree_address.split(".")[-1]
     # print("there shouldnt be any space in the tree name internal node name as well")
@@ -55,6 +57,7 @@ def read_species_tree(species_tree_address):
         project = Phyloxml()
         project.build_from_file(species_tree_address)
         # Each tree contains the same methods as orthoxml_to_newick.py PhyloTree object
+        species_tree =""
         for species_tree in project.get_phylogeny():
             species_tree = species_tree
         for node_species_tree in species_tree.traverse(strategy="postorder"):
@@ -71,10 +74,10 @@ def read_species_tree(species_tree_address):
             try:
                 species_tree = Tree(species_tree_address)
             except:
-                logger_hog.error("Format of species tree is not known or the file doesn't exist "+species_tree_address )
+                logger.error("Format of species tree is not known or the file doesn't exist "+species_tree_address )
                 sys.exit()
     else:
-        logger_hog.error("For now we accept phyloxml or nwk format for input species tree.or the file doesn't exist "+species_tree_address)
+        logger.error("For now we accept phyloxml or nwk format for input species tree.or the file doesn't exist "+species_tree_address)
         sys.exit()
 
     return species_tree
@@ -183,38 +186,36 @@ def get_score_all_root(gtree, stree):
 
     return gtree
 
-def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list=[]):
-    if _config.add_outgroup:
-        pass # midpoint rooting is done in _wrapper afrer adding the outgroup once
+def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, conf_infer_subhhogs, hogs_children_level_list=[]):
 
-    elif _config.rooting_method == "midpoint":
+    if conf_infer_subhhogs.rooting_method == "midpoint":
         r_outgroup = gene_tree.get_midpoint_outgroup()
         try:
             gene_tree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
         except:
             pass
-    elif  _config.rooting_method == "Nevers_rooting":
-        logger_hog.info("Nevers_rooting started for " +str(gene_tree.write(format=1, format_root_node=True)))
-        species= Tree("/work/FAC/FBM/DBC/cdessim2/default/smajidi1/qfo/qfo_run_raw/in_folder/species_tree.nwk",format=1)
+    elif  conf_infer_subhhogs.rooting_method == "Nevers_rooting":
+        logger.info("Nevers_rooting started for " +str(gene_tree.write(format=1, format_root_node=True)))
+        species= Tree("species_tree.nwk",format=1)
         gene_tree  = get_score_all_root(gene_tree, species)
-        logger_hog.info("Nevers_rooting finished for " + str(gene_tree.write(format=1, format_root_node=True)))
+        logger.info("Nevers_rooting finished for " + str(gene_tree.write(format=1, format_root_node=True)))
 
-    elif _config.rooting_method == "mad":
+    elif conf_infer_subhhogs.rooting_method == "mad":
         gene_tree = _wrappers.mad_rooting(genetree_msa_file_addr) # todo check with qouted gene tree
 
-    elif _config.rooting_method == "outlier":  # todo need check with new gene tree
-        gene_tree = PhyloTree(gene_tree_raw + ";", format=0)
+    elif conf_infer_subhhogs.rooting_method == "outlier":  # not yet implmented completely, todo need check with new gene tree
+        gene_tree = PhyloTree(str(gene_tree), format=0)
         outliers = find_outlier_leaves(gene_tree)
         r_outgroup = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
         gene_tree.set_outgroup(r_outgroup)
     else:
-        logger_hog.warning("rooting method not found !!   * * * * *  *")
+        logger.warning("rooting method not found !!   * * * * *  *")
 
     all_species_dubious_sd_dic = {}
-    if _config.label_SD_internal == "species_overlap":
-        (gene_tree, all_species_dubious_sd_dic) = label_sd_internal_nodes(gene_tree)
+    if label_SD_internal == "species_overlap":
+        (gene_tree, all_species_dubious_sd_dic) = label_sd_internal_nodes(gene_tree, conf_infer_subhhogs.threshold_dubious_sd)
 
-    elif _config.label_SD_internal == "reconcilation": # todo need check with new gene tree
+    elif label_SD_internal == "reconciliation": # todo need check with new gene tree
         node_species_tree_nwk_string = node_species_tree.write(format=1)
         node_species_tree_PhyloTree = PhyloTree(node_species_tree_nwk_string, format=1)
         gene_tree_nwk_string = gene_tree.write(format=1, format_root_node=True)
@@ -239,7 +240,7 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
                         node.name = node_name_new
                         break
 
-    if _config.gene_trees_write:
+    if conf_infer_subhhogs.gene_trees_write:
         gene_tree.write(format=1, format_root_node=True, outfile=genetree_msa_file_addr+"_SD_labeled.nwk")
 
     return gene_tree, all_species_dubious_sd_dic
@@ -292,7 +293,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid):
     #             # list_children_names = [str(node_child.name) for node_child in node_children]
     #             # node.name = '_'.join(list_children_names)
     #             # ?? to imrpove, if the species tree has internal node name, keep it,
-    #             # then checn condition in  _infer_subhog.py, where logger_hog.info("Finding hogs for rhogid: "+str(rh
+    #             # then checn condition in  _infer_subhog.py, where logger.info("Finding hogs for rhogid: "+str(rh
     #             node.name = "internal_" + str(counter_internal)  #  +"_rhg"+rhogid  #  for debuging
     #             counter_internal += 1
     # print("Working on the following species tree.")
@@ -302,7 +303,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid):
 
 
 
-def label_sd_internal_nodes(tree_out):
+def label_sd_internal_nodes(tree_out, threshold_dubious_sd):
     """
     for the input gene tree, run the species overlap method
     and label internal nodes of the gene tree
@@ -340,7 +341,7 @@ def label_sd_internal_nodes(tree_out):
             if node_children_species_intersection:  # print("node_children_species_list",node_children_species_list)
                 counter_D += 1
                 node.name = "D" + str(counter_D) + "_"+str(len(node_children_species_intersection))+"_"+str(len(node_children_species_union))
-                if len(node_children_species_intersection)/ len(node_children_species_union) <= _config.threshold_dubious_sd:
+                if len(node_children_species_intersection)/ len(node_children_species_union) <= threshold_dubious_sd:
                     all_species_dubious_sd_dic[node.name] = list(node_children_species_intersection)
             else:
                 counter_S += 1
@@ -418,7 +419,7 @@ def get_reconciled_tree_zmasek(gtree, sptree, inplace=False):
 
     # set/compute the mapping function M(g) for the
     # leaf nodes in the gene tree (see paper for details)
-    species = [i.name for i in sptree.get_leaves()]   #sptree.get_species()
+    # species = [i.name for i in sptree.get_leaves()]   #sptree.get_species()
     for g_node in gtree.get_leaves():
         g_node_species = g_node.name.split("||")[1]
         g_node.add_feature("M", sp2node[g_node_species])
@@ -475,7 +476,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
             record_edited = SeqRecord(Seq(record_seq_edited), record.id, '', '')
             msa_filtered_col.append(record_edited)
 
-    if _config.msa_write_all and gene_tree_file_addr:
+    if msa_write_all and gene_tree_file_addr:
         out_name_msa=gene_tree_file_addr+"_filtered_"+"col_"+str(tresh_ratio_gap_col)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_col, handle_msa_fasta, "fasta")
@@ -497,8 +498,8 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
             if ratio_record_nongap >= inferhog_tresh_ratio_gap_row:
                 msa_filtered_row.append(record)
         else:
-            logger_hog.warning("issue 12788 : error , seq len is zero when msa_filter_row")
-    if _config.msa_write_all and gene_tree_file_addr:
+            logger.warning("issue 12788 : error , seq len is zero when msa_filter_row")
+    if msa_write_all and gene_tree_file_addr:
         out_name_msa = gene_tree_file_addr +"_filtered_row_"+str(inferhog_tresh_ratio_gap_row)+".msa.fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
@@ -508,27 +509,27 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
 
 
 
-def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
+def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, conf_infer_subhhogs):
 
     msa_filt_row_1 = merged_msa
     # if _config.inferhog_filter_all_msas_row:
     #  msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
     # if   msa_filt_row_1 and len(msa_filt_row_1[0]) >=
-    if len(msa_filt_row_1[0]) >= _config.inferhog_min_cols_msa_to_filter:
+    if len(msa_filt_row_1[0]) >= conf_infer_subhhogs.inferhog_min_cols_msa_to_filter:
         # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
         # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
-        # logger_hog.debug( "We are doing MSA trimming " + rhogid + ", for taxonomic level:" + str(node_species_tree.name))
+        # logger.debug( "We are doing MSA trimming " + rhogid + ", for taxonomic level:" + str(node_species_tree.name))
         # print(len(merged_msa), len(merged_msa[0]))
 
-        if _config.automated_trimAL:
+        if automated_trimAL:
             msa_filt_col = msa_filt_row_1
             msa_filt_row_col = _wrappers.trim_msa(msa_filt_row_1)
         else:
-            msa_filt_col = msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_0_")
+            msa_filt_col = msa_filter_col(msa_filt_row_1, conf_infer_subhhogs.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_0_")
             msa_filt_row_col = msa_filt_col
             if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
-                msa_filt_row_col_raw = msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr+"_1_")
-                msa_filt_row_col = msa_filter_col(msa_filt_row_col_raw, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_2_")
+                msa_filt_row_col_raw = msa_filter_row(msa_filt_col, conf_infer_subhhogs.inferhog_tresh_ratio_gap_row, gene_tree_file_addr+"_1_")
+                msa_filt_row_col = msa_filter_col(msa_filt_row_col_raw, conf_infer_subhhogs.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_2_")
 
 
         # compare msa_filt_row_col and msa_filt_col,
@@ -537,7 +538,7 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
             set_prot_after = set([i.id for i in msa_filt_row_col])
             prots_to_remove_level = set_prot_before - set_prot_after
             for prots_to_remove in prots_to_remove_level:
-                logger_hog.debug("** we are removing the sequence "+str(prots_to_remove)+" due to trimming")
+                logger.debug("** we are removing the sequence "+str(prots_to_remove)+" due to trimming")
                 # we may want to tag it in the hog object
             #assert len(prots_to_remove_level), "issue 31235"
             #prots_to_remove |= prots_to_remove_level
@@ -552,7 +553,7 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
             #             hogs_children_level_list.append(hog_i)
         else:
             msa_filt_row_col = msa_filt_col
-        merged_msa_filt = msa_filt_row_col
+        # merged_msa_filt = msa_filt_row_col
     else:
         msa_filt_row_col = msa_filt_row_1
         msa_filt_col = msa_filt_row_1

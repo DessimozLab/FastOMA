@@ -7,16 +7,14 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from datetime import datetime
 
-
 from Bio import SeqIO
 from ete3 import Tree
 
-from . import _config
-from ._config import logger_hog
+from ._wrappers import logger
 from ._utils_subhog import read_species_tree
 from .transformer import header_transformer
 from .zoo.hog import extract_flat_groups_at_level, extract_marker_groups_at_level
-from .zoo.hog.convert import orthoxml_to_newick
+# from .zoo.hog.convert import orthoxml_to_newick
 from . import __version__ as fastoma_version
 
 # This code collect subhogs and writes outputs.
@@ -25,7 +23,7 @@ from . import __version__ as fastoma_version
 def iter_hogs(pickle_folder: Path):
     cnt = 0
     nr_hogs = 0
-    logger_hog.info("reading pickle files from %s", pickle_folder)
+    logger.info("reading pickle files from %s", pickle_folder)
     for root, dirs, files in os.walk(pickle_folder, followlinks=True):
         for f in files:
             if f.startswith('file_') and f.endswith('.pickle'):
@@ -35,10 +33,10 @@ def iter_hogs(pickle_folder: Path):
                 yield from cur
                 cnt += 1
                 if cnt % 500 == 0:
-                    logger_hog.info("read %d batch pickle files so far, resulting in %d roothogs so far",
+                    logger.info("read %d batch pickle files so far, resulting in %d roothogs so far",
                                     cnt, nr_hogs)
-    logger_hog.info("number of pickle files is %d.", cnt)
-    logger_hog.debug("number of hogs in all batches is %d", nr_hogs)
+    logger.info("number of pickle files is %d.", cnt)
+    logger.debug("number of hogs in all batches is %d", nr_hogs)
 
 
 def convert_speciestree_to_orthoxml_taxonomy(tree:Tree):
@@ -127,9 +125,9 @@ def fastoma_collect_subhogs():
                              Existing values are:
                                noop:      No transformation - entire ID of fasta header
                                UniProt:   '>sp|P68250|1433B_BOVIN' --> P68250""")
-    conf = parser.parse_args()
-    logger_hog.setLevel(level=30 - 10 * min(conf.v, 2))
-    logger_hog.debug(conf)
+    conf = parser.parse_args() # conf_collect_subhogs
+    logger.setLevel(level=30 - 10 * min(conf.v, 2))
+    logger.debug(conf)
     id_transformer = header_transformer(conf.id_transform)
 
     write_hog_orthoxml(conf.pickle_folder, conf.out, conf.gene_id_pickle_file,
@@ -159,11 +157,11 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
     with open(gene_id_pickle_file, 'rb') as handle:
         gene_id_name = pickle.load(handle)
         # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
-    logger_hog.debug("We read the gene_id_name dictionary with %d items", len(gene_id_name))
+    logger.debug("We read the gene_id_name dictionary with %d items", len(gene_id_name))
 
     speciestree = read_species_tree(species_tree)
     taxonomy, name2taxid = convert_speciestree_to_orthoxml_taxonomy(speciestree)
-    logger_hog.debug("Now creating the header of orthoxml")
+    logger.debug("Now creating the header of orthoxml")
 
    #  #### create the header of orthoxml ####
     for query_species_name, list_prots in gene_id_name.items():
@@ -173,7 +171,7 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
         for (gene_idx_integer, query_prot_name) in list_prots:
             prot_id = id_transformer.transform(query_prot_name)
             gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": prot_id})
-    logger_hog.debug("gene_xml is created.")
+    logger.debug("gene_xml is created.")
     orthoxml_file.append(taxonomy)
 
     scores = ET.SubElement(orthoxml_file, "scores")
@@ -184,12 +182,12 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
     groups_xml = ET.SubElement(orthoxml_file, "groups")
     for fam, hogs_a_rhog_xml in enumerate(iter_hogs(Path(pickle_folder)), start=1):
         groups_xml.append(update_hogids(fam, hogs_a_rhog_xml, name2taxid))
-    logger_hog.debug("converting the xml object to string.")
+    logger.debug("converting the xml object to string.")
     with open(output_xml_name, 'wb') as fh:
         ET.indent(orthoxml_file, space='  ', level=0)
         orthoxml = ET.ElementTree(orthoxml_file)
         orthoxml.write(fh, encoding="utf-8", xml_declaration=True, )
-    logger_hog.info("orthoxml is written in %s", output_xml_name)
+    logger.info("orthoxml is written in %s", output_xml_name)
 
 
 def callback_group_and_omamer(node):
@@ -207,7 +205,7 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
     output_fasta_groups = Path(output_fasta_groups)
     output_fasta_groups.mkdir(parents=True, exist_ok=True)
 
-    logger_hog.info("Start writing OG tsv and fasta files")
+    logger.info("Start writing OG tsv and fasta files")
     fasta_format = "fa"  # of the rhogs
     nr_prot_in_groups, nr_groups = 0, 0
     with open(output_file_og_tsv, 'w') as tsv:
@@ -222,7 +220,7 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
 
             _write_group_fasta(fasta_format, group_members, group_name, id_transformer, meta, output_fasta_groups,
                                roothog_folder)
-    logger_hog.info("writing of %s done. created %d groups containing %d proteins in total",
+    logger.info("writing of %s done. created %d groups containing %d proteins in total",
                     output_file_og_tsv, nr_groups, nr_prot_in_groups)
 
 
@@ -234,7 +232,7 @@ def write_roothogs(orthoxml: Path, roothog_folder: Path, output_file_roothog_tsv
     output_fasta_groups = Path(output_fasta_groups)
     output_fasta_groups.mkdir(parents=True, exist_ok=True)
 
-    logger_hog.info("Start writing RootHOG tsv and fasta files")
+    logger.info("Start writing RootHOG tsv and fasta files")
     fasta_format = "fa"  # of the rhogs
     nr_prot_in_groups, nr_groups = 0, 0
     with open(output_file_roothog_tsv, 'wt') as tsv:
@@ -252,7 +250,7 @@ def write_roothogs(orthoxml: Path, roothog_folder: Path, output_file_roothog_tsv
             _write_group_fasta(fasta_format, group_members, group_name, id_transformer, meta, output_fasta_groups,
                                roothog_folder)
 
-    logger_hog.info("writing of %s done. created %d groups containing %d proteins in total",
+    logger.info("writing of %s done. created %d groups containing %d proteins in total",
                     output_file_roothog_tsv, nr_groups, nr_prot_in_groups)
 
 

@@ -4,14 +4,23 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 from random import sample
 import random
-from . import _config
 
-random.seed(_config.seed_random)
+seed_random=1234 # Also in _wrappers.py
+random.seed(seed_random)
+
+fragment_detection = True  # this also need to be consistent in _infer_subhog.py
+fragment_detection_msa_merge = True # todo is it still needed?
+
+subsampling_hogclass = True
+hogclass_max_num_seq = 20              # 40 subsampling in msa # ver very 2
+hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 50
+hogclass_tresh_ratio_gap_col = 0.6     # 0.8 for very very big
+
+
 import itertools
-
 from . import _utils_subhog
-from ._utils_subhog import logger_hog
-from . import _config
+from ._wrappers import logger
+
 
 
 class HOG:
@@ -26,7 +35,7 @@ class HOG:
         self._rhogid = rhogid
         self.__class__._hogid_iter += 1
         # 0070124
-        #todo add release id,
+
         self._hogid = "HOG_" + self._rhogid+ "_sub" + str(self.__class__._hogid_iter)
         self._tax_least = taxnomic_range  #  least taxnomic level
         self._tax_now = taxnomic_range    # the taxnomic level that we are considering now, checking for duplication
@@ -59,24 +68,24 @@ class HOG:
 
             records_full = [record for record in msa if (record.id in self._members) and (record.id not in self._dubious_members) ]
 
-            if len(records_full[0]) > _config.hogclass_min_cols_msa_to_filter:
-                records_sub_filt = _utils_subhog.msa_filter_col(records_full, _config.hogclass_tresh_ratio_gap_col)
+            if len(records_full[0]) > hogclass_min_cols_msa_to_filter:
+                records_sub_filt = _utils_subhog.msa_filter_col(records_full, hogclass_tresh_ratio_gap_col)
                 # the challange is that one of the sequences might be complete gap
             else:
                 records_sub_filt = records_full  # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
 
-            if _config.subsampling_hogclass and len(records_sub_filt) > _config.hogclass_max_num_seq:
+            if subsampling_hogclass and len(records_sub_filt) > hogclass_max_num_seq:
                 # to do in future:  select best seq, not easy to defin, keep diversity,
-                records_sub_sampled_raw = sample(list(records_sub_filt), _config.hogclass_max_num_seq)  # without replacement.
+                records_sub_sampled_raw = sample(list(records_sub_filt), hogclass_max_num_seq)  # without replacement.
                 records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, 0.01) # to make sure no empty column
-                logger_hog.info("we are doing subsamping in hog class from " + str(len(records_full)) + " to " + str(_config.hogclass_max_num_seq) + " seqs.")
+                logger.info("we are doing subsamping in hog class from " + str(len(records_full)) + " to " + str(hogclass_max_num_seq) + " seqs.")
             else:
                 records_sub_sampled = records_sub_filt
                 # removing some columns completely gap - (not x   )
             self._msa = MultipleSeqAlignment(records_sub_sampled)
             # without replacement sampling ,  # self._children = sub_hogs # as legacy  ?
         else:
-            logger_hog.error("Error 142769,  check the input format to instantiate HOG class")
+            logger.error("Error 142769,  check the input format to instantiate HOG class")
             assert False
 
     def __repr__(self):
@@ -106,7 +115,7 @@ class HOG:
         self._dubious_members |= set(fragments_list_nothost)
         self._dubious_members |= {fragment_host}
         if fragment_host not in self._members:
-            logger_hog.error("Error 1252769, fragment_host not in hog"+str(fragment_host))
+            logger.error("Error 1252769, fragment_host not in hog"+str(fragment_host))
         self._members |= set(fragments_list_nothost)
 
         msa_old = self._msa
@@ -167,7 +176,7 @@ class HOG:
             list_member = list(self._members)
             if len(list_member) == 1:
                 list_member_first = list(self._members)[0]  # ['tr|A0A3Q2UIK0|A0A3Q2UIK0_CHICK||CHICK_||1053007703']
-                if _config.fragment_detection and _config.fragment_detection_msa_merge and "_|_" in list_member_first:
+                if fragment_detection and fragment_detection_msa_merge and "_|_" in list_member_first:
                     paralog_element = ET.Element('paralogGroup')
                     #property_element = ET.SubElement(paralog_element, "property", attrib={"name": "TaxRange", "value": str(self._tax_now)})
                     property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value": "DubiousMergedfragment"})
@@ -186,7 +195,7 @@ class HOG:
                     # to do could be improved when the rhog contains only one protein
                     return geneRef_elemnt
 
-            elif len(list_member) > 1 and _config.fragment_detection and (not _config.fragment_detection_msa_merge):
+            elif len(list_member) > 1 and fragment_detection and (not fragment_detection_msa_merge):
                 paralog_element = ET.Element('paralogGroup')
                 property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value":"Dubiousfragment"})
                 # property_element = ET.SubElement(paralog_element, "property", attrib={"TaxRange": str(self._tax_now),"Type": "DubiousMergedfragment"})
@@ -210,7 +219,7 @@ class HOG:
             # following only for debugging, can be deleted later
             for subhog in list_of_subhogs_of_same_clade:
                 if len(subhog._members) == 0:
-                    logger_hog.warning("issue 12314506" + str(subhog) + str(sub_clade))
+                    logger.warning("issue 12314506" + str(subhog) + str(sub_clade))
 
             if len(list_of_subhogs_of_same_clade) > 1:
                 paralog_element = ET.Element('paralogGroup')
@@ -222,7 +231,7 @@ class HOG:
                     if str(element_p):
                         paralog_element.append(element_p)  # ,**gene_id_name  indent+2
                     else:
-                        logger_hog.warning("issue 123434" + str(sh) + str(sub_clade))
+                        logger.warning("issue 123434" + str(sh) + str(sub_clade))
 
                 element_list.append(paralog_element)
             elif len(list_of_subhogs_of_same_clade) == 1:
@@ -232,9 +241,9 @@ class HOG:
                     if str(element):  # element could be  <Element 'geneRef' at 0x7f7f9bacb450>
                         element_list.append(element)  # indent+2
                     else:
-                        logger_hog.warning("issue 12359 "+str(subhog))
+                        logger.warning("issue 12359 "+str(subhog))
                 else:
-                    logger_hog.warning("issue 12369 " + str(subhog))
+                    logger.warning("issue 12369 " + str(subhog))
 
         if len(element_list) == 1:
             return element_list[0]

@@ -2,11 +2,10 @@ import sys
 from ete3 import Tree
 import os
 import collections
-import argparse
+# import argparse
 
-from . import _config
 from . import _utils_roothog
-logger = _config.logger_hog
+from ._wrappers import logger
 
 
 def check_proteome_files(proteome_folder):
@@ -205,7 +204,7 @@ def fastoma_check_input():
     parser.add_argument("--hogmap", help="Path to the folder containing the hogmap files")
     parser.add_argument("--omamer_db", help="Path to the omamer database")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
-    conf = parser.parse_args()
+    conf = parser.parse_args() # conf_check_input
     logger.setLevel(level=30 - 10 * min(conf.v, 2))
     logger.debug("Arguments: %s", conf)
 
