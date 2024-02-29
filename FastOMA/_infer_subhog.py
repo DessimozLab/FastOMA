@@ -315,7 +315,7 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
 
     if len(msa_filt_row_col) > 1 and len(msa_filt_row_col[0]) > 1:
 
-        gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, genetree_msa_file_addr)
+        gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, genetree_msa_file_addr, conf_infer_subhhogs)
         gene_tree=""
         try:
             gene_tree = Tree(gene_tree_raw + ";", format=0)   #

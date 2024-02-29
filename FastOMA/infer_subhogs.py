@@ -12,25 +12,26 @@ def fastoma_infer_subhogs():
 
     import argparse
     parser = argparse.ArgumentParser(description="checking parameters for FastOMA")
+    parser.add_argument("--input-rhog-folder", required=True, help="Path to the input rootHOG folder.")
     parser.add_argument("--parallel", help="use concurrent parallel per rootHOG")
-    #parser.add_argument("--species-tree", required=True,
-    #                    help="Path to the input species tree file in newick format")
+    parser.add_argument("--species-tree", required=True,
+                        help="Path to the input species tree file in newick format")
 
-    parser.add_argument("--threshold-dubious-sd", required=False,type=float, default=1/10,
+    parser.add_argument("--threshold-dubious-sd", required=False, type=float, default=1/10,
                         help="Threshold to remove proteins in a gene tree due to low species overlap score, not enough evidence for duplication event.") # threshold_dubious_sd
     parser.add_argument("--overlap-fragments", required=False, type=float, default=0.15,
                         help="Threshold overlap between two sequences (rows) in MSA to decide whether they are fragments of a gene .")  # overlap_fragments
-    parser.add_argument("--gene-tree-rooting", required=False , default="midpoint",
+    parser.add_argument("--gene-rooting-method", required=False, default="midpoint", # gene_rooting_method
                         help="The method used for rooting of gene tree :    midpoint    mad     Nevers_rooting .")
-    parser.add_argument("--gene-trees-write", required=False , default=False,
+    parser.add_argument("--gene-trees-write", required=False, default=False,
                         help="writing the final labeled gene trees (after removing suspicous genes) .")
-    parser.add_argument("--msa-write", required=False , default=False,
+    parser.add_argument("--msa-write", required=False, default=False,
                         help="writing the raw MSAs (might have more genes that the final gene tree) .")
-    parser.add_argument("--gap-ratio-row", required=False, type=float ,default=0.3,
+    parser.add_argument("--gap-ratio-row", required=False, type=float, default=0.3,
                         help="For trimming the MSA, the threshold of ratio of gaps for each row.")
-    parser.add_argument("--gap-ratio-col", required=False, type=float ,default=0.5,
+    parser.add_argument("--gap-ratio-col", required=False, type=float, default=0.5,
                         help="For trimming the MSA, the threshold of ratio of gaps for each column.")
-    parser.add_argument("--min-col-trim", required=False, type=int ,default=50,
+    parser.add_argument("--min-col-trim", required=False, type=int, default=50,
                         help="min no. columns in msa to consider for filtering")
 
 
@@ -72,8 +73,8 @@ def fastoma_infer_subhogs():
     # logger.debug("msa_write_all is " + str(_config.msa_write_all))
     # logger.debug("keep_subhog_each_pickle is " + str(_config.keep_subhog_each_pickle))
 
-
-    address_rhogs_folder = "./"  # _config.input_rhog_folder
+    address_rhogs_folder = conf_infer_subhhogs.input_rhog_folder
+    # address_rhogs_folder = "./"  # _config.input_rhog_folder
     inferhog_concurrent_on = conf_infer_subhhogs.parallel
     if inferhog_concurrent_on:
         print("parallelization for subhog inference is on.")

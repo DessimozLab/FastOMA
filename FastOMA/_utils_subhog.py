@@ -188,22 +188,22 @@ def get_score_all_root(gtree, stree):
 
 def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, conf_infer_subhhogs, hogs_children_level_list=[]):
 
-    if conf_infer_subhhogs.rooting_method == "midpoint":
+    if conf_infer_subhhogs.gene_rooting_method == "midpoint":
         r_outgroup = gene_tree.get_midpoint_outgroup()
         try:
             gene_tree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
         except:
             pass
-    elif  conf_infer_subhhogs.rooting_method == "Nevers_rooting":
+    elif  conf_infer_subhhogs.gene_rooting_method == "Nevers_rooting":
         logger.info("Nevers_rooting started for " +str(gene_tree.write(format=1, format_root_node=True)))
         species= Tree("species_tree.nwk",format=1)
         gene_tree  = get_score_all_root(gene_tree, species)
         logger.info("Nevers_rooting finished for " + str(gene_tree.write(format=1, format_root_node=True)))
 
-    elif conf_infer_subhhogs.rooting_method == "mad":
+    elif conf_infer_subhhogs.gene_rooting_method == "mad":
         gene_tree = _wrappers.mad_rooting(genetree_msa_file_addr) # todo check with qouted gene tree
 
-    elif conf_infer_subhhogs.rooting_method == "outlier":  # not yet implmented completely, todo need check with new gene tree
+    elif conf_infer_subhhogs.gene_rooting_method == "outlier":  # not yet implmented completely, todo need check with new gene tree
         gene_tree = PhyloTree(str(gene_tree), format=0)
         outliers = find_outlier_leaves(gene_tree)
         r_outgroup = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
@@ -515,7 +515,7 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, conf_i
     # if _config.inferhog_filter_all_msas_row:
     #  msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
     # if   msa_filt_row_1 and len(msa_filt_row_1[0]) >=
-    if len(msa_filt_row_1[0]) >= conf_infer_subhhogs.inferhog_min_cols_msa_to_filter:
+    if len(msa_filt_row_1[0]) >= conf_infer_subhhogs.min_col_trim:
         # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
         # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
         # logger.debug( "We are doing MSA trimming " + rhogid + ", for taxonomic level:" + str(node_species_tree.name))
@@ -525,11 +525,11 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, conf_i
             msa_filt_col = msa_filt_row_1
             msa_filt_row_col = _wrappers.trim_msa(msa_filt_row_1)
         else:
-            msa_filt_col = msa_filter_col(msa_filt_row_1, conf_infer_subhhogs.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_0_")
+            msa_filt_col = msa_filter_col(msa_filt_row_1, conf_infer_subhhogs.gap_ratio_col, gene_tree_file_addr+"_0_")
             msa_filt_row_col = msa_filt_col
             if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
-                msa_filt_row_col_raw = msa_filter_row(msa_filt_col, conf_infer_subhhogs.inferhog_tresh_ratio_gap_row, gene_tree_file_addr+"_1_")
-                msa_filt_row_col = msa_filter_col(msa_filt_row_col_raw, conf_infer_subhhogs.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_2_")
+                msa_filt_row_col_raw = msa_filter_row(msa_filt_col, conf_infer_subhhogs.gap_ratio_row, gene_tree_file_addr+"_1_")
+                msa_filt_row_col = msa_filter_col(msa_filt_row_col_raw, conf_infer_subhhogs.gap_ratio_col, gene_tree_file_addr+"_2_")
 
 
         # compare msa_filt_row_col and msa_filt_col,

@@ -303,7 +303,7 @@ def handle_singleton(rhogs_prots,hogmaps, conf_infer_roothogs):
             for idx, hogid in enumerate(hogids[1:]):  # the 0-index is already checked and is a singleton
                 rhogid = hogid.split(".")[0].split(":")[1]
                 if rhogid in rhogs_prots:
-                    if len(rhogs_prots[rhogid]) > 1 and scores[idx+1] >  conf_infer_roothogs.fscore_thresh: # todo  check
+                    if len(rhogs_prots[rhogid]) > 1 and scores[idx+1] >  conf_infer_roothogs.mergHOG_fscore_thresh: # todo  check
                         rhogs_prots[rhogid].append((species, prot))
                         del rhogs_prots[rhogid0]
                         query_singleton_rhog_solved.append((species, prot))
@@ -323,7 +323,7 @@ def handle_singleton(rhogs_prots,hogmaps, conf_infer_roothogs):
         hogids = [i[0] for i in prot_maps]
         for idx, hogid in enumerate(hogids[1:]):  # the 0-index is already checked and is a singleton
         #for hogid in hogids[1:]:
-            if scores[idx+1] >  conf_infer_roothogs.fscore_thresh :
+            if scores[idx+1] >  conf_infer_roothogs.mergHOG_fscore_thresh :
                 rhogid = hogid.split(".")[0].split(":")[1]
                 if rhogid in dic_singlton_remained:
                     dic_singlton_remained[rhogid].append((species, prot))
@@ -408,12 +408,12 @@ def filter_big_roothogs(hogmaps, rhogs_prots, conf_infer_roothogs):
             hogid = prot_maps[0][0]
             max_score = float(prot_maps[0][1])
 
-            if max_score > conf_infer_roothogs.omamer_family_threshold:
+            if max_score > conf_infer_roothogs.big_fscore_thresh:
                 sp_prot_list_filt.append((species_name, prot_id))
                 hogids.append(hogid)
 
         logger.info("For big rootHOG " + rhogid + ", " + str(
-            len(sp_prot_list_filt)) + " proteins left after filtering with threshold " + str(conf_infer_roothogs.omamer_family_threshold))
+            len(sp_prot_list_filt)) + " proteins left after filtering with threshold " + str(conf_infer_roothogs.big_fscore_thresh))
 
         if len(sp_prot_list_filt) < conf_infer_roothogs.big_rhog_size:
             sp_prot_list_filt2 = sp_prot_list_filt
@@ -486,7 +486,7 @@ def find_rhog_candidate_pairs(hogmaps, conf_infer_roothogs): # rhogs_prots
                         rhogs_size[rhogid]  = 0
                     rhogs_size[rhogid] += 1
                     rhogids.append(rhogid)
-                    #rhogids.append(rhogid)
+                    # rhogids.append(rhogid)
                     scores.append(float(score))
 
             for ii in range(len(rhogids)):

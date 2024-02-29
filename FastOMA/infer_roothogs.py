@@ -21,13 +21,12 @@ def fastoma_infer_roothogs():
     parser.add_argument("--out-rhog-folder", required=True, help="Folder where the roothog fasta files are written") #out_rhog_folder
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
 
-    parser.add_argument("--mergHOG-ratioMax-thresh", required=False, help="For merging rootHOGs, threshold of ratioMax ") # mergHOG_ratioMax_thresh
-    parser.add_argument("--mergHOG-ratioMin-thresh", required=False, help="For merging rootHOGs, threshold of ratioMin ") # mergHOG_ratioMin_thresh
-    parser.add_argument("--mergHOG-shared-thresh", required=False, help="For merging rootHOGs, threshold of no shared proteins ") # mergHOG_shared_thresh
-    parser.add_argument("--fscore-thresh", required=False, help="For merging rootHOGs, threshold of no shared proteins ") # fscore_thresh
-    parser.add_argument("--big-rhog-size", required=False,  default=50*1000,help= "For big rootHOGs, we have different heuristics") # big_rhog_size
-    parser.add_argument("--omamer-family-threshold", required=False, default=95, help="For huge rootHOGs, we have different heuristics, like filtering low family score protiens") # omamer_family_threshold
-
+    parser.add_argument("--mergHOG-ratioMax-thresh", required=False, type=float, default=0.8, help="For merging rootHOGs, threshold of ratioMax ") # mergHOG_ratioMax_thresh
+    parser.add_argument("--mergHOG-ratioMin-thresh", required=False, type=float, default=0.9, help="For merging rootHOGs, threshold of ratioMin ") # mergHOG_ratioMin_thresh
+    parser.add_argument("--mergHOG-shared-thresh", required=False, type=float, default=10, help="For merging rootHOGs, threshold of number shared proteins ") # mergHOG_shared_thresh
+    parser.add_argument("--mergHOG-fscore-thresh", required=False, type=float, default=70, help="For merging rootHOGs, threshold of famlut score shared proteins ") # mergHOG_fscore_thresh
+    parser.add_argument("--big-rhog-size", required=False, type=int, default=50*1000, help= "For big rootHOGs, we have different heuristics") # big_rhog_size
+    parser.add_argument("--big-fscore-thresh", required=False, type=int, default=95, help="For huge rootHOGs, we have different heuristics, like filtering low family score protiens") # big_fscore_thresh
 
     conf_infer_roothogs = parser.parse_args()
     logger.setLevel(level=30 - 10 * min(conf_infer_roothogs.v, 2))
