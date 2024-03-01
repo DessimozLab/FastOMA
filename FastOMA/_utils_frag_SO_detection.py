@@ -400,7 +400,7 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
                 gene_tree.prune(rest_leaves, preserve_branch_length=True)
 
         try:
-            if  len(gene_tree) and (gene_trees_write_all or conf_infer_subhhogs.rooting_method == "mad"): # len(gene_tree) > 1 and
+            if  len(gene_tree) and (gene_trees_write_all or conf_infer_subhhogs.gene_rooting_method == "mad"): # len(gene_tree) > 1 and
                 gene_tree.write(outfile=genetree_msa_file_addr+"_dubiousMSA.nwk",format=1)
         except:
             logger.warning("couldn't write the file _dubiousMSA.nwk")
