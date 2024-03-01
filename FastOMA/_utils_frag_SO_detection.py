@@ -380,7 +380,7 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
             if merged_msa_new:
                 (msa_filt_row_col_new, msa_filt_col, hogs_children_level_list) = _utils_subhog.filter_msa(merged_msa_new, genetree_msa_file_addr+"_merged", hogs_children_level_list, conf_infer_subhhogs)
             if len(msa_filt_row_col_new) > 1 and len(msa_filt_row_col_new[0]) > 3:
-                gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col_new, genetree_msa_file_addr+"_merged_", conf_infer_subhhogs)
+                gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col_new, genetree_msa_file_addr+"_merged_", conf_infer_subhhogs.gene_rooting_method)
                 gene_tree = Tree(gene_tree_raw , format=0, quoted_node_names=True) #+ ";"
 
             else:

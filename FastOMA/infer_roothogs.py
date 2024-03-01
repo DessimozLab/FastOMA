@@ -2,13 +2,12 @@ import os.path
 from shutil import which
 
 from . import _utils_roothog
-
 from ._wrappers import logger
 
 """
-proteomes of species as fasta files in /proteome/
-omamer's output of  in /hogmap/
-hog and HOG are used interchangeably here. 
+
+fastoma-infer-roothogs --proteomes proteome --hogmap hogmap --out-rhog-folder omamer_rhogs -vv
+
 """
 
 
@@ -52,7 +51,6 @@ def fastoma_infer_roothogs():
     rhogs_prots = _utils_roothog.merge_rhogs2(hogmaps, rhogs_prots, conf_infer_roothogs)
     rhogs_prots = _utils_roothog.filter_big_roothogs(hogmaps, rhogs_prots, conf_infer_roothogs)
 
-
     min_rhog_size = 2
     rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, conf_infer_roothogs.out_rhog_folder, min_rhog_size)
     linclust_available=which("mmseqs")  # True #
@@ -65,5 +63,3 @@ def fastoma_infer_roothogs():
             num_clusters = _utils_roothog.write_clusters(conf_infer_roothogs.out_rhog_folder, min_rhog_size)
             logger.debug("we wrote %d new clusters with linclust ", num_clusters)
 
-    #if _config.add_outgroup: # already done
-    #   _utils_roothog.write_outgroups_all(rhogs_prots,prot_recs_all)

@@ -6,7 +6,6 @@ import string
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from datetime import datetime
-
 from Bio import SeqIO
 from ete3 import Tree
 
@@ -17,8 +16,15 @@ from .zoo.hog import extract_flat_groups_at_level, extract_marker_groups_at_leve
 # from .zoo.hog.convert import orthoxml_to_newick
 from . import __version__ as fastoma_version
 
-# This code collect subhogs and writes outputs.
+"""
 
+fastoma-collect-subhogs --pickle-folder pickle_folders  --roothogs-folder omamer_rhogs \
+ --gene-id-pickle-file gene_id_dic_xml.pickle --out FastOMA_HOGs.orthoxml  --marker-groups-fasta OrthologousGroups.tsv \
+ --roothog-tsv RootHOGs.tsv  --species-tree  species_tree_checked.nwk  -vv
+ 
+"""
+
+# This code collect subhogs and writes outputs.
 
 def iter_hogs(pickle_folder: Path):
     cnt = 0
@@ -125,20 +131,20 @@ def fastoma_collect_subhogs():
                              Existing values are:
                                noop:      No transformation - entire ID of fasta header
                                UniProt:   '>sp|P68250|1433B_BOVIN' --> P68250""")
-    conf = parser.parse_args() # conf_collect_subhogs
-    logger.setLevel(level=30 - 10 * min(conf.v, 2))
-    logger.debug(conf)
-    id_transformer = header_transformer(conf.id_transform)
+    conf_collect_subhogs = parser.parse_args() # conf_collect_subhogs
+    logger.setLevel(level=30 - 10 * min(conf_collect_subhogs.v, 2))
+    logger.debug(conf_collect_subhogs)
+    id_transformer = header_transformer(conf_collect_subhogs.id_transform)
 
-    write_hog_orthoxml(conf.pickle_folder, conf.out, conf.gene_id_pickle_file,
-                       id_transformer=id_transformer, species_tree=conf.species_tree)
-    if conf.roothog_tsv is not None:
-        write_roothogs(Path(conf.out), Path(conf.roothogs_folder),
-                       output_file_roothog_tsv=conf.roothog_tsv,
+    write_hog_orthoxml(conf_collect_subhogs.pickle_folder, conf_collect_subhogs.out, conf_collect_subhogs.gene_id_pickle_file,
+                       id_transformer=id_transformer, species_tree=conf_collect_subhogs.species_tree)
+    if conf_collect_subhogs.roothog_tsv is not None:
+        write_roothogs(Path(conf_collect_subhogs.out), Path(conf_collect_subhogs.roothogs_folder),
+                       output_file_roothog_tsv=conf_collect_subhogs.roothog_tsv,
                        id_transformer=id_transformer)
-    if conf.marker_groups_fasta is not None:
-        write_group_files(Path(conf.out), Path(conf.roothogs_folder),
-                          output_file_og_tsv=conf.marker_groups_fasta,
+    if conf_collect_subhogs.marker_groups_fasta is not None:
+        write_group_files(Path(conf_collect_subhogs.out), Path(conf_collect_subhogs.roothogs_folder),
+                          output_file_og_tsv=conf_collect_subhogs.marker_groups_fasta,
                           id_transformer=id_transformer)
 
 

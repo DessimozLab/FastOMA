@@ -64,7 +64,7 @@ def merge_msa(list_msas, gene_tree_file_addr, conf_infer_subhhogs):
     return merged
 
 
-def infer_gene_tree(msa, gene_tree_file_addr, conf_infer_subhhogs):
+def infer_gene_tree(msa, gene_tree_file_addr, gene_rooting_method):
     """
     infere gene tree using fastTree for the input msa
     and write it as orthoxml_to_newick.py file
@@ -104,7 +104,7 @@ def infer_gene_tree(msa, gene_tree_file_addr, conf_infer_subhhogs):
     # instead -> hash thing
     # ??? hashlib.md5(original_name).hexdig..it()
 
-    if gene_trees_write_all or conf_infer_subhhogs.gene_rooting_method == "mad":
+    if gene_trees_write_all or gene_rooting_method == "mad":
         file_gene_tree = open(gene_tree_file_addr, "w")
         file_gene_tree.write(tree_nwk) #file_gene_tree.write(";\n")
         file_gene_tree.close()

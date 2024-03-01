@@ -8,7 +8,11 @@ big_rhog_filesize_thresh = 400 * 1000
 sum_list_rhogs_filesize_thresh = 2 * 1e6
 
 
+"""
 
+fastoma-batch-roothogs --input-roothogs omamer_rhogs --out-big rhogs_big  --out-rest rhogs_rest -vv
+
+"""
 
 class BatchBuilder:
     def __init__(self, outdir: Path, max_size: int):
@@ -65,8 +69,9 @@ def fastoma_batch_roothogs():
     parser.add_argument('--out-rest', required=True, help="folder where the remaining families should be stored in"
                                                           "batch subfolder structure.")
     parser.add_argument('-v', default=0, action="count", help="incrase verbosity")
-    conf = parser.parse_args()
-    logger.setLevel(level=30 - 10 * min(conf.v, 2))
+    conf_batch_roothogs = parser.parse_args()
+    logger.setLevel(level=30 - 10 * min(conf_batch_roothogs.v, 2))
+    logger.debug("Arguments: %s", conf_batch_roothogs)
 
-    folder_1h_rhog(Path(conf.input_roothogs), Path(conf.out_big), Path(conf.out_rest))
+    folder_1h_rhog(Path(conf_batch_roothogs.input_roothogs), Path(conf_batch_roothogs.out_big), Path(conf_batch_roothogs.out_rest))
 

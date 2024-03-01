@@ -2,11 +2,15 @@ import sys
 from ete3 import Tree
 import os
 import collections
-# import argparse
 
 from . import _utils_roothog
 from ._wrappers import logger
 
+"""
+
+fastoma-check-input --proteomes proteome --species-tree species_tree.nwk --out-tree species_tree.nwk --hogmap hogmap -vv
+
+"""
 
 def check_proteome_files(proteome_folder):
     proteome_files = os.listdir(proteome_folder)
@@ -205,8 +209,10 @@ def fastoma_check_input():
     parser.add_argument("--omamer_db", help="Path to the omamer database")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
     conf = parser.parse_args() # conf_check_input
+
     logger.setLevel(level=30 - 10 * min(conf.v, 2))
     logger.debug("Arguments: %s", conf)
+
 
     species_names = check_proteome_files(conf.proteomes)
     if not species_names:
