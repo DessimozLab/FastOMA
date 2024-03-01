@@ -317,14 +317,18 @@ process hog_big{
   memory { check_max( mem_cat(getMaxFileSize(rhogsbig), nr_species as int) * task.attempt, "memory") }
   time { check_max( time_cat(getMaxFileSize(rhogsbig), nr_species as int) * task.attempt, "time") }
 
+  publishDir = [
+    path: params.temp_output,
+    enabled: params.debug_enabled,
+  ]
   input:
     each rhogsbig
     path species_tree
     val nr_species
   output:
     path "pickle_hogs"
-    path "msa/*.fa" , optional: true          // msa         if write True
-    path "gene_trees/*.nwk" , optional: true  // gene trees  if write True
+    path "*.fa" , optional: true          // msa         if write True
+    path "*.nwk" , optional: true  // gene trees  if write True
   script:
     """
         fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig}  \
@@ -336,14 +340,17 @@ process hog_big{
 
 process hog_rest{
   label "process_single"
-
+  publishDir = [
+    path: params.temp_output,
+    enabled: params.debug_enabled,
+  ]
   input:
     each rhogsrest
     path species_tree
   output:
     path "pickle_hogs"
-    path "msa/*.fa" , optional: true          // msa         if write True
-    path "gene_trees/*.nwk" , optional: true  // gene trees  if write True
+    path "*.fa" , optional: true          // msa         if write True
+    path "*.nwk" , optional: true  // gene trees  if write True
   script:
     """
         fastoma-infer-subhogs --input-rhog-folder ${rhogsrest}  \

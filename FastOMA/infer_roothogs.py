@@ -23,7 +23,6 @@ def fastoma_infer_roothogs():
     parser.add_argument("--hogmap", help="Path to the folder containing the hogmap files")
     parser.add_argument("--out-rhog-folder", required=True, help="Folder where the roothog fasta files are written") #out_rhog_folder
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
-    parser.add_argument("--version", action="version", version=__version__)
 
     parser.add_argument("--mergHOG-ratioMax-thresh", required=False, type=float, default=0.8, help="For merging rootHOGs, threshold of ratioMax ") # mergHOG_ratioMax_thresh
     parser.add_argument("--mergHOG-ratioMin-thresh", required=False, type=float, default=0.9, help="For merging rootHOGs, threshold of ratioMin ") # mergHOG_ratioMin_thresh
