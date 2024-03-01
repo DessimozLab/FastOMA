@@ -236,7 +236,7 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
         if prot_dubious_sd_remove_list:
             rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list)
             gene_tree.prune(rest_leaves, preserve_branch_length=True)
-            if gene_trees_write_all or conf_infer_subhhogs.rooting_method=="mad":
+            if gene_trees_write_all or conf_infer_subhhogs.gene_rooting_method=="mad":
                 gene_tree.write(format=1, outfile=genetree_msa_file_addr + "_dubious_sd"+str(itr_so)+".nwk" )
 
             (gene_tree, all_species_dubious_sd_dic_updated) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr + "_dubious_sd"+str(itr_so)+".nwk", conf_infer_subhhogs)
