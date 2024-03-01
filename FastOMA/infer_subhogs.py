@@ -30,9 +30,9 @@ def fastoma_infer_subhogs():
                         help="Threshold overlap between two sequences (rows) in MSA to decide whether they are fragments of a gene.")  # overlap_fragments
     parser.add_argument("--gene-rooting-method", required=False, default="midpoint", # gene_rooting_method
                         help="The method used for rooting of gene tree :    midpoint    mad     Nevers_rooting .")
-    parser.add_argument("--gene-trees-write", required=False, default=False,
+    parser.add_argument("--gene-trees-write", action='store_true',
                         help="writing the final labeled gene trees (after removing suspicous genes).")
-    parser.add_argument("--msa-write", required=False, default=False,
+    parser.add_argument("--msa-write", action='store_true',
                         help="writing the raw MSAs (might have more genes that the final gene tree).")
     parser.add_argument("--gap-ratio-row", required=False, type=float, default=0.3,
                         help="For trimming the MSA, the threshold of ratio of gaps for each row.")
