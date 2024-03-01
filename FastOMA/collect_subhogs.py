@@ -107,6 +107,7 @@ def update_hogids(fam, hog, name2taxid):
 def fastoma_collect_subhogs():
     import argparse
     parser = argparse.ArgumentParser(description="collecting all computed HOGs and combine into a single orthoxml")
+    parser.add_argument("--version", action="version", version="FastOMA v"+fastoma_version)
     parser.add_argument('--pickle-folder', required=True,
                         help="folder containing the pickle files. Will be searched recursively")
     parser.add_argument('--roothogs-folder', required=True, help="folder containing the omamer roothogs")

@@ -2,7 +2,7 @@
 import shutil
 from pathlib import Path
 from ._wrappers import logger
-
+from . import __version__ as fastoma_version
 
 big_rhog_filesize_thresh = 400 * 1000
 sum_list_rhogs_filesize_thresh = 2 * 1e6
@@ -64,6 +64,7 @@ def folder_1h_rhog(roothog_path: Path, output_folder_big: Path, output_folder_re
 def fastoma_batch_roothogs():
     import argparse
     parser = argparse.ArgumentParser(description="Analyse roothog families and create batches for analysis")
+    parser.add_argument("--version", action="version", version="FastOMA v"+fastoma_version)
     parser.add_argument('--input-roothogs', required=True, help="folder where input roothogs are stored")
     parser.add_argument('--out-big', required=True, help="folder where the big single family hogs should be stored")
     parser.add_argument('--out-rest', required=True, help="folder where the remaining families should be stored in"

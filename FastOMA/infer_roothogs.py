@@ -3,6 +3,9 @@ from shutil import which
 
 from . import _utils_roothog
 from ._wrappers import logger
+from . import __version__ as fastoma_version
+
+
 
 """
 
@@ -14,11 +17,13 @@ fastoma-infer-roothogs --proteomes proteome --hogmap hogmap --out-rhog-folder om
 def fastoma_infer_roothogs():
     import argparse
     parser = argparse.ArgumentParser(description="checking parameters for FastOMA")
+    parser.add_argument("--version", action="version", version="FastOMA v"+fastoma_version)
     parser.add_argument("--proteomes", required=True, help="Path to the folder containing the input proteomes")
     parser.add_argument("--splice", help="Path to the folder containing the splice information files")
     parser.add_argument("--hogmap", help="Path to the folder containing the hogmap files")
     parser.add_argument("--out-rhog-folder", required=True, help="Folder where the roothog fasta files are written") #out_rhog_folder
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
+    parser.add_argument("--version", action="version", version=__version__)
 
     parser.add_argument("--mergHOG-ratioMax-thresh", required=False, type=float, default=0.8, help="For merging rootHOGs, threshold of ratioMax ") # mergHOG_ratioMax_thresh
     parser.add_argument("--mergHOG-ratioMin-thresh", required=False, type=float, default=0.9, help="For merging rootHOGs, threshold of ratioMin ") # mergHOG_ratioMin_thresh

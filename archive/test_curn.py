@@ -12,6 +12,7 @@ from FastOMA.infer_subhogs import fastoma_infer_subhogs
 #fastoma_infer_subhogs()
 fastoma_infer_roothogs()
 
+a=2
 #
 # from FastOMA.zoo.hog import transform
 #

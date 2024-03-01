@@ -5,10 +5,11 @@ import collections
 
 from . import _utils_roothog
 from ._wrappers import logger
+from . import __version__ as fastoma_version
 
 """
 
-fastoma-check-input --proteomes proteome --species-tree species_tree.nwk --out-tree species_tree.nwk --hogmap hogmap -vv
+fastoma-check-input --proteomes proteome --species-tree species_tree.nwk --out-tree species_tree_checked.nwk --hogmap hogmap -vv
 
 """
 
@@ -201,6 +202,7 @@ def check_splice(isoform_by_gene_all):
 def fastoma_check_input():
     import argparse
     parser = argparse.ArgumentParser(description="checking parameters for FastOMA")
+    parser.add_argument("--version", action="version", version="FastOMA v"+fastoma_version)
     parser.add_argument("--proteomes", required=True, help="Path to the folder containing the input proteomes")
     parser.add_argument("--species-tree", required=True, help="Path to the input species tree file in newick format")
     parser.add_argument("--out-tree", required=True, help="Path to output file for sanitised species tree. ")
