@@ -9,7 +9,7 @@ FastOMA is a scalable software package to infer orthology relationship.
 The name of each fasta file is the name of species. Please make sure that the name of fasta records do not contain special characters including `||`.
 
 2. Rooted Species tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
-A rough species tree is enough, and it does not need to be binary (fully resolved). Besides, we do not need branch lengths. 
+A rough species tree is enough, and it does not need to be binary (fully resolved). Besides, we do not need branch lengths. You could use the NCBI tree via ete3 package. 
 Note that the name of leaves of the tree (species name) should be the same as the file name of FASTAs (without `.fa` extension) (item 1). 
 And there shouldn't be any repeated names in leaves names and internal node names. The tree should not be with quotation.  
 
