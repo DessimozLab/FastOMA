@@ -91,7 +91,10 @@ class GroupExtractor(object):
             try:
                 node.remove(c)
             except ValueError as e:
-                logger.warning("cannot remove element %s: %s", c, e)
+                # this is not a direct child of node. we ignore this potential
+                # memory-leak as the entire group will be deleted at latest once
+                # we reach the root orthologGroup node.
+                pass
         return genes
 
     def merge_children(self, node):
