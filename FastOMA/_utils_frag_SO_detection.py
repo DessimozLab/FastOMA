@@ -2,6 +2,7 @@
 
 import numpy as np
 from Bio.Seq import Seq  # , UnknownSeq
+from Bio import SeqIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 from ete3 import Tree
@@ -13,7 +14,8 @@ from ._wrappers import logger
 
 fragment_detection_msa_merge = True
 fragment_detection = True
-gene_trees_write_all = False
+iteration_sp_overlap= 10
+#gene_trees_write_all = True
 
 
 """
@@ -228,18 +230,19 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
     #  prot_dubious_sd_list, node_species_tree, genetree_msa_file_addr, hogs_children_level_list
 
     all_species_dubious_sd_dic_updated = all_species_dubious_sd_dic
-    itr_so = 0
-    while all_species_dubious_sd_dic_updated and itr_so< 10: # todo future parameter 10
+    itr_so = 1 # todo double check the one without itr is
+    while all_species_dubious_sd_dic_updated and itr_so< iteration_sp_overlap:
         logger.debug("These are found with low SO score all_species_dubious_sd_dic " + str(all_species_dubious_sd_dic_updated)+" which are now being handled itr"+str(itr_so)+" .")
         prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic_updated)
 
         if prot_dubious_sd_remove_list:
             rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list)
             gene_tree.prune(rest_leaves, preserve_branch_length=True)
-            if gene_trees_write_all or conf_infer_subhhogs.gene_rooting_method=="mad":
-                gene_tree.write(format=1, outfile=genetree_msa_file_addr + "_dubious_sd"+str(itr_so)+".nwk" )
+            if conf_infer_subhhogs.gene_trees_write or conf_infer_subhhogs.gene_rooting_method=="mad":
+                genetree_msa_file_addr = genetree_msa_file_addr[:-1]+str(int(genetree_msa_file_addr[-1])+itr_so)
+                gene_tree.write(format=1, outfile=genetree_msa_file_addr + "_dubiousSD.nwk")
 
-            (gene_tree, all_species_dubious_sd_dic_updated) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr + "_dubious_sd"+str(itr_so)+".nwk", conf_infer_subhhogs)
+            (gene_tree, all_species_dubious_sd_dic_updated, genetree_msa_file_addr) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, conf_infer_subhhogs)
 
             hogs_children_level_list_raw = hogs_children_level_list
             for prot_dubious_sd_remove in prot_dubious_sd_remove_list:
@@ -257,7 +260,7 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
 
         itr_so += 1
 
-    return (gene_tree, hogs_children_level_list)
+    return (gene_tree, hogs_children_level_list, genetree_msa_file_addr)
 
 
 def merge_prots_name_hierarchy_toleaves(hog_host, fragment_name_host, merged_fragment_name):
@@ -344,6 +347,7 @@ def merge_fragments_hogclass(fragments_set, seq_dubious_msa, hogs_children_level
             merged_msa_new_list.append(seq_rec)
     merged_msa_new = MultipleSeqAlignment(merged_msa_new_list)
 
+
     # fragments_list_remove
     result_merging1 = merge_prots_name_hierarchy_toleaves(hog_host, fragment_name_host, merged_fragment_name)
 
@@ -378,11 +382,14 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
                 # note that merged_msa is the merging of different subhog childrend and is not related to merge fragments  of two seqeuncs with bad annotation
 
             if merged_msa_new:
-                (msa_filt_row_col_new, msa_filt_col, hogs_children_level_list) = _utils_subhog.filter_msa(merged_msa_new, genetree_msa_file_addr+"_merged", hogs_children_level_list, conf_infer_subhhogs)
-            if len(msa_filt_row_col_new) > 1 and len(msa_filt_row_col_new[0]) > 3:
-                gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col_new, genetree_msa_file_addr+"_merged_", conf_infer_subhhogs.gene_rooting_method)
-                gene_tree = Tree(gene_tree_raw , format=0, quoted_node_names=True) #+ ";"
+                genetree_msa_file_addr = genetree_msa_file_addr[:-1]+str(int(genetree_msa_file_addr[-1])+1)
+                if conf_infer_subhhogs.msa_write:
+                    SeqIO.write(merged_msa_new, genetree_msa_file_addr + "_fragmentsMerged.fa", "fasta")
+                (msa_filt_row_col_new, msa_filt_col, hogs_children_level_list, genetree_msa_file_addr) = _utils_subhog.filter_msa(merged_msa_new, genetree_msa_file_addr, hogs_children_level_list, conf_infer_subhhogs)
 
+            if len(msa_filt_row_col_new) > 1 and len(msa_filt_row_col_new[0]) > 3:
+                gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col_new, genetree_msa_file_addr, conf_infer_subhhogs)
+                gene_tree = Tree(gene_tree_raw , format=0, quoted_node_names=True) #+ ";"
             else:
                 logger.warning("** issue 861956")
                 gene_tree = ""
@@ -400,14 +407,15 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
                 gene_tree.prune(rest_leaves, preserve_branch_length=True)
 
         try:
-            if  len(gene_tree) and (gene_trees_write_all or conf_infer_subhhogs.gene_rooting_method == "mad"): # len(gene_tree) > 1 and
+            if  len(gene_tree) and (conf_infer_subhhogs.gene_trees_write or conf_infer_subhhogs.gene_rooting_method == "mad"): # len(gene_tree) > 1 and
+                genetree_msa_file_addr = genetree_msa_file_addr[:-1]+str(int(genetree_msa_file_addr[-1])+1)
                 gene_tree.write(outfile=genetree_msa_file_addr+"_dubiousMSA.nwk",format=1)
         except:
-            logger.warning("couldn't write the file _dubiousMSA.nwk")
+            logger.warning("issue 24966013  couldn't write the file "+genetree_msa_file_addr+"_dubiousMSA.nwk")
 
 
         if len(gene_tree) > 1:
-            (gene_tree, all_species_dubious_sd_dic2) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr+"_dubiousMSA.nwk", conf_infer_subhhogs, [])
+            (gene_tree, all_species_dubious_sd_dic2, genetree_msa_file_addr) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, conf_infer_subhhogs, [])
 
 
         # todo check the following is needed

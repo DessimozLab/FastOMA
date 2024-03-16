@@ -8,7 +8,7 @@ from . import __version__ as fastoma_version
 """
 
 fastoma-infer-subhogs  --input-rhog-folder rhogs_rest/0  --output-pickles "pickle_hogs"  \
-    --species-tree  species_tree_checked.nwk -vv --parallel
+    --species-tree  species_tree_checked.nwk -vv --parallel # --msa-write --gene-trees-write
     
 """
 
@@ -31,7 +31,7 @@ def fastoma_infer_subhogs():
     parser.add_argument("--gene-rooting-method", required=False, default="midpoint", # gene_rooting_method
                         help="The method used for rooting of gene tree :    midpoint    mad     Nevers_rooting .")
     parser.add_argument("--gene-trees-write", action='store_true',
-                        help="writing the final labeled gene trees (after removing suspicous genes).")
+                        help="writing the final labeled gene trees .") # the order seems to be nwk_SD_labeled.nwk, dubious_sd0.nwk_SD_labeled.nwk, dubious_sd1.nwk_SD_labeled.nwk
     parser.add_argument("--msa-write", action='store_true',
                         help="writing the raw MSAs (might have more genes that the final gene tree).")
     parser.add_argument("--gap-ratio-row", required=False, type=float, default=0.3,
@@ -68,4 +68,6 @@ def fastoma_infer_subhogs():
     hogs_rhog_xml_batch = _infer_subhog.read_infer_xml_rhogs_batch(list_rhog_fastas_files_rem, inferhog_concurrent_on, conf_infer_subhhogs.output_pickles, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
 
     print("finsihed ", address_rhogs_folder)
+
+    threshold_dubious_sd= 0.1
 

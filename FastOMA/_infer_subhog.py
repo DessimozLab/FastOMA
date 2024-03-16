@@ -287,12 +287,13 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
         return len(hogs_children_level_list)
 
 
-    genetree_msa_file_addr = "tree_"+rhogid+"_"+str(node_species_tree.name) + ".nwk" # genetrees
+    genetree_msa_file_addr = "HOG_"+rhogid+"_"+str(node_species_tree.name) #+ ".nwk" # genetrees
     if len(genetree_msa_file_addr) > 245:
         # there is a limitation on length of file name. I want to  keep it consistent ,msa and gene tree names.
-        rand_num = random.randint(1, 10000)
-        genetree_msa_file_addr = genetree_msa_file_addr[:245] + str(rand_num)+".nwk"
-
+        rand_num = random.randint(1, 100000)
+        genetree_msa_file_addr = genetree_msa_file_addr[:245] +"randomID_"+ str(rand_num) # +".nwk"
+        logger.debug("genetree_msa_file_addr was long, now truncated " + genetree_msa_file_addr)
+    genetree_msa_file_addr+="_itr0"
     sub_msa_list_lowerLevel_ready = [hog._msa for hog in hogs_children_level_list if len(hog._msa) > 0]
     # sub_msa_list_lowerLevel_ready = [ii for ii in sub_msa_list_lowerLevel_ready_raw if len(ii) > 0]
     logger.debug("Merging "+str(len(sub_msa_list_lowerLevel_ready))+" MSAs for rhog:"+rhogid+", level:"+str(node_species_tree.name))
@@ -308,14 +309,14 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
         else:
             merged_msa = sub_msa_list_lowerLevel_ready   #  when only on  child, the rest msa is empty.
         logger.debug("All sub-hogs are merged, merged_msa "+str(len(merged_msa))+" "+str(len(merged_msa[0]))+" for rhog: "+rhogid+", taxonomic level:"+str(node_species_tree.name))
-        (msa_filt_row_col, msa_filt_col, hogs_children_level_list) = _utils_subhog.filter_msa(merged_msa, genetree_msa_file_addr, hogs_children_level_list, conf_infer_subhhogs)
+        (msa_filt_row_col, msa_filt_col, hogs_children_level_list, genetree_msa_file_addr) = _utils_subhog.filter_msa(merged_msa, genetree_msa_file_addr, hogs_children_level_list, conf_infer_subhhogs)
         # msa_filt_col is used for parent level of HOG. msa_filt_row_col is used for gene tree inference.
     else:
         logger.info("Issue 1455, merged_msa is empty " + rhogid + ", for taxonomic level:" + str(node_species_tree.name))
 
     if len(msa_filt_row_col) > 1 and len(msa_filt_row_col[0]) > 1:
 
-        gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, genetree_msa_file_addr, conf_infer_subhhogs.gene_rooting_method)
+        gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, genetree_msa_file_addr, conf_infer_subhhogs)
         gene_tree=""
         try:
             gene_tree = Tree(gene_tree_raw + ";", format=0)   #
@@ -323,7 +324,7 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
             try:
                 gene_tree = Tree(gene_tree_raw + ";", format=0, quoted_node_names=True)  #
             except:
-                print("error")
+                logger.debug(" issue 22233198233 error"+str(gene_tree))
         logger.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+rhogid+", level: "+str(node_species_tree.name))
 
         if fragment_detection and len(gene_tree) > 2 and prot_dubious_msa_list:
@@ -333,10 +334,10 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
 
         # when the prot dubious is removed during trimming
         if len(gene_tree) > 1: # e.g. "('sp|O67547|SUCD_AQUAE||AQUAE||1002000005|_|sub10001':0.329917,'tr|O84829|O84829_CHLTR||CHLTR||1001000005|_|sub10002':0.329917);"
-            (gene_tree, all_species_dubious_sd_dic) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr,conf_infer_subhhogs, hogs_children_level_list)
+            (gene_tree, all_species_dubious_sd_dic, genetree_msa_file_addr) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr,conf_infer_subhhogs, hogs_children_level_list)
 
             if low_so_detection and all_species_dubious_sd_dic:
-                (gene_tree, hogs_children_level_list) = _utils_frag_SO_detection.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list, conf_infer_subhhogs)
+                (gene_tree, hogs_children_level_list, genetree_msa_file_addr) = _utils_frag_SO_detection.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list, conf_infer_subhhogs)
 
             logger.debug("Merging sub-hogs for rhogid:"+rhogid+", level:"+str(node_species_tree.name))
             # the last element should be merged_msa not the trimmed msa, as we create new hog based on this msa

@@ -12,7 +12,6 @@ seed_random=1234 # Also in _hog_class.py
 tree_tool = "fasttree"  #  "fasttree"  "iqtree"  # todo iqtree is very slow and not tested properly
 rooting_mad_executable_path = "mad"  # it could be also a full address ends with mad like  /user/myfolder/mad
 # mmseqs_executable_path ="mmseqs" # todo move run_linclust to _wrapper.py
-gene_trees_write_all = False
 
 logger_level = "DEBUG"            # DEBUG INFO  # TRACE  DEBUG INFO  WARN  ERROR  FATAL
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
@@ -23,7 +22,8 @@ if logger_level == "DEBUG":
     logger.setLevel(logging.DEBUG)
 
 
-def merge_msa(list_msas, gene_tree_file_addr, conf_infer_subhhogs):
+
+def merge_msa(list_msas, genetree_msa_file_addr, conf_infer_subhhogs):
     """
     merge orthoxml_to_newick.py list of MSAs (multiple sequnce aligmnet)
     by run mafft on them.
@@ -37,7 +37,7 @@ def merge_msa(list_msas, gene_tree_file_addr, conf_infer_subhhogs):
 
     #logger.debug("we are mergin subhogs"+len(list_msas))
     # logger.debug(str(list_msas[0][0].id ) + "\n")
-    # SeqIO.write(list_msas ?? , gene_tree_file_addr + ".unaligned.fa", "fasta")
+    # SeqIO.write(list_msas ?? , genetree_msa_file_addr + ".unaligned.fa", "fasta")
 
     # todo using more cpus ?  (now a bit better using --thread -1)
     # sometimes better not to merge and remove gapps and do from scratch!
@@ -59,12 +59,12 @@ def merge_msa(list_msas, gene_tree_file_addr, conf_infer_subhhogs):
     # print(time_duration)
     # logger.info(str(len(list_msas)) + " msas are merged with length of "+ str(len(merged)) + "  " + str (len(merged[0])))
     if conf_infer_subhhogs.msa_write:
-        SeqIO.write(merged, gene_tree_file_addr + "_msa.fa", "fasta")
+        SeqIO.write(merged, genetree_msa_file_addr + ".fa", "fasta")
 
     return merged
 
 
-def infer_gene_tree(msa, gene_tree_file_addr, gene_rooting_method):
+def infer_gene_tree(msa, genetree_msa_file_addr, conf_infer_subhhogs):
     """
     infere gene tree using fastTree for the input msa
     and write it as orthoxml_to_newick.py file
@@ -104,8 +104,8 @@ def infer_gene_tree(msa, gene_tree_file_addr, gene_rooting_method):
     # instead -> hash thing
     # ??? hashlib.md5(original_name).hexdig..it()
 
-    if gene_trees_write_all or gene_rooting_method == "mad":
-        file_gene_tree = open(gene_tree_file_addr, "w")
+    if conf_infer_subhhogs.gene_trees_write or conf_infer_subhhogs.gene_rooting_method == "mad":
+        file_gene_tree = open(genetree_msa_file_addr+".nwk", "w")
         file_gene_tree.write(tree_nwk) #file_gene_tree.write(";\n")
         file_gene_tree.close()
 

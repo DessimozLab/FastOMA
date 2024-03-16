@@ -18,8 +18,8 @@ from os import listdir
 from ._wrappers import logger
 from . import _wrappers
 
-msa_write_all = False
-automated_trimAL = False
+msa_write_all = True
+automated_trimAL = False    # todo not tested properly
 label_SD_internal = "species_overlap"  # todo the other option "reconciliation" hasn't been tested properly
 
 """
@@ -241,9 +241,11 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, conf_infer
                         break
 
     if conf_infer_subhhogs.gene_trees_write:
-        gene_tree.write(format=1, format_root_node=True, outfile=genetree_msa_file_addr+"_SD_labeled.nwk")
 
-    return gene_tree, all_species_dubious_sd_dic
+        genetree_msa_file_addr = genetree_msa_file_addr[:-1] + str(int(genetree_msa_file_addr[-1]) + 1)
+        gene_tree.write(format=1, format_root_node=True, outfile=genetree_msa_file_addr+"_SpDupLabel.nwk") # speciatio duplication labeled
+
+    return gene_tree, all_species_dubious_sd_dic, genetree_msa_file_addr
 
 
 
@@ -449,8 +451,8 @@ def get_reconciled_tree_zmasek(gtree, sptree, inplace=False):
 
 
 
-def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
-    # gene_tree_file_addr contains roothog numebr
+def msa_filter_col(msa, tresh_ratio_gap_col, genetree_msa_file_addr=""):
+    # genetree_msa_file_addr contains roothog numebr
     # note this is used in hog class as well
 
     ratio_col_all = []
@@ -466,7 +468,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
             keep_cols.append(col_i)
     #plt.hist(ratio_col_all,bins=100) # , bins=10
     #plt.show()
-    #plt.savefig(gene_tree_file_addr+ "filtered_row_"+"_col_"+str(tresh_ratio_gap_col)+".txt.pdf")
+    #plt.savefig(genetree_msa_file_addr+ "filtered_row_"+"_col_"+str(tresh_ratio_gap_col)+".txt.pdf")
     #print("- Columns indecis extracted. Out of ", length_record,"columns,",len(keep_cols),"is remained.")
     msa_filtered_col = []
     for record in msa:
@@ -476,8 +478,8 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
             record_edited = SeqRecord(Seq(record_seq_edited), record.id, '', '')
             msa_filtered_col.append(record_edited)
 
-    if msa_write_all and gene_tree_file_addr:
-        out_name_msa=gene_tree_file_addr+"_filtered_"+"col_"+str(tresh_ratio_gap_col)+".msa.fa"
+    if msa_write_all and genetree_msa_file_addr:
+        out_name_msa=genetree_msa_file_addr+"_filterCol_"+str(tresh_ratio_gap_col)+".fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_col, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
@@ -485,7 +487,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
     return MultipleSeqAlignment(msa_filtered_col)
 
 
-def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
+def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, genetree_msa_file_addr=""):
     msa_filtered_row = []
     ratio_records = []
     for record in msa:
@@ -499,8 +501,8 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
                 msa_filtered_row.append(record)
         else:
             logger.warning("issue 12788 : error , seq len is zero when msa_filter_row")
-    if msa_write_all and gene_tree_file_addr:
-        out_name_msa = gene_tree_file_addr +"_filtered_row_"+str(inferhog_tresh_ratio_gap_row)+".msa.fa"
+    if msa_write_all and genetree_msa_file_addr:
+        out_name_msa = genetree_msa_file_addr +"_filterRow_"+str(inferhog_tresh_ratio_gap_row)+".fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
@@ -509,11 +511,11 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
 
 
 
-def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, conf_infer_subhhogs):
+def filter_msa(merged_msa, genetree_msa_file_addr, hogs_children_level_list, conf_infer_subhhogs):
 
     msa_filt_row_1 = merged_msa
     # if _config.inferhog_filter_all_msas_row:
-    #  msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
+    #  msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, genetree_msa_file_addr)
     # if   msa_filt_row_1 and len(msa_filt_row_1[0]) >=
     if len(msa_filt_row_1[0]) >= conf_infer_subhhogs.min_col_trim:
         # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
@@ -525,11 +527,15 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, conf_i
             msa_filt_col = msa_filt_row_1
             msa_filt_row_col = _wrappers.trim_msa(msa_filt_row_1)
         else:
-            msa_filt_col = msa_filter_col(msa_filt_row_1, conf_infer_subhhogs.gap_ratio_col, gene_tree_file_addr+"_0_")
+            genetree_msa_file_addr = genetree_msa_file_addr[:-1] + str(int(genetree_msa_file_addr[-1]) + 1)
+
+            msa_filt_col = msa_filter_col(msa_filt_row_1, conf_infer_subhhogs.gap_ratio_col, genetree_msa_file_addr)
             msa_filt_row_col = msa_filt_col
             if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
-                msa_filt_row_col_raw = msa_filter_row(msa_filt_col, conf_infer_subhhogs.gap_ratio_row, gene_tree_file_addr+"_1_")
-                msa_filt_row_col = msa_filter_col(msa_filt_row_col_raw, conf_infer_subhhogs.gap_ratio_col, gene_tree_file_addr+"_2_")
+                genetree_msa_file_addr = genetree_msa_file_addr[:-1] + str(int(genetree_msa_file_addr[-1]) + 1)
+                msa_filt_row_col_raw = msa_filter_row(msa_filt_col, conf_infer_subhhogs.gap_ratio_row, genetree_msa_file_addr)
+                genetree_msa_file_addr = genetree_msa_file_addr[:-1] + str(int(genetree_msa_file_addr[-1]) + 1)
+                msa_filt_row_col = msa_filter_col(msa_filt_row_col_raw, conf_infer_subhhogs.gap_ratio_col, genetree_msa_file_addr)
 
 
         # compare msa_filt_row_col and msa_filt_col,
@@ -542,7 +548,7 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, conf_i
                 # we may want to tag it in the hog object
             #assert len(prots_to_remove_level), "issue 31235"
             #prots_to_remove |= prots_to_remove_level
-            # todo: we may want to remove prot from all subhogs
+            # todo: we may want to remove prot from all subhogs. otherwise (right now , they still exist in the HOG structure not in the tree,  descion making for this level)
             # should I remove them from subhog._members ? we are doing so for merging fragments or low species overlap I guess
             # hogs_children_level_list_raw = hogs_children_level_list
             # hogs_children_level_list = []
@@ -561,7 +567,7 @@ def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list, conf_i
     # if len(msa_filt_row_col) < 2:
     #    msa_filt_row_col = msa_filt_col[:2]
 
-    return (msa_filt_row_col, msa_filt_col, hogs_children_level_list)
+    return (msa_filt_row_col, msa_filt_col, hogs_children_level_list, genetree_msa_file_addr)
 
 
 class PhyloTree:
