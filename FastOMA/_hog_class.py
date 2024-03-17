@@ -5,28 +5,29 @@ from Bio.SeqRecord import SeqRecord
 from random import sample
 import random
 
+
+# todo some of these could also come under conf_infer_subhhogs
 seed_random=1234 # Also in _wrappers.py
 random.seed(seed_random)
-
 fragment_detection = True  # this also need to be consistent in _infer_subhog.py
-fragment_detection_msa_merge = True # todo is it still needed?
-
+fragment_detection_msa_merge = True
 subsampling_hogclass = True
-hogclass_max_num_seq = 20              # 40 subsampling in msa # ver very 2
+hogclass_max_num_seq = 10              # 40 subsampling in msa # ver very 2
 hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 50
-hogclass_tresh_ratio_gap_col = 0.6     # 0.8 for very very big
+#hogclass_tresh_ratio_gap_col = 0.05     # 0.8 for very very big
 
 
 import itertools
 from . import _utils_subhog
 from ._wrappers import logger
 
+# from .infer_subhogs import conf_infer_subhhogs #fastoma_infer_subhogs #
 
 
 class HOG:
     _hogid_iter = 10000
 
-    def __init__(self, input_instantiate, taxnomic_range, rhogid, msa=None, num_species_tax_speciestree=None):
+    def __init__(self, input_instantiate, taxnomic_range, rhogid, msa=None, num_species_tax_speciestree=None, conf_infer_subhhogs=None):
         # fragment_list list of  sets , each set contains protein ID of fragments
         # the input_instantiate could be either
         #     1) orthoxml_to_newick.py protein as the biopython seq record  SeqRecord(seq=Seq('MAPSSRSPSPRT. ]
@@ -69,15 +70,15 @@ class HOG:
             records_full = [record for record in msa if (record.id in self._members) and (record.id not in self._dubious_members) ]
 
             if len(records_full[0]) > hogclass_min_cols_msa_to_filter:
-                records_sub_filt = _utils_subhog.msa_filter_col(records_full, hogclass_tresh_ratio_gap_col)
+                records_sub_filt = _utils_subhog.msa_filter_col(records_full, conf_infer_subhhogs)
                 # the challange is that one of the sequences might be complete gap
             else:
                 records_sub_filt = records_full  # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
 
             if subsampling_hogclass and len(records_sub_filt) > hogclass_max_num_seq:
                 # to do in future:  select best seq, not easy to defin, keep diversity,
-                records_sub_sampled_raw = sample(list(records_sub_filt), hogclass_max_num_seq)  # without replacement.
-                records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, 0.01) # to make sure no empty column
+                records_sub_sampled = sample(list(records_sub_filt), hogclass_max_num_seq)  # without replacement.
+                # records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, 0.01) # to make sure no empty column
                 logger.info("we are doing subsamping in hog class from " + str(len(records_full)) + " to " + str(hogclass_max_num_seq) + " seqs.")
             else:
                 records_sub_sampled = records_sub_filt

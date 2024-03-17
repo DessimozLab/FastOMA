@@ -230,7 +230,7 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
     #  prot_dubious_sd_list, node_species_tree, genetree_msa_file_addr, hogs_children_level_list
 
     all_species_dubious_sd_dic_updated = all_species_dubious_sd_dic
-    itr_so = 1 # todo double check the one without itr is
+    itr_so = 1 # iteration of species overlap (so)
     while all_species_dubious_sd_dic_updated and itr_so< iteration_sp_overlap:
         logger.debug("These are found with low SO score all_species_dubious_sd_dic " + str(all_species_dubious_sd_dic_updated)+" which are now being handled itr"+str(itr_so)+" .")
         prot_dubious_sd_remove_list = find_prot_dubious_sd_remove(gene_tree, all_species_dubious_sd_dic_updated)

@@ -293,7 +293,7 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
         rand_num = random.randint(1, 100000)
         genetree_msa_file_addr = genetree_msa_file_addr[:245] +"randomID_"+ str(rand_num) # +".nwk"
         logger.debug("genetree_msa_file_addr was long, now truncated " + genetree_msa_file_addr)
-    genetree_msa_file_addr+="_itr0"
+    genetree_msa_file_addr+="_itr0" # warning we expect this variable always ends with an integer (best 1 digit)
     sub_msa_list_lowerLevel_ready = [hog._msa for hog in hogs_children_level_list if len(hog._msa) > 0]
     # sub_msa_list_lowerLevel_ready = [ii for ii in sub_msa_list_lowerLevel_ready_raw if len(ii) > 0]
     logger.debug("Merging "+str(len(sub_msa_list_lowerLevel_ready))+" MSAs for rhog:"+rhogid+", level:"+str(node_species_tree.name))
@@ -341,7 +341,7 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
 
             logger.debug("Merging sub-hogs for rhogid:"+rhogid+", level:"+str(node_species_tree.name))
             # the last element should be merged_msa not the trimmed msa, as we create new hog based on this msa
-            hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid, merged_msa_new)
+            hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid, merged_msa_new, conf_infer_subhhogs)
             # for i in hogs_this_level_list: print(i.get_members())
             logger.debug("After merging subhogs of childrens, "+str(len(hogs_this_level_list))+" subhogs are found for rhogid: "+rhogid+", for taxonomic level:"+str(this_level_node_name))
 
@@ -369,7 +369,7 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
     return len(hogs_this_level_list)
 
 
-def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid, merged_msa):
+def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid, merged_msa, conf_infer_subhhogs):
     """
     merge subhogs based on the gene tree specieciaton node of gene tree by creating inter-HOG graph (implicitley )
     """
@@ -442,7 +442,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                 taxnomic_range = node_species_tree.name
                 num_species_tax_speciestree = len(node_species_tree.get_leaves())
                 # num_species_tax   is the number of species exist in the species tree at this clade
-                HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid, merged_msa, num_species_tax_speciestree)
+                HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid, merged_msa, num_species_tax_speciestree, conf_infer_subhhogs)
                 if len(HOG_this_node._msa) == 1:
                     logger.warning("issue 1258313"+str(HOG_this_node)+str(HOG_this_node._msa)+" "+node.name  )
                 hogs_this_level_list.append(HOG_this_node)
