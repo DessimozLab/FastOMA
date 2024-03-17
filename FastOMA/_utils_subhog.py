@@ -14,11 +14,12 @@ import numpy as np
 import sys
 from os import listdir
 
+from . import _utils_frag_SO_detection
 
 from ._wrappers import logger
 from . import _wrappers
 
-msa_write_all = True
+
 automated_trimAL = False    # todo not tested properly
 label_SD_internal = "species_overlap"  # todo the other option "reconciliation" hasn't been tested properly
 
@@ -451,7 +452,7 @@ def get_reconciled_tree_zmasek(gtree, sptree, inplace=False):
 
 
 
-def msa_filter_col(msa, tresh_ratio_gap_col, genetree_msa_file_addr=""):
+def msa_filter_col(msa, conf_infer_subhhogs, genetree_msa_file_addr=""):
     # genetree_msa_file_addr contains roothog numebr
     # note this is used in hog class as well
 
@@ -464,7 +465,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, genetree_msa_file_addr=""):
         gap_count=col_values.count("-") + col_values.count("?") + col_values.count(".") +col_values.count("~")
         ratio_col_nongap = 1- gap_count/num_records
         ratio_col_all.append(ratio_col_nongap)
-        if ratio_col_nongap >= tresh_ratio_gap_col:
+        if ratio_col_nongap >= conf_infer_subhhogs.gap_ratio_col:
             keep_cols.append(col_i)
     #plt.hist(ratio_col_all,bins=100) # , bins=10
     #plt.show()
@@ -478,8 +479,8 @@ def msa_filter_col(msa, tresh_ratio_gap_col, genetree_msa_file_addr=""):
             record_edited = SeqRecord(Seq(record_seq_edited), record.id, '', '')
             msa_filtered_col.append(record_edited)
 
-    if msa_write_all and genetree_msa_file_addr:
-        out_name_msa=genetree_msa_file_addr+"_filterCol_"+str(tresh_ratio_gap_col)+".fa"
+    if conf_infer_subhhogs.msa_write and genetree_msa_file_addr:
+        out_name_msa=genetree_msa_file_addr+"_filterCol_"+str(conf_infer_subhhogs.gap_ratio_col)+".fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_col, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
@@ -487,7 +488,7 @@ def msa_filter_col(msa, tresh_ratio_gap_col, genetree_msa_file_addr=""):
     return MultipleSeqAlignment(msa_filtered_col)
 
 
-def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, genetree_msa_file_addr=""):
+def msa_filter_row(msa, conf_infer_subhhogs, genetree_msa_file_addr=""):
     msa_filtered_row = []
     ratio_records = []
     for record in msa:
@@ -497,12 +498,12 @@ def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, genetree_msa_file_addr="")
         if seqLen:
             ratio_record_nongap = 1-gap_count/seqLen
             ratio_records.append(round(ratio_record_nongap, 3))
-            if ratio_record_nongap >= inferhog_tresh_ratio_gap_row:
+            if ratio_record_nongap >= conf_infer_subhhogs.gap_ratio_row:
                 msa_filtered_row.append(record)
         else:
             logger.warning("issue 12788 : error , seq len is zero when msa_filter_row")
-    if msa_write_all and genetree_msa_file_addr:
-        out_name_msa = genetree_msa_file_addr +"_filterRow_"+str(inferhog_tresh_ratio_gap_row)+".fa"
+    if conf_infer_subhhogs.msa_write and genetree_msa_file_addr:
+        out_name_msa = genetree_msa_file_addr +"_filterRow_"+str(conf_infer_subhhogs.gap_ratio_row)+".fa"
         handle_msa_fasta = open(out_name_msa, "w")
         SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
         handle_msa_fasta.close()
@@ -529,13 +530,13 @@ def filter_msa(merged_msa, genetree_msa_file_addr, hogs_children_level_list, con
         else:
             genetree_msa_file_addr = genetree_msa_file_addr[:-1] + str(int(genetree_msa_file_addr[-1]) + 1)
 
-            msa_filt_col = msa_filter_col(msa_filt_row_1, conf_infer_subhhogs.gap_ratio_col, genetree_msa_file_addr)
+            msa_filt_col = msa_filter_col(msa_filt_row_1, conf_infer_subhhogs, genetree_msa_file_addr)
             msa_filt_row_col = msa_filt_col
             if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
                 genetree_msa_file_addr = genetree_msa_file_addr[:-1] + str(int(genetree_msa_file_addr[-1]) + 1)
-                msa_filt_row_col_raw = msa_filter_row(msa_filt_col, conf_infer_subhhogs.gap_ratio_row, genetree_msa_file_addr)
+                msa_filt_row_col_raw = msa_filter_row(msa_filt_col, conf_infer_subhhogs, genetree_msa_file_addr)
                 genetree_msa_file_addr = genetree_msa_file_addr[:-1] + str(int(genetree_msa_file_addr[-1]) + 1)
-                msa_filt_row_col = msa_filter_col(msa_filt_row_col_raw, conf_infer_subhhogs.gap_ratio_col, genetree_msa_file_addr)
+                msa_filt_row_col = msa_filter_col(msa_filt_row_col_raw, conf_infer_subhhogs, genetree_msa_file_addr)
 
 
         # compare msa_filt_row_col and msa_filt_col,
@@ -543,20 +544,28 @@ def filter_msa(merged_msa, genetree_msa_file_addr, hogs_children_level_list, con
             set_prot_before = set([i.id for i in msa_filt_col])
             set_prot_after = set([i.id for i in msa_filt_row_col])
             prots_to_remove_level = set_prot_before - set_prot_after
-            for prots_to_remove in prots_to_remove_level:
-                logger.debug("** we are removing the sequence "+str(prots_to_remove)+" due to trimming")
+            for prot_to_remove in prots_to_remove_level:
+                logger.debug("** we are removing the sequence "+str(prot_to_remove)+" due to trimming")
                 # we may want to tag it in the hog object
             #assert len(prots_to_remove_level), "issue 31235"
             #prots_to_remove |= prots_to_remove_level
             # todo: we may want to remove prot from all subhogs. otherwise (right now , they still exist in the HOG structure not in the tree,  descion making for this level)
             # should I remove them from subhog._members ? we are doing so for merging fragments or low species overlap I guess
-            # hogs_children_level_list_raw = hogs_children_level_list
-            # hogs_children_level_list = []
+            hogs_children_level_list_raw = hogs_children_level_list
+            hogs_children_level_list = []
             # for hog_i in hogs_children_level_list_raw:
             #   for prot_to_remove in prots_to_remove:
             #         result_removal = hog_i.remove_prot_from_hog(prot_to_remove)
             #       if result_removal != 0:
             #             hogs_children_level_list.append(hog_i)
+            hogs_to_remove_list=[]
+            for prot_to_remove in prots_to_remove_level:
+                for hog in hogs_children_level_list_raw:
+                    if prot_to_remove in hog._members:
+                        result_removing =  _utils_frag_SO_detection.remove_prot_hog_hierarchy_toleaves(hog, prot_to_remove)
+                        if result_removing == 0:  # the hog is empty
+                            hogs_to_remove_list.append(hog)
+            hogs_children_level_list = [i for i in hogs_children_level_list_raw if i not in hogs_to_remove_list]
         else:
             msa_filt_row_col = msa_filt_col
         # merged_msa_filt = msa_filt_row_col
