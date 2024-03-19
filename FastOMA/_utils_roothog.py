@@ -532,6 +532,7 @@ def find_rhog_candidate_pairs(hogmaps, conf_infer_roothogs): # rhogs_prots
             ratioMax = count_shared / max(rhogs_size[hogi], rhogs_size[hogj])
             ratioMin = count_shared / min(rhogs_size[hogi], rhogs_size[hogj])
             # mean_scores > _config.mergHOG_mean_thresh or
+            # todo: big_rhog_size make it as a ratio, could be problometic when we have many more species -> merging too much
             condition_merge = (max(rhogs_size[hogi], rhogs_size[hogj]) < conf_infer_roothogs.big_rhog_size / 6 and \
                                 ((ratioMax > conf_infer_roothogs.mergHOG_ratioMax_thresh or ratioMin > conf_infer_roothogs.mergHOG_ratioMin_thresh) and count_shared > conf_infer_roothogs.mergHOG_shared_thresh))  \
                               and rhogs_size[hogi] < conf_infer_roothogs.big_rhog_size / 6 and rhogs_size[hogj] < conf_infer_roothogs.big_rhog_size / 6

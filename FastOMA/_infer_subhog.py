@@ -426,7 +426,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                 for subHOG in hogs_children_level_list:
                     subHOG_members = subHOG._members
                     if node_leave_name in subHOG_members:  # could be improved
-                        if subHOG._hogid not in subHOG_to_be_merged_set_other_Snodes_flattned_temp:
+                        if subHOG._hogid not in subHOG_to_be_merged_set_other_Snodes_flattned_temp: #todo 18march this means that we are not merging a few together
                             subHOG_to_be_merged.append(subHOG)
                             subhogs_id_children_assigned.append(subHOG._hogid)
                         else:  # this hog is already decided to be merged  print(node.name, subHOG._hogid, node_leave_name)
