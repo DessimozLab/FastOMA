@@ -99,7 +99,7 @@ class HOG:
     def get_dubious_members(self):
         return self._dubious_members
 
-    def remove_prot_from_hog(self, prot_to_remove):
+    def remove_prot_from_hog(self, prot_to_remove): # recursive should happen elsewher, self._subhog (children subhogs)
         prot_members_hog_old = self._members
         assert prot_members_hog_old
         prot_members_hog_edited = prot_members_hog_old - set([prot_to_remove])
@@ -110,6 +110,45 @@ class HOG:
         if len(prot_members_hog_edited) == 0:  # hog should be removed, no members is left
             return 0
         return 1
+
+
+    # def remove_protlist_from_hog(self, protlist_to_remove):
+    #     # recursive should happen elsewher, self._subhog (children subhogs
+    #     prot_members_hog_old = self._members
+    #     assert prot_members_hog_old
+    #     prot_members_hog_edited = prot_members_hog_old - set(protlist_to_remove)
+    #     self._members = prot_members_hog_edited # self._members.remove(prot_to_remove)    # discard
+    #     msa_old = self._msa     #  we may want to edit the msa of children level to be consistent
+    #     msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id not in protlist_to_remove])
+    #     self._msa = msa_edited
+    #     if len(prot_members_hog_edited) == 0:  # hog should be removed, no members is left
+    #         return 0
+    #     return 1
+
+    def prune(self, protlist_to_keep):
+        prot_members_hog_old = self._members
+        assert prot_members_hog_old
+        prot_members_hog_edited = set([i for i in prot_members_hog_old if i in protlist_to_keep ])
+        prot_not_inmember = [i for i in protlist_to_keep if i  not in prot_members_hog_old]
+        if prot_not_inmember:
+            logger.warning("Some proteins are not in the subhog"+str(self._hogid)+":"+str(prot_not_inmember))
+        self._members = prot_members_hog_edited # self._members.remove(prot_to_remove)    # discard
+        msa_old = self._msa     #  we may want to edit the msa of children level to be consistent
+        msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id in protlist_to_keep])
+        self._msa = msa_edited
+        hogid_old = self._hogid
+        if "__" in hogid_old:
+            assert len(hogid_old.split("__")) < 3, "issue 13413057"
+            itr = hogid_old.split("__")[1] # expecting no "__" in the subhogID
+            itr_int = int(itr)
+            self._hogid = hogid_old.split("__")[0] + "__"+str(itr_int+1)
+        else:
+            self._hogid = hogid_old +"__1"
+        if len(prot_members_hog_edited) == 0:  # hog should be removed, no members is left
+            return 0
+        return 1
+
+
 
     def insert_dubious_prots(self, fragment_host, fragments_list_nothost):
 
