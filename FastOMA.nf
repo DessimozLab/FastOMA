@@ -14,8 +14,8 @@ params.fasta_header_id_transformer = "noop"
 
 // output subfolder definition
 params.genetrees_folder = params.output_folder + "/genetrees"
+params.msa_folder = params.output_folder + "/msa"
 params.hogmap_folder = params.output_folder + "/hogmap"
-
 params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
 
 
@@ -317,10 +317,10 @@ process hog_big{
   memory { check_max( mem_cat(getMaxFileSize(rhogsbig), nr_species as int) * task.attempt, "memory") }
   time { check_max( time_cat(getMaxFileSize(rhogsbig), nr_species as int) * task.attempt, "time") }
 
-  publishDir = [
-    path: params.temp_output,
-    enabled: params.debug_enabled,
-  ]
+  publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
+  publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
+
   input:
     each rhogsbig
     path species_tree
@@ -334,28 +334,34 @@ process hog_big{
         fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig}  \
                                --species-tree ${species_tree} \
                                --output-pickles pickle_hogs \
-                               --parallel  -vv
+                               --parallel  \
+                               -vv \
+                               ${ params.write_msas ? "--msa-write" : ""} \
+                               ${ params.write_genetrees ? "--gene-trees-write" : ""}
     """
 }
 
 process hog_rest{
   label "process_single"
-  publishDir = [
-    path: params.temp_output,
-    enabled: params.debug_enabled,
-  ]
+  publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
+  publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
+
   input:
     each rhogsrest
     path species_tree
   output:
     path "pickle_hogs"
-    path "*.fa" , optional: true          // msa         if write True
+    path "*.fa" , optional: true   // msa         if write True
     path "*.nwk" , optional: true  // gene trees  if write True
   script:
     """
         fastoma-infer-subhogs --input-rhog-folder ${rhogsrest}  \
                               --species-tree ${species_tree} \
-                              --output-pickles pickle_hogs -vv
+                              --output-pickles pickle_hogs \
+                              -vv \
+                              ${ params.write_msas ? "--msa-write" : ""} \
+                              ${ params.write_genetrees ? "--gene-trees-write" : ""}
     """
 }
 
@@ -400,6 +406,7 @@ process extract_pairwise_ortholog_relations {
         fastoma-helper -vv pw-rel --orthoxml $orthoxml \
                                   --out orthologs.tsv.gz \
                                   --type ortholog
+
     """
 }
 
@@ -437,7 +444,6 @@ workflow {
     species_tree = Channel.fromPath(params.species_tree, type: "file", checkIfExists:true).first()
 
     splice_folder = Channel.fromPath(params.splice_folder, type: "dir")
-    genetrees_folder = Channel.fromPath(params.genetrees_folder, type: 'dir')
     hogmap_in = Channel.fromPath(params.hogmap_in, type:'dir')
 
     omamerdb = Channel.fromPath(params.omamer_db)

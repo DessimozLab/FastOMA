@@ -819,7 +819,7 @@ import subprocess
 
 
 def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):   # todo move run_linclust to _wrapper.py
-    num_threads = 10 # todo how to assign more cpu for this step in nextflow
+    num_threads = 10  # todo how to assign more cpu for this step in nextflow
     command_clust = mmseqs_executable_path +" easy-linclust --threads " + str(
         num_threads) + " " + fasta_to_cluster + " singleton_unmapped tmp_linclust"
 
