@@ -460,10 +460,10 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
             # todo add the release id   to file names  rhogids_list[:2] > ['HOG:C0884658', 'HOG:C0709155']
             SeqIO.write(rhog_recs, address_rhogs_folder + "/HOG_" + rhogid + ".fa", "fasta")
             rhogid_written_list.append(rhogid)
-        else:
-            for prot1 in rhog_recs:
-                a=1
-                #logger_hog.debug("we are removing due to omamer signleton hog |*|" + str(prot1.id))
+        #else:
+        #    for prot1 in rhog_recs:
+        #        a=1
+        #       #logger_hog.debug("we are removing due to omamer signleton hog |*|" + str(prot1.id))
 
     logger_hog.info("Writing Sequences of " + str(len(rhogid_written_list)) + " roothogs finished.")
 
