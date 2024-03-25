@@ -234,7 +234,7 @@ def handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all
             rest_leaves = set([i.name for i in gene_tree.get_leaves()]) - set(prot_dubious_sd_remove_list)
             gene_tree.prune(rest_leaves, preserve_branch_length=True)
             if _config.gene_trees_write_all or _config.rooting_method=="mad":
-                gene_tree.write(format=1, outfile=genetree_msa_file_addr + "_dubious_sd"+str(itr_so)+".nwk" )
+                gene_tree.write(format=1, outfile=genetree_msa_file_addr + "_dubious_sd"+str(itr_so)+".nwk", format_root_node=True )
 
             (gene_tree, all_species_dubious_sd_dic_updated) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr + "_dubious_sd"+str(itr_so)+".nwk")
 
@@ -401,7 +401,7 @@ def handle_fragment_msa(prot_dubious_msa_list, seq_dubious_msa_list, gene_tree, 
 
         try:
             if  len(gene_tree) and (_config.gene_trees_write_all or _config.rooting_method == "mad"): # len(gene_tree) > 1 and
-                gene_tree.write(outfile=genetree_msa_file_addr+"_dubiousMSA.nwk",format=1)
+                gene_tree.write(outfile=genetree_msa_file_addr+"_dubiousMSA.nwk",format=1, format_root_node=True)
         except:
             logger_hog.warning("couldn't write the file _dubiousMSA.nwk")
 
