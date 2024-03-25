@@ -325,7 +325,8 @@ def handle_singleton(rhogs_prots,hogmaps):
             if scores[idx+1] >  _config.threshod_f_score_merging :
                 rhogid = hogid.split(".")[0].split(":")[1]
                 if rhogid in dic_singlton_remained:
-                    dic_singlton_remained[rhogid].append((species, prot))
+                    if (species, prot) not in dic_singlton_remained[rhogid]:  # this can happen when a prot mapped to D0680404.3b and D0680404.3a (causing repeated item in the dic), error later in line: del rhogs_prots[rhogid_ii]
+                        dic_singlton_remained[rhogid].append((species, prot))
                 else:
                     dic_singlton_remained[rhogid] = [(species, prot)]
     logger_hog.debug("These are associated to " + str(len(dic_singlton_remained)) + " HOGs considering all multi-hits.")
