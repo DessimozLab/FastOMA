@@ -2,6 +2,8 @@ FastOMA
 ======
 FastOMA is a scalable software package to infer orthology relationship.
 
+Want to learn more about FastOMA and try it online, check out [FastOMA academy](https://omabrowser.org/oma/academy/module/fastOMA_2023) !
+
 # Input and Output: 
 
 ### Input: 
@@ -406,6 +408,9 @@ FastOMA uses the [linclust](https://github.com/soedinglab/MMseqs2#cluster) softw
 These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_clustXXXXX.fa`.
 These are initial gene families that are used in `infer_subhogs` step, which could be split into a few smaller gene families. 
 
+## Cite us
+
+Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick Vesztrocy, Stefano Pascarelli, David Moi, Natasha Glover, Adrian M. Altenhoff, and Christophe Dessimoz. "Orthology inference at scale with FastOMA." bioRxiv (2024): 2024-01. https://www.biorxiv.org/content/10.1101/2024.01.29.577392v1.full
 
 
 ## Change log
