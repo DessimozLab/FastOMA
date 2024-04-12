@@ -1,4 +1,4 @@
-
+import collections
 
 from Bio import SeqIO
 import concurrent.futures
@@ -8,15 +8,16 @@ import shutil
 import pickle
 import gc
 import random
-from ete3 import Tree
+from ete3 import Tree, TreeNode
 import xml.etree.ElementTree as ET
+from typing import List
 
 # import networkx as nx
 # import matplotlib.pyplot as plt
 from . import _wrappers
 from . import _utils_subhog
 from . import _utils_frag_SO_detection
-from ._hog_class import HOG
+from ._hog_class import HOG, Representative
 
 from ._wrappers import logger
 
@@ -250,6 +251,58 @@ def read_children_hogs(node_species_tree, rhogid, pickles_subhog_folder_all):
     return hogs_children_level_list
 
 
+RepLookup = collections.namedtuple("RepLookup", ["hog", "representative"])
+class LevelHOGProcessor:
+    def __init__(self, node_species_tree:TreeNode, subhogs:List[HOG], rhogid:str, conf):
+        self.node_species_tree = node_species_tree
+        self.subhogs = subhogs
+        self.rhogid = rhogid
+        self.conf = conf
+        self._base_msa_tree_filename =  "HOG_"+rhogid+"_"+str(node_species_tree.name)
+        self._outname_step = 0
+        self._rep_lookup = self._prepare_lookups()
+
+    def get_name_of_output(self, is_msa=False, is_tree=False):
+        if (is_msa and self.conf.msa_write) or (is_tree and self.conf.gene_trees_write):
+            self._outname_step += 1
+            return f"{self._base_msa_tree_filename}_it{self._outname_step}"
+        return None
+
+    def _prepare_lookups(self):
+        lookup = {}
+        for hog in self.subhogs:
+            for rep in hog.get_representatives():
+                lookup[rep.get_id()] = RepLookup(hog, rep)
+        return lookup
+
+    def find_most_divergent_representatives_from_genetree(self, genetree:TreeNode):
+        """this method returns the N most divergent representatives from a rooted tree. within each cluster
+        it selects the one representative sequence that corresponds to the the median distance from the root
+        among the sequnces in the cluster.
+
+        :param genetree: the rooted tree (with distances) that should be processed
+        :return: the N most divergent representatives for that tree. N is taken from self.conf"""
+        if len(genetree.get_leaves()) <= self.conf.number_of_samples_per_hog:
+            return [Representative(self._rep_lookup[n.name].representative) for n in genetree.iter_leaves()]
+        # first, annotate the distance from the root
+        for n in genetree.traverse():
+            n.add_feature('dist_from_root', n.dist + (n.up.dist_from_root if n.up is not None else 0))
+        # now, let's get a list of all the internal nodes ordered with the dist_from_root and find which distance
+        # results in number_of_samples_per_hog subtrees that are most divergent
+        ordered = sorted([n.dist_from_root for n in genetree.traverse() if not n.is_leaf()], key=lambda x: x.dist_from_root)
+        cutoff = ordered[self.conf.number_of_samples_per_hog-1]
+        sub_clades = [sub for sub in genetree.iter_leaves(
+            is_leaf_fn=lambda n: len(n.children) == 0 or n.dist_from_root >= cutoff
+        )]
+        # now, let's select for each sub_clade the one leave that is close to the median dist_from_root (no outliers)
+        representatives = []
+        for sub in sub_clades:
+            order_by_dist = sorted((n for n in sub.iter_leaves()), key=lambda n: n.dist_from_root)
+            median_elem = order_by_dist[len(order_by_dist)//2]
+            new_rep = Representative(self._rep_lookup[median_elem.name].representative,
+                                     [self._rep_lookup[z.name].representative for z in order_by_dist])
+            representatives.append(new_rep)
+        return representatives
 
 
 def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, conf_infer_subhhogs):

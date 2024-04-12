@@ -24,6 +24,18 @@ from ._wrappers import logger
 # from .infer_subhogs import conf_infer_subhhogs #fastoma_infer_subhogs #
 
 
+class Representative:
+    def __init__(self, the_one, elements=None):
+
+        if isinstance(the_one, Representative):
+            self._seq = the_one.get_record()
+            self._elements = the_one.get_subelements()
+        self._seq = the_one
+        if elements is None:
+            self._elements = None
+            raise RuntimeError("not yet implemented")
+
+
 class HOG:
     _hogid_iter = 10000
 
@@ -40,6 +52,7 @@ class HOG:
         self._hogid = "HOG_" + self._rhogid+ "_sub" + str(self.__class__._hogid_iter)
         self._tax_least = taxnomic_range  #  least taxnomic level
         self._tax_now = taxnomic_range    # the taxnomic level that we are considering now, checking for duplication
+        self.active = True
 
 
         if isinstance(input_instantiate, SeqRecord):  # if len(sub_hogs)==1:
