@@ -209,16 +209,14 @@ def singletone_hog_(node_species_tree, rhogid, pickles_subhog_folder_all, rhogs_
                         logger.debug(" Issue  1238510: the pickle file for single tone is empty "+ str(hogs_this_level_list)+" " + rhogid)
 
     # logger.debug("reading protien / singletone HOG of  " + str(this_level_node_name))
-    rhog_i_prot_address = rhogs_fa_folder +"/HOG_"+rhogid+".fa"
-    rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
-    species_names_rhog_nonuniq = [seq.id.split("||")[1] for seq in rhog_i]
-    prot_idx_interest_in_rhog = [idx for idx in range(len(species_names_rhog_nonuniq)) if
-                                 species_names_rhog_nonuniq[idx] == node_species_name]
-    rhog_part = [rhog_i[i] for i in prot_idx_interest_in_rhog]
     hogs_this_level_list = []
-    for prot in rhog_part:
-        hog_leaf = HOG(prot, node_species_name, rhogid)  # node_species_tree.name
-        hogs_this_level_list.append(hog_leaf)
+    rhog_i_prot_address = rhogs_fa_folder +"/HOG_"+rhogid+".fa"
+    with open(rhog_i_prot_address, 'rt') as fasta:
+        species_seq_generator = (rec for rec in SeqIO.parse(fasta, format="fasta")
+                                 if rec.id.split('||')[1] == node_species_name)
+        for prot in species_seq_generator:
+            hog_leaf = HOG(prot, node_species_name, rhogid)  # node_species_tree.name
+            hogs_this_level_list.append(hog_leaf)
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+".pickle"
     with open(pickle_subhog_file, 'wb') as handle:
         pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)

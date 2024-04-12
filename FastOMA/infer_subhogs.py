@@ -71,3 +71,6 @@ def fastoma_infer_subhogs():
 
     threshold_dubious_sd= 0.1
 
+
+if __name__ == "__main__":
+    fastoma_infer_subhogs()
