@@ -90,7 +90,7 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
             if orthoxml_v03 and 'paralogGroup' in str(hogs_a_rhog_xml_raw) :
                 # in version v0.3 of orthoxml, there shouldn't be any paralogGroup at root level. Let's put them inside an orthogroup should be in
                 hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(hog_i._hogid)})
-                property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i._tax_now)})
+                property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i._tax_now.name)})
                 hog_elemnt.append(hogs_a_rhog_xml_raw)
                 hogs_a_rhog_xml = hog_elemnt
             else:
@@ -216,7 +216,7 @@ def singletone_hog_(node_species_tree, rhogid, pickles_subhog_folder_all, rhogs_
         species_seq_generator = (rec for rec in SeqIO.parse(fasta, format="fasta")
                                  if rec.id.split('||')[1] == node_species_name)
         for prot in species_seq_generator:
-            hog_leaf = HOG(prot, node_species_name, rhogid)  # node_species_tree.name
+            hog_leaf = HOG(prot, node_species_tree, rhogid)  # node_species_tree.name
             hogs_this_level_list.append(hog_leaf)
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+".pickle"
     with open(pickle_subhog_file, 'wb') as handle:
@@ -490,10 +490,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
 
             elif len(subHOG_to_be_merged)>1:
                 subHOG_to_be_merged_set = set(subHOG_to_be_merged)
-                taxnomic_range = node_species_tree.name
-                num_species_tax_speciestree = len(node_species_tree.get_leaves())
-                # num_species_tax   is the number of species exist in the species tree at this clade
-                HOG_this_node = HOG(subHOG_to_be_merged_set, taxnomic_range, rhogid, merged_msa, num_species_tax_speciestree, conf_infer_subhhogs)
+                HOG_this_node = HOG(subHOG_to_be_merged_set, node_species_tree, rhogid, merged_msa, conf_infer_subhhogs)
                 if len(HOG_this_node._msa) == 1:
                     logger.warning("issue 1258313"+str(HOG_this_node)+str(HOG_this_node._msa)+" "+node.name  )
                 hogs_this_level_list.append(HOG_this_node)
@@ -521,7 +518,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     # if len(hogs_this_level_list)==1:  hogs_this_level_list = [hogs_this_level_list]
 
     for hog_j in hogs_this_level_list:
-        hog_j._tax_now = node_species_tree.name
+        hog_j._tax_now = node_species_tree
     ##  the following if fore debugging of connected component of inter-HOG graph
     ## check for conflicts in merging
     #     for i in range(subHOG_to_be_merged_set_other_Snodes):  if

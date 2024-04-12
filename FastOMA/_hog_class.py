@@ -3,6 +3,8 @@ import xml.etree.ElementTree as ET
 from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 from random import sample
+from typing import Optional, List, Union
+from ete3 import Tree, TreeNode
 import random
 
 
@@ -25,21 +27,37 @@ from ._wrappers import logger
 
 
 class Representative:
-    def __init__(self, the_one, elements=None):
-
+    def __init__(self, the_one, elements:Optional[List]=None):
         if isinstance(the_one, Representative):
             self._seq = the_one.get_record()
-            self._elements = the_one.get_subelements()
-        self._seq = the_one
-        if elements is None:
-            self._elements = None
-            raise RuntimeError("not yet implemented")
+            self._subelements = the_one.get_subelements()
+            self._species = the_one.get_species()
+        elif isinstance(the_one, SeqRecord):
+            self._seq = the_one
+            self._subelements = set(the_one.id)
+            # TODO: this should be done more genenerally. copied from singleton_hog function
+            self._species = {the_one.id.split('||')[1]}
+        if elements is not None:
+            self._subelements |= (s.get_subelements() for s in elements)
+            self._species |= (s.get_species() for s in elements)
+
+    def get_id(self):
+        return self._seq.id
+
+    def get_record(self):
+        return self._seq
+
+    def get_subelements(self):
+        return self._subelements
+
+    def get_species(self):
+        return self._species
 
 
 class HOG:
     _hogid_iter = 10000
 
-    def __init__(self, input_instantiate, taxnomic_range, rhogid, msa=None, num_species_tax_speciestree=None, conf_infer_subhhogs=None):
+    def __init__(self, input_instantiate, taxnomic_range:TreeNode, rhogid:str, msa:Optional[MultipleSeqAlignment] = None, conf_infer_subhhogs=None):
         # fragment_list list of  sets , each set contains protein ID of fragments
         # the input_instantiate could be either
         #     1) orthoxml_to_newick.py protein as the biopython seq record  SeqRecord(seq=Seq('MAPSSRSPSPRT. ]
@@ -53,7 +71,6 @@ class HOG:
         self._tax_least = taxnomic_range  #  least taxnomic level
         self._tax_now = taxnomic_range    # the taxnomic level that we are considering now, checking for duplication
         self.active = True
-
 
         if isinstance(input_instantiate, SeqRecord):  # if len(sub_hogs)==1:
             only_protein = input_instantiate  # only one seq, only on child, leaf
@@ -73,7 +90,7 @@ class HOG:
                 hog_members |= sub_hog.get_members()  # union
             self._members = hog_members  # set.union(*tup)    # this also include dubious_members
             self._subhogs = list(input_instantiate)  # full members of subhog, children
-            self._num_species_tax_speciestree = num_species_tax_speciestree
+            self._num_species_tax_speciestree = len(taxnomic_range.get_leaves())
 
             dubious_members = set()
             for sub_hog in sub_hogs:
@@ -104,7 +121,7 @@ class HOG:
 
     def __repr__(self):
         return "HOGobj:" + self._hogid + ",size=" + str(
-            len(self._members))+", taxLeast=" + str(self._tax_least) + ", taxNow= " + str(self._tax_now)
+            len(self._members))+", taxLeast=" + str(self._tax_least.name) + ", taxNow= " + str(self._tax_now.name)
 
     def get_members(self):
         return set(self._members)
@@ -223,7 +240,7 @@ class HOG:
         # We continue this function as an Implicit else :  len(self._subhogs) >=1
 
         def _sorter_key(sh):
-            return sh._tax_now
+            return sh._tax_now.name
         self._subhogs.sort(key=_sorter_key)
 
         element_list = []
@@ -268,7 +285,7 @@ class HOG:
             num_species_tax_hog = len(set([i.split("||")[1] for i in self._members]))  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
             completeness_score = round(num_species_tax_hog/self._num_species_tax_speciestree,4)
             property_element = ET.SubElement(hog_elemnt, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
-            property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(self._tax_now)})
+            property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(self._tax_now.name)})
 
             for element in element_list:
                 hog_elemnt.append(element)
