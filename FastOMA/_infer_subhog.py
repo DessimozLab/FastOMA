@@ -304,6 +304,34 @@ class LevelHOGProcessor:
             representatives.append(new_rep)
         return representatives
 
+    def infer_reconciliation(self, genetree:TreeNode, sos_threshold=0.0):
+        """Annotate each internal node with a 'evoltype' and 'sos' attribute.
+
+        The evoltype attribute will be either 'S' or 'D' (speciation or duplication),
+        and the 'sos' attribute will contain the fraction of species that overlap among the
+        subtrees. The parameter sos_threshold specifies the minimum fraction of species that
+        must overlap among the subtrees in order to be considered a duplication.
+
+        :param genetree: the rooted tree that should be processed
+        :param sos_threshold: the minimum fraction of species that must overlap among the
+                              subtrees in order to be considered a duplication.
+        """
+        for n in genetree.traverse('postorder'):
+            if n.is_leaf():
+                n.add_feature('species', self._rep_lookup[n.name].representative.get_species())
+            else:
+                assert len(n.children) == 2
+                s1, s2 = tuple(c.species for c in n.children)
+                for c in n.children:
+                    c.del_feature('species')  # cleanup to avoid excessive memory
+                sp_inter = s1.intersection(s2)
+                sp_union = s1.union(s2)
+                sos = len(sp_inter) / len(sp_union)
+                n.add_feature('species', sp_union)
+                n.add_feature('sos', sos)
+                n.add_feature('evoltype', 'D' if sos > sos_threshold else 'S')
+        genetree.del_feature('species')
+
 
 def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, conf_infer_subhhogs):
     """
