@@ -34,7 +34,7 @@ class Representative:
             self._species = the_one.get_species()
         elif isinstance(the_one, SeqRecord):
             self._seq = the_one
-            self._subelements = set(the_one.id)
+            self._subelements = set([the_one.id])
             # TODO: this should be done more genenerally. copied from singleton_hog function
             self._species = {the_one.id.split('||')[1]}
         if elements is not None:
@@ -57,7 +57,15 @@ class Representative:
 class HOG:
     _hogid_iter = 10000
 
-    def __init__(self, input_instantiate, taxnomic_range:TreeNode, rhogid:str, msa:Optional[MultipleSeqAlignment] = None, conf_infer_subhhogs=None):
+    def __init__(self, input_instantiate, taxnomic_range:TreeNode, rhogid:str, msa:Optional[MultipleSeqAlignment] = None,
+                 representatives=Optional[List[Representative]], conf_infer_subhhogs=None):
+        """HOG class constructor.
+
+        A HOG can be initialized with either a single SeqRecord or from a list of HOGs
+        (which will become its sub-hog elements). Furthermore, the taxonomic range
+        (a node from the species tree) needs to be provided.
+        Parameters:
+        :param input_instantiate"""
         # fragment_list list of  sets , each set contains protein ID of fragments
         # the input_instantiate could be either
         #     1) orthoxml_to_newick.py protein as the biopython seq record  SeqRecord(seq=Seq('MAPSSRSPSPRT. ]
@@ -75,6 +83,7 @@ class HOG:
         if isinstance(input_instantiate, SeqRecord):  # if len(sub_hogs)==1:
             only_protein = input_instantiate  # only one seq, only on child, leaf
             self._members = set([only_protein.id])
+            self._representatives = [Representative(only_protein)]
             self._msa = MultipleSeqAlignment([only_protein])
             self._subhogs = []
             self._dubious_members = set()
@@ -87,33 +96,28 @@ class HOG:
             sub_hogs = input_instantiate
             hog_members = set()
             for sub_hog in sub_hogs:
-                hog_members |= sub_hog.get_members()  # union
+                hog_members |= sub_hog.get_members()
             self._members = hog_members  # set.union(*tup)    # this also include dubious_members
             self._subhogs = list(input_instantiate)  # full members of subhog, children
             self._num_species_tax_speciestree = len(taxnomic_range.get_leaves())
+            self._representatives = [r for r in representatives]
+            representatives_id = set(r.get_id() for r in representatives)
+            assert len(representatives_id) == len(self._representatives), "Non-unique ids among representatives"
+            assert representatives_id.issubset(self._members), "Representatives must be subset of HOG members"
 
             dubious_members = set()
             for sub_hog in sub_hogs:
                 dubious_members |= sub_hog.get_dubious_members()  # union
             self._dubious_members = dubious_members
+            assert self._dubious_members.isdisjoint(representatives_id), \
+                   'Dubious members has non-empty intersection with representatives:' + str(self._dubious_members.intersection(representatives_id))
 
-            records_full = [record for record in msa if (record.id in self._members) and (record.id not in self._dubious_members) ]
+            records = [record for record in msa if (record.id in representatives_id)]
 
-            if len(records_full[0]) > hogclass_min_cols_msa_to_filter:
-                records_sub_filt = _utils_subhog.msa_filter_col(records_full, conf_infer_subhhogs)
+            if len(records[0]) > hogclass_min_cols_msa_to_filter:
+                records = _utils_subhog.msa_filter_col(records, conf_infer_subhhogs)
                 # the challange is that one of the sequences might be complete gap
-            else:
-                records_sub_filt = records_full  # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
-
-            if subsampling_hogclass and len(records_sub_filt) > hogclass_max_num_seq:
-                # to do in future:  select best seq, not easy to defin, keep diversity,
-                records_sub_sampled = sample(list(records_sub_filt), hogclass_max_num_seq)  # without replacement.
-                # records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, 0.01) # to make sure no empty column
-                logger.info("we are doing subsamping in hog class from " + str(len(records_full)) + " to " + str(hogclass_max_num_seq) + " seqs.")
-            else:
-                records_sub_sampled = records_sub_filt
-                # removing some columns completely gap - (not x   )
-            self._msa = MultipleSeqAlignment(records_sub_sampled)
+            self._msa = MultipleSeqAlignment(records)
             # without replacement sampling ,  # self._children = sub_hogs # as legacy  ?
         else:
             logger.error("Error 142769,  check the input format to instantiate HOG class")
@@ -123,11 +127,18 @@ class HOG:
         return "HOGobj:" + self._hogid + ",size=" + str(
             len(self._members))+", taxLeast=" + str(self._tax_least.name) + ", taxNow= " + str(self._tax_now.name)
 
+    @property
+    def hogid(self):
+        return self._hogid
+
     def get_members(self):
         return set(self._members)
 
     def get_dubious_members(self):
         return self._dubious_members
+
+    def get_representatives(self):
+        return self._representatives
 
     def remove_prot_from_hog(self, prot_to_remove):
         prot_members_hog_old = self._members
@@ -157,7 +168,6 @@ class HOG:
 
 
     def merge_prots_name_hog(self, fragment_name_host, merged_fragment_name):
-
         prot_members_hog = list(self._members)
         assert fragment_name_host in prot_members_hog, str(fragment_name_host)+str("  prot_members_hog:")+str(prot_members_hog)
         fragment_host_idx = prot_members_hog.index(fragment_name_host)
