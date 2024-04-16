@@ -1,6 +1,7 @@
 import collections
 
 from Bio import SeqIO
+from Bio.Align import MultipleSeqAlignment
 import concurrent.futures
 import time
 import os
@@ -255,7 +256,7 @@ RepLookup = collections.namedtuple("RepLookup", ["hog", "representative"])
 class LevelHOGProcessor:
     def __init__(self, node_species_tree:TreeNode, subhogs:List[HOG], rhogid:str, conf):
         self.node_species_tree = node_species_tree
-        self.subhogs = subhogs
+        self.subhogs = {hog.hogid: hog for hog in subhogs}
         self.rhogid = rhogid
         self.conf = conf
         self._base_msa_tree_filename =  "HOG_"+rhogid+"_"+str(node_species_tree.name)
@@ -270,7 +271,7 @@ class LevelHOGProcessor:
 
     def _prepare_lookups(self):
         lookup = {}
-        for hog in self.subhogs:
+        for hog in self.subhogs.values():
             for rep in hog.get_representatives():
                 lookup[rep.get_id()] = RepLookup(hog, rep)
         return lookup
@@ -304,6 +305,19 @@ class LevelHOGProcessor:
             representatives.append(new_rep)
         return representatives
 
+    def _get_merge_candidates_with_hogids(self, reconciled_genetree:TreeNode):
+        for top_speciation_node in reconciled_genetree.traverse(
+                'preorder',
+                is_leaf_fn=lambda n: len(n.children) == 0 or n.evoltype == "S"
+        ):
+            hogids_in_subtree = set([])
+            for n in top_speciation_node.iter_leaves():
+                hogid = self._rep_lookup[n.name].hog.hogid
+                n.add_feature('hogids', hogid)
+                hogids_in_subtree.add(hogid)
+            top_speciation_node.add_feature('hogids', hogids_in_subtree)
+            yield top_speciation_node
+
     def infer_reconciliation(self, genetree:TreeNode, sos_threshold=0.0):
         """Annotate each internal node with a 'evoltype' and 'sos' attribute.
 
@@ -332,6 +346,28 @@ class LevelHOGProcessor:
                 n.add_feature('evoltype', 'D' if sos > sos_threshold else 'S')
         genetree.del_feature('species')
 
+    def merge_subhogs(self, reconciled_genetree:TreeNode, msa:MultipleSeqAlignment):
+        while True:
+            hogids_in_subtrees = collections.defaultdict(list)
+            for n in self._get_merge_candidates_with_hogids(reconciled_genetree):
+                for hogid in n.hogids:
+                    hogids_in_subtrees[hogid].append(n)
+            if any(len(z)>1 for z in hogids_in_subtrees.values()):
+                logger.info("At least one subhog is split. here is the full labeled genetree:\n"
+                            + reconciled_genetree.get_ascii(show_internal=True, attributes=['evoltype', 'sos', 'hogids']))
+            else:
+                break
+            for hogid, subtrees in hogids_in_subtrees.items():
+                if len(subtrees) > 1:
+                    logger.info(f"Representaives of {hogid} are split among {len(subtrees)} candidate subtrees.")
+                    split_parts = [list(n.name for n in sub.iter_leaves() if n.hogids == hogid) for sub in subtrees]
+                    self.subhogs[hogid].split(split_parts)
+        # TODO: reload lookup, redo labeling of hogs and extract mergeparts
+        new_hogs = []
+        for subtree in hogids_in_subtrees():
+            new_repr = self.find_most_divergent_representatives_from_genetree(subtree)
+            new_hogs.append(HOG([self.subhogs[h] for h in subtree.hogids], self.node_species_tree, rhogid=self.rhogid, msa=msa, representatives=new_repr))
+        return new_hogs
 
 def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, conf_infer_subhhogs):
     """
