@@ -191,9 +191,9 @@ def singletone_hog_(node_species_tree, rhogid, pickles_subhog_folder_all, rhogs_
     node_species_name = node_species_tree.name  # there is only one species (for the one protein)
     this_level_node_name = node_species_name
     pickles_subhog_folder = pickles_subhog_folder_all + "/rhog_" + rhogid + "/"
-    # logger.debug(" ** inferhog_resume_subhog is " + str(_config.inferhog_resume_subhog))
+    # logger.debug(" ** inferhog_resume_subhog is " + str(inferhog_resume_subhog))
     if inferhog_resume_subhog:
-        # logger.debug("inferhog_resume_subhog is " + str(_config.inferhog_resume_subhog) + " so, we are reading from pickles.")
+
         pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name) + ".pickle"
         # open already calculated subhogs , but not completed till root in previous run
         if os.path.exists(pickle_subhog_file):
@@ -201,7 +201,7 @@ def singletone_hog_(node_species_tree, rhogid, pickles_subhog_folder_all, rhogs_
                 with open(pickle_subhog_file, 'rb') as handle:
                     # i don't even need to open this even
                     # is output of pickle.load(handle) is chlired or this level ?
-                    # todo I think I don't need to read the pickle file
+                    # todo I think I don't need to read the pickle file, we could do it to check it has enough
                     hogs_this_level_list = pickle.load(handle) #[object class HOG HOG:4027_sub1,len=1,taxono=PSETE]
                     if hogs_this_level_list:
                         logger.debug("Level " + str(this_level_node_name) + " with " + str(len(hogs_this_level_list)) + " hogs is read from pickle.")
@@ -413,6 +413,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
         all_prots_genetree = all_prots_genetree_raw1 # todo how about merged split genes, they have _|_ inside
 
     #subhogs_id_children_assigned = []  # the same as  subHOG_to_be_merged_all_id
+
     hogs_this_level_list = []
     #subHOG_to_be_merged_set_other_Snodes = []
     #subHOG_to_be_merged_set_other_Snodes_flattned_temp = []
@@ -488,12 +489,39 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                         prot_list_notintheSpeciaionNode = [i for i in subhog._members if i not in subhog_members_SpeciaionNode]
                         subhog_rest_i = copy.deepcopy(subhog) # how about hog ID
                         # this is not recursive subhog.remove_protlist_from_hog(prot_list_notintheSpeciaionNode) # this includes prots not sub-sampled (not in genetree but in member)
-                        for prot_ii in prot_list_notintheSpeciaionNode:
+                        prot_list_notintheSpeciaionNode_inGenetree = [i_member for i_member in subhog_members_intree if i_member not in subhog_members_SpeciaionNode]
+                        prot_list_notintheSpeciaionNode_inGenetree_childsubhogs = []
+                        for prot in prot_list_notintheSpeciaionNode_inGenetree:
+                            for child_subhog in subhog._subhogs:
+                                if prot in child_subhog._members:
+                                    prot_list_notintheSpeciaionNode_inGenetree_childsubhogs.append(child_subhog)
+
+                        prot_list_notintheSpeciaionNode_extended = []
+                        for subhog_notin in set(prot_list_notintheSpeciaionNode_inGenetree_childsubhogs):
+                            prot_list_notintheSpeciaionNode_extended += list(subhog_notin._members)
+
+                        for prot_ik in subhog_members_SpeciaionNode:
+                            if prot_ik in prot_list_notintheSpeciaionNode_extended:
+                                logger.warning("issue 123550972 this case need to be handled seperatly "+str(subhog))
+
+                        ## for debugging
+
+                        found = []
+                        for prot in subhog_members_SpeciaionNode:
+                            for child_subhog in subhog._subhogs:
+                                if prot in child_subhog._members:
+                                    found.append(child_subhog)
+                        prot_list_notintheSpeciaionNode_inGenetree_childsubhogs_names = [i._hogid for i in set(prot_list_notintheSpeciaionNode_inGenetree_childsubhogs)]
+                        for child_subhog in set(found):
+                            if child_subhog._hogid in prot_list_notintheSpeciaionNode_inGenetree_childsubhogs_names:
+                                logger.warning("issue 123550973 this case need to be handled seperatly " + str(subhog) + str(child_subhog))
+
+                        for prot_ii in prot_list_notintheSpeciaionNode_extended:
                             result_removing = _utils_frag_SO_detection.remove_prot_hog_hierarchy_toleaves(subhog, prot_ii)
                             if result_removing == 0:   # the hog is empty
                                 print("warning it is empty!"+str(subhog)) #hogs_children_level_list.remove(subhog)
                         print("the current one is shrunk to" + str(subhog))
-                        results_keep = keep_prots_hog_hierarchy_toleaves(subhog_rest_i, prot_list_notintheSpeciaionNode)
+                        results_keep = keep_prots_hog_hierarchy_toleaves(subhog_rest_i, prot_list_notintheSpeciaionNode_extended)
                         #subhog_copy.prune(prot_list_notintheSpeciaionNode) # create a new subHOG and keep it with prots in prot_list_notintheSpeciaionNode
                         print("the rest are here " + str(subhog_rest_i))
                         hogs_children_level_list.append(subhog_rest_i) # but this should be used for merging purpuses
