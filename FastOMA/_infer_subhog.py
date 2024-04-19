@@ -1,4 +1,5 @@
 import collections
+from copy import deepcopy
 
 from Bio import SeqIO
 from Bio.Align import MultipleSeqAlignment
@@ -18,9 +19,10 @@ from typing import List
 from . import _wrappers
 from . import _utils_subhog
 from . import _utils_frag_SO_detection
-from ._hog_class import HOG, Representative
+from ._hog_class import HOG, Representative, split_hog
 
 from ._wrappers import logger
+from .zoo.utils import unique
 
 low_so_detection = True # detection of proteins with low species overlap score in gene tree
 fragment_detection = True  # this also need to be consistent in _hog_class.py
@@ -259,7 +261,7 @@ class LevelHOGProcessor:
         self.subhogs = {hog.hogid: hog for hog in subhogs}
         self.rhogid = rhogid
         self.conf = conf
-        self._base_msa_tree_filename =  "HOG_"+rhogid+"_"+str(node_species_tree.name)
+        self._base_msa_tree_filename = "HOG_"+rhogid+"_"+str(node_species_tree.name)
         self._outname_step = 0
         self._rep_lookup = self._prepare_lookups()
 
@@ -290,8 +292,8 @@ class LevelHOGProcessor:
             n.add_feature('dist_from_root', n.dist + (n.up.dist_from_root if n.up is not None else 0))
         # now, let's get a list of all the internal nodes ordered with the dist_from_root and find which distance
         # results in number_of_samples_per_hog subtrees that are most divergent
-        ordered = sorted([n.dist_from_root for n in genetree.traverse() if not n.is_leaf()], key=lambda x: x.dist_from_root)
-        cutoff = ordered[self.conf.number_of_samples_per_hog-1]
+        ordered = sorted([n for n in genetree.traverse() if not n.is_leaf()], key=lambda x: x.dist_from_root)
+        cutoff = ordered[self.conf.number_of_samples_per_hog-1].dist_from_root
         sub_clades = [sub for sub in genetree.iter_leaves(
             is_leaf_fn=lambda n: len(n.children) == 0 or n.dist_from_root >= cutoff
         )]
@@ -317,6 +319,30 @@ class LevelHOGProcessor:
                 hogids_in_subtree.add(hogid)
             top_speciation_node.add_feature('hogids', hogids_in_subtree)
             yield top_speciation_node
+
+    def infer_rooted_genetree(self, gene_tree: TreeNode):
+        genetree = deepcopy(gene_tree)
+        if self.conf.gene_rooting_method == "midpoint":
+            r_outgroup = genetree.get_midpoint_outgroup()
+            genetree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
+
+        elif self.conf.gene_rooting_method == "Nevers_rooting":
+            logger.info("Nevers_rooting started for " + str(genetree.write(format=1, format_root_node=True)))
+            species = Tree("species_tree.nwk", format=1)
+            genetree = _utils_subhog.get_score_all_root(genetree, species)
+            logger.info("Nevers_rooting finished for " + str(genetree.write(format=1, format_root_node=True)))
+
+        elif self.conf.gene_rooting_method == "mad":
+            genetree = _wrappers.mad_rooting(genetree)  # todo check with qouted gene tree
+
+        elif self.conf.gene_rooting_method == "outlier":  # not yet implmented completely, todo need check with new gene tree
+            outliers = _utils_subhog.find_outlier_leaves(genetree)
+            r_outgroup = _utils_subhog.midpoint_rooting_outgroup(genetree, leaves_to_exclude=outliers)
+            genetree.set_outgroup(r_outgroup)
+        else:
+            logger.warning("rooting method not found !!   * * * * *  *")
+            raise ValueError("invalid rooting method: {}".format(self.conf.gene_rooting_method))
+        return genetree
 
     def infer_reconciliation(self, genetree:TreeNode, sos_threshold=0.0):
         """Annotate each internal node with a 'evoltype' and 'sos' attribute.
@@ -352,7 +378,7 @@ class LevelHOGProcessor:
             for n in self._get_merge_candidates_with_hogids(reconciled_genetree):
                 for hogid in n.hogids:
                     hogids_in_subtrees[hogid].append(n)
-            if any(len(z)>1 for z in hogids_in_subtrees.values()):
+            if any(len(z) > 1 for z in hogids_in_subtrees.values()):
                 logger.info("At least one subhog is split. here is the full labeled genetree:\n"
                             + reconciled_genetree.get_ascii(show_internal=True, attributes=['evoltype', 'sos', 'hogids']))
             else:
@@ -361,13 +387,26 @@ class LevelHOGProcessor:
                 if len(subtrees) > 1:
                     logger.info(f"Representaives of {hogid} are split among {len(subtrees)} candidate subtrees.")
                     split_parts = [list(n.name for n in sub.iter_leaves() if n.hogids == hogid) for sub in subtrees]
-                    self.subhogs[hogid].split(split_parts)
+                    split_hogs = split_hog(self.subhogs[hogid], *split_parts)
+                    # TODO replace the split hogs in the references
         # TODO: reload lookup, redo labeling of hogs and extract mergeparts
         new_hogs = []
-        for subtree in hogids_in_subtrees():
-            new_repr = self.find_most_divergent_representatives_from_genetree(subtree)
-            new_hogs.append(HOG([self.subhogs[h] for h in subtree.hogids], self.node_species_tree, rhogid=self.rhogid, msa=msa, representatives=new_repr))
+        processed_nodes = set([])
+        for subtrees in hogids_in_subtrees.values():
+            for subtree in subtrees:
+                if subtree in processed_nodes:
+                    continue
+                processed_nodes.add(subtree)
+                new_repr = self.find_most_divergent_representatives_from_genetree(subtree)
+                hog = HOG([self.subhogs[h] for h in subtree.hogids],
+                          self.node_species_tree,
+                          rhogid=self.rhogid,
+                          msa=msa,
+                          representatives=new_repr,
+                          conf_infer_subhhogs=self.conf)
+                new_hogs.append(hog)
         return new_hogs
+
 
 def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, conf_infer_subhhogs):
     """
@@ -401,7 +440,7 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
             pickle.dump(hogs_this_level_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
         return len(hogs_children_level_list)
 
-
+    level_processor = LevelHOGProcessor(node_species_tree, hogs_children_level_list, rhogid, conf_infer_subhhogs)
     genetree_msa_file_addr = "HOG_"+rhogid+"_"+str(node_species_tree.name) #+ ".nwk" # genetrees
     if len(genetree_msa_file_addr) > 245:
         # there is a limitation on length of file name. I want to  keep it consistent ,msa and gene tree names.
@@ -434,12 +473,9 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
         gene_tree_raw = _wrappers.infer_gene_tree(msa_filt_row_col, genetree_msa_file_addr, conf_infer_subhhogs)
         gene_tree=""
         try:
-            gene_tree = Tree(gene_tree_raw + ";", format=0)   #
+            gene_tree = Tree(gene_tree_raw + ";", format=0, quoted_node_names=True)   #
         except:
-            try:
-                gene_tree = Tree(gene_tree_raw + ";", format=0, quoted_node_names=True)  #
-            except:
-                logger.debug(" issue 22233198233 error"+str(gene_tree))
+            logger.debug(" issue 22233198233 error"+str(gene_tree))
         logger.debug("Gene tree is inferred len "+str(len(gene_tree))+" rhog:"+rhogid+", level: "+str(node_species_tree.name))
 
         if fragment_detection and len(gene_tree) > 2 and prot_dubious_msa_list:
@@ -449,16 +485,21 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
 
         # when the prot dubious is removed during trimming
         if len(gene_tree) > 1: # e.g. "('sp|O67547|SUCD_AQUAE||AQUAE||1002000005|_|sub10001':0.329917,'tr|O84829|O84829_CHLTR||CHLTR||1001000005|_|sub10002':0.329917);"
+            gene_tree = level_processor.infer_rooted_genetree(gene_tree)
+            level_processor.infer_reconciliation(gene_tree, sos_threshold=conf_infer_subhhogs.threshold_dubious_sd)
+            hogs_this_level_list = level_processor.merge_subhogs(gene_tree, msa=msa_filt_row_col)
+
+
             (gene_tree, all_species_dubious_sd_dic, genetree_msa_file_addr) = _utils_subhog.genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr,conf_infer_subhhogs, hogs_children_level_list)
-
-            if low_so_detection and all_species_dubious_sd_dic:
-                (gene_tree, hogs_children_level_list, genetree_msa_file_addr) = _utils_frag_SO_detection.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list, conf_infer_subhhogs)
-
-            logger.debug("Merging sub-hogs for rhogid:"+rhogid+", level:"+str(node_species_tree.name))
-            # the last element should be merged_msa not the trimmed msa, as we create new hog based on this msa
-            hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid, merged_msa_new, conf_infer_subhhogs)
-            # for i in hogs_this_level_list: print(i.get_members())
-            logger.debug("After merging subhogs of childrens, "+str(len(hogs_this_level_list))+" subhogs are found for rhogid: "+rhogid+", for taxonomic level:"+str(this_level_node_name))
+            #
+            # if low_so_detection and all_species_dubious_sd_dic:
+            #     (gene_tree, hogs_children_level_list, genetree_msa_file_addr) = _utils_frag_SO_detection.handle_fragment_sd(node_species_tree, gene_tree, genetree_msa_file_addr, all_species_dubious_sd_dic, hogs_children_level_list, conf_infer_subhhogs)
+            #
+            # logger.debug("Merging sub-hogs for rhogid:"+rhogid+", level:"+str(node_species_tree.name))
+            # # the last element should be merged_msa not the trimmed msa, as we create new hog based on this msa
+            # hogs_this_level_list = merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid, merged_msa_new, conf_infer_subhhogs)
+            # # for i in hogs_this_level_list: print(i.get_members())
+            # logger.debug("After merging subhogs of childrens, "+str(len(hogs_this_level_list))+" subhogs are found for rhogid: "+rhogid+", for taxonomic level:"+str(this_level_node_name))
 
         else:
             hogs_this_level_list = hogs_children_level_list

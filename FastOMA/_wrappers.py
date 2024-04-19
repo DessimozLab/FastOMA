@@ -141,7 +141,7 @@ def trim_msa(msa):
     return msa_out
 
 
-def mad_rooting(input_tree_file_path: str): # , mad_executable_path: str = "./mad"
+def mad_rooting(input_tree_file_path: str):  # , mad_executable_path: str = "./mad"
     """
     Rooting a tree using MAD algorithm.
     :param input_tree_file_path: path to the input tree file.
@@ -173,11 +173,7 @@ def mad_rooting(input_tree_file_path: str): # , mad_executable_path: str = "./ma
     #    print("error:\n", error)
 
     if "Error analyzing file" in str(output) or error:
-        try:
-            rooted_tree = Tree(input_tree_file_path)
-        except:
-            rooted_tree = Tree(input_tree_file_path,format=1)
-
+        raise RuntimeError("Error running MAD rooting: \n{}\n{}".format(output, error))
 
     elif "rooted trees written" in str(output): # 3 rooted trees written to tree_664187_Eukaryota.nwk.rooted Warning: Trees with repeating branch lengths are suspicious (3 repeating values).
         file_multiple_tree_handle= open(input_tree_file_path + ".rooted",'r')

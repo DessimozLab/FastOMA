@@ -15,7 +15,8 @@ fastoma-infer-subhogs  --input-rhog-folder rhogs_rest/0  --output-pickles "pickl
 def fastoma_infer_subhogs():
 
     import argparse
-    parser = argparse.ArgumentParser(description="checking parameters for FastOMA")
+    parser = argparse.ArgumentParser(description="checking parameters for FastOMA",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--version", action="version", version="FastOMA v"+fastoma_version)
     parser.add_argument("--input-rhog-folder", required=True, help="Path to the input rootHOG folder.")
     parser.add_argument("--parallel", action='store_true', help="use concurrent parallel per rootHOG")
@@ -26,6 +27,8 @@ def fastoma_infer_subhogs():
 
     parser.add_argument("--threshold-dubious-sd", required=False, type=float, default=1/10,
                         help="Threshold to remove proteins in a gene tree due to low species overlap score, not enough evidence for duplication event.") # threshold_dubious_sd
+    parser.add_argument("--number-of-samples-per-hog", type=int, default=5,
+                        help="Number of representatives (sequences) per HOG. Defaults to ")
     parser.add_argument("--overlap-fragments", required=False, type=float, default=0.15,
                         help="Threshold overlap between two sequences (rows) in MSA to decide whether they are fragments of a gene.")  # overlap_fragments
     parser.add_argument("--gene-rooting-method", required=False, default="midpoint", # gene_rooting_method

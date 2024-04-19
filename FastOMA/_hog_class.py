@@ -38,8 +38,9 @@ class Representative:
             # TODO: this should be done more genenerally. copied from singleton_hog function
             self._species = {the_one.id.split('||')[1]}
         if elements is not None:
-            self._subelements |= (s.get_subelements() for s in elements)
-            self._species |= (s.get_species() for s in elements)
+            for e in elements:
+                self._subelements |= e.get_subelements()
+                self._species |= e.get_species()
 
     def get_id(self):
         return self._seq.id
@@ -124,12 +125,15 @@ class HOG:
             assert False
 
     def __repr__(self):
-        return "HOGobj:" + self._hogid + ",size=" + str(
-            len(self._members))+", taxLeast=" + str(self._tax_least.name) + ", taxNow= " + str(self._tax_now.name)
+        return f"<HOG:{self.hogid},size={len(self._members)},taxLeast={self._tax_least.name},taxNow={self._tax_now.name}>"
 
     @property
     def hogid(self):
         return self._hogid
+
+    @property
+    def taxname(self):
+        return self._tax_now.name
 
     def get_members(self):
         return set(self._members)
@@ -139,6 +143,16 @@ class HOG:
 
     def get_representatives(self):
         return self._representatives
+
+    def find_representative(self, seq_id):
+        """Find the representative of the given sequence using its ID."""
+        for r in self._representatives:
+            if r.id == seq_id:
+                return r
+        for r in self._representatives:
+            if seq_id in r.get_members():
+                return r
+        raise KeyError("No representative found for " + seq_id)
 
     def remove_prot_from_hog(self, prot_to_remove):
         prot_members_hog_old = self._members
@@ -166,6 +180,27 @@ class HOG:
         # species_name = fragment_host.split("||")[1]   # if self._tax_now == species_name:
         return 1
 
+    def __contains__(self, item):
+        if isinstance(item, Representative):
+            return item.get_id() in self._members
+        elif isinstance(item, HOG):
+            return item in self._subhogs
+        else:
+            return item in self._members
+
+    def get_subhog_path(self, seq_id, max_depth=-1):
+        if seq_id not in self._members:
+            raise KeyError(f"{seq_id} is not part of this HOG")
+        path = []
+        h = self
+        while max_depth != 0 and len(h._subhogs) > 0:
+            for s in h._subhogs:
+                if seq_id in s:
+                    path.append(s)
+                    h = s
+                    break
+            max_depth -= 1
+        return path
 
     def merge_prots_name_hog(self, fragment_name_host, merged_fragment_name):
         prot_members_hog = list(self._members)
@@ -177,8 +212,6 @@ class HOG:
         self._members = set(prot_members_hog)
 
         return 1
-
-
 
     def merge_prots_msa(self, merged_fragment_name, merged_msa_new):   # merged_fragment_name 'BUPERY_R03529||BUPERY||1105002086_|_BUPERY_R10933||BUPERY||1105008975']
         prot_members_hog = list(self._members)
@@ -209,10 +242,7 @@ class HOG:
     #     self._msa = MultipleSeqAlignment(msa_new)
     #     return 1
 
-
-
     def to_orthoxml(self):
-
         if len(self._subhogs) == 0:
             list_member = list(self._members)
             if len(list_member) == 1:
@@ -319,3 +349,34 @@ class HOG:
            </paralogGroup>
         </orthologGroup>
 """
+
+
+def split_hog(hog:HOG, *partitions):
+    """splits a hog into parts based to the partitions provided.
+
+    The partitions need to be a lists of Representatives (or simply members)
+    of the given HOG.
+
+    :param partitions:  a list or a tuple of Representatives of the current HOG
+    :type partitions:   List[Representatives]
+    :returns List[HOG]: a list of HOG objects splitting the original HOG in the
+                        desired partitions.
+    """
+    max_depth = 4
+    if len(partitions) < 2:
+        raise ValueError(f"Must provide at least two partitions to split {hog}")
+    partitions = [set(hog.find_representative(r) for r in part) for part in partitions]
+    if not all(p1.isdisjoint(p2) for p1, p2 in itertools.combinations(partitions, 2)):
+        raise ValueError(f"Not all partitions are non-overlapping {partitions}")
+    if sum(len(p) for p in partitions) != len(hog.get_representatives()):
+        raise ValueError(f"Partitions to split {hog} must cover all {len(hog.get_representatives())} representatives, but cover only {sum(len(p) for p in partitions)}.")
+    rep_to_subhog_list = {rep: hog.get_subhog_path(rep.get_id(), max_depth) for part in partitions for rep in part}
+
+    logger.debug(f"Subhog paths of represenatatives for {hog}")
+    for i, part in enumerate(partitions):
+        logger.debug(f"---Partition {i} -----")
+        for rep in part:
+            path = " --> ".join(str(h) for h in rep_to_subhog_list[rep])
+            logger.debug(f"{rep.get_id()}: {path}")
+
+    raise RuntimeError("this part of the code needs more thinking")

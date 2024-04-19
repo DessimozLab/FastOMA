@@ -197,8 +197,8 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, conf_infer
             pass
     elif  conf_infer_subhhogs.gene_rooting_method == "Nevers_rooting":
         logger.info("Nevers_rooting started for " +str(gene_tree.write(format=1, format_root_node=True)))
-        species= Tree("species_tree.nwk",format=1)
-        gene_tree  = get_score_all_root(gene_tree, species)
+        species = Tree("species_tree.nwk", format=1)
+        gene_tree = get_score_all_root(gene_tree, species)
         logger.info("Nevers_rooting finished for " + str(gene_tree.write(format=1, format_root_node=True)))
 
     elif conf_infer_subhhogs.gene_rooting_method == "mad":
@@ -578,9 +578,6 @@ def filter_msa(merged_msa, genetree_msa_file_addr, hogs_children_level_list, con
 
     return (msa_filt_row_col, msa_filt_col, hogs_children_level_list, genetree_msa_file_addr)
 
-
-class PhyloTree:
-    pass
 
 def get_farthest_leaf(tree: PhyloTree, target_leaf: PhyloTree, leaves_list: List[PhyloTree]) -> Tuple[float, PhyloTree]:
     """
