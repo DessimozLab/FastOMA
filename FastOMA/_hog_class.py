@@ -69,7 +69,7 @@ class HOG:
 
             records_full = [record for record in msa if (record.id in self._members) and (record.id not in self._dubious_members) ]
 
-            if len(records_full[0]) > hogclass_min_cols_msa_to_filter:
+            if records_full and len(records_full[0]) > hogclass_min_cols_msa_to_filter:
                 records_sub_filt = _utils_subhog.msa_filter_col(records_full, conf_infer_subhhogs)
                 # the challange is that one of the sequences might be complete gap
             else:
