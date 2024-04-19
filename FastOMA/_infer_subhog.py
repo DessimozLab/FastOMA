@@ -515,17 +515,19 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                         for child_subhog in set(found):
                             if child_subhog._hogid in prot_list_notintheSpeciaionNode_inGenetree_childsubhogs_names:
                                 logger.warning("issue 123550973 this case need to be handled seperatly " + str(subhog) + str(child_subhog))
-
-                        for prot_ii in prot_list_notintheSpeciaionNode_extended:
-                            result_removing = _utils_frag_SO_detection.remove_prot_hog_hierarchy_toleaves(subhog, prot_ii)
-                            if result_removing == 0:   # the hog is empty
-                                print("warning it is empty!"+str(subhog)) #hogs_children_level_list.remove(subhog)
-                        print("the current one is shrunk to" + str(subhog))
-                        results_keep = keep_prots_hog_hierarchy_toleaves(subhog_rest_i, prot_list_notintheSpeciaionNode_extended)
-                        #subhog_copy.prune(prot_list_notintheSpeciaionNode) # create a new subHOG and keep it with prots in prot_list_notintheSpeciaionNode
-                        print("the rest are here " + str(subhog_rest_i))
-                        hogs_children_level_list.append(subhog_rest_i) # but this should be used for merging purpuses
-
+                        if set(prot_list_notintheSpeciaionNode_extended) != set(subhog._members):
+                            # otherwise all prots in this hog were in the same child subhog  in the previous level ->  subhog_rest_i =  subhog and subhog=empty
+                            for prot_ii in prot_list_notintheSpeciaionNode_extended:
+                                result_removing = _utils_frag_SO_detection.remove_prot_hog_hierarchy_toleaves(subhog, prot_ii)
+                                if result_removing == 0:   # the hog is empty
+                                    print("warning it is empty!"+str(subhog)) #hogs_children_level_list.remove(subhog)
+                            print("the current one is shrunk to" + str(subhog))
+                            results_keep = keep_prots_hog_hierarchy_toleaves(subhog_rest_i, prot_list_notintheSpeciaionNode_extended)
+                            #subhog_copy.prune(prot_list_notintheSpeciaionNode) # create a new subHOG and keep it with prots in prot_list_notintheSpeciaionNode
+                            print("the rest are here " + str(subhog_rest_i))
+                            hogs_children_level_list.append(subhog_rest_i) # but this should be used for merging purpuses
+                        else:
+                            logger.warning("issue 123550971 we are merging two subhogs that there was a dup, we couldn't split because proteins in the species node and outside of it were in the same child subhog (unsampled)   ")
                 # add a check when subhog_rest_i is the last item in the gene tree, to include non-sampled genes
                 taxnomic_range = node_species_tree.name
                 num_species_tax_speciestree = len(node_species_tree.get_leaves()) # num_species_tax   is the number of species exist in the species tree at this clade
