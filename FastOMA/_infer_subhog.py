@@ -402,143 +402,108 @@ def keep_prots_hog_hierarchy_toleaves(hog_ii, prots_tokeep):
 
 def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid, merged_msa, conf_infer_subhhogs):
     """
-    merge subhogs based on the gene tree specieciaton node of gene tree by creating inter-HOG graph (implicitley )
+    merge subhogs based on the gene tree speciation node of gene tree by creating inter-HOG graph (implicitely )
     """
-
-    all_prots_genetree_raw0 = [i.name for i in gene_tree.get_leaves()]
-    all_prots_genetree_raw1 = [i.split("|_|")[0] for i in all_prots_genetree_raw0]
-    if all_prots_genetree_raw1[0].startswith("'"):
-        all_prots_genetree = [i[1:] for i in all_prots_genetree_raw1]  # since splited , there is no ' at the end. so -1] is not needed. # "'sp|O67547|SUCD_AQUAE||AQUAE||1002000005", gene tree is quoted, there are both ' and " !
+    prots_genetree_raw0 = [i.name for i in gene_tree.get_leaves()]
+    prots_genetree_raw1 = [i.split("|_|")[0] for i in prots_genetree_raw0]
+    if prots_genetree_raw1[0].startswith("'"):
+        prots_genetree = [i[1:] for i in prots_genetree_raw1]  # since is split , there is no ' at the end. so -1] is not needed. # "'sp|O67547|SUCD_AQUAE||AQUAE||1002000005", gene tree is quoted, there are both ' and " !
     else:
-        all_prots_genetree = all_prots_genetree_raw1 # todo how about merged split genes, they have _|_ inside
-
-    #subhogs_id_children_assigned = []  # the same as  subHOG_to_be_merged_all_id
+        prots_genetree = prots_genetree_raw1
+        # todo how about merged split genes, they have _|_ inside   (also for below leaves_name_raw0)
+        # node_leaves_name =[] for name_i in node_leaves_name_: node_leaves_name += name_i.split("_|_")
 
     hogs_this_level_list = []
-    #subHOG_to_be_merged_set_other_Snodes = []
-    #subHOG_to_be_merged_set_other_Snodes_flattned_temp = []
-    ##  the following if for debugging and visualisation of connected component of inter-HOG graph
-    # hoggraph_node_name = [i._hogid.split("_")[1][3:] for i in hogs_children_level_list]
-    # hog_size_dic = {}
-    # dic_hog = {}
-    # for hog in hogs_children_level_list:
-    #     hog_id_short = hog._hogid.split("_")[1][3:]
-    #     for prot in hog._members:
-    #         dic_hog[prot] = hog_id_short + "_len" + str(len(hog._members))
-    #     hog_size_dic[hog_id_short] = len(hog._members)
-    # for hog in hogs_children_level_list:
-    #     hog_id_short = hog._hogid.split("_")[1][3:] + "_len" + str(len(hog._members))
-    #     # print(hog_id_short, ":", hog._members)
-    # hoggraph_node_name_len = [i+"_len"+str(hog_size_dic[i]) for i in hoggraph_node_name]
-    # hoggraph = nx.Graph()
-    # hoggraph.add_nodes_from(hoggraph_node_name_len)
-
+    subHOG_ids_merged_done = []
     for node in gene_tree.traverse(strategy="preorder", is_leaf_fn=lambda n: hasattr(n, "processed") and n.processed==True):
 
         if not node.is_leaf() and node.name[0] == "S":
-            node_leaves_name_raw0 = [i.name for i in node.get_leaves()]
-            # leaves names  with subhog id  'HALSEN_R15425||HALSEN|_|1352015793_sub10149',
-            node_leaves_name_raw1 = [i.split("|_|")[0] for i in node_leaves_name_raw0]
-
-            if node_leaves_name_raw1[0].startswith("'"):
-                node_leaves_name = [i[1:] for i in node_leaves_name_raw1] # since splited , there is no ' at the end. so -1] is not needed.
-                # "'sp|O67547|SUCD_AQUAE||AQUAE||1002000005", gene tree is quoted, there are both ' and " !
+            leaves_name_raw0 = [i.name for i in node.get_leaves()]  # leaves names  with subhog id  'HALSEN_R15425||HALSEN|_|1352015793_sub10149',
+            leaves_name_raw1 = [i.split("|_|")[0] for i in leaves_name_raw0]
+            if leaves_name_raw1[0].startswith("'"):
+                node_leaves_name = [i[1:] for i in leaves_name_raw1] # since is split, there is no ' at the end. so -1] is not needed.  # "'sp|O67547|SUCD_AQUAE||AQUAE||1002000005", gene tree is quoted, there are both ' and " !
             else:
-                node_leaves_name = node_leaves_name_raw1
-            # node_leaves_name =[]
-            # for name_i in node_leaves_name_:
-            #     node_leaves_name += name_i.split("_|_")
+                node_leaves_name = leaves_name_raw1
 
-            # num_prot = len(s_gene_tree_leaves)
-            # for i in range(num_prot):
-            #     hog_i = dic_hog[s_gene_tree_leaves[i]]
-            #     for j in range(i):
-            #         hog_j = dic_hog[s_gene_tree_leaves[j]]
-            #         if hoggraph.has_edge(hog_i, hog_j):
-            #             hoggraph[hog_i][hog_j]['weight'] += 1
-            #         else:
-            #             hoggraph.add_edge(hog_i, hog_j, weight=1)
-            # print(hoggraph.edges(data=True))
-            # todo this piece of code could be neater, for extracting connected component of inter-hog graph
-            subHOG_to_be_merged = []
-            for node_leave_name in node_leaves_name:  # print(node_leave_name)
+            subHOGs_to_merge = []
+            for node_leave_name in node_leaves_name:
                 for subHOG in hogs_children_level_list:
                     subHOG_members = subHOG._members
-                    if node_leave_name in subHOG_members:  # could be improved
-                        # if subHOG._hogid not in subHOG_to_be_merged_set_other_Snodes_flattned_temp: #todo 18march this means that we are not merging a few together
-                        subHOG_to_be_merged.append(subHOG)
-                            # subhogs_id_children_assigned.append(subHOG._hogid)
-                        #else:  # this hog is already decided to be merged  print(node.name, subHOG._hogid, node_leave_name)
-                        #    if "processed" in node:
-                        #        logger.warning("issue 1863 "+ str(node.name)+str(subHOG._hogid)+ str(node_leave_name)) # print("processed", node.name) #else: #    print("processed not in ", node.name)  # print(node_leave_name,"is in ",subHOG._hogid)
-            # if len(subHOG_to_be_merged) == 1: # this was supposed to find merging one subhog, but I forget it is not a set any more probably  (was about to fix on 10 march 2024, Sina hopes he won't forget to do it on the other branch)
-            #     logger.warning("issue 125568313 "+str(subHOG_to_be_merged)+" "+node.name+" probably the subhog was merged previously" )
-            #     #logger.debug("issue 125568313 " + str(subHOG_to_be_merged_set_other_Snodes_flattned_temp))
-            #     logger.debug("issue 125568313 " +str(node.name)+" "+ str(gene_tree.write(format=1,format_root_node=True)))
+                    if node_leave_name in subHOG_members:  #we merge a hog only once, unless it is split (the rest of hog will be merged in another speciation event
+                        if subHOG not in subHOGs_to_merge and subHOG._hogid not in subHOG_ids_merged_done:
+                            subHOGs_to_merge.append(subHOG)
 
-            if len(set(subHOG_to_be_merged))>1:
-                for subhog in subHOG_to_be_merged:
-                    subhog_members_intree = set([i for i in subhog._members if i in all_prots_genetree])
-                    # accounting for subsampling in hog
-                    subhog_members_SpeciaionNode = set([i for i in subhog_members_intree if i in node_leaves_name])
-                    if len(subhog_members_intree) > 1 and subhog_members_SpeciaionNode != subhog_members_intree:
-                        # a few of the proteins in the subhog (exist in gene tree) are in other part of the tree
-                        print("Inconsisetnecy compared previous level, we'll split the hog"+str(subhog))
-                        print(subhog_members_intree, "\n", subhog_members_SpeciaionNode, "\n", subhog)
+            if len(subHOGs_to_merge)<2:
+                continue
 
-                        prot_list_notintheSpeciaionNode = [i for i in subhog._members if i not in subhog_members_SpeciaionNode]
-                        subhog_rest_i = copy.deepcopy(subhog) # how about hog ID
-                        # this is not recursive subhog.remove_protlist_from_hog(prot_list_notintheSpeciaionNode) # this includes prots not sub-sampled (not in genetree but in member)
-                        prot_list_notintheSpeciaionNode_inGenetree = [i_member for i_member in subhog_members_intree if i_member not in subhog_members_SpeciaionNode]
-                        prot_list_notintheSpeciaionNode_inGenetree_childsubhogs = []
-                        for prot in prot_list_notintheSpeciaionNode_inGenetree:
-                            for child_subhog in subhog._subhogs:
-                                if prot in child_subhog._members:
-                                    prot_list_notintheSpeciaionNode_inGenetree_childsubhogs.append(child_subhog)
+            for subhog in subHOGs_to_merge:
+                subhog_members_intree = set([i for i in subhog._members if i in prots_genetree])
 
-                        prot_list_notintheSpeciaionNode_extended = []
-                        for subhog_notin in set(prot_list_notintheSpeciaionNode_inGenetree_childsubhogs):
-                            prot_list_notintheSpeciaionNode_extended += list(subhog_notin._members)
 
-                        for prot_ik in subhog_members_SpeciaionNode:
-                            if prot_ik in prot_list_notintheSpeciaionNode_extended:
-                                logger.warning("issue 123550972 this case need to be handled seperatly "+str(subhog))
+                subhog_members_SpeciaionNode = set([i for i in subhog_members_intree if i in node_leaves_name])
+                if len(subhog_members_intree) > 1 and subhog_members_SpeciaionNode != subhog_members_intree:
+                    # a few of the proteins in the subhog (exist in gene tree) are in other part of the tree
+                    print("Inconsisetnecy compared previous level, we'll split the hog"+str(subhog))
+                    print(subhog_members_intree, "\n", subhog_members_SpeciaionNode, "\n", subhog)
 
-                        ## for debugging
+                    prot_list_notintheSpeciaionNode = [i for i in subhog._members if i not in subhog_members_SpeciaionNode]
 
-                        found = []
-                        for prot in subhog_members_SpeciaionNode:
-                            for child_subhog in subhog._subhogs:
-                                if prot in child_subhog._members:
-                                    found.append(child_subhog)
-                        prot_list_notintheSpeciaionNode_inGenetree_childsubhogs_names = [i._hogid for i in set(prot_list_notintheSpeciaionNode_inGenetree_childsubhogs)]
-                        for child_subhog in set(found):
-                            if child_subhog._hogid in prot_list_notintheSpeciaionNode_inGenetree_childsubhogs_names:
-                                logger.warning("issue 123550973 this case need to be handled seperatly " + str(subhog) + str(child_subhog))
-                        if set(prot_list_notintheSpeciaionNode_extended) != set(subhog._members):
-                            # otherwise all prots in this hog were in the same child subhog  in the previous level ->  subhog_rest_i =  subhog and subhog=empty
-                            for prot_ii in prot_list_notintheSpeciaionNode_extended:
-                                result_removing = _utils_frag_SO_detection.remove_prot_hog_hierarchy_toleaves(subhog, prot_ii)
-                                if result_removing == 0:   # the hog is empty
-                                    print("warning it is empty!"+str(subhog)) #hogs_children_level_list.remove(subhog)
-                            print("the current one is shrunk to" + str(subhog))
-                            results_keep = keep_prots_hog_hierarchy_toleaves(subhog_rest_i, prot_list_notintheSpeciaionNode_extended)
-                            #subhog_copy.prune(prot_list_notintheSpeciaionNode) # create a new subHOG and keep it with prots in prot_list_notintheSpeciaionNode
-                            print("the rest are here " + str(subhog_rest_i))
-                            hogs_children_level_list.append(subhog_rest_i) # but this should be used for merging purpuses
-                        else:
+                    # this is not recursive subhog.remove_protlist_from_hog(prot_list_notintheSpeciaionNode) # this includes prots not sub-sampled (not in genetree but in member)
+                    prot_list_notintheSpeciaionNode_inGenetree = [i_member for i_member in subhog_members_intree if i_member not in subhog_members_SpeciaionNode]
+                    prot_list_notintheSpeciaionNode_inGenetree_childsubhogs = []
+                    for prot in prot_list_notintheSpeciaionNode_inGenetree:
+                        for child_subhog in subhog._subhogs:
+                            if prot in child_subhog._members:
+                                prot_list_notintheSpeciaionNode_inGenetree_childsubhogs.append(child_subhog)
+
+                    prot_list_notintheSpeciaionNode_extended = []
+                    for subhog_notin in set(prot_list_notintheSpeciaionNode_inGenetree_childsubhogs):
+                        prot_list_notintheSpeciaionNode_extended += list(subhog_notin._members)
+
+                    for prot_ik in subhog_members_SpeciaionNode:
+                        if prot_ik in prot_list_notintheSpeciaionNode_extended:
+                            logger.warning("issue 123550972 this case need to be handled seperatly "+str(subhog))
+
+                    ## for debugging
+
+                    found = []
+                    for prot in subhog_members_SpeciaionNode:
+                        for child_subhog in subhog._subhogs:
+                            if prot in child_subhog._members:
+                                found.append(child_subhog)
+                    prot_list_notintheSpeciaionNode_inGenetree_childsubhogs_names = [i._hogid for i in set(prot_list_notintheSpeciaionNode_inGenetree_childsubhogs)]
+                    for child_subhog in set(found):
+                        if child_subhog._hogid in prot_list_notintheSpeciaionNode_inGenetree_childsubhogs_names:
+                            logger.warning("issue 123550973 this case need to be handled seperatly " + str(subhog) + str(child_subhog))
+
+
+
+                    # treat unsampled ones separately than sampled ones in the gene tree
+                    # in this case, we dont have subsampling but we don't split
+
+                    if set(prot_list_notintheSpeciaionNode_extended) != set(subhog._members):
+                        subhog_rest_i = copy.deepcopy(subhog)  # how about hog ID
+                        # otherwise all prots in this hog were in the same child subhog  in the previous level ->  subhog_rest_i =  subhog and subhog=empty
+                        print("len of prot_list_notintheSpeciaionNode_extended " + str(len(prot_list_notintheSpeciaionNode_extended)))
+                        for prot_ii in prot_list_notintheSpeciaionNode_extended:
+                            result_removing = _utils_frag_SO_detection.remove_prot_hog_hierarchy_toleaves(subhog, prot_ii)
+                            if result_removing == 0:   # the hog is empty
+                                print("warning it is empty!"+str(subhog)) # hogs_children_level_list.remove(subhog)
+                        print("the current one is shrunk to" + str(subhog))
+                        results_keep = keep_prots_hog_hierarchy_toleaves(subhog_rest_i, prot_list_notintheSpeciaionNode_extended)
+                        #subhog_copy.prune(prot_list_notintheSpeciaionNode) # create a new subHOG and keep it with prots in prot_list_notintheSpeciaionNode
+                        print("the rest are here " + str(subhog_rest_i))
+                        hogs_children_level_list.append(subhog_rest_i) # but this should be used for merging purpuses
+                        if set(prot_list_notintheSpeciaionNode_extended) == set(subhog._members):
                             logger.warning("issue 123550971 we are merging two subhogs that there was a dup, we couldn't split because proteins in the species node and outside of it were in the same child subhog (unsampled)   ")
                 # add a check when subhog_rest_i is the last item in the gene tree, to include non-sampled genes
                 taxnomic_range = node_species_tree.name
                 num_species_tax_speciestree = len(node_species_tree.get_leaves()) # num_species_tax   is the number of species exist in the species tree at this clade
-                HOG_this_node = HOG(set(subHOG_to_be_merged), taxnomic_range, rhogid, merged_msa, num_species_tax_speciestree, conf_infer_subhhogs)
+                subHOG_ids_merged_done += [hg._hogid for hg in subHOGs_to_merge]
+                HOG_this_node = HOG(set(subHOGs_to_merge), taxnomic_range, rhogid, merged_msa, num_species_tax_speciestree, conf_infer_subhhogs)
                 if len(HOG_this_node._msa) == 1:
                     logger.warning("issue 1258313"+str(HOG_this_node)+str(HOG_this_node._msa)+" "+node.name  )
                 hogs_this_level_list.append(HOG_this_node)
-
-                #subHOG_to_be_merged_set = set(subHOG_to_be_merged)
-                # subHOG_to_be_merged_set_other_Snodes.append([i._hogid for i in subHOG_to_be_merged_set])
-                # subHOG_to_be_merged_set_other_Snodes_flattned_temp = [item for items in subHOG_to_be_merged_set_other_Snodes for  item in items]
 
 
                 #  I don't need to traverse deeper in this clade
