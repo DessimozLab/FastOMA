@@ -458,7 +458,7 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                     prots_childids = [i for subhog in subhog_childids_intree_notInSpeciaion for i in subhog._members]
                     # such child subhog might have some proteins of the speciation node and some outside of specietion node (contradactory info, we do our best based on the latest information we have)
                     subhog_members_intree_notInSpeciaion_extended = [i for i in prots_childids if i not in subhog_members_intree_InSpeciaion]
-                    subhog_members_rest = [i for i in subhog._members if i not in subhog_members_intree_notInSpeciaion_extended]
+                    subhog_members_rest = [i for i in subhog._members if i in subhog_members_intree_notInSpeciaion_extended]
 
                     hogs_children_level_updated.remove(subhog)
                     subhog_rest = copy.deepcopy(subhog)
@@ -479,14 +479,14 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
                     # if set(prot_list_notintheSpeciaionNode_extended) == set(subhog._members):
                     #    logger.warning("issue 123550971 we are merging two subhogs that there was a dup, we couldn't split because proteins in the species node and outside of it were in the same child subhog (unsampled)   ")
 
-                # add a check when subhog_rest is the last item in the gene tree, to include non-sampled genes
-                taxnomic_range = node_species_tree.name
-                num_species_tax_speciestree = len(node_species_tree.get_leaves()) # num_species_tax   is the number of species exist in the species tree at this clade
-                subHOG_ids_merged_done += [hg._hogid for hg in subHOGs_to_merge]
-                HOG_this_node = HOG(set(subHOGs_to_merge), taxnomic_range, rhogid, merged_msa, num_species_tax_speciestree, conf_infer_subhhogs)
-                if len(HOG_this_node._msa) == 1:
-                    logger.warning("issue 1258313"+str(HOG_this_node)+str(HOG_this_node._msa)+" "+node.name  )
-                hogs_this_level_list.append(HOG_this_node)
+            # add a check when subhog_rest is the last item in the gene tree, to include non-sampled genes
+            taxnomic_range = node_species_tree.name
+            num_species_tax_speciestree = len(node_species_tree.get_leaves()) # num_species_tax   is the number of species exist in the species tree at this clade
+            subHOG_ids_merged_done += [hg._hogid for hg in subHOGs_to_merge]
+            HOG_this_node = HOG(set(subHOGs_to_merge), taxnomic_range, rhogid, merged_msa, num_species_tax_speciestree, conf_infer_subhhogs)
+            if len(HOG_this_node._msa) == 1:
+                logger.warning("issue 1258313"+str(HOG_this_node)+str(HOG_this_node._msa)+" "+node.name  )
+            hogs_this_level_list.append(HOG_this_node)
 
 
                 #  I don't need to traverse deeper in this clade
