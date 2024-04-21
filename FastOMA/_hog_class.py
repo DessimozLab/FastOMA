@@ -136,14 +136,14 @@ class HOG:
         msa_old = self._msa     #  we may want to edit the msa of children level to be consistent
         msa_edited = MultipleSeqAlignment([i for i in msa_old if i.id in protlist_to_keep])
         self._msa = msa_edited
-        hogid_old = self._hogid
-        if "__" in hogid_old:
-            assert len(hogid_old.split("__")) < 3, "issue 13413057"
-            itr = hogid_old.split("__")[1] # expecting no "__" in the subhogID
-            itr_int = int(itr)
-            self._hogid = hogid_old.split("__")[0] + "__"+str(itr_int+1)
-        else:
-            self._hogid = hogid_old +"__1"
+        # hogid_old = self._hogid
+        # if "__" in hogid_old:
+        #     assert len(hogid_old.split("__")) < 3, "issue 13413057"
+        #     itr = hogid_old.split("__")[1] # expecting no "__" in the subhogID
+        #     itr_int = int(itr)
+        #     self._hogid = hogid_old.split("__")[0] + "__"+str(itr_int+1)
+        # else:
+        #     self._hogid = hogid_old +"__1"
         if len(prot_members_hog_edited) == 0:  # hog should be removed, no members is left
             return 0
         return 1
