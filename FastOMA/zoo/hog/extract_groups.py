@@ -73,19 +73,19 @@ class GroupExtractor(object):
         return True
 
     def _collect_genes(self, node):
-        genes = []; to_rem = []
+        genes = set([]); to_rem = []
         for child in node.iter():
             if child == node:
                 continue
             if child.tag == "{http://orthoXML.org/2011/}geneRef":
                 try:
-                    genes.append(self.genes[child.get('id')])
+                    genes.add(self.genes[child.get('id')])
                 except KeyError:
                     logger.info(f"ignoring gene(id={child.get('id')}), probably in skip set.")
                     pass
                 to_rem.append(child)
             elif child.tag == "{http://orthoXML.org/2011/}orthologGroup":
-                genes.extend((n for n in child.text if isinstance(n, Gene)))
+                genes.update((n for n in child.text if isinstance(n, Gene)))
                 to_rem.append(child)
         for c in to_rem:
             try:
