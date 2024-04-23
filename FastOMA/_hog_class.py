@@ -6,7 +6,7 @@ from random import sample
 from typing import Optional, List, Union
 from ete3 import Tree, TreeNode
 import random
-
+from ._utils_subhog import MSAFilter
 
 # todo some of these could also come under conf_infer_subhhogs
 seed_random=1234 # Also in _wrappers.py
@@ -116,7 +116,8 @@ class HOG:
             records = [record for record in msa if (record.id in representatives_id)]
 
             if len(records[0]) > hogclass_min_cols_msa_to_filter:
-                records = _utils_subhog.msa_filter_col(records, conf_infer_subhhogs)
+                filter = MSAFilter(levelprocessor=None, conf=conf_infer_subhhogs)
+                records = filter.msa_filter_col(records)
                 # the challange is that one of the sequences might be complete gap
             self._msa = MultipleSeqAlignment(records)
             # without replacement sampling ,  # self._children = sub_hogs # as legacy  ?
@@ -144,10 +145,13 @@ class HOG:
     def get_representatives(self):
         return self._representatives
 
+    def get_msa(self):
+        return self._msa
+
     def find_representative(self, seq_id):
         """Find the representative of the given sequence using its ID."""
         for r in self._representatives:
-            if r.id == seq_id:
+            if r.get_id() == seq_id:
                 return r
         for r in self._representatives:
             if seq_id in r.get_members():

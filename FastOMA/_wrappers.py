@@ -22,8 +22,7 @@ if logger_level == "DEBUG":
     logger.setLevel(logging.DEBUG)
 
 
-
-def merge_msa(list_msas, genetree_msa_file_addr, conf_infer_subhhogs):
+def merge_msa(list_msas):
     """
     merge orthoxml_to_newick.py list of MSAs (multiple sequnce aligmnet)
     by run mafft on them.
@@ -53,18 +52,12 @@ def merge_msa(list_msas, genetree_msa_file_addr, conf_infer_subhhogs):
     wrapper_mafft_merge.options['--thread'].set_value(-1) # -1 uses a largely appropriate number of threads in each step, after automatically counting the number of physical cores the computer has.
     # --randomseed
     wrapper_mafft_merge.options['--randomseed'].set_value(seed_random)
-
     merged = wrapper_mafft_merge()
-    # time_duration = wrapper_mafft_merge.elapsed_time
-    # print(time_duration)
-    # logger.info(str(len(list_msas)) + " msas are merged with length of "+ str(len(merged)) + "  " + str (len(merged[0])))
-    if conf_infer_subhhogs.msa_write:
-        SeqIO.write(merged, genetree_msa_file_addr + ".fa", "fasta")
-
+    logger.debug("running mafft took "+str(wrapper_mafft_merge.elapsed_time))
     return merged
 
 
-def infer_gene_tree(msa, genetree_msa_file_addr, conf_infer_subhhogs):
+def infer_gene_tree(msa):
     """
     infere gene tree using fastTree for the input msa
     and write it as orthoxml_to_newick.py file
@@ -97,20 +90,7 @@ def infer_gene_tree(msa, genetree_msa_file_addr, conf_infer_subhhogs):
     time_taken_tree = wrapper_tree.elapsed_time
     result_tree2 = wrapper_tree.result
     tree_nwk = result_tree2["tree"].as_string(schema='newick') #str(result_tree2["tree"])
-
-    # current_time = datetime.now().strftime("%H:%M:%S")
-    # for development we write the gene tree, the name of file should be limit in size in linux.
-    # danger of overwriting
-    # instead -> hash thing
-    # ??? hashlib.md5(original_name).hexdig..it()
-
-    if conf_infer_subhhogs.gene_trees_write or conf_infer_subhhogs.gene_rooting_method == "mad":
-        file_gene_tree = open(genetree_msa_file_addr+".nwk", "w")
-        file_gene_tree.write(tree_nwk) #file_gene_tree.write(";\n")
-        file_gene_tree.close()
-
     return tree_nwk
-
 
 def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
 
@@ -176,11 +156,11 @@ def mad_rooting(input_tree_file_path: str):  # , mad_executable_path: str = "./m
         raise RuntimeError("Error running MAD rooting: \n{}\n{}".format(output, error))
 
     elif "rooted trees written" in str(output): # 3 rooted trees written to tree_664187_Eukaryota.nwk.rooted Warning: Trees with repeating branch lengths are suspicious (3 repeating values).
-        file_multiple_tree_handle= open(input_tree_file_path + ".rooted",'r')
-        trees=[]
-        for line_tree1 in file_multiple_tree_handle:
-            if line_tree1.strip():
-                trees.append(line_tree1.strip())
+        with open(input_tree_file_path + ".rooted", 'rt') as f_in:
+            trees = []
+            for line_tree1 in f_in:
+                if line_tree1.strip():
+                    trees.append(line_tree1.strip())
         # todo which one to choose ?
         rooted_tree = Tree(trees[0])
     else:#Rooted tree written to 'tree_672375_Theria.nwk.rooted'
