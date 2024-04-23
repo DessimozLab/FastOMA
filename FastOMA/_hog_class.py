@@ -54,6 +54,8 @@ class Representative:
     def get_species(self):
         return self._species
 
+    def __repr__(self):
+        return '<Representative: {} [{} elements; {} species]>'.format(self.get_id(), len(self.get_subelements()), len(self.get_species()))
 
 class HOG:
     _hogid_iter = 10000

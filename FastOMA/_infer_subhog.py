@@ -315,9 +315,7 @@ class LevelHOGProcessor:
         ):
             hogids_in_subtree = set([])
             for n in top_speciation_node.iter_leaves():
-                hogid = self._rep_lookup[n.name].hog.hogid
-                n.add_feature('hogids', hogid)
-                hogids_in_subtree.add(hogid)
+                hogids_in_subtree.add(n.hogid)
             top_speciation_node.add_feature('hogids', hogids_in_subtree)
             yield top_speciation_node
 
@@ -329,7 +327,7 @@ class LevelHOGProcessor:
             fn = fn + fn_suffix
             with open(fn, 'wt') as fout:
                 if is_tree:
-                    fout.write(elem.write(format=1, features=features))
+                    fout.write(elem.write(format=1, features=features, format_root_node=True))
                 elif is_msa:
                     SeqIO.write(elem, fout, format="fasta")
 
@@ -360,7 +358,8 @@ class LevelHOGProcessor:
         if self._msa_filter is None:
             self._msa_filter = MSAFilter(self, self.conf)
         filtered_msa, removed_ids = self._msa_filter.filter_msa(msa)
-        logger.error(f"handling of filtered msa is not implemented yet.")
+        if len(removed_ids)>0:
+            logger.error(f"handling of filtered msa is not implemented yet.")
         return filtered_msa
 
     def infer_genetree_from_msa(self, msa):
@@ -409,9 +408,11 @@ class LevelHOGProcessor:
         :param sos_threshold: the minimum fraction of species that must overlap among the
                               subtrees in order to be considered a duplication.
         """
+        cnt_D, cnt_S = 0, 0
         for n in genetree.traverse('postorder'):
             if n.is_leaf():
                 n.add_feature('species', self._rep_lookup[n.name].representative.get_species())
+                n.add_feature('hogid', self._rep_lookup[n.name].hog.hogid)
             else:
                 len(n.children) >= 2
                 specs = tuple(c.species for c in n.children)
@@ -424,8 +425,14 @@ class LevelHOGProcessor:
                 n.add_feature('sos', sos)
                 n.add_feature('so_tuple', (len(sp_inter), len(sp_union)))
                 n.add_feature('evoltype', 'D' if sos > sos_threshold else 'S')
+                if sos > sos_threshold:
+                    cnt_D += 1
+                    n.name = f"D{cnt_D}_{len(sp_inter)}_{len(sp_union)}"
+                else:
+                    cnt_S += 1
+                    n.name = f"S{cnt_S}"
         genetree.del_feature('species')
-        self.write_msa_or_tree_if_necessary(genetree, fn_suffix="_rec.nwk", features=['evoltype', 'sos', 'so_tuple'])
+        self.write_msa_or_tree_if_necessary(genetree, fn_suffix="_rec.nwk", features=['evoltype', 'sos', 'so_tuple', 'hogid'])
 
     def merge_subhogs(self, reconciled_genetree:TreeNode, msa:MultipleSeqAlignment):
         while True:
@@ -441,7 +448,7 @@ class LevelHOGProcessor:
             for hogid, subtrees in hogids_in_subtrees.items():
                 if len(subtrees) > 1:
                     logger.info(f"Representaives of {hogid} are split among {len(subtrees)} candidate subtrees.")
-                    split_parts = [list(n.name for n in sub.iter_leaves() if n.hogids == hogid) for sub in subtrees]
+                    split_parts = [list(n.name for n in sub.iter_leaves() if n.hogid == hogid) for sub in subtrees]
                     split_hogs = split_hog(self.subhogs[hogid], *split_parts)
                     # TODO replace the split hogs in the references
         # TODO: reload lookup, redo labeling of hogs and extract mergeparts
