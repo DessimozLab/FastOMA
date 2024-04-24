@@ -117,7 +117,7 @@ class HOG:
 
             records = [record for record in msa if (record.id in representatives_id)]
 
-            if len(records[0]) > hogclass_min_cols_msa_to_filter:
+            if len(records[0]) > hogclass_min_cols_msa_to_filter and conf_infer_subhhogs is not None:
                 filter = MSAFilter(levelprocessor=None, conf=conf_infer_subhhogs)
                 records = filter.msa_filter_col(records)
                 # the challange is that one of the sequences might be complete gap
@@ -137,6 +137,14 @@ class HOG:
     @property
     def taxname(self):
         return self._tax_now.name
+
+    @property
+    def taxlevel(self):
+        return self._tax_now
+
+    @property
+    def rhogid(self):
+        return self._rhogid
 
     def get_members(self):
         return set(self._members)
@@ -385,4 +393,12 @@ def split_hog(hog:HOG, *partitions):
             path = " --> ".join(str(h) for h in rep_to_subhog_list[rep])
             logger.debug(f"{rep.get_id()}: {path}")
 
+    first_level_subhogs = [set(rep_to_subhog_list[rep][0] for rep in part) for part in partitions]
+    if all(s1.isdisjoint(s2) for s1, s2 in itertools.combinations(first_level_subhogs, 2)):
+        logger.info(f"Splitting {hog} into {len(first_level_subhogs)} subhogs: {first_level_subhogs}")
+        hogs = []
+        for p, subhogs in enumerate(first_level_subhogs):
+            h = HOG(subhogs, taxnomic_range=hog.taxlevel, rhogid=hog.rhogid, msa=hog.get_msa(), representatives=partitions[p])
+            hogs.append(h)
+        return hogs
     raise RuntimeError("this part of the code needs more thinking")

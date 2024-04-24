@@ -315,6 +315,7 @@ class LevelHOGProcessor:
         ):
             hogids_in_subtree = set([])
             for n in top_speciation_node.iter_leaves():
+                n.add_feature('hogid', self._rep_lookup[n.name].hog.hogid)
                 hogids_in_subtree.add(n.hogid)
             top_speciation_node.add_feature('hogids', hogids_in_subtree)
             yield top_speciation_node
@@ -414,7 +415,7 @@ class LevelHOGProcessor:
                 n.add_feature('species', self._rep_lookup[n.name].representative.get_species())
                 n.add_feature('hogid', self._rep_lookup[n.name].hog.hogid)
             else:
-                len(n.children) >= 2
+                assert len(n.children) >= 2
                 specs = tuple(c.species for c in n.children)
                 for c in n.children:
                     c.del_feature('species')  # cleanup to avoid excessive memory
@@ -442,7 +443,7 @@ class LevelHOGProcessor:
                     hogids_in_subtrees[hogid].append(n)
             if any(len(z) > 1 for z in hogids_in_subtrees.values()):
                 logger.info("At least one subhog is split. here is the full labeled genetree:\n"
-                            + reconciled_genetree.get_ascii(show_internal=True, attributes=['evoltype', 'sos', 'hogids']))
+                            + reconciled_genetree.get_ascii(show_internal=True, attributes=['evoltype', 'sos', 'hogids', 'hogid']))
             else:
                 break
             for hogid, subtrees in hogids_in_subtrees.items():
@@ -450,8 +451,11 @@ class LevelHOGProcessor:
                     logger.info(f"Representaives of {hogid} are split among {len(subtrees)} candidate subtrees.")
                     split_parts = [list(n.name for n in sub.iter_leaves() if n.hogid == hogid) for sub in subtrees]
                     split_hogs = split_hog(self.subhogs[hogid], *split_parts)
-                    # TODO replace the split hogs in the references
-        # TODO: reload lookup, redo labeling of hogs and extract mergeparts
+                    if len(split_hogs) > 1:
+                        # we could split the current hog.
+                        self.subhogs.pop(hogid)
+                        self.subhogs.update({h.hogid: h for h in split_hogs})
+            self._rep_lookup = self._prepare_lookups()
         new_hogs = []
         processed_nodes = set([])
         for subtrees in hogids_in_subtrees.values():
