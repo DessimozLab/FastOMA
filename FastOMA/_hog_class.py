@@ -401,4 +401,4 @@ def split_hog(hog:HOG, *partitions):
             h = HOG(subhogs, taxnomic_range=hog.taxlevel, rhogid=hog.rhogid, msa=hog.get_msa(), representatives=partitions[p])
             hogs.append(h)
         return hogs
-    raise RuntimeError("this part of the code needs more thinking")
+    #raise RuntimeError("this part of the code needs more thinking")

@@ -3,8 +3,8 @@ from ete3 import Tree, TreeNode
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from argparse import Namespace
-from .._hog_class import HOG, Representative
-from .._infer_subhog import LevelHOGProcessor
+from FastOMA._hog_class import HOG, Representative
+from FastOMA._infer_subhog import LevelHOGProcessor
 
 
 class TestLevelHogProcessor(TestCase):

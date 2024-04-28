@@ -1,6 +1,8 @@
 import collections
+import itertools
 from copy import deepcopy
 
+import dendropy
 from Bio import SeqIO
 from Bio.Align import MultipleSeqAlignment
 import concurrent.futures
@@ -295,7 +297,8 @@ class LevelHOGProcessor:
         # now, let's get a list of all the internal nodes ordered with the dist_from_root and find which distance
         # results in number_of_samples_per_hog subtrees that are most divergent
         ordered = sorted([n for n in genetree.traverse() if not n.is_leaf()], key=lambda x: x.dist_from_root)
-        cutoff = ordered[self.conf.number_of_samples_per_hog-1].dist_from_root
+        idx = min(len(ordered), self.conf.number_of_samples_per_hog) - 1  # in case of multi-fucations, len(ordered) can be shorter than number_of_samples_per_hog
+        cutoff = ordered[idx].dist_from_root
         sub_clades = [sub for sub in genetree.iter_leaves(
             is_leaf_fn=lambda n: len(n.children) == 0 or n.dist_from_root >= cutoff
         )]
@@ -379,6 +382,12 @@ class LevelHOGProcessor:
             r_outgroup = genetree.get_midpoint_outgroup()
             genetree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
 
+        elif self.conf.gene_rooting_method == "midpoint-dendropy":
+            dt = dendropy.Tree.get_from_string(gene_tree.write(format=1), schema="newick")
+            dt.reroot_at_midpoint()
+            nw = dt.as_string(schema="newick", suppress_rooting=True)
+            genetree = Tree(nw, format=1, quoted_node_names=True)
+
         elif self.conf.gene_rooting_method == "Nevers_rooting":
             logger.info("Nevers_rooting started for " + str(genetree.write(format=1, format_root_node=True)))
             species = Tree("species_tree.nwk", format=1)
@@ -435,6 +444,54 @@ class LevelHOGProcessor:
         genetree.del_feature('species')
         self.write_msa_or_tree_if_necessary(genetree, fn_suffix="_rec.nwk", features=['evoltype', 'sos', 'so_tuple', 'hogid'])
 
+    def _compute_between_and_within_distances(self, genetree, subtrees_node, partitions):
+        mrca = genetree.get_common_ancestor(*subtrees_node)
+        id2part = {id_: i for i, p in enumerate(partitions) for id_ in p}
+        N = len(partitions)
+        dists = collections.defaultdict(list)
+        for l1, l2 in itertools.combinations(mrca.iter_leaves(), 2):
+            i1 = id2part.get(l1.name, N)
+            i2 = id2part.get(l2.name, N)
+            dists[(i1, i2)].append(mrca.get_distance(l1, l2))
+
+        return dists
+
+    def _resolve_conflicts(self, gene_tree: TreeNode, subtrees_node, partitions) -> bool:
+        """resolves cases of conflicting subhog splittings where a
+        the representatives of a subhog are split among different subtrees
+        and have been merged even before the previous level.
+
+        the method returns a boolean value indicating whether a new reconciliation
+        is necessary (e.g. in case the tree has been modified and hence the labeling
+        of speciation/duplication might have changed).
+        """
+        mrca = gene_tree.get_common_ancestor(*subtrees_node)
+        min_support = min(n.support for n in subtrees_node)
+        min_branch_to_subtree = min(gene_tree.get_distance(mrca, n) for n in subtrees_node)
+        partitions = sorted(partitions, key=lambda x: -len(x))
+        if  min_support < 0.7 or min_branch_to_subtree < 0.01:
+            # we collapse things, i.e. separate nodes in tree based on hogid
+            # we mv all leaves from the non-biggest partitions to the mrca of the biggest partion
+            target_node = gene_tree.get_common_ancestor(partitions[0])
+            for small_partition in partitions[1:]:
+                for name in small_partition:
+                    n = gene_tree.search_nodes(name=name)[0]
+                    parent = n.up
+                    n = n.detach()
+                    target_node.add_child(n)
+                    if len(parent.children) == 1:
+                        parent.delete(prevent_nondicotomic=True, preserve_branch_length=True)
+            return True
+        else:
+            # we remove the bogous representatives, but keep the labeling of the
+            # speciation/duplication nodes. that way, the two subhogs will not get merged
+            # at this level (since they are in different subtrees).
+            for small_partition in partitions[1:]:
+                for name in small_partition:
+                    n = gene_tree.search_nodes(name=name)[0]
+                    n.delete(prevent_nondicotomic=True, preserve_branch_length=True)
+            return False
+
     def merge_subhogs(self, reconciled_genetree:TreeNode, msa:MultipleSeqAlignment):
         while True:
             hogids_in_subtrees = collections.defaultdict(list)
@@ -446,16 +503,21 @@ class LevelHOGProcessor:
                             + reconciled_genetree.get_ascii(show_internal=True, attributes=['evoltype', 'sos', 'hogids', 'hogid']))
             else:
                 break
+            redo_reconcilation = False
             for hogid, subtrees in hogids_in_subtrees.items():
                 if len(subtrees) > 1:
                     logger.info(f"Representaives of {hogid} are split among {len(subtrees)} candidate subtrees.")
                     split_parts = [list(n.name for n in sub.iter_leaves() if n.hogid == hogid) for sub in subtrees]
                     split_hogs = split_hog(self.subhogs[hogid], *split_parts)
-                    if len(split_hogs) > 1:
+                    if split_hogs and len(split_hogs) > 1:
                         # we could split the current hog.
                         self.subhogs.pop(hogid)
                         self.subhogs.update({h.hogid: h for h in split_hogs})
+                    else:
+                        redo_reconcilation |= self._resolve_conflicts(reconciled_genetree, subtrees, split_parts)
             self._rep_lookup = self._prepare_lookups()
+            if redo_reconcilation:
+                self.infer_reconciliation(reconciled_genetree, sos_threshold=self.conf.threshold_dubious_sd)
         new_hogs = []
         processed_nodes = set([])
         for subtrees in hogids_in_subtrees.values():
