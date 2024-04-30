@@ -261,11 +261,18 @@ RepLookup = collections.namedtuple("RepLookup", ["hog", "representative"])
 class LevelHOGProcessor:
     def __init__(self, node_species_tree:TreeNode, subhogs:List[HOG], rhogid:str, conf):
         self.node_species_tree = node_species_tree
-        self.subhogs = {hog.hogid: hog for hog in subhogs}
+        self._frozen_hogs_before = set([])
+        self.subhogs = {}
+        for hog in subhogs:
+            if hog.active:
+                self.subhogs[hog.hogid] = hog
+            else:
+                self._frozen_hogs_before.add(hog)
         self.rhogid = rhogid
         self.conf = conf
         self._base_msa_tree_filename = "HOG_"+rhogid+"_"+str(node_species_tree.name)
         self._outname_step = 0
+        self._removed_rep = set([])
         self._rep_lookup = self._prepare_lookups()
         self._msa_filter = MSAFilter(self, conf)
 
@@ -279,7 +286,8 @@ class LevelHOGProcessor:
         lookup = {}
         for hog in self.subhogs.values():
             for rep in hog.get_representatives():
-                lookup[rep.get_id()] = RepLookup(hog, rep)
+                if rep.get_id() not in self._removed_rep:
+                    lookup[rep.get_id()] = RepLookup(hog, rep)
         return lookup
 
     def find_most_divergent_representatives_from_genetree(self, genetree:TreeNode):
@@ -364,7 +372,25 @@ class LevelHOGProcessor:
         filtered_msa, removed_ids = self._msa_filter.filter_msa(msa)
         if len(removed_ids)>0:
             logger.error(f"handling of filtered msa is not implemented yet.")
+            self._remove_representatives(ids=removed_ids)
         return filtered_msa
+
+    def _remove_representatives(self, ids):
+        self._removed_rep.update(ids)
+        hogids_to_remove = []
+        for hog_id, hog in self.subhogs.items():
+            for rep in hog.get_representatives():
+                if rep.get_id() not in self._removed_rep:
+                    break
+            else:
+                # going here if not a break -> hog disappeared. remove it from current level and freeze it at level below
+                hogids_to_remove.append(hog_id)
+                hog.active = False
+                self._frozen_hogs_before.add(hog)
+        for h in hogids_to_remove:
+            self.subhogs.pop(h)
+        self._rep_lookup = self._prepare_lookups()
+
 
     def infer_genetree_from_msa(self, msa):
         genetree_nwk = _wrappers.infer_gene_tree(msa)
@@ -557,6 +583,7 @@ class LevelHOGProcessor:
         else:
             rooted_gene_tree = gene_tree
         new_hogs = self.merge_subhogs(rooted_gene_tree, msa=filtered_msa)
+        new_hogs.extend(self._frozen_hogs_before)
         return new_hogs
 
 

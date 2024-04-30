@@ -382,8 +382,8 @@ def split_hog(hog:HOG, *partitions):
     partitions = [set(hog.find_representative(r) for r in part) for part in partitions]
     if not all(p1.isdisjoint(p2) for p1, p2 in itertools.combinations(partitions, 2)):
         raise ValueError(f"Not all partitions are non-overlapping {partitions}")
-    if sum(len(p) for p in partitions) != len(hog.get_representatives()):
-        raise ValueError(f"Partitions to split {hog} must cover all {len(hog.get_representatives())} representatives, but cover only {sum(len(p) for p in partitions)}.")
+    #if sum(len(p) for p in partitions) != len(set(hog.get_representatives())):
+    #    raise ValueError(f"Partitions to split {hog} must cover all {len(hog.get_representatives())} representatives, but cover only {sum(len(p) for p in partitions)}.")
     rep_to_subhog_list = {rep: hog.get_subhog_path(rep.get_id(), max_depth) for part in partitions for rep in part}
 
     logger.debug(f"Subhog paths of represenatatives for {hog}")
