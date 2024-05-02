@@ -370,8 +370,7 @@ class LevelHOGProcessor:
         if self._msa_filter is None:
             self._msa_filter = MSAFilter(self, self.conf)
         filtered_msa, removed_ids = self._msa_filter.filter_msa(msa)
-        if len(removed_ids)>0:
-            logger.error(f"handling of filtered msa is not implemented yet.")
+        if len(removed_ids) > 0:
             self._remove_representatives(ids=removed_ids)
         return filtered_msa
 

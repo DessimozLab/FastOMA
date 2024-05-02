@@ -489,9 +489,6 @@ class MSAFilter:
         return msa_filt_row_col, proteins_to_be_removed
 
     def msa_filter_col(self, msa):
-        # genetree_msa_file_addr contains roothog numebr
-        # note this is used in hog class as well
-
         ratio_col_all = []
         length_record = len(msa[0])
         num_records = len(msa)
@@ -503,6 +500,10 @@ class MSAFilter:
             ratio_col_all.append(ratio_col_nongap)
             if ratio_col_nongap >= self.gap_ratio_col:
                 keep_cols.append(col_i)
+        if len(keep_cols) < length_record:
+            ratios = np.array(ratio_col_all)
+            logger.info(f"Filtering columns (gap_ratio threshold={self.gap_ratio_col}): keep {len(keep_cols)}/{length_record}")
+            logger.info(f"Gap ratio distribution (percentiles 10, 25, 50, 75, 90): {np.percentile(ratios, [10,25,50,75,90])}")
         msa_filtered_col = []
         for record in msa:
             record_seq = str(record.seq)
