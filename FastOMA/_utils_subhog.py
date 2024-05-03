@@ -353,9 +353,6 @@ def label_sd_internal_nodes(tree_out, threshold_dubious_sd):
 
 
 
-
-
-
 def label_SD_internal_nodes_reconcilation(gene_tree, species_tree):
     """
     for the input gene tree, run the gene/species tree reconciliation method
@@ -474,7 +471,7 @@ class MSAFilter:
             msa_filt_row_col = msa_filt_col
             if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
                 msa_filt_row_col_raw = self.msa_filter_row(msa_filt_col)
-                msa_filt_row_col = self.msa_filter_col(msa_filt_row_col_raw)
+                msa_filt_row_col = self.remove_empty_columns(msa_filt_row_col_raw)
 
         # compare msa_filt_row_col and msa_filt_col,
         if len(msa_filt_row_col) != len(msa_filt_col):  # some sequences are removed
@@ -489,21 +486,19 @@ class MSAFilter:
         return msa_filt_row_col, proteins_to_be_removed
 
     def msa_filter_col(self, msa):
-        ratio_col_all = []
-        length_record = len(msa[0])
-        num_records = len(msa)
-        keep_cols = []
-        for col_i in range(length_record):
-            col_values = [record.seq[col_i] for record in msa]
-            gap_count = col_values.count("-") + col_values.count("?") + col_values.count(".") + col_values.count("~")
-            ratio_col_nongap = 1 - gap_count/num_records
-            ratio_col_all.append(ratio_col_nongap)
-            if ratio_col_nongap >= self.gap_ratio_col:
-                keep_cols.append(col_i)
-        if len(keep_cols) < length_record:
-            ratios = np.array(ratio_col_all)
-            logger.info(f"Filtering columns (gap_ratio threshold={self.gap_ratio_col}): keep {len(keep_cols)}/{length_record}")
+        ratios = self._get_gap_ratios(msa)
+        keep_cols = [k for k in range(len(ratios)) if ratios[k] < self.gap_ratio_col]
+        if len(keep_cols) < len(ratios):
+            logger.info(f"Filtering columns (gap_ratio threshold={self.gap_ratio_col}): keep {len(keep_cols)}/{len(ratios)}")
             logger.info(f"Gap ratio distribution (percentiles 10, 25, 50, 75, 90): {np.percentile(ratios, [10,25,50,75,90])}")
+            col_filtered_msa = self._filter_msa_cols(msa, keep_cols)
+        else:
+            col_filtered_msa = msa
+        if self.lp is not None:
+            self.lp.write_msa_or_tree_if_necessary(col_filtered_msa, f"_filterCol_{self.gap_ratio_col}.fa")
+        return col_filtered_msa
+
+    def _filter_msa_cols(self, msa, keep_cols):
         msa_filtered_col = []
         for record in msa:
             record_seq = str(record.seq)
@@ -511,10 +506,25 @@ class MSAFilter:
             if len(record_seq_edited) > 1:
                 record_edited = SeqRecord(Seq(record_seq_edited), record.id, '', '')
                 msa_filtered_col.append(record_edited)
-        col_filtered_msa = MultipleSeqAlignment(msa_filtered_col)
-        if self.lp is not None:
-            self.lp.write_msa_or_tree_if_necessary(col_filtered_msa, f"_filterCol_{self.gap_ratio_col}.fa")
-        return col_filtered_msa
+        return MultipleSeqAlignment(msa_filtered_col)
+
+    def _get_gap_ratios(self, msa):
+        length_record = len(msa[0])
+        num_records = len(msa)
+        ratios = np.zeros((length_record,), dtype="f8")
+        for col_i in range(length_record):
+            col_values = [record.seq[col_i] for record in msa]
+            gap_count = col_values.count("-") + col_values.count("?") + col_values.count(".") + col_values.count("~")
+            ratios[col_i] = gap_count / num_records
+        return ratios
+
+    def remove_empty_columns(self, msa):
+        ratios = self._get_gap_ratios(msa)
+        keep_cols = [k for k in range(len(ratios)) if ratios[k] < 1]
+        if len(keep_cols) < len(ratios):
+            logger.info(f"Removing {len(ratios) - len(keep_cols)} empty columns from msa")
+            return self._filter_msa_cols(msa, keep_cols)
+        return msa
 
     def msa_filter_row(self, msa:MultipleSeqAlignment):
         msa_filtered_row = []
@@ -535,6 +545,37 @@ class MSAFilter:
             self.lp.write_msa_or_tree_if_necessary(row_filtered_msa, f"_filterRow_{self.gap_ratio_row}.fa")
         return row_filtered_msa
 
+
+class MSAFilterElbow(MSAFilter):
+   def msa_filter_col(self, msa):
+        """alternative filtering based on the extrem point (highest off-diagonal distance) of a
+        plot of gap-ratio vs fraction of columns included."""
+        ratios = self._get_gap_ratios(msa)
+        # compute points (gap_ratio, frac_of_cols) where frac_of_cols is the fraction of columns that has a lower gap ratio
+        gap_ratio_and_col_frac = np.array([(r, sum(ratios < r) / len(ratios)) for r in ratios])
+        # off diagonal distance can be computed by np.cross(p1 - [0,0], pnt - [0,0]) / dist([1,1] - [0,0])
+        # divider is constant for all points (can be left away)
+        p1 = np.array([1, 1])
+        dist_from_diag = np.cross(gap_ratio_and_col_frac, p1, axisa=1)
+        idx = abs(dist_from_diag).argsort()
+        k = idx[-1]
+        threshold = gap_ratio_and_col_frac[k][0]
+        logger.info(f"Estimated elbow gap ratio: {threshold} (dist from diag: {dist_from_diag[k]}; frac of msa: {gap_ratio_and_col_frac[k][1]})")
+        logger.info(f"Gap ratio to apply: max({threshold}, {self.gap_ratio_col})")
+        threshold = max(threshold, self.gap_ratio_col)
+
+        keep_cols = [k for k in range(len(ratios)) if ratios[k] < threshold]
+        col_filtered_msa = self._filter_msa_cols(msa, keep_cols)
+        if self.lp is not None:
+            self.lp.write_msa_or_tree_if_necessary(col_filtered_msa, f"_filterCol_{threshold:.3f}.fa")
+        return col_filtered_msa
+
+
+class MSAFilterTrimAL(MSAFilter):
+    def filter_msa(self, msa):
+        filtered = _wrappers.trim_msa(msa)
+        removed_seqs = set(r.id for r in msa) - set(r.id for r in filtered)
+        return filtered, removed_seqs
 
 
 def get_farthest_leaf(tree: PhyloTree, target_leaf: PhyloTree, leaves_list: List[PhyloTree]) -> Tuple[float, PhyloTree]:

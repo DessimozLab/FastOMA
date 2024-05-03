@@ -22,7 +22,7 @@ from . import _wrappers
 from . import _utils_subhog
 from . import _utils_frag_SO_detection
 from ._hog_class import HOG, Representative, split_hog
-from ._utils_subhog import MSAFilter
+from ._utils_subhog import MSAFilter, MSAFilterElbow, MSAFilterTrimAL
 
 from ._wrappers import logger
 from .zoo.utils import unique
@@ -274,7 +274,17 @@ class LevelHOGProcessor:
         self._outname_step = 0
         self._removed_rep = set([])
         self._rep_lookup = self._prepare_lookups()
-        self._msa_filter = MSAFilter(self, conf)
+        self._msa_filter = self._instantiate_msa_filter()
+
+    def _instantiate_msa_filter(self):
+        if self.conf.msa_filter_method == "col-row-threshold":
+            return MSAFilter(self, self.conf)
+        elif self.conf.msa_filter_method == "col-elbow-row-threshold":
+            return MSAFilterElbow(self, self.conf)
+        elif self.conf.msa_filter_method == "trimal":
+            return MSAFilterTrimAL(self, self.conf)
+        else:
+            raise ValueError("Invalid msa_filter_method value")
 
     def get_name_of_output(self, is_msa=False, is_tree=False):
         if (is_msa and self.conf.msa_write) or (is_tree and self.conf.gene_trees_write):
@@ -574,8 +584,10 @@ class LevelHOGProcessor:
         """
         msa = self.align_subhogs()
         filtered_msa = self.filter_msa(msa)
+        if len(filtered_msa) == 0:
+            return list(self.subhogs.values())
         gene_tree = self.infer_genetree_from_msa(filtered_msa)
-        if len(gene_tree)>1:
+        if len(gene_tree) > 1:
             rooted_gene_tree = self.infer_rooted_genetree(gene_tree)
             # TODO: dealing with fragments is not done yet.
             self.infer_reconciliation(rooted_gene_tree, sos_threshold=self.conf.threshold_dubious_sd)

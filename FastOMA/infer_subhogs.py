@@ -37,13 +37,16 @@ def fastoma_infer_subhogs():
                         help="writing the all gene trees .")  # the order seems to be nwk_SD_labeled.nwk, dubious_sd0.nwk_SD_labeled.nwk, dubious_sd1.nwk_SD_labeled.nwk
     parser.add_argument("--msa-write", action='store_true',
                         help="writing the raw MSAs (might have more genes that the final gene tree).")
+    parser.add_argument("--msa-filter-method",
+                        choices=("col-row-threshold", "col-elbow-row-threshold", "trimal"),
+                        default="col-row-threshold",
+                        help="The method used for filtering MSAs.")
     parser.add_argument("--gap-ratio-row", required=False, type=float, default=0.3,
                         help="For trimming the MSA, the threshold of ratio of gaps for each row.")
     parser.add_argument("--gap-ratio-col", required=False, type=float, default=0.5,
                         help="For trimming the MSA, the threshold of ratio of gaps for each column.")
-    parser.add_argument("--min-col-trim", required=False, type=int, default=50, # todo min rows trim
+    parser.add_argument("--min-col-trim", required=False, type=int, default=50,  # todo min rows trim
                         help="min no. columns in msa to consider for filtering")
-
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
     conf_infer_subhhogs = parser.parse_args()
     logger.setLevel(level=30 - 10 * min(conf_infer_subhhogs.v, 2))
