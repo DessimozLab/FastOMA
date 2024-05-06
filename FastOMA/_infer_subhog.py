@@ -514,7 +514,9 @@ class LevelHOGProcessor:
                     parent = n.up
                     n = n.detach()
                     target_node.add_child(n)
-                    if len(parent.children) == 1:
+                    if len(parent.children) == 1 and parent.up is None:
+                        parent.children[0].delete(prevent_nondicotomic=True, preserve_branch_length=True)
+                    elif len(parent.children) == 1:
                         parent.delete(prevent_nondicotomic=True, preserve_branch_length=True)
             return True
         else:
