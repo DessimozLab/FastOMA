@@ -453,13 +453,14 @@ class LevelHOGProcessor:
         :param sos_threshold: the minimum fraction of species that must overlap among the
                               subtrees in order to be considered a duplication.
         """
+        logger.info("\n" + genetree.get_ascii(show_internal=True, attributes=['name', 'hogid']))
         cnt_D, cnt_S = 0, 0
         for n in genetree.traverse('postorder'):
             if n.is_leaf():
                 n.add_feature('species', self._rep_lookup[n.name].representative.get_species())
                 n.add_feature('hogid', self._rep_lookup[n.name].hog.hogid)
             else:
-                assert len(n.children) >= 2
+                assert len(n.children) >= 2, f"{n.name} has {len(n.children)} children"
                 specs = tuple(c.species for c in n.children)
                 for c in n.children:
                     c.del_feature('species')  # cleanup to avoid excessive memory
@@ -492,7 +493,7 @@ class LevelHOGProcessor:
         return dists
 
     def _resolve_conflicts(self, gene_tree: TreeNode, subtrees_node, partitions) -> bool:
-        """resolves cases of conflicting subhog splittings where a
+        """resolves cases of conflicting subhog splittings where
         the representatives of a subhog are split among different subtrees
         and have been merged even before the previous level.
 
@@ -500,6 +501,8 @@ class LevelHOGProcessor:
         is necessary (e.g. in case the tree has been modified and hence the labeling
         of speciation/duplication might have changed).
         """
+        subtrees_node = list(map(lambda n: n if len(n.children) != 1 or n.children[0].up == n else n.children[0],
+                                 subtrees_node))
         mrca = gene_tree.get_common_ancestor(*subtrees_node)
         min_support = min(n.support for n in subtrees_node)
         min_branch_to_subtree = min(gene_tree.get_distance(mrca, n) for n in subtrees_node)
@@ -554,6 +557,8 @@ class LevelHOGProcessor:
                         redo_reconcilation |= self._resolve_conflicts(reconciled_genetree, subtrees, split_parts)
             self._rep_lookup = self._prepare_lookups()
             if redo_reconcilation:
+                if len(reconciled_genetree.children) == 1:
+                    reconciled_genetree.children[0].delete(preserve_branch_length=True)
                 self.infer_reconciliation(reconciled_genetree, sos_threshold=self.conf.threshold_dubious_sd)
         new_hogs = []
         processed_nodes = set([])
