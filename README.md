@@ -64,6 +64,7 @@ a conda environment with the necessary dependencies.
 See also [How to install FastOMA](#how-to-install-FastOMA) for additional ways how to install and run FastOMA. Note also the 
 section on the different [profiles](#using-different-nextflow-profiles).
 
+For more informaton on how Nextflow and Docker work together, see [here](https://www.nextflow.io/blog/2016/docker-and-nextflow.html).  
 
 ### More details on how to run
 We provide for every commit of the repository a docker image for FastOMA on dockerhub. You can specify the container as 
@@ -120,10 +121,39 @@ nextflow run FastOMA.nf -profile docker --container_version "sha-$(git rev-list 
 
 ### 4. Manual installation in conda/mamba environment
 In the FastOMA repository, we provide a conda environment file that can be used to generate a conda / mamba 
-environment:
+environment. 
+
+For Conda installation you need to first download the Miniconda installer from [this link](https://docs.anaconda.com/free/miniconda/). 
+
+For MacOS:
+```
+curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o Miniconda3.sh
+bash Miniconda3.sh
+```
+
+For Linux
+```
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o Miniconda3.sh
+bashMiniconda3.sh
+```
+
+Then follow the instruction on the terminal. Finally, close and re-open the terminal and run
+```
+conda create -n fastoma python=3.9 --file environment_conda.yml
+cond activate mamba activate FastOMA
+```
+Then, clone and install fastOMA using
 ```
 git clone https://github.com/DessimozLab/FastOMA.git
 
+```
+
+
+
+Alternatively, you could use Mamba instead of Conda (which needs its own [installation](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html)). 
+Note that it is not encouraged to have both Mamba and conda on one system, [more info](https://stackoverflow.com/questions/76760906/installing-mamba-on-a-machine-with-conda).
+
+```
 mamba env create -n FastOMA -f environment_conda.yml
 mamba activate FastOMA
 ```
@@ -177,6 +207,8 @@ set it up in `nextflow.config` based on the existing profiles and the documentat
 
 
 # How to run FastOMA on the test data
+Note : If you want to use FastOMA with Docker or other profiles check on the different [here](#using-different-nextflow-profiles).   
+
 First, cd to the `testdata` folder and download the omamer database (optional) and change its name to `omamerdb.h5`.
 ```
 cd FastOMA/testdata
@@ -207,6 +239,8 @@ nextflow run ../FastOMA.nf  \
          --report \
          -profile standard
 ```
+
+
 
 Note that to have a comprehensive test, we set the default value of needed cpus as 10. 
 If you face `.command.sh: line 2: papermill: command not found`, note that the orthology inference is finished and you have them in output folder and you may want to install `pip install -e .[report]` to have `papermill` generating the report and run the last step.
