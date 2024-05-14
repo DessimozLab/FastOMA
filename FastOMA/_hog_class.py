@@ -28,6 +28,7 @@ from ._wrappers import logger
 
 class Representative:
     def __init__(self, the_one, elements:Optional[List]=None):
+        self.enabled = True
         if isinstance(the_one, Representative):
             self._seq = the_one.get_record()
             self._subelements = the_one.get_subelements()

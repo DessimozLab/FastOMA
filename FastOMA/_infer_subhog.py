@@ -1,6 +1,8 @@
 import collections
+import csv
 import itertools
 from copy import deepcopy
+from pathlib import Path
 
 import dendropy
 from Bio import SeqIO
@@ -300,15 +302,21 @@ class LevelHOGProcessor:
                     lookup[rep.get_id()] = RepLookup(hog, rep)
         return lookup
 
-    def find_most_divergent_representatives_from_genetree(self, genetree:TreeNode):
+    def find_most_divergent_representatives_from_genetree(self, genetree_subtree:TreeNode):
         """this method returns the N most divergent representatives from a rooted tree. within each cluster
         it selects the one representative sequence that corresponds to the the median distance from the root
         among the sequnces in the cluster.
 
         :param genetree: the rooted tree (with distances) that should be processed
         :return: the N most divergent representatives for that tree. N is taken from self.conf"""
-        if len(genetree.get_leaves()) <= self.conf.number_of_samples_per_hog:
+        genetree = genetree_subtree.copy()
+        # we remove the non-enabled representatives from the tree
+        keep = [n for n in genetree.iter_leaves() if self._rep_lookup[n.name].representative.enabled]
+        if len(keep) < len(genetree):
+            genetree.prune(keep, preserve_branch_length=True)
+        if len(genetree) <= self.conf.number_of_samples_per_hog:
             return [Representative(self._rep_lookup[n.name].representative) for n in genetree.iter_leaves()]
+
         # first, annotate the distance from the root
         for n in genetree.traverse():
             n.add_feature('dist_from_root', n.dist + (n.up.dist_from_root if n.up is not None and hasattr(n.up, 'dist_from_root') else 0))
@@ -346,12 +354,20 @@ class LevelHOGProcessor:
         is_msa = isinstance(elem, MultipleSeqAlignment)
         fn = self.get_name_of_output(is_tree=is_tree, is_msa=is_msa)
         if fn is not None:
-            fn = fn + fn_suffix
+            fn = Path(fn + fn_suffix)
             with open(fn, 'wt') as fout:
                 if is_tree:
                     fout.write(elem.write(format=1, features=features, format_root_node=True))
                 elif is_msa:
                     SeqIO.write(elem, fout, format="fasta")
+            if is_tree:
+                fn2 = fn.stem + ".tsv"
+                with open(fn2, 'wt') as fout:
+                    writer = csv.writer(fout, dialect="excel-tab")
+                    writer.writerow(["id", "hogid", "hog_size", "representaive_size", "enabled"])
+                    for n in elem.iter_leaves():
+                        rep_val = self._rep_lookup[n.name]
+                        writer.writerow([n.name, rep_val.hog.hogid, len(rep_val.hog.get_members()), len(rep_val.representative.get_subelements()), rep_val.representative.enabled])
 
     def align_subhogs(self):
         sub_msas = [hog.get_msa() for hog in self.subhogs.values() if len(hog.get_msa()) > 0]
@@ -501,13 +517,19 @@ class LevelHOGProcessor:
         is necessary (e.g. in case the tree has been modified and hence the labeling
         of speciation/duplication might have changed).
         """
-        subtrees_node = list(map(lambda n: n if len(n.children) != 1 or n.children[0].up == n else n.children[0],
-                                 subtrees_node))
+        updated_subtree_nodes = []
+        for n in subtrees_node:
+            # previous rounds of _resolve_conflicts might have left disconnected subtree_nodes
+            # so we identify the first node which is either a leaf or a bifurcating node.
+            while len(n.children) == 1:
+                n = n.children[0]
+            updated_subtree_nodes.append(n)
+        subtrees_node = updated_subtree_nodes
         mrca = gene_tree.get_common_ancestor(*subtrees_node)
         min_support = min(n.support for n in subtrees_node)
         min_branch_to_subtree = min(gene_tree.get_distance(mrca, n) for n in subtrees_node)
         partitions = sorted(partitions, key=lambda x: -len(x))
-        if  min_support < 0.7 or min_branch_to_subtree < 0.01:
+        if min_support < 0.7 or min_branch_to_subtree < 0.01:
             # we collapse things, i.e. separate nodes in tree based on hogid
             # we mv all leaves from the non-biggest partitions to the mrca of the biggest partion
             target_node = gene_tree.get_common_ancestor(partitions[0])
@@ -521,9 +543,11 @@ class LevelHOGProcessor:
                         parent.children[0].delete(prevent_nondicotomic=True, preserve_branch_length=True)
                     elif len(parent.children) == 1:
                         parent.delete(prevent_nondicotomic=True, preserve_branch_length=True)
+                    # deactivate representative for next level
+                    self._rep_lookup[n.name].representative.enabled = False
             return True
         else:
-            # we remove the bogous representatives, but keep the labeling of the
+            # we remove the bogus representatives, but keep the labeling of the
             # speciation/duplication nodes. that way, the two subhogs will not get merged
             # at this level (since they are in different subtrees).
             for small_partition in partitions[1:]:
