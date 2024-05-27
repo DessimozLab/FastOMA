@@ -532,7 +532,10 @@ class LevelHOGProcessor:
         if min_support < 0.7 or min_branch_to_subtree < 0.01:
             # we collapse things, i.e. separate nodes in tree based on hogid
             # we mv all leaves from the non-biggest partitions to the mrca of the biggest partion
-            target_node = gene_tree.get_common_ancestor(partitions[0])
+            if len(partitions[0]) > 1:
+                target_node = gene_tree.get_common_ancestor(partitions[0])
+            else:
+                target_node = gene_tree.search_nodes(name=partitions[0][0])[0].up
             for small_partition in partitions[1:]:
                 for name in small_partition:
                     n = gene_tree.search_nodes(name=name)[0]
