@@ -42,8 +42,7 @@ def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, pickle
     """
     infer subHOGs for a list of rootHOGs
     """
-    logger.debug("Inferring subHOGs for  "+str(len(rhogid_batch_list))+"rootHOGs started.")
-    logger.debug("we are not reporting single tone hogs in the output xml. You may check this _config.inferhog_min_hog_size_xml.")
+    logger.debug("Inferring subHOGs for batch of %d rootHOGs started.", len(rhogid_batch_list))
     hogs_rhog_xml_len_batch = []
     for rhogid in rhogid_batch_list:
         hogs_rhogs_xml_len = read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
@@ -64,16 +63,16 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     # if (_config.gene_trees_write or _config.msa_write) and not os.path.exists("./genetrees"):
     #     os.makedirs("./genetrees")
 
-    logger.debug("\n" + "==" * 10 + "\n Start working on root hog: " + rhogid + ". \n")
+    logger.info("\n" + "==" * 10 + "\n Start working on root hog: " + rhogid + ". \n")
     rhog_i_prot_address = rhogs_fa_folder + "/HOG_" + rhogid+ ".fa"
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
-    logger.debug("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
+    logger.info("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
     # the file "species_tree_checked.nwk" is created by the check_input.py
     (species_tree) = _utils_subhog.read_species_tree(conf_infer_subhhogs.species_tree)
 
     (species_tree, species_names_rhog, prot_names_rhog) = _utils_subhog.prepare_species_tree(rhog_i, species_tree, rhogid)
     species_names_rhog = list(set(species_names_rhog))
-    logger.debug("Number of unique species in rHOG " + rhogid + " is " + str(len(species_names_rhog)) + ".")
+    logger.info("Number of unique species in rHOG " + rhogid + " is " + str(len(species_names_rhog)) + ".")
 
     if inferhog_concurrent_on:  # for big HOG we use parallelization at the level taxonomic level using concurrent
         hogs_a_rhog_num = infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
@@ -105,8 +104,8 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
                 hogs_a_rhog_xml = hogs_a_rhog_xml_raw
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
         else:
-            logger.debug("we are not reporting due to fastoma signleton hog |*|  " + str(list(hog_i._members)[0]))
-            if len(hog_i._members)>1:
+            logger.debug("we are not reporting due to fastoma singleton hog |*|  " + str(list(hog_i._members)[0]))
+            if len(hog_i._members) > 1:
                 logger.warning("issue 166312309 this is not a singleton "+str(hog_i._members))
 
 
@@ -114,7 +113,7 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     with open(pickles_rhog_file, 'wb') as handle:
         # dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
         pickle.dump(hogs_rhogs_xml, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    logger.debug("All subHOGs for the rootHOG as OrthoXML format is written in " + pickles_rhog_file)
+    logger.info("All subHOGs for the rootHOG %s as OrthoXML format is written in %s", rhogid, pickles_rhog_file)
     # to see orthoxml as string, you might need to do it for different idx
     # idx=0; from xml.dom import minidom; import xml.etree.ElementTree as ET; minidom.parseString(ET.tostring(hogs_rhogs_xml[idx])).toprettyxml(indent="   ")
     del hogs_a_rhog  # to be memory efficient
@@ -528,8 +527,8 @@ class LevelHOGProcessor:
         mrca = gene_tree.get_common_ancestor(*subtrees_node)
         min_support = min(n.support for n in subtrees_node)
         min_branch_to_subtree = min(gene_tree.get_distance(mrca, n) for n in subtrees_node)
-        partitions = sorted(partitions, key=lambda x: -len(x))
-        if min_support < 0.7 or min_branch_to_subtree < 0.01:
+        partitions = sorted(partitions, key=lambda x: [-sum(len(self._rep_lookup[r].representative.get_subelements()) for r in x), -len(x),])
+        if False and (min_support < 0.7 or min_branch_to_subtree < 0.01):
             # we collapse things, i.e. separate nodes in tree based on hogid
             # we mv all leaves from the non-biggest partitions to the mrca of the biggest partion
             if len(partitions[0]) > 1:
@@ -553,6 +552,11 @@ class LevelHOGProcessor:
             # we remove the bogus representatives, but keep the labeling of the
             # speciation/duplication nodes. that way, the two subhogs will not get merged
             # at this level (since they are in different subtrees).
+            stats = [{'len': len(p),
+                      'rep_size': sum(len(self._rep_lookup[r].representative.get_subelements()) for r in p),
+                     } for p in partitions]
+            logger.info(f"Resolving conflict for {self._rep_lookup[partitions[0][0]].hog.hogid} by ignoring representatives {partitions[1:]}")
+            logger.debug(f"{len(partitions)} partitions: {stats}")
             for small_partition in partitions[1:]:
                 for name in small_partition:
                     n = gene_tree.search_nodes(name=name)[0]
