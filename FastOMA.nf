@@ -336,6 +336,8 @@ process hog_big{
   publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
   publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv.gz"
 
   input:
     each rhogsbig
@@ -345,6 +347,8 @@ process hog_big{
     path "pickle_hogs"
     path "*.fa" , optional: true          // msa         if write True
     path "*.nwk" , optional: true  // gene trees  if write True
+    path "*.tsv", optional: true
+    path "*.tsv.gz", optional: true
   script:
     """
         fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig}  \
@@ -366,6 +370,8 @@ process hog_rest{
   publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
   publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv.gz"
 
   input:
     each rhogsrest
@@ -374,6 +380,8 @@ process hog_rest{
     path "pickle_hogs"
     path "*.fa" , optional: true   // msa         if write True
     path "*.nwk" , optional: true  // gene trees  if write True
+    path "*.tsv", optional: true
+    path "*.tsv.gz", optional: true
   script:
     """
         fastoma-infer-subhogs --input-rhog-folder ${rhogsrest}  \
