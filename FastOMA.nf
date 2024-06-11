@@ -104,10 +104,21 @@ if (params.help) {
                                   - UniProt      : extract accession from uniprot header
                                                    e.g. '>sp|P68250|1433B_BOVIN' --> 'P68250'
 
+    Algorithmic parameters:
+        --nr_repr_per_hog       The maximum number of representatives per subhog to keep during the
+                                inference. Higher values lead to slighlty higher runtime.
+                                Default to ${params.nr_repr_per_hog}.
+        --filter_method         The applied filtering method on the MSAs before tree building.
+                                must be one of "col-row-threshold", "col-elbow-row-threshold", "trimal".
+                                Defaults to ${params.filter_method}.
+
     Flags:
         --help                  Display this message
         --debug_enabled         Store addtional information that might be helpful to debug in case
                                 of a problem with FastOMA.
+        --write_msas            MSAs used during inference of subhogs will be stored at
+                                every taxonomic level.
+        --write_genetrees       Inferred gene trees will be stored at every taxonomic level.
         --report                Produce nextflow report and timeline and store in in
                                 $params.statdir
 
@@ -135,6 +146,11 @@ Parameters:
    omamer_db                 ${params.omamer_db}
    hogmap_in                 ${params.hogmap_in}
    fasta_header_id_transformer  ${params.fasta_header_id_transformer}
+
+   filter_method             ${params.filter_method}
+   filter_gap_ratio_row      ${params.filter_gap_ratio_row}
+   filter_gap_ratio_col      ${params.filter_gap_ratio_col}
+   nr_repr_per_hog           ${params.nr_repr_per_hog}
    
    debug_enabled             ${params.debug_enabled}
    report                    ${params.report}
@@ -336,6 +352,10 @@ process hog_big{
                                --output-pickles pickle_hogs \
                                --parallel  \
                                -vv \
+                               --msa-filter-method ${params.filter_method} \
+                               --gap-ratio-row ${params.filter_gap_ratio_row} \
+                               --gap-ratio-col ${params.filter_gap_ratio_col} \
+                               --number-of-samples-per-hog ${params.nr_repr_per_hog} \
                                ${ params.write_msas ? "--msa-write" : ""} \
                                ${ params.write_genetrees ? "--gene-trees-write" : ""}
     """
@@ -360,6 +380,10 @@ process hog_rest{
                               --species-tree ${species_tree} \
                               --output-pickles pickle_hogs \
                               -vv \
+                              --msa-filter-method ${params.filter_method} \
+                              --gap-ratio-row ${params.filter_gap_ratio_row} \
+                              --gap-ratio-col ${params.filter_gap_ratio_col} \
+                              --number-of-samples-per-hog ${params.nr_repr_per_hog} \
                               ${ params.write_msas ? "--msa-write" : ""} \
                               ${ params.write_genetrees ? "--gene-trees-write" : ""}
     """
