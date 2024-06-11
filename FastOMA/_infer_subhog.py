@@ -363,7 +363,7 @@ class LevelHOGProcessor:
                 fn2 = fn.stem + ".tsv"
                 with open(fn2, 'wt') as fout:
                     writer = csv.writer(fout, dialect="excel-tab")
-                    writer.writerow(["id", "hogid", "hog_size", "representaive_size", "enabled"])
+                    writer.writerow(["id", "hogid", "hog_size", "representative_size", "enabled"])
                     for n in elem.iter_leaves():
                         rep_val = self._rep_lookup[n.name]
                         writer.writerow([n.name, rep_val.hog.hogid, len(rep_val.hog.get_members()), len(rep_val.representative.get_subelements()), rep_val.representative.enabled])
