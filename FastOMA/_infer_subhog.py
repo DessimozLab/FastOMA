@@ -3,6 +3,7 @@ import csv
 import itertools
 from copy import deepcopy
 from pathlib import Path
+import gzip
 
 import dendropy
 from Bio import SeqIO
@@ -367,6 +368,14 @@ class LevelHOGProcessor:
                     for n in elem.iter_leaves():
                         rep_val = self._rep_lookup[n.name]
                         writer.writerow([n.name, rep_val.hog.hogid, len(rep_val.hog.get_members()), len(rep_val.representative.get_subelements()), rep_val.representative.enabled])
+                fn3 = fn.stem + "-rep.tsv.gz"
+                with gzip.open(fn3, 'wt') as fout:
+                    writer = csv.writer(fout, dialect="excel-tab")
+                    writer.writerow(["id", "representative"])
+                    for n in elem.iter_leaves():
+                        rep_val = self._rep_lookup[n.name]
+                        for member in rep_val.representative.get_subelements():
+                            writer.writerow([n.name, member])
 
     def align_subhogs(self):
         sub_msas = [hog.get_msa() for hog in self.subhogs.values() if len(hog.get_msa()) > 0]
