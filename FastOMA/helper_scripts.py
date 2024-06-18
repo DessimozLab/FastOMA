@@ -1,5 +1,5 @@
 import argparse
-from ._config import logger_hog as logger
+from ._wrappers import logger
 from .zoo.utils import auto_open
 
 

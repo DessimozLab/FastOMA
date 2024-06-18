@@ -3,21 +3,73 @@ import xml.etree.ElementTree as ET
 from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 from random import sample
+from typing import Optional, List, Union
+from ete3 import Tree, TreeNode
 import random
-from . import _config
+from ._utils_subhog import MSAFilter
 
-random.seed(_config.seed_random)
+# todo some of these could also come under conf_infer_subhhogs
+seed_random=1234 # Also in _wrappers.py
+random.seed(seed_random)
+fragment_detection = True  # this also need to be consistent in _infer_subhog.py
+fragment_detection_msa_merge = True
+subsampling_hogclass = True
+hogclass_max_num_seq = 10              # 40 subsampling in msa # ver very 2
+hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 50
+#hogclass_tresh_ratio_gap_col = 0.05     # 0.8 for very very big
+
+
 import itertools
-
 from . import _utils_subhog
-from ._utils_subhog import logger_hog
-from . import _config
+from ._wrappers import logger
 
+# from .infer_subhogs import conf_infer_subhhogs #fastoma_infer_subhogs #
+
+
+class Representative:
+    def __init__(self, the_one, elements:Optional[List]=None):
+        self.enabled = True
+        if isinstance(the_one, Representative):
+            self._seq = the_one.get_record()
+            self._subelements = the_one.get_subelements()
+            self._species = the_one.get_species()
+        elif isinstance(the_one, SeqRecord):
+            self._seq = the_one
+            self._subelements = set([the_one.id])
+            # TODO: this should be done more genenerally. copied from singleton_hog function
+            self._species = {the_one.id.split('||')[1]}
+        if elements is not None:
+            for e in elements:
+                self._subelements |= e.get_subelements()
+                self._species |= e.get_species()
+
+    def get_id(self):
+        return self._seq.id
+
+    def get_record(self):
+        return self._seq
+
+    def get_subelements(self):
+        return self._subelements
+
+    def get_species(self):
+        return self._species
+
+    def __repr__(self):
+        return '<Representative: {} [{} elements; {} species]>'.format(self.get_id(), len(self.get_subelements()), len(self.get_species()))
 
 class HOG:
     _hogid_iter = 10000
 
-    def __init__(self, input_instantiate, taxnomic_range, rhogid, msa=None, num_species_tax_speciestree=None):
+    def __init__(self, input_instantiate, taxnomic_range:TreeNode, rhogid:str, msa:Optional[MultipleSeqAlignment] = None,
+                 representatives=Optional[List[Representative]], conf_infer_subhhogs=None):
+        """HOG class constructor.
+
+        A HOG can be initialized with either a single SeqRecord or from a list of HOGs
+        (which will become its sub-hog elements). Furthermore, the taxonomic range
+        (a node from the species tree) needs to be provided.
+        Parameters:
+        :param input_instantiate"""
         # fragment_list list of  sets , each set contains protein ID of fragments
         # the input_instantiate could be either
         #     1) orthoxml_to_newick.py protein as the biopython seq record  SeqRecord(seq=Seq('MAPSSRSPSPRT. ]
@@ -26,15 +78,16 @@ class HOG:
         self._rhogid = rhogid
         self.__class__._hogid_iter += 1
         # 0070124
-        #todo add release id,
+
         self._hogid = "HOG_" + self._rhogid+ "_sub" + str(self.__class__._hogid_iter)
         self._tax_least = taxnomic_range  #  least taxnomic level
         self._tax_now = taxnomic_range    # the taxnomic level that we are considering now, checking for duplication
-
+        self.active = True
 
         if isinstance(input_instantiate, SeqRecord):  # if len(sub_hogs)==1:
             only_protein = input_instantiate  # only one seq, only on child, leaf
             self._members = set([only_protein.id])
+            self._representatives = [Representative(only_protein)]
             self._msa = MultipleSeqAlignment([only_protein])
             self._subhogs = []
             self._dubious_members = set()
@@ -47,47 +100,74 @@ class HOG:
             sub_hogs = input_instantiate
             hog_members = set()
             for sub_hog in sub_hogs:
-                hog_members |= sub_hog.get_members()  # union
+                hog_members |= sub_hog.get_members()
             self._members = hog_members  # set.union(*tup)    # this also include dubious_members
             self._subhogs = list(input_instantiate)  # full members of subhog, children
-            self._num_species_tax_speciestree = num_species_tax_speciestree
+            self._num_species_tax_speciestree = len(taxnomic_range.get_leaves())
+            self._representatives = [r for r in representatives]
+            representatives_id = set(r.get_id() for r in representatives)
+            assert len(representatives_id) == len(self._representatives), "Non-unique ids among representatives"
+            assert representatives_id.issubset(self._members), "Representatives must be subset of HOG members"
 
             dubious_members = set()
             for sub_hog in sub_hogs:
                 dubious_members |= sub_hog.get_dubious_members()  # union
             self._dubious_members = dubious_members
+            assert self._dubious_members.isdisjoint(representatives_id), \
+                   'Dubious members has non-empty intersection with representatives:' + str(self._dubious_members.intersection(representatives_id))
 
-            records_full = [record for record in msa if (record.id in self._members) and (record.id not in self._dubious_members) ]
+            records = [record for record in msa if (record.id in representatives_id)]
 
-            if len(records_full[0]) > _config.hogclass_min_cols_msa_to_filter:
-                records_sub_filt = _utils_subhog.msa_filter_col(records_full, _config.hogclass_tresh_ratio_gap_col)
+            if len(records[0]) > hogclass_min_cols_msa_to_filter and conf_infer_subhhogs is not None:
+                filter = MSAFilter(levelprocessor=None, conf=conf_infer_subhhogs)
+                records = filter.msa_filter_col(records)
                 # the challange is that one of the sequences might be complete gap
-            else:
-                records_sub_filt = records_full  # or even for rows # msa_filt_row_col = _utils.msa_filter_row(msa_filt_row, tresh_ratio_gap_row)
-
-            if _config.subsampling_hogclass and len(records_sub_filt) > _config.hogclass_max_num_seq:
-                # to do in future:  select best seq, not easy to defin, keep diversity,
-                records_sub_sampled_raw = sample(list(records_sub_filt), _config.hogclass_max_num_seq)  # without replacement.
-                records_sub_sampled = _utils_subhog.msa_filter_col(records_sub_sampled_raw, 0.01) # to make sure no empty column
-                logger_hog.info("we are doing subsamping in hog class from " + str(len(records_full)) + " to " + str(_config.hogclass_max_num_seq) + " seqs.")
-            else:
-                records_sub_sampled = records_sub_filt
-                # removing some columns completely gap - (not x   )
-            self._msa = MultipleSeqAlignment(records_sub_sampled)
+            self._msa = MultipleSeqAlignment(records)
             # without replacement sampling ,  # self._children = sub_hogs # as legacy  ?
         else:
-            logger_hog.error("Error 142769,  check the input format to instantiate HOG class")
+            logger.error("Error 142769,  check the input format to instantiate HOG class")
             assert False
 
     def __repr__(self):
-        return "HOGobj:" + self._hogid + ",size=" + str(
-            len(self._members))+", taxLeast=" + str(self._tax_least) + ", taxNow= " + str(self._tax_now)
+        return f"<HOG:{self.hogid},size={len(self._members)},taxLeast={self._tax_least.name},taxNow={self._tax_now.name}>"
+
+    @property
+    def hogid(self):
+        return self._hogid
+
+    @property
+    def taxname(self):
+        return self._tax_now.name
+
+    @property
+    def taxlevel(self):
+        return self._tax_now
+
+    @property
+    def rhogid(self):
+        return self._rhogid
 
     def get_members(self):
         return set(self._members)
 
     def get_dubious_members(self):
         return self._dubious_members
+
+    def get_representatives(self):
+        return self._representatives
+
+    def get_msa(self):
+        return self._msa
+
+    def find_representative(self, seq_id):
+        """Find the representative of the given sequence using its ID."""
+        for r in self._representatives:
+            if r.get_id() == seq_id:
+                return r
+        for r in self._representatives:
+            if seq_id in r.get_members():
+                return r
+        raise KeyError("No representative found for " + seq_id)
 
     def remove_prot_from_hog(self, prot_to_remove):
         prot_members_hog_old = self._members
@@ -106,7 +186,7 @@ class HOG:
         self._dubious_members |= set(fragments_list_nothost)
         self._dubious_members |= {fragment_host}
         if fragment_host not in self._members:
-            logger_hog.error("Error 1252769, fragment_host not in hog"+str(fragment_host))
+            logger.error("Error 1252769, fragment_host not in hog"+str(fragment_host))
         self._members |= set(fragments_list_nothost)
 
         msa_old = self._msa
@@ -115,9 +195,29 @@ class HOG:
         # species_name = fragment_host.split("||")[1]   # if self._tax_now == species_name:
         return 1
 
+    def __contains__(self, item):
+        if isinstance(item, Representative):
+            return item.get_id() in self._members
+        elif isinstance(item, HOG):
+            return item in self._subhogs
+        else:
+            return item in self._members
+
+    def get_subhog_path(self, seq_id, max_depth=-1):
+        if seq_id not in self._members:
+            raise KeyError(f"{seq_id} is not part of this HOG")
+        path = []
+        h = self
+        while max_depth != 0 and len(h._subhogs) > 0:
+            for s in h._subhogs:
+                if seq_id in s:
+                    path.append(s)
+                    h = s
+                    break
+            max_depth -= 1
+        return path
 
     def merge_prots_name_hog(self, fragment_name_host, merged_fragment_name):
-
         prot_members_hog = list(self._members)
         assert fragment_name_host in prot_members_hog, str(fragment_name_host)+str("  prot_members_hog:")+str(prot_members_hog)
         fragment_host_idx = prot_members_hog.index(fragment_name_host)
@@ -127,8 +227,6 @@ class HOG:
         self._members = set(prot_members_hog)
 
         return 1
-
-
 
     def merge_prots_msa(self, merged_fragment_name, merged_msa_new):   # merged_fragment_name 'BUPERY_R03529||BUPERY||1105002086_|_BUPERY_R10933||BUPERY||1105008975']
         prot_members_hog = list(self._members)
@@ -159,15 +257,12 @@ class HOG:
     #     self._msa = MultipleSeqAlignment(msa_new)
     #     return 1
 
-
-
     def to_orthoxml(self):
-
         if len(self._subhogs) == 0:
             list_member = list(self._members)
             if len(list_member) == 1:
                 list_member_first = list(self._members)[0]  # ['tr|A0A3Q2UIK0|A0A3Q2UIK0_CHICK||CHICK_||1053007703']
-                if _config.fragment_detection and _config.fragment_detection_msa_merge and "_|_" in list_member_first:
+                if fragment_detection and fragment_detection_msa_merge and "_|_" in list_member_first:
                     paralog_element = ET.Element('paralogGroup')
                     #property_element = ET.SubElement(paralog_element, "property", attrib={"name": "TaxRange", "value": str(self._tax_now)})
                     property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value": "DubiousMergedfragment"})
@@ -186,7 +281,7 @@ class HOG:
                     # to do could be improved when the rhog contains only one protein
                     return geneRef_elemnt
 
-            elif len(list_member) > 1 and _config.fragment_detection and (not _config.fragment_detection_msa_merge):
+            elif len(list_member) > 1 and fragment_detection and (not fragment_detection_msa_merge):
                 paralog_element = ET.Element('paralogGroup')
                 property_element = ET.SubElement(paralog_element, "property", attrib={"name": "Type", "value":"Dubiousfragment"})
                 # property_element = ET.SubElement(paralog_element, "property", attrib={"TaxRange": str(self._tax_now),"Type": "DubiousMergedfragment"})
@@ -200,7 +295,7 @@ class HOG:
         # We continue this function as an Implicit else :  len(self._subhogs) >=1
 
         def _sorter_key(sh):
-            return sh._tax_now
+            return sh._tax_now.name
         self._subhogs.sort(key=_sorter_key)
 
         element_list = []
@@ -210,7 +305,7 @@ class HOG:
             # following only for debugging, can be deleted later
             for subhog in list_of_subhogs_of_same_clade:
                 if len(subhog._members) == 0:
-                    logger_hog.warning("issue 12314506" + str(subhog) + str(sub_clade))
+                    logger.warning("issue 12314506" + str(subhog) + str(sub_clade))
 
             if len(list_of_subhogs_of_same_clade) > 1:
                 paralog_element = ET.Element('paralogGroup')
@@ -222,7 +317,7 @@ class HOG:
                     if str(element_p):
                         paralog_element.append(element_p)  # ,**gene_id_name  indent+2
                     else:
-                        logger_hog.warning("issue 123434" + str(sh) + str(sub_clade))
+                        logger.warning("issue 123434" + str(sh) + str(sub_clade))
 
                 element_list.append(paralog_element)
             elif len(list_of_subhogs_of_same_clade) == 1:
@@ -232,9 +327,9 @@ class HOG:
                     if str(element):  # element could be  <Element 'geneRef' at 0x7f7f9bacb450>
                         element_list.append(element)  # indent+2
                     else:
-                        logger_hog.warning("issue 12359 "+str(subhog))
+                        logger.warning("issue 12359 "+str(subhog))
                 else:
-                    logger_hog.warning("issue 12369 " + str(subhog))
+                    logger.warning("issue 12369 " + str(subhog))
 
         if len(element_list) == 1:
             return element_list[0]
@@ -245,7 +340,7 @@ class HOG:
             num_species_tax_hog = len(set([i.split("||")[1] for i in self._members]))  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
             completeness_score = round(num_species_tax_hog/self._num_species_tax_speciestree,4)
             property_element = ET.SubElement(hog_elemnt, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
-            property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(self._tax_now)})
+            property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(self._tax_now.name)})
 
             for element in element_list:
                 hog_elemnt.append(element)
@@ -269,3 +364,42 @@ class HOG:
            </paralogGroup>
         </orthologGroup>
 """
+
+
+def split_hog(hog:HOG, *partitions):
+    """splits a hog into parts based to the partitions provided.
+
+    The partitions need to be a lists of Representatives (or simply members)
+    of the given HOG.
+
+    :param partitions:  a list or a tuple of Representatives of the current HOG
+    :type partitions:   List[Representatives]
+    :returns List[HOG]: a list of HOG objects splitting the original HOG in the
+                        desired partitions.
+    """
+    max_depth = 4
+    if len(partitions) < 2:
+        raise ValueError(f"Must provide at least two partitions to split {hog}")
+    partitions = [set(hog.find_representative(r) for r in part) for part in partitions]
+    if not all(p1.isdisjoint(p2) for p1, p2 in itertools.combinations(partitions, 2)):
+        raise ValueError(f"Not all partitions are non-overlapping {partitions}")
+    #if sum(len(p) for p in partitions) != len(set(hog.get_representatives())):
+    #    raise ValueError(f"Partitions to split {hog} must cover all {len(hog.get_representatives())} representatives, but cover only {sum(len(p) for p in partitions)}.")
+    rep_to_subhog_list = {rep: hog.get_subhog_path(rep.get_id(), max_depth) for part in partitions for rep in part}
+
+    logger.debug(f"Subhog paths of represenatatives for {hog}")
+    for i, part in enumerate(partitions):
+        logger.debug(f"---Partition {i} -----")
+        for rep in part:
+            path = " --> ".join(str(h) for h in rep_to_subhog_list[rep])
+            logger.debug(f"{rep.get_id()}: {path}")
+
+    first_level_subhogs = [set(rep_to_subhog_list[rep][0] for rep in part) for part in partitions]
+    if all(s1.isdisjoint(s2) for s1, s2 in itertools.combinations(first_level_subhogs, 2)):
+        logger.info(f"Splitting {hog} into {len(first_level_subhogs)} subhogs: {first_level_subhogs}")
+        hogs = []
+        for p, subhogs in enumerate(first_level_subhogs):
+            h = HOG(subhogs, taxnomic_range=hog.taxlevel, rhogid=hog.rhogid, msa=hog.get_msa(), representatives=partitions[p])
+            hogs.append(h)
+        return hogs
+    #raise RuntimeError("this part of the code needs more thinking")

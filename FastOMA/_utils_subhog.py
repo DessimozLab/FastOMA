@@ -14,11 +14,14 @@ import numpy as np
 import sys
 from os import listdir
 
+from . import _utils_frag_SO_detection
 
-from ._config import logger_hog
-from . import _config
+from ._wrappers import logger
 from . import _wrappers
 
+
+automated_trimAL = False    # todo not tested properly
+label_SD_internal = "species_overlap"  # todo the other option "reconciliation" hasn't been tested properly
 
 """
 fragments in the code mean poorly annotated genes that should be one gene.
@@ -47,7 +50,7 @@ def read_species_tree(species_tree_address):
 
     output (species_tree)
     """
-    # logger_hog.info(species_tree_address)
+    # logger.info(species_tree_address)
     # print(round(os.path.getsize(species_tree_address)/1000),"kb")
     format_tree = species_tree_address.split(".")[-1]
     # print("there shouldnt be any space in the tree name internal node name as well")
@@ -55,6 +58,7 @@ def read_species_tree(species_tree_address):
         project = Phyloxml()
         project.build_from_file(species_tree_address)
         # Each tree contains the same methods as orthoxml_to_newick.py PhyloTree object
+        species_tree =""
         for species_tree in project.get_phylogeny():
             species_tree = species_tree
         for node_species_tree in species_tree.traverse(strategy="postorder"):
@@ -71,10 +75,10 @@ def read_species_tree(species_tree_address):
             try:
                 species_tree = Tree(species_tree_address)
             except:
-                logger_hog.error("Format of species tree is not known or the file doesn't exist "+species_tree_address )
+                logger.error("Format of species tree is not known or the file doesn't exist "+species_tree_address )
                 sys.exit()
     else:
-        logger_hog.error("For now we accept phyloxml or nwk format for input species tree.or the file doesn't exist "+species_tree_address)
+        logger.error("For now we accept phyloxml or nwk format for input species tree.or the file doesn't exist "+species_tree_address)
         sys.exit()
 
     return species_tree
@@ -183,38 +187,36 @@ def get_score_all_root(gtree, stree):
 
     return gtree
 
-def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_children_level_list=[]):
-    if _config.add_outgroup:
-        pass # midpoint rooting is done in _wrapper afrer adding the outgroup once
+def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, conf_infer_subhhogs, hogs_children_level_list=[]):
 
-    elif _config.rooting_method == "midpoint":
+    if conf_infer_subhhogs.gene_rooting_method == "midpoint":
         r_outgroup = gene_tree.get_midpoint_outgroup()
         try:
             gene_tree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
         except:
             pass
-    elif  _config.rooting_method == "Nevers_rooting":
-        logger_hog.info("Nevers_rooting started for " +str(gene_tree.write(format=1, format_root_node=True)))
-        species= Tree("/work/FAC/FBM/DBC/cdessim2/default/smajidi1/qfo/qfo_run_raw/in_folder/species_tree.nwk",format=1)
-        gene_tree  = get_score_all_root(gene_tree, species)
-        logger_hog.info("Nevers_rooting finished for " + str(gene_tree.write(format=1, format_root_node=True)))
+    elif  conf_infer_subhhogs.gene_rooting_method == "Nevers_rooting":
+        logger.info("Nevers_rooting started for " +str(gene_tree.write(format=1, format_root_node=True)))
+        species = Tree("species_tree.nwk", format=1)
+        gene_tree = get_score_all_root(gene_tree, species)
+        logger.info("Nevers_rooting finished for " + str(gene_tree.write(format=1, format_root_node=True)))
 
-    elif _config.rooting_method == "mad":
+    elif conf_infer_subhhogs.gene_rooting_method == "mad":
         gene_tree = _wrappers.mad_rooting(genetree_msa_file_addr) # todo check with qouted gene tree
 
-    elif _config.rooting_method == "outlier":  # todo need check with new gene tree
-        gene_tree = PhyloTree(gene_tree_raw + ";", format=0)
+    elif conf_infer_subhhogs.gene_rooting_method == "outlier":  # not yet implmented completely, todo need check with new gene tree
+        gene_tree = PhyloTree(str(gene_tree), format=0)
         outliers = find_outlier_leaves(gene_tree)
         r_outgroup = midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
         gene_tree.set_outgroup(r_outgroup)
     else:
-        logger_hog.warning("rooting method not found !!   * * * * *  *")
+        logger.warning("rooting method not found !!   * * * * *  *")
 
     all_species_dubious_sd_dic = {}
-    if _config.label_SD_internal == "species_overlap":
-        (gene_tree, all_species_dubious_sd_dic) = label_sd_internal_nodes(gene_tree)
+    if label_SD_internal == "species_overlap":
+        (gene_tree, all_species_dubious_sd_dic) = label_sd_internal_nodes(gene_tree, conf_infer_subhhogs.threshold_dubious_sd)
 
-    elif _config.label_SD_internal == "reconcilation": # todo need check with new gene tree
+    elif label_SD_internal == "reconciliation": # todo need check with new gene tree
         node_species_tree_nwk_string = node_species_tree.write(format=1)
         node_species_tree_PhyloTree = PhyloTree(node_species_tree_nwk_string, format=1)
         gene_tree_nwk_string = gene_tree.write(format=1, format_root_node=True)
@@ -239,10 +241,12 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, hogs_child
                         node.name = node_name_new
                         break
 
-    if _config.gene_trees_write:
-        gene_tree.write(format=1, format_root_node=True, outfile=genetree_msa_file_addr+"_SD_labeled.nwk")
+    if conf_infer_subhhogs.gene_trees_write:
 
-    return gene_tree, all_species_dubious_sd_dic
+        genetree_msa_file_addr = genetree_msa_file_addr[:-1] + str(int(genetree_msa_file_addr[-1]) + 1)
+        gene_tree.write(format=1, format_root_node=True, outfile=genetree_msa_file_addr+"_SpDupLabel.nwk") # speciatio duplication labeled
+
+    return gene_tree, all_species_dubious_sd_dic, genetree_msa_file_addr
 
 
 
@@ -292,7 +296,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid):
     #             # list_children_names = [str(node_child.name) for node_child in node_children]
     #             # node.name = '_'.join(list_children_names)
     #             # ?? to imrpove, if the species tree has internal node name, keep it,
-    #             # then checn condition in  _infer_subhog.py, where logger_hog.info("Finding hogs for rhogid: "+str(rh
+    #             # then checn condition in  _infer_subhog.py, where logger.info("Finding hogs for rhogid: "+str(rh
     #             node.name = "internal_" + str(counter_internal)  #  +"_rhg"+rhogid  #  for debuging
     #             counter_internal += 1
     # print("Working on the following species tree.")
@@ -302,7 +306,7 @@ def prepare_species_tree(rhog_i, species_tree, rhogid):
 
 
 
-def label_sd_internal_nodes(tree_out):
+def label_sd_internal_nodes(tree_out, threshold_dubious_sd):
     """
     for the input gene tree, run the species overlap method
     and label internal nodes of the gene tree
@@ -340,15 +344,12 @@ def label_sd_internal_nodes(tree_out):
             if node_children_species_intersection:  # print("node_children_species_list",node_children_species_list)
                 counter_D += 1
                 node.name = "D" + str(counter_D) + "_"+str(len(node_children_species_intersection))+"_"+str(len(node_children_species_union))
-                if len(node_children_species_intersection)/ len(node_children_species_union) <= _config.threshold_dubious_sd:
+                if len(node_children_species_intersection)/ len(node_children_species_union) <= threshold_dubious_sd:
                     all_species_dubious_sd_dic[node.name] = list(node_children_species_intersection)
             else:
                 counter_S += 1
                 node.name = "S" + str(counter_S)
     return tree_out, all_species_dubious_sd_dic
-
-
-
 
 
 
@@ -418,7 +419,7 @@ def get_reconciled_tree_zmasek(gtree, sptree, inplace=False):
 
     # set/compute the mapping function M(g) for the
     # leaf nodes in the gene tree (see paper for details)
-    species = [i.name for i in sptree.get_leaves()]   #sptree.get_species()
+    # species = [i.name for i in sptree.get_leaves()]   #sptree.get_species()
     for g_node in gtree.get_leaves():
         g_node_species = g_node.name.split("||")[1]
         g_node.add_feature("M", sp2node[g_node_species])
@@ -446,125 +447,136 @@ def get_reconciled_tree_zmasek(gtree, sptree, inplace=False):
     return gtree
 
 
+class MSAFilter:
+    def __init__(self, levelprocessor, conf):
+        self.lp = levelprocessor
+        self.gap_ratio_row = conf.gap_ratio_row
+        self.gap_ratio_col = conf.gap_ratio_col
+        self.min_col_trim = conf.min_col_trim
 
+    def filter_msa(self, msa):
+        proteins_to_be_removed = set([])
+        if len(msa[0]) < self.min_col_trim:
+            return msa, proteins_to_be_removed
 
-def msa_filter_col(msa, tresh_ratio_gap_col, gene_tree_file_addr=""):
-    # gene_tree_file_addr contains roothog numebr
-    # note this is used in hog class as well
-
-    ratio_col_all = []
-    length_record = len(msa[0])
-    num_records = len(msa)
-    keep_cols = []
-    for col_i in range(length_record):
-        col_values = [record.seq[col_i] for record in msa]
-        gap_count=col_values.count("-") + col_values.count("?") + col_values.count(".") +col_values.count("~")
-        ratio_col_nongap = 1- gap_count/num_records
-        ratio_col_all.append(ratio_col_nongap)
-        if ratio_col_nongap >= tresh_ratio_gap_col:
-            keep_cols.append(col_i)
-    #plt.hist(ratio_col_all,bins=100) # , bins=10
-    #plt.show()
-    #plt.savefig(gene_tree_file_addr+ "filtered_row_"+"_col_"+str(tresh_ratio_gap_col)+".txt.pdf")
-    #print("- Columns indecis extracted. Out of ", length_record,"columns,",len(keep_cols),"is remained.")
-    msa_filtered_col = []
-    for record in msa:
-        record_seq = str(record.seq)
-        record_seq_edited = ''.join([record_seq[i] for i in keep_cols])
-        if len(record_seq_edited) > 1:
-            record_edited = SeqRecord(Seq(record_seq_edited), record.id, '', '')
-            msa_filtered_col.append(record_edited)
-
-    if _config.msa_write_all and gene_tree_file_addr:
-        out_name_msa=gene_tree_file_addr+"_filtered_"+"col_"+str(tresh_ratio_gap_col)+".msa.fa"
-        handle_msa_fasta = open(out_name_msa, "w")
-        SeqIO.write(msa_filtered_col, handle_msa_fasta, "fasta")
-        handle_msa_fasta.close()
-    # print("- Column-wise filtering of MSA is finished",len(msa_filtered_col),len(msa_filtered_col[0]))
-    return MultipleSeqAlignment(msa_filtered_col)
-
-
-def msa_filter_row(msa, inferhog_tresh_ratio_gap_row, gene_tree_file_addr=""):
-    msa_filtered_row = []
-    ratio_records = []
-    for record in msa:
-        seq = record.seq
-        seqLen = len(record)
-        gap_count = seq.count("-") + seq.count("?") + seq.count(".") +seq.count("~")
-        if seqLen:
-            ratio_record_nongap = 1-gap_count/seqLen
-            ratio_records.append(round(ratio_record_nongap, 3))
-            if ratio_record_nongap >= inferhog_tresh_ratio_gap_row:
-                msa_filtered_row.append(record)
-        else:
-            logger_hog.warning("issue 12788 : error , seq len is zero when msa_filter_row")
-    if _config.msa_write_all and gene_tree_file_addr:
-        out_name_msa = gene_tree_file_addr +"_filtered_row_"+str(inferhog_tresh_ratio_gap_row)+".msa.fa"
-        handle_msa_fasta = open(out_name_msa, "w")
-        SeqIO.write(msa_filtered_row, handle_msa_fasta, "fasta")
-        handle_msa_fasta.close()
-
-    return MultipleSeqAlignment(msa_filtered_row)
-
-
-
-def filter_msa(merged_msa, gene_tree_file_addr, hogs_children_level_list):
-
-    msa_filt_row_1 = merged_msa
-    # if _config.inferhog_filter_all_msas_row:
-    #  msa_filt_row_1 = _utils_subhog.msa_filter_row(merged_msa, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr)
-    # if   msa_filt_row_1 and len(msa_filt_row_1[0]) >=
-    if len(msa_filt_row_1[0]) >= _config.inferhog_min_cols_msa_to_filter:
         # (len(merged_msa) > 10000 and len(merged_msa[0]) > 3000) or (len(merged_msa) > 500 and len(merged_msa[0]) > 5000) or (len(merged_msa) > 200 and len(merged_msa[0]) > 9000):
         # for very big MSA, gene tree is slow. if it is full of gaps, let's trim the msa.
-        # logger_hog.debug( "We are doing MSA trimming " + rhogid + ", for taxonomic level:" + str(node_species_tree.name))
+        # logger.debug( "We are doing MSA trimming " + rhogid + ", for taxonomic level:" + str(node_species_tree.name))
         # print(len(merged_msa), len(merged_msa[0]))
-
-        if _config.automated_trimAL:
-            msa_filt_col = msa_filt_row_1
-            msa_filt_row_col = _wrappers.trim_msa(msa_filt_row_1)
+        if automated_trimAL:
+            msa_filt_col = msa
+            msa_filt_row_col = _wrappers.trim_msa(msa)
         else:
-            msa_filt_col = msa_filter_col(msa_filt_row_1, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_0_")
+            msa_filt_col = self.msa_filter_col(msa)
             msa_filt_row_col = msa_filt_col
             if msa_filt_col and msa_filt_col[0] and len(msa_filt_col[0]):
-                msa_filt_row_col_raw = msa_filter_row(msa_filt_col, _config.inferhog_tresh_ratio_gap_row, gene_tree_file_addr+"_1_")
-                msa_filt_row_col = msa_filter_col(msa_filt_row_col_raw, _config.inferhog_tresh_ratio_gap_col, gene_tree_file_addr+"_2_")
-
+                msa_filt_row_col_raw = self.msa_filter_row(msa_filt_col)
+                msa_filt_row_col = self.remove_empty_columns(msa_filt_row_col_raw)
 
         # compare msa_filt_row_col and msa_filt_col,
         if len(msa_filt_row_col) != len(msa_filt_col):  # some sequences are removed
             set_prot_before = set([i.id for i in msa_filt_col])
             set_prot_after = set([i.id for i in msa_filt_row_col])
-            prots_to_remove_level = set_prot_before - set_prot_after
-            for prots_to_remove in prots_to_remove_level:
-                logger_hog.debug("** we are removing the sequence "+str(prots_to_remove)+" due to trimming")
+            proteins_to_be_removed = set_prot_before - set_prot_after
+            for prot_to_remove in proteins_to_be_removed:
+                logger.debug("** we are removing the sequence " + str(prot_to_remove) + " due to trimming")
                 # we may want to tag it in the hog object
-            #assert len(prots_to_remove_level), "issue 31235"
-            #prots_to_remove |= prots_to_remove_level
-            # todo: we may want to remove prot from all subhogs
-            # should I remove them from subhog._members ? we are doing so for merging fragments or low species overlap I guess
-            # hogs_children_level_list_raw = hogs_children_level_list
-            # hogs_children_level_list = []
-            # for hog_i in hogs_children_level_list_raw:
-            #   for prot_to_remove in prots_to_remove:
-            #         result_removal = hog_i.remove_prot_from_hog(prot_to_remove)
-            #       if result_removal != 0:
-            #             hogs_children_level_list.append(hog_i)
         else:
             msa_filt_row_col = msa_filt_col
-        merged_msa_filt = msa_filt_row_col
-    else:
-        msa_filt_row_col = msa_filt_row_1
-        msa_filt_col = msa_filt_row_1
-        # the msa may be empty
-    # if len(msa_filt_row_col) < 2:
-    #    msa_filt_row_col = msa_filt_col[:2]
+        return msa_filt_row_col, proteins_to_be_removed
 
-    return (msa_filt_row_col, msa_filt_col, hogs_children_level_list)
+    def msa_filter_col(self, msa):
+        ratios = self._get_gap_ratios(msa)
+        keep_cols = [k for k in range(len(ratios)) if ratios[k] < self.gap_ratio_col]
+        if len(keep_cols) < len(ratios):
+            logger.info(f"Filtering columns (gap_ratio threshold={self.gap_ratio_col}): keep {len(keep_cols)}/{len(ratios)}")
+            logger.info(f"Gap ratio distribution (percentiles 10, 25, 50, 75, 90): {np.percentile(ratios, [10,25,50,75,90])}")
+            col_filtered_msa = self._filter_msa_cols(msa, keep_cols)
+        else:
+            col_filtered_msa = msa
+        if self.lp is not None:
+            self.lp.write_msa_or_tree_if_necessary(col_filtered_msa, f"_filterCol_{self.gap_ratio_col}.fa")
+        return col_filtered_msa
+
+    def _filter_msa_cols(self, msa, keep_cols):
+        msa_filtered_col = []
+        for record in msa:
+            record_seq = str(record.seq)
+            record_seq_edited = ''.join([record_seq[i] for i in keep_cols])
+            if len(record_seq_edited) > 1:
+                record_edited = SeqRecord(Seq(record_seq_edited), record.id, '', '')
+                msa_filtered_col.append(record_edited)
+        return MultipleSeqAlignment(msa_filtered_col)
+
+    def _get_gap_ratios(self, msa):
+        length_record = len(msa[0])
+        num_records = len(msa)
+        ratios = np.zeros((length_record,), dtype="f8")
+        for col_i in range(length_record):
+            col_values = [record.seq[col_i] for record in msa]
+            gap_count = col_values.count("-") + col_values.count("?") + col_values.count(".") + col_values.count("~")
+            ratios[col_i] = gap_count / num_records
+        return ratios
+
+    def remove_empty_columns(self, msa):
+        ratios = self._get_gap_ratios(msa)
+        keep_cols = [k for k in range(len(ratios)) if ratios[k] < 1]
+        if len(keep_cols) < len(ratios):
+            logger.info(f"Removing {len(ratios) - len(keep_cols)} empty columns from msa")
+            return self._filter_msa_cols(msa, keep_cols)
+        return msa
+
+    def msa_filter_row(self, msa:MultipleSeqAlignment):
+        msa_filtered_row = []
+        ratio_records = []
+        for record in msa:
+            seq = record.seq
+            seqLen = len(record)
+            gap_count = seq.count("-") + seq.count("?") + seq.count(".") +seq.count("~")
+            if seqLen:
+                ratio_record_nongap = 1-gap_count/seqLen
+                ratio_records.append(round(ratio_record_nongap, 3))
+                if ratio_record_nongap >= self.gap_ratio_row:
+                    msa_filtered_row.append(record)
+            else:
+                logger.warning("issue 12788 : error , seq len is zero when msa_filter_row")
+        row_filtered_msa = MultipleSeqAlignment(msa_filtered_row)
+        if self.lp is not None:
+            self.lp.write_msa_or_tree_if_necessary(row_filtered_msa, f"_filterRow_{self.gap_ratio_row}.fa")
+        return row_filtered_msa
 
 
-class PhyloTree:
-    pass
+class MSAFilterElbow(MSAFilter):
+   def msa_filter_col(self, msa):
+        """alternative filtering based on the extrem point (highest off-diagonal distance) of a
+        plot of gap-ratio vs fraction of columns included."""
+        ratios = self._get_gap_ratios(msa)
+        # compute points (gap_ratio, frac_of_cols) where frac_of_cols is the fraction of columns that has a lower gap ratio
+        gap_ratio_and_col_frac = np.array([(r, sum(ratios < r) / len(ratios)) for r in ratios])
+        # off diagonal distance can be computed by np.cross(p1 - [0,0], pnt - [0,0]) / dist([1,1] - [0,0])
+        # divider is constant for all points (can be left away)
+        p1 = np.array([1, 1])
+        dist_from_diag = np.cross(gap_ratio_and_col_frac, p1, axisa=1)
+        idx = abs(dist_from_diag).argsort()
+        k = idx[-1]
+        threshold = gap_ratio_and_col_frac[k][0]
+        logger.info(f"Estimated elbow gap ratio: {threshold} (dist from diag: {dist_from_diag[k]}; frac of msa: {gap_ratio_and_col_frac[k][1]})")
+        logger.info(f"Gap ratio to apply: max({threshold}, {self.gap_ratio_col})")
+        threshold = max(threshold, self.gap_ratio_col)
+
+        keep_cols = [k for k in range(len(ratios)) if ratios[k] < threshold]
+        col_filtered_msa = self._filter_msa_cols(msa, keep_cols)
+        if self.lp is not None:
+            self.lp.write_msa_or_tree_if_necessary(col_filtered_msa, f"_filterCol_{threshold:.3f}.fa")
+        return col_filtered_msa
+
+
+class MSAFilterTrimAL(MSAFilter):
+    def filter_msa(self, msa):
+        filtered = _wrappers.trim_msa(msa)
+        removed_seqs = set(r.id for r in msa) - set(r.id for r in filtered)
+        return filtered, removed_seqs
+
 
 def get_farthest_leaf(tree: PhyloTree, target_leaf: PhyloTree, leaves_list: List[PhyloTree]) -> Tuple[float, PhyloTree]:
     """

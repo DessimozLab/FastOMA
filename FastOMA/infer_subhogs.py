@@ -1,56 +1,67 @@
-
-
 import os
 
 from . import _utils_subhog
 from . import _infer_subhog
-from . import _config
-from ._config import logger_hog
+from ._wrappers import logger
+from . import __version__ as fastoma_version
 
+"""
+
+fastoma-infer-subhogs  --input-rhog-folder rhogs_rest/0  --output-pickles "pickle_hogs"  \
+    --species-tree  species_tree_checked.nwk -vv --parallel # --msa-write --gene-trees-write
+    
+"""
 
 def fastoma_infer_subhogs():
-    _config.set_configs()
-    logger_hog.debug("logger_level is "+str(_config.logger_level))
-    logger_hog.debug("input_rhog_folder is " + str(_config.input_rhog_folder))
-    logger_hog.debug("parallel is " + str(_config.parallel))
-    logger_hog.debug("species_tree_checked is " + str(_config.species_tree_checked))
-    logger_hog.debug("fragment_detection is " + str(_config.fragment_detection))
-    logger_hog.debug("low_so_detection is " + str(_config.low_so_detection))
-    logger_hog.debug("inferhog_max_workers_num is " + str(_config.inferhog_max_workers_num))
-    logger_hog.debug("inferhog_tresh_ratio_gap_row is " + str(_config.inferhog_tresh_ratio_gap_row))
-    logger_hog.debug("inferhog_tresh_ratio_gap_col is " + str(_config.inferhog_tresh_ratio_gap_col))
-    logger_hog.debug("inferhog_min_cols_msa_to_filter is " + str(_config.inferhog_min_cols_msa_to_filter))
-    logger_hog.debug("big_rhog_size is " + str(_config.big_rhog_size))
-    logger_hog.debug("omamer_family_threshold is " + str(_config.omamer_family_threshold))
-    logger_hog.debug("hogclass_max_num_seq is " + str(_config.hogclass_max_num_seq))
-    logger_hog.debug("hogclass_min_cols_msa_to_filter is " + str(_config.hogclass_min_cols_msa_to_filter))
-    logger_hog.debug("inferhog_resume_rhog is " + str(_config.inferhog_resume_rhog))
-    logger_hog.debug("inferhog_resume_subhog is " + str(_config.inferhog_resume_subhog))
-    logger_hog.debug("fragment_detection is " + str(_config.fragment_detection))
-    logger_hog.debug("fragment_detection_msa_merge is " + str(_config.fragment_detection_msa_merge))
-    logger_hog.debug("low_so_detection is " + str(_config.low_so_detection))
-    logger_hog.debug("threshold_dubious_sd is " + str(_config.threshold_dubious_sd))
-    logger_hog.debug("overlap_fragments is " + str(_config.overlap_fragments))
-    logger_hog.debug("gene_trees_write is " + str(_config.gene_trees_write))
-    logger_hog.debug("msa_write is " + str(_config.msa_write))
-    logger_hog.debug("gene_trees_write_all is " + str(_config.gene_trees_write_all))
-    logger_hog.debug("msa_write_all is " + str(_config.msa_write_all))
-    logger_hog.debug("keep_subhog_each_pickle is " + str(_config.keep_subhog_each_pickle))
 
+    import argparse
+    parser = argparse.ArgumentParser(description="checking parameters for FastOMA",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--version", action="version", version="FastOMA v"+fastoma_version)
+    parser.add_argument("--input-rhog-folder", required=True, help="Path to the input rootHOG folder.")
+    parser.add_argument("--parallel", action='store_true', help="use concurrent parallel per rootHOG")
+    parser.add_argument("--species-tree", required=True,
+                        help="Path to the input species tree file in newick format")
+    parser.add_argument("--output-pickles", required=False, default="pickle_hogs",
+                        help="Path to the output folder")
 
-    address_rhogs_folder = _config.input_rhog_folder
-    # inferhog_concurrent_on = False
-    inferhog_concurrent_on = _config.parallel #  sys.argv[2]   # "False"  # "False"  #
+    parser.add_argument("--threshold-dubious-sd", required=False, type=float, default=1/10,
+                        help="Threshold to remove proteins in a gene tree due to low species overlap score, not enough evidence for duplication event.") # threshold_dubious_sd
+    parser.add_argument("--number-of-samples-per-hog", type=int, default=5,
+                        help="Number of representatives (sequences) per HOG. Defaults to ")
+    parser.add_argument("--overlap-fragments", required=False, type=float, default=0.15,
+                        help="Threshold overlap between two sequences (rows) in MSA to decide whether they are fragments of a gene.")  # overlap_fragments
+    parser.add_argument("--gene-rooting-method", required=False, default="midpoint", # gene_rooting_method
+                        help="The method used for rooting of gene tree :    midpoint    mad     Nevers_rooting .")
+    parser.add_argument("--gene-trees-write", action='store_true',
+                        help="writing the all gene trees .")  # the order seems to be nwk_SD_labeled.nwk, dubious_sd0.nwk_SD_labeled.nwk, dubious_sd1.nwk_SD_labeled.nwk
+    parser.add_argument("--msa-write", action='store_true',
+                        help="writing the raw MSAs (might have more genes that the final gene tree).")
+    parser.add_argument("--msa-filter-method",
+                        choices=("col-row-threshold", "col-elbow-row-threshold", "trimal"),
+                        default="col-row-threshold",
+                        help="The method used for filtering MSAs.")
+    parser.add_argument("--gap-ratio-row", required=False, type=float, default=0.3,
+                        help="For trimming the MSA, the threshold of ratio of gaps for each row.")
+    parser.add_argument("--gap-ratio-col", required=False, type=float, default=0.5,
+                        help="For trimming the MSA, the threshold of ratio of gaps for each column.")
+    parser.add_argument("--min-col-trim", required=False, type=int, default=50,  # todo min rows trim
+                        help="min no. columns in msa to consider for filtering")
+    parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
+    conf_infer_subhhogs = parser.parse_args()
+    logger.setLevel(level=30 - 10 * min(conf_infer_subhhogs.v, 2))
+    logger.debug("Arguments: %s", conf_infer_subhhogs)
 
+    address_rhogs_folder = conf_infer_subhhogs.input_rhog_folder
+    # address_rhogs_folder = "./"  # _config.input_rhog_folder
+    inferhog_concurrent_on = conf_infer_subhhogs.parallel
     if inferhog_concurrent_on:
         print("parallelization for subhog inference is on.")
 
-    pickles_rhog_folder = "./pickle_hogs" # pickles_temp/ pickle_rhogs
-    if not os.path.exists(pickles_rhog_folder):
-        os.makedirs(pickles_rhog_folder)
+    if not os.path.exists(conf_infer_subhhogs.output_pickles):
+        os.makedirs(conf_infer_subhhogs.output_pickles)
 
-    pickles_subhog_folder_all = "./"
-    print("input is", address_rhogs_folder)
+    pickles_subhog_folder_all = "./" # pickle per taxonomic level
 
     list_rhog_fastas_files = _utils_subhog.list_rhog_fastas(address_rhogs_folder)
     print("there are ", len(list_rhog_fastas_files), "rhogs in the input folder")
@@ -60,39 +71,12 @@ def fastoma_infer_subhogs():
     list_rhog_fastas_files_rem = _utils_subhog.list_rhog_fastas(address_rhogs_folder)
     print("there are ", len(list_rhog_fastas_files_rem), "rhogs remained in the input folder", list_rhog_fastas_files_rem[:5] )
 
-    hogs_rhog_xml_batch = _infer_subhog.read_infer_xml_rhogs_batch(list_rhog_fastas_files_rem, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, rhogs_fa_folder)
+    hogs_rhog_xml_batch = _infer_subhog.read_infer_xml_rhogs_batch(list_rhog_fastas_files_rem, inferhog_concurrent_on, conf_infer_subhhogs.output_pickles, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
 
     print("finsihed ", address_rhogs_folder)
 
-# TODO all below
+    threshold_dubious_sd= 0.1
 
-"""
-  
-- use same seed for hog sampling and fasttree/mafft if they have 
-- add python code for validate the input make sure the file is there and decent
-- check input tree 
-_utils_subhog line 92 add check for spaces or chars in 
 
-- print as debug all the variables 
-# [_config.oma_database_address, _config.working_folder_root , _config.species_tree_address , _config.working_id ,
- _config.protein_format_qfo_dataset, _config.in_folder, _config.omamer_fscore_treshold_big_rhog,
-  _config.treshold_big_rhog_szie, _config.gene_trees_write, _config.keep_subhog_each_pickle, 
-  _config.hogclass_max_num_seq, _config.hogclass_min_cols_msa_to_filter, _config.hogclass_tresh_ratio_gap_col, _config.automated_trimAL, _config.lable_SD_internal ,
-   _config.rooting_method, _config.rooting_mad_executable_path , _config.inferhog_tresh_ratio_gap_row , _config.inferhog_tresh_ratio_gap_col , _config.inferhog_min_cols_msa_to_filter
-    , _config.inferhog_filter_all_msas_row , _config.inferhog_resume_rhog  , _config.inferhog_resume_subhog , _config.inferhog_max_workers_num , _config.inferhog_min_hog_size_xml, _config.logger_level]
-
-FileExistsError: [Errno 17] File exists: '/work/FAC/FBM/DBC/cdessim2/default/smajidi1/fastget/qfo3/working_nf//pickles_subhog/'
-
-when concurrent has a issue it doesnt stop
-Out[6]: {<Future at 0x7f1b48d9afa0 state=finished raised TypeError>: 'KORCO_'}
-add eception to show , whn this happens for which taxnomic level and rhog
-
-proteins were associated with known HOGs, and warn if less than ~80 % of proteins are associated with known HOGs.
-
-double check 
-     prots_to_remove
-     it seems that it always an input argument! 
-     
-
-"""
-
+if __name__ == "__main__":
+    fastoma_infer_subhogs()

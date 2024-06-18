@@ -2,12 +2,16 @@ import sys
 from ete3 import Tree
 import os
 import collections
-import argparse
 
-from . import _config
 from . import _utils_roothog
-logger = _config.logger_hog
+from ._wrappers import logger
+from . import __version__ as fastoma_version
 
+"""
+
+fastoma-check-input --proteomes proteome --species-tree species_tree.nwk --out-tree species_tree_checked.nwk --hogmap hogmap -vv
+
+"""
 
 def check_proteome_files(proteome_folder):
     proteome_files = os.listdir(proteome_folder)
@@ -198,6 +202,7 @@ def check_splice(isoform_by_gene_all):
 def fastoma_check_input():
     import argparse
     parser = argparse.ArgumentParser(description="checking parameters for FastOMA")
+    parser.add_argument("--version", action="version", version="FastOMA v"+fastoma_version)
     parser.add_argument("--proteomes", required=True, help="Path to the folder containing the input proteomes")
     parser.add_argument("--species-tree", required=True, help="Path to the input species tree file in newick format")
     parser.add_argument("--out-tree", required=True, help="Path to output file for sanitised species tree. ")
@@ -205,9 +210,11 @@ def fastoma_check_input():
     parser.add_argument("--hogmap", help="Path to the folder containing the hogmap files")
     parser.add_argument("--omamer_db", help="Path to the omamer database")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
-    conf = parser.parse_args()
+    conf = parser.parse_args() # conf_check_input
+
     logger.setLevel(level=30 - 10 * min(conf.v, 2))
     logger.debug("Arguments: %s", conf)
+
 
     species_names = check_proteome_files(conf.proteomes)
     if not species_names:

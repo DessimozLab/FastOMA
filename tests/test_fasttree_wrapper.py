@@ -1,11 +1,13 @@
 import unittest
 
-import FastOMA._config
+
 from Bio import AlignIO
 from FastOMA._wrappers import infer_gene_tree
 from FastOMA.zoo.wrappers import WrapperError
 import pathlib
 this_dir = pathlib.Path(__file__).parent
+
+# todo needs update
 
 
 class FastTreeTester(unittest.TestCase):
@@ -18,5 +20,6 @@ class FastTreeTester(unittest.TestCase):
 
     def test_treebuilding_with_correct_msa(self):
         msa = AlignIO.read(this_dir / "data" / "correct-msa.fa", "fasta")
-        tree = infer_gene_tree(msa, "/tmp")
+        gene_rooting_method= ""
+        tree = infer_gene_tree(msa, "/tmp", gene_rooting_method)
         self.assertIn("HUMAN01350", tree)
