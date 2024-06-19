@@ -2,7 +2,7 @@ FastOMA
 ======
 FastOMA is a scalable software package to infer orthology relationship.
 
-Want to learn more about FastOMA and try it online, check out [FastOMA academy](https://omabrowser.org/oma/academy/module/fastOMA_2023) !
+Want to learn more about FastOMA and try it online, check out [FastOMA academy](https://omabrowser.org/oma/academy/module/fastOMA_2023) and FastOMA talk at ISMB 2023 on [YouTube](https://youtu.be/KGetTUMDvlA?si=efeqKKarwpIFgXyN)!
 
 # Input and Output: 
 
@@ -11,7 +11,7 @@ Want to learn more about FastOMA and try it online, check out [FastOMA academy](
 The name of each fasta file is the name of species. Please make sure that the name of fasta records do not contain special characters including `||`.
 
 2. Rooted Species tree in [newick format](http://etetoolkit.org/docs/latest/tutorial/tutorial_trees.html#reading-newick-trees).
-A rough species tree is enough, and it does not need to be binary (fully resolved). Besides, we do not need branch lengths. You could use the NCBI tree via ete3 package. 
+A rough species tree is enough, and it does not need to be binary (fully resolved). Besides, we do not need branch lengths. You could use the NCBI tree via ete3 package via `cat list_taxanomic_id.txt | ete3 ncbiquery --tree > species_tree.nwk` (see [this](http://etetoolkit.org/documentation/ete-ncbiquery/)). 
 Note that the name of leaves of the tree (species name) should be the same as the file name of FASTAs (without `.fa` extension) (item 1). 
 And there shouldn't be any repeated names in leaves names and internal node names. The tree should not be with quotation.  
 
@@ -38,7 +38,7 @@ The updated tree will be stored in the output folder named as `species_tree_chec
 
 ### Main output:
 Orthology information as HOG structure in [OrthoXML](https://orthoxml.org/) format
-which can be used with [PyHAM](https://github.com/DessimozLab/pyham).
+which can be used with [PyHAM](https://github.com/DessimozLab/pyham). Learn more about HOG [here](https://youtu.be/5p5x5gxzhZA?si=YxP-1VgKSH5e_wMS) and [here](https://omabrowser.org/oma/homologs/).
 The details of output are described [below](#expected-output-structure-for-test-data).
 
 Additionally, FastOMA generates TSV files for rootlevel HOGs (deepest level) and 
@@ -113,7 +113,7 @@ nextflow run FastOMA.nf -profile docker --container_version "sha-$(git rev-list 
   ```
   You can also install FastOMA from a clone of the repository in editable mode with `pip install -e .[report,nextflow]`.
 
-- run pipeline including with some testdata:
+- run pipeline including with some testdata (For more details, see the section [How to run FastOMA on the test data](https://github.com/DessimozLab/fastoma?tab=readme-ov-file#how-to-run-fastoma-on-the-test-data) )
   ```bash
   nextflow run FastOMA.nf -profile standard --input_folder testdata/in_folder --output_folder output -with-report
   ```
@@ -172,7 +172,7 @@ Nextflow provides support to run a workflow on different infrastructures. Select
 For FastOMA, we've implemented the following profiles below. Additional ones can also be created by specifying them in the `nextflow.config` file.
 
 ### Docker
-With `-profile docker` one can use docker as an execution platform. It requires docker to be installed on the system. The pipeline 
+With `-profile docker` one can use docker as an execution platform. It requires docker to be installed on the system (see [here](https://docs.docker.com/engine/install/)). The pipeline 
 will automatically fetch missing containers from dockerhub (e.g. dessimozlab/fastoma) if not found locally. By default, the version
 `latest` is used by the pipeline, however we provide images for any branch and release as well; even for every recent commit.
 One can select the desired container via the `--container_version` argument
@@ -187,6 +187,7 @@ This will use the container that is tagged with the current commit id. Similarly
 `--container_version "0.2.0"` to use the container with version `dessimozlab/fastoma:0.2.0` from dockerhub.
 
 ### Singularity
+Since Docker needs administrator privileges (root access), [Singluarity](https://apptainer.org/index.html) (a.k.a Apptainer) is a good alternative. This can be installed using [Conda](https://anaconda.org/conda-forge/singularity) with `conda install conda-forge::singularity`. However, in most of the academic HPC cluster, singluarity is already installed and can be called with `module load`.
 With `-profile singularity` singularity containers will be used to run the workflow. It requires singularity to 
 be installed on your system. The containers are automatically pulled from dockerhub and converted to singularity 
 containers. The same options as for [Docker](#docker) will be available.
@@ -207,7 +208,7 @@ set it up in `nextflow.config` based on the existing profiles and the documentat
 
 
 # How to run FastOMA on the test data
-Note : If you want to use FastOMA with Docker or other profiles check on the different [here](#using-different-nextflow-profiles).   
+Note : If you are using FastOMA with Docker or other profiles, check out the difference [here](#using-different-nextflow-profiles).   
 
 First, cd to the `testdata` folder and download the omamer database (optional) and change its name to `omamerdb.h5`.
 ```
