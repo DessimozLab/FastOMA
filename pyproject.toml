@@ -20,6 +20,7 @@ dependencies = [
     "lxml >=4.6,<6",
     "omamer ~=2.0",
     "pyham ~=1.1",
+    "numpy <2",   # temporary fix as pytables does not yet work with numpy 2.0
     "pyparsing",
     "networkx",
 ]
