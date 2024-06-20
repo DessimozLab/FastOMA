@@ -15,10 +15,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
-RUN pip install --upgrade hatch pip wheel
+RUN pip install --upgrade hatch pip
 COPY pyproject.toml .
 RUN python -m venv /app \
     && hatch dep show requirements --all > requirements.txt \
+    && /app/bin/pip install wheel setuptools \
     && /app/bin/pip install -r requirements.txt
 
 COPY . .
