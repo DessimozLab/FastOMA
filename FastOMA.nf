@@ -446,6 +446,7 @@ process extract_pairwise_ortholog_relations {
 process fastoma_report {
   publishDir params.output_folder, mode: 'copy'
   input:
+    path notebook
     path orthoxml
     path proteome_folder
     path species_tree_checked
@@ -461,7 +462,7 @@ process fastoma_report {
         >&2 echo "Ensure you have installed fastoma with the 'report' feature\n (e.g. pip install fastoma[report])"
         exit 1
     fi
-    papermill ${workflow.projectDir}/FastOMA/fastoma_notebook_stat.ipynb \
+    papermill $notebook \
               report.ipynb \
               -p output_folder "./" \
               -p proteome_folder "$proteome_folder"
@@ -479,6 +480,7 @@ workflow {
     hogmap_in = Channel.fromPath(params.hogmap_in, type:'dir')
 
     omamerdb = Channel.fromPath(params.omamer_db)
+    notebook = Channel.fromPath("$workflow.projectDir/FastOMA/fastoma_notebook_stat.ipynb", type: "file", checkIfExists: true).first()
     (species_tree_checked, ready_input_check) = check_input(proteome_folder, hogmap_in, species_tree, omamerdb, splice_folder)
     omamer_input_channel = proteomes.combine(omamerdb).combine(hogmap_in).combine(ready_input_check)
     hogmap = omamer_run(omamer_input_channel)
@@ -498,7 +500,7 @@ workflow {
         FALSE: n>25
     }
     extract_pairwise_ortholog_relations(orthoxml_file, c.TRUE)
-    fastoma_report(orthoxml_file, proteome_folder, species_tree_checked)
+    fastoma_report(notebook, orthoxml_file, proteome_folder, species_tree_checked)
 }
 
 workflow.onComplete {
