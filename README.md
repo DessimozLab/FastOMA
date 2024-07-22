@@ -139,8 +139,8 @@ bashMiniconda3.sh
 
 Then follow the instruction on the terminal. Finally, close and re-open the terminal and run
 ```
-conda create -n fastoma python=3.9 --file environment_conda.yml
-cond activate mamba activate FastOMA
+conda create -n fastoma python=3.9 --file environment-conda.yml
+conda activate fastoma
 ```
 Then, clone and install fastOMA using
 ```
@@ -154,7 +154,7 @@ Alternatively, you could use Mamba instead of Conda (which needs its own [instal
 Note that it is not encouraged to have both Mamba and conda on one system, [more info](https://stackoverflow.com/questions/76760906/installing-mamba-on-a-machine-with-conda).
 
 ```
-mamba env create -n FastOMA -f environment_conda.yml
+mamba env create -n FastOMA -f environment-conda.yml
 mamba activate FastOMA
 ```
 
