@@ -2,7 +2,7 @@ import groovy.json.JsonBuilder;
 
 // NXF_WRAPPER_STAGE_FILE_THRESHOLD='50000'
 
-params.input_folder = "testdata/in_folder"
+params.input_folder = "${projectDir}/testdata/in_folder"
 params.output_folder = "out_folder/"
 params.proteome_folder = params.input_folder + "/proteome"
 params.hogmap_in = params.input_folder + "/hogmap_in"

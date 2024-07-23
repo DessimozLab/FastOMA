@@ -6,3 +6,4 @@ archive
 .git
 .gitignore
 __pycache__
+*.orig
