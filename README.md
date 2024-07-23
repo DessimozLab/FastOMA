@@ -88,10 +88,10 @@ There are four ways to run/install FastOMA detailed below:
 The FastOMA workflow can be run directly without any installation using nextflow's ability to fetch a workflow from github. A specific version can be selected by specifying the `-r` option to nextflow to select a specific version of FastOMA:
 
 ```bash
-nextflow run desimozlab/FastOMA -r 0.2.0 -profile conda 
+nextflow run desimozlab/FastOMA -r v0.3.1 -profile conda 
 ```
 
-This will fetch version 0.2.0 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
+This will fetch version 0.3.1 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
 
 ### 2. Cloning the FastOMA repo and running from there
 
@@ -139,7 +139,7 @@ bashMiniconda3.sh
 
 Then follow the instruction on the terminal. Finally, close and re-open the terminal and run
 ```
-conda create -n fastoma python=3.9 --file environment_conda.yml
+conda create -n fastoma python=3.9 --file environment-conda.yml
 cond activate mamba activate FastOMA
 ```
 Then, clone and install fastOMA using
@@ -184,7 +184,7 @@ nextflow run FastOMA.nf -profile docker \
     --output_folder myresult/
 ```
 This will use the container that is tagged with the current commit id. Similarly, one could also use 
-`--container_version "0.2.0"` to use the container with version `dessimozlab/fastoma:0.2.0` from dockerhub.
+`--container_version "0.3.1"` to use the container with version `dessimozlab/fastoma:0.3.1` from dockerhub.
 
 ### Singularity
 Since Docker needs administrator privileges (root access), [Singluarity](https://apptainer.org/index.html) (a.k.a Apptainer) is a good alternative. This can be installed using [Conda](https://anaconda.org/conda-forge/singularity) with `conda install conda-forge::singularity`. However, in most of the academic HPC cluster, singluarity is already installed and can be called with `module load`.
