@@ -1,7 +1,6 @@
 import collections
 import csv
 import itertools
-from copy import deepcopy
 from pathlib import Path
 import gzip
 
@@ -436,7 +435,7 @@ class LevelHOGProcessor:
         return genetree
 
     def infer_rooted_genetree(self, gene_tree: TreeNode):
-        genetree = deepcopy(gene_tree)
+        genetree = gene_tree.copy()
         if self.conf.gene_rooting_method == "midpoint":
             r_outgroup = genetree.get_midpoint_outgroup()
             genetree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
