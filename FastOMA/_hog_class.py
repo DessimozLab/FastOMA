@@ -366,7 +366,7 @@ class HOG:
 """
 
 
-def split_hog(hog:HOG, *partitions):
+def split_hog(hog:HOG, level_name:str, *partitions):
     """splits a hog into parts based to the partitions provided.
 
     The partitions need to be a lists of Representatives (or simply members)
@@ -402,4 +402,17 @@ def split_hog(hog:HOG, *partitions):
             h = HOG(subhogs, taxnomic_range=hog.taxlevel, rhogid=hog.rhogid, msa=hog.get_msa(), representatives=partitions[p])
             hogs.append(h)
         return hogs
+    else:
+        rep_to_subhog_list = {rep: hog.get_subhog_path(rep.get_id(), max_depth=-1) for part in partitions for rep in part}
+        for depth in range(max(len(sh) for sh in rep_to_subhog_list.values())):
+            rep_sets = [set(rep_to_subhog_list[rep][depth] for rep in part if len(rep_to_subhog_list[rep]) > depth) for part in partitions]
+            if all(s1.isdisjoint(s2) for s1, s2 in itertools.combinations(rep_sets, 2)):
+                break
+        depth -= 1
+        rep_sets = [set(rep_to_subhog_list[rep][depth] for rep in part if len(rep_to_subhog_list[rep]) > depth) for part in partitions]
+        merged_in = set.union(*(s1.intersection(s2) for s1, s2 in itertools.combinations(rep_sets, 2)))
+        involved_reps = [(r, h[depth].hogid, h[depth].taxname) for r, h in rep_to_subhog_list.items() if len(h)>depth and h[depth] in merged_in]
+        logger.warning(f"{hog} should be split in {len(partitions)} partitions at {level_name}. Not implemented yet.")
+        for rep in involved_reps:
+            logger.warning(f"  - Rep {rep[0]} merged into {rep[1]} at level {rep[2]}")
     #raise RuntimeError("this part of the code needs more thinking")

@@ -587,7 +587,7 @@ class LevelHOGProcessor:
                 if len(subtrees) > 1:
                     logger.info(f"Representaives of {hogid} are split among {len(subtrees)} candidate subtrees.")
                     split_parts = [list(n.name for n in sub.iter_leaves() if n.hogid == hogid) for sub in subtrees]
-                    split_hogs = split_hog(self.subhogs[hogid], *split_parts)
+                    split_hogs = split_hog(self.subhogs[hogid], self.node_species_tree.name, *split_parts)
                     if split_hogs and len(split_hogs) > 1:
                         # we could split the current hog.
                         self.subhogs.pop(hogid)
