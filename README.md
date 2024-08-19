@@ -55,7 +55,7 @@ installed.
 ```bash
 nextflow run dessimozlab/FastOMA -profile docker  --input_folder /path/to/in_folder --output_folder /path/to/out_folder 
 ```
-You could also add specific version to be used by adding `-r v0.3.1` to the command line. 
+You could also add specific version to be used by adding `-r v0.3.4` to the command line. 
 Nextflow will automatically fetch the [dessimozlab/FastOMA](https://github.com/dessimozlab/FastOMA) repository and starts 
 the `FastOMA.nf` workflow. The `-profile` argument must be used to specify the profile to use. We support `docker`, 
 `singularity` and `conda` which then automatically set up the necessary tools by downloading the required containers or creating 
@@ -88,10 +88,10 @@ There are four ways to run/install FastOMA detailed below:
 The FastOMA workflow can be run directly without any installation using nextflow's ability to fetch a workflow from github. A specific version can be selected by specifying the `-r` option to nextflow to select a specific version of FastOMA:
 
 ```bash
-nextflow run desimozlab/FastOMA -r v0.3.1 -profile conda 
+nextflow run desimozlab/FastOMA -r v0.3.4 -profile conda 
 ```
 
-This will fetch version v0.3.1 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
+This will fetch version v0.3.4 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
 
 ### 2. Cloning the FastOMA repo and running from there
 
@@ -184,7 +184,7 @@ nextflow run FastOMA.nf -profile docker \
     --output_folder myresult/
 ```
 This will use the container that is tagged with the current commit id. Similarly, one could also use 
-`--container_version "0.3.1"` to use the container with version `dessimozlab/fastoma:0.3.1` from dockerhub. Check the latest version on the [DockerHub](https://hub.docker.com/r/dessimozlab/fastoma/tags).
+`--container_version "0.3.4"` to use the container with version `dessimozlab/fastoma:0.3.4` from dockerhub. Check the latest version on the [DockerHub](https://hub.docker.com/r/dessimozlab/fastoma/tags).
 
 ### Singularity
 Since Docker needs administrator privileges (root access), [Singluarity](https://apptainer.org/index.html) (a.k.a Apptainer) is a good alternative. This can be installed using [Conda](https://anaconda.org/conda-forge/singularity) with `conda install conda-forge::singularity`. However, in most of the academic HPC cluster, singluarity is already installed and can be called with `module load`.
