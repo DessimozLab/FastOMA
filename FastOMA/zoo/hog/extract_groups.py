@@ -1,3 +1,5 @@
+import itertools
+
 from ..utils import auto_open
 import collections
 from time import time
@@ -72,8 +74,20 @@ class GroupExtractor(object):
         self.genes.update(generef_2_xref)
         return True
 
+    def _count_genes(self, node):
+        count = 0
+        for gene in node.iter('{http://orthoXML.org/2011/}geneRef'):
+            count += 1
+        for og in node.iter('{http://orthoXML.org/2011/}orthologGroup'):
+            for n in og.text:
+                if isinstance(n, Gene):
+                    count += 1
+        return count
+
     def _collect_genes(self, node):
-        genes = set([]); to_rem = []
+        genes = set([])
+        if node.tag != "{http://orthoXML.org/2011/}orthologGroup":
+            raise RuntimeError("_collect_genes() only works for ortholog groups")
         for child in node.iter():
             if child == node:
                 continue
@@ -83,22 +97,15 @@ class GroupExtractor(object):
                 except KeyError:
                     logger.info(f"ignoring gene(id={child.get('id')}), probably in skip set.")
                     pass
-                to_rem.append(child)
             elif child.tag == "{http://orthoXML.org/2011/}orthologGroup":
                 genes.update((n for n in child.text if isinstance(n, Gene)))
-                to_rem.append(child)
-        for c in to_rem:
-            try:
-                node.remove(c)
-            except ValueError as e:
-                # this is not a direct child of node. we ignore this potential
-                # memory-leak as the entire group will be deleted at latest once
-                # we reach the root orthologGroup node.
-                pass
         return genes
 
     def merge_children(self, node):
         genes = self._collect_genes(node)
+        for child in reversed(node):
+            if child.tag in ("{http://orthoXML.org/2011/}orthologGroup", "{http://orthoXML.org/2011/}geneRef", "{http://orthoXML.org/2011/}paralogGroup"):
+                node.remove(child)
         node.text = genes
 
     def get_group(self, node):
@@ -134,11 +141,11 @@ class GroupExtractor(object):
 
 class MarkerGroupExtractor(GroupExtractor):
     def handle_duplication_node(self, elem):
-        nr_children = [len(self._collect_genes(child)) for child in elem]
+        nr_children = [self._count_genes(child) for child in elem]
         max_pos = nr_children.index(max(nr_children))
-        for i, child in enumerate(elem):
-            if i != max_pos:
-                elem.remove(child)
+        to_rem = [c for i, c in enumerate(elem) if i != max_pos]
+        for child in to_rem:
+            elem.remove(child)
 
 
 def parse_orthoxml(fh, processor:GroupExtractor):
@@ -174,7 +181,10 @@ def parse_orthoxml(fh, processor:GroupExtractor):
                     processor.merge_children(elem)
                     if og_level == extract_at_depth:
                         logger.debug("dumping annotated group with {} genes".format(len(elem.text)))
-                        yield processor.get_group(elem)
+                        if len(elem.text) > 1:
+                            yield processor.get_group(elem)
+                        else:
+                            logger.debug("won't return group of less than two proteins")
                         elem.clear()
                         extract_at_depth = -1 if processor.target_clade is not None else 0
                 if og_level == 0:

@@ -254,7 +254,7 @@ def write_roothogs(orthoxml: Path, roothog_folder: Path, output_file_roothog_tsv
             for gene in group_members:
                 tsv.write(f"{group_name}\t{gene}\t{omamer_roothog}\n")
 
-            _write_group_fasta(fasta_format, group_members, group_name, id_transformer, meta, output_fasta_groups,
+            _write_group_fasta(fasta_format, group_members, group_name.replace(":", ""), id_transformer, meta, output_fasta_groups,
                                roothog_folder)
 
     logger.info("writing of %s done. created %d groups containing %d proteins in total",
