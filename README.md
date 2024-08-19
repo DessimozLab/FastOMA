@@ -449,6 +449,8 @@ Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick Vesztrocy, 
 
 
 ## Change log
+- Update  v0.3.4: Fixing a bug in marker gene groups extraction. Before, more than one gene per species were possible
+- Update  v0.3.3: improvements for nextflow (selection of alternative versions) and updates on readme
 - Update  v0.3.1: spliting HOG and sampling
 - Update  v0.1.6: adding dynamic resources, additional and improved output
 - Update  v0.1.5: docker, add help, clean nextflow 
