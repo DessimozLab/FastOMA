@@ -181,7 +181,10 @@ def parse_orthoxml(fh, processor:GroupExtractor):
                     processor.merge_children(elem)
                     if og_level == extract_at_depth:
                         logger.debug("dumping annotated group with {} genes".format(len(elem.text)))
-                        yield processor.get_group(elem)
+                        if len(elem.text) > 1:
+                            yield processor.get_group(elem)
+                        else:
+                            logger.debug("won't return group of less than two proteins")
                         elem.clear()
                         extract_at_depth = -1 if processor.target_clade is not None else 0
                 if og_level == 0:
