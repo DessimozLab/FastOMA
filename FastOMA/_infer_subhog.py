@@ -1,6 +1,7 @@
 import collections
 import csv
 import itertools
+import sys
 from pathlib import Path
 import gzip
 
@@ -308,7 +309,14 @@ class LevelHOGProcessor:
 
         :param genetree: the rooted tree (with distances) that should be processed
         :return: the N most divergent representatives for that tree. N is taken from self.conf"""
+        before_rec_limit = None
+        if len(genetree_subtree) > 2*sys.getrecursionlimit():
+            before_rec_limit = sys.getrecursionlimit()
+            sys.setrecursionlimit(len(genetree_subtree))
         genetree = genetree_subtree.copy()
+        if before_rec_limit is not None:
+            sys.setrecursionlimit(before_rec_limit)
+
         # we remove the non-enabled representatives from the tree
         keep = [n for n in genetree.iter_leaves() if self._rep_lookup[n.name].representative.enabled]
         if len(keep) < len(genetree):
@@ -435,34 +443,33 @@ class LevelHOGProcessor:
         return genetree
 
     def infer_rooted_genetree(self, gene_tree: TreeNode):
-        genetree = gene_tree.copy()
         if self.conf.gene_rooting_method == "midpoint":
-            r_outgroup = genetree.get_midpoint_outgroup()
-            genetree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
+            r_outgroup = gene_tree.get_midpoint_outgroup()
+            gene_tree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
 
         elif self.conf.gene_rooting_method == "midpoint-dendropy":
             dt = dendropy.Tree.get_from_string(gene_tree.write(format=1), schema="newick")
             dt.reroot_at_midpoint()
             nw = dt.as_string(schema="newick", suppress_rooting=True)
-            genetree = Tree(nw, format=1, quoted_node_names=True)
+            gene_tree = Tree(nw, format=1, quoted_node_names=True)
 
         elif self.conf.gene_rooting_method == "Nevers_rooting":
-            logger.info("Nevers_rooting started for " + str(genetree.write(format=1, format_root_node=True)))
+            logger.info("Nevers_rooting started for " + str(gene_tree.write(format=1, format_root_node=True)))
             species = Tree("species_tree.nwk", format=1)
-            genetree = _utils_subhog.get_score_all_root(genetree, species)
-            logger.info("Nevers_rooting finished for " + str(genetree.write(format=1, format_root_node=True)))
+            gene_tree = _utils_subhog.get_score_all_root(gene_tree, species)
+            logger.info("Nevers_rooting finished for " + str(gene_tree.write(format=1, format_root_node=True)))
 
         elif self.conf.gene_rooting_method == "mad":
-            genetree = _wrappers.mad_rooting(genetree)  # todo check with qouted gene tree
+            gene_tree = _wrappers.mad_rooting(gene_tree)  # todo check with qouted gene tree
 
         elif self.conf.gene_rooting_method == "outlier":  # not yet implmented completely, todo need check with new gene tree
-            outliers = _utils_subhog.find_outlier_leaves(genetree)
-            r_outgroup = _utils_subhog.midpoint_rooting_outgroup(genetree, leaves_to_exclude=outliers)
-            genetree.set_outgroup(r_outgroup)
+            outliers = _utils_subhog.find_outlier_leaves(gene_tree)
+            r_outgroup = _utils_subhog.midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
+            gene_tree.set_outgroup(r_outgroup)
         else:
             logger.warning("rooting method not found !!   * * * * *  *")
             raise ValueError("invalid rooting method: {}".format(self.conf.gene_rooting_method))
-        return genetree
+        return gene_tree
 
     def infer_reconciliation(self, genetree:TreeNode, sos_threshold=0.0):
         """Annotate each internal node with a 'evoltype' and 'sos' attribute.

@@ -400,7 +400,7 @@ def get_reconciled_tree_zmasek(gtree, sptree, inplace=False):
             node.del_feature("M")
 
     if not inplace:
-        gtree = gtree.copy('deepcopy')
+        gtree = gtree.copy()
 
     # check for missing species
     g_node_species_all = []
