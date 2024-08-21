@@ -309,13 +309,7 @@ class LevelHOGProcessor:
 
         :param genetree: the rooted tree (with distances) that should be processed
         :return: the N most divergent representatives for that tree. N is taken from self.conf"""
-        before_rec_limit = None
-        if len(genetree_subtree) > 2*sys.getrecursionlimit():
-            before_rec_limit = sys.getrecursionlimit()
-            sys.setrecursionlimit(len(genetree_subtree))
-        genetree = genetree_subtree.copy()
-        if before_rec_limit is not None:
-            sys.setrecursionlimit(before_rec_limit)
+        genetree = genetree_subtree.copy('newick-extended')
 
         # we remove the non-enabled representatives from the tree
         keep = [n for n in genetree.iter_leaves() if self._rep_lookup[n.name].representative.enabled]
