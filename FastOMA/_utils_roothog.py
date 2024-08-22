@@ -282,7 +282,7 @@ def group_prots_roothogs(hogmaps):
     return rhogs_prots
 
 
-def handle_singleton(rhogs_prots,hogmaps, conf_infer_roothogs):
+def handle_singleton(rhogs_prots, hogmaps, conf_infer_roothogs):
     query_singleton_rhog = []  # they are the only one to hit to this HOG
     for rhog, prot_sp_list in rhogs_prots.items():  # 'C0602129': [('GORGO', 'GORGO00025'), ('GORGO', 'GORGO00026')],
         if len(prot_sp_list) == 1:
@@ -297,13 +297,17 @@ def handle_singleton(rhogs_prots,hogmaps, conf_infer_roothogs):
             #prot_maps2 = prot_maps
             # omamer output is sorted based on normcount. but that's intended by omamer developers
             # family_p	family_count	family_normcount
-            scores = [float(i[1]) for i in prot_maps]  # (hogid,score,seqlen,subfamily_medianseqlen)
-            hogids = [i[0] for i in prot_maps]
-            rhogid0 = hogids[0].split(".")[0].split(":")[1]  # 'HOG:D0903929.1a'
-            for idx, hogid in enumerate(hogids[1:]):  # the 0-index is already checked and is a singleton
-                rhogid = hogid.split(".")[0].split(":")[1]
+            best, minor_mappings = prot_maps[0], prot_maps[1:]
+            # consistency check: assert that best roothog id is indeed singleton
+            rhogid0 = best.hogid.split(".")[0].split(":")[-1]
+            if len(rhogs_prots[rhogid0]) != 1:
+                logger.error(f"singleton roothog is not singleton: {species}, {prot}: rhog: {rhogid0}: {rhogs_prots[rhogid0]}")
+                raise RuntimeError("singleton roothog is not singleton")
+
+            for cand_map in minor_mappings:
+                rhogid = cand_map.hogid.split(".")[0].split(":")[-1]
                 if rhogid in rhogs_prots:
-                    if len(rhogs_prots[rhogid]) > 1 and scores[idx+1] >  conf_infer_roothogs.mergHOG_fscore_thresh: # todo  check
+                    if len(rhogs_prots[rhogid]) > 1 and float(cand_map.score) > conf_infer_roothogs.mergHOG_fscore_thresh: # todo  check
                         rhogs_prots[rhogid].append((species, prot))
                         del rhogs_prots[rhogid0]
                         query_singleton_rhog_solved.append((species, prot))
@@ -316,48 +320,38 @@ def handle_singleton(rhogs_prots,hogmaps, conf_infer_roothogs):
     logger.debug("However, " + str(len(query_singleton_rhog_remained)) + " proteins/singletons are remained.")
 
     # try to create group from multi-hits of remained singleton
-    dic_singlton_remained = {}
+    dic_singlton_remained = collections.defaultdict(set)
     for (species, prot) in query_singleton_rhog_remained:
         prot_maps = hogmaps[species][prot]
-        scores = [float(i[1]) for i in prot_maps]  # (hogid,score,seqlen,subfamily_medianseqlen)
-        hogids = [i[0] for i in prot_maps]
-        for idx, hogid in enumerate(hogids[1:]):  # the 0-index is already checked and is a singleton
-        #for hogid in hogids[1:]:
-            if scores[idx+1] >  conf_infer_roothogs.mergHOG_fscore_thresh :
-                rhogid = hogid.split(".")[0].split(":")[1]
-                if rhogid in dic_singlton_remained:
-                    dic_singlton_remained[rhogid].append((species, prot))
-                else:
-                    dic_singlton_remained[rhogid] = [(species, prot)]
-    logger.debug("These are associated to " + str(len(dic_singlton_remained)) + " HOGs considering all multi-hits.")
+        for cand_map in prot_maps[1:]:
+            if float(cand_map.score) > conf_infer_roothogs.mergHOG_fscore_thresh:
+                rhogid = cand_map.hogid.split(".")[0].split(":")[-1]
+                dic_singlton_remained[rhogid].add((species, prot))
+    logger.debug(f"These are associated to {len(dic_singlton_remained)} HOGs considering all multi-hits.")
 
-    prots_rhogs_dic = {}
-    for rhog, sp_prots in rhogs_prots.items():
-        if len(sp_prots) == 1:
-            prots_rhogs_dic[sp_prots[0]] = rhog
+    # get lookup from prot -> roothog (to be used for for deleting an new cluster assignment
+    prots_rhogs_dic = {sp_prots[0]: rhog for rhog, sp_prots in rhogs_prots.items() if len(sp_prots) == 1}
+    clusters = UnionFind()
+    for rhog, prot_set in dic_singlton_remained.items():
+        clusters.union(*prot_set)
 
-    count_new_rhogids = 0
-    count_updated_rhogids = 0
-    already_grouped = []
-    for rhogid, spec_prot_list in dic_singlton_remained.items():
-        if len(set(spec_prot_list)) > 1:
-            already_grouped_set = set(already_grouped)
-            val = sum([1 for i in spec_prot_list if i in already_grouped_set])
+    nr_new_rhogs, nr_prot_in_new_rhogs = 0, 0
+    for cc in clusters.get_components():
+        if len(cc) > 1:
+            nr_new_rhogs += 1
+            # check that indeed the proteins are singletons in the rhog_prots dict
+            if any(len(rhogs_prots.get(prots_rhogs_dic[prot], [])) > 1 for prot in cc):
+                raise RuntimeError("issue 15219325")
+            for prot in cc:
+                rhog = prots_rhogs_dic[prot]
+                if rhog in rhogs_prots:
+                    del rhogs_prots[rhog]
+            cc = list(cc)
+            rhog = prots_rhogs_dic[cc[0]]
+            rhogs_prots[rhog] = cc
+            nr_prot_in_new_rhogs += len(cc)
 
-            if val == 0:  # the prot has not yet grouped
-                if rhogid in rhogs_prots:
-                    count_updated_rhogids += 1
-                else:
-                    count_new_rhogids += 1
-                #remove singleton from rhogs_prots
-                for spec_prot in spec_prot_list:
-                    rhogid_ii = prots_rhogs_dic[spec_prot]
-                    del rhogs_prots[rhogid_ii]
-
-                rhogs_prots[rhogid] = spec_prot_list
-                already_grouped += spec_prot_list
-    logger.debug("We updated " + str(count_updated_rhogids) + " and created  " + str(
-        count_new_rhogids) + " new HOGs  which are not singleton anymore.")
+    logger.debug(f"We merged {nr_prot_in_new_rhogs} in {nr_new_rhogs} additional groups with >1 members.")
 
     counter_rhog_singlton_final = 0
     counter_notsingl_final = 0
@@ -366,7 +360,6 @@ def handle_singleton(rhogs_prots,hogmaps, conf_infer_roothogs):
             counter_notsingl_final += 1
         else:
             counter_rhog_singlton_final += 1
-
     logger.debug("Now, we have " + str(counter_notsingl_final) + " rootHOGs with >1 proteins and  and " + str(
         counter_rhog_singlton_final) + " singleton rootHOGs ")
 
