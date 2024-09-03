@@ -111,6 +111,10 @@ if (params.help) {
         --filter_method         The applied filtering method on the MSAs before tree building.
                                 must be one of "col-row-threshold", "col-elbow-row-threshold", "trimal".
                                 Defaults to ${params.filter_method}.
+        --min_sequence_length   Minimum length of a sequence to be considered for orthology
+                                inference. Too short sequences tend to be problematic.
+                                Defaults to ${params.min_sequence_length}.
+
 
     Flags:
         --help                  Display this message
@@ -226,6 +230,7 @@ process infer_roothogs{
                                --hogmap hogmaps \
                                --splice ${splice_folder} \
                                --out-rhog-folder "omamer_rhogs" \
+                               --min-sequence-length ${params.min_sequence_length} \
                                -vv
     """
 }
