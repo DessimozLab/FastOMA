@@ -140,7 +140,7 @@ class UnionFind(object):
         return comp
 
 
-def parse_proteomes(folder=None):  # list_oma_species
+def parse_proteomes(folder=None, min_sequence_length=0):  # list_oma_species
     """
     parsing fasta files of proteins located in /proteome/
     using Bio.SeqIO.parse
@@ -166,7 +166,9 @@ def parse_proteomes(folder=None):  # list_oma_species
     prot_recs_lists = {} # key: species name, value is a dic of query protein Biopython records. # 'MYCGE': [SeqRecord(seq=Seq('MDFDK
     for species_name in species_names:
         prot_address = os.path.join(folder, species_name + "." + fasta_format_keep)
-        prots_record = list(SeqIO.parse(prot_address, "fasta"))
+        prots_record = list(rec for rec in SeqIO.parse(prot_address, "fasta") if len(rec) >= min_sequence_length)
+        # logger.debug(prots_record)
+        logger.info(f"{species_name} contains {len(prots_record)} that are at least {min_sequence_length} long.")
         prot_recs_lists[species_name] = prots_record
 
     logger.info("There are %d species in the proteome folder.", len(species_names))
@@ -212,7 +214,7 @@ def add_species_name_prot_id( prot_recs_lists):
     return prot_recs_all
 
 
-def parse_hogmap_omamer(species_names, fasta_format_keep,  folder=None):
+def parse_hogmap_omamer(proteomes, fasta_format_keep, folder=None):
     """
      function for parsing output of omamer (hogmap files) located in /hogmap/
     Each hogmap file correspond to one fasta file of species, with the same name.
@@ -227,7 +229,8 @@ def parse_hogmap_omamer(species_names, fasta_format_keep,  folder=None):
 
     hogmaps = {}
     unmapped = collections.defaultdict(list)
-    for species_name in species_names:
+    for species_name, prot_reqs in proteomes.items():
+        proteome = set(rec.id.split('||', 1)[0] for rec in prot_reqs)
         hogmap_address = os.path.join(folder, species_name + "." + fasta_format_keep + ".hogmap")
         cur_species_hogmap = collections.defaultdict(list)
         with open(hogmap_address, 'rt') as hogmap_file:
@@ -236,6 +239,8 @@ def parse_hogmap_omamer(species_names, fasta_format_keep,  folder=None):
             for row in reader:
                 if row['hogid'] == "N/A":
                     unmapped[species_name].append(row['qseqid'])
+                elif row['qseqid'] not in proteome:
+                    logger.info(f"Ignoring {row} [{species_name}] from hogmap as not in proteome")
                 else:
                     cur_species_hogmap[row['qseqid']].append(
                         HOGMapData(row['hogid'], row['family_p'], row['qseqlen'], row['subfamily_medianseqlen']))
