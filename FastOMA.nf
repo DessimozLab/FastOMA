@@ -123,6 +123,11 @@ if (params.help) {
         --write_msas            MSAs used during inference of subhogs will be stored at
                                 every taxonomic level.
         --write_genetrees       Inferred gene trees will be stored at every taxonomic level.
+        --force_pairwise_ortholog_generation
+                                Force producing the pairwise orthologs.tsv.gz file even if the
+                                dataset contains many proteomes. By default, FastOMA produces the
+                                pairwise ortholog file only if there are at most 25 proteomes in
+                                the dataset.
         --report                Produce nextflow report and timeline and store in in
                                 $params.statdir
 
@@ -149,15 +154,17 @@ Parameters:
    splice_folder             ${params.splice_folder}
    omamer_db                 ${params.omamer_db}
    hogmap_in                 ${params.hogmap_in}
-   fasta_header_id_transformer  ${params.fasta_header_id_transformer}
+   fasta_header_id_transformer    ${params.fasta_header_id_transformer}
 
    filter_method             ${params.filter_method}
    filter_gap_ratio_row      ${params.filter_gap_ratio_row}
    filter_gap_ratio_col      ${params.filter_gap_ratio_col}
    nr_repr_per_hog           ${params.nr_repr_per_hog}
-   
+   min_sequence_length       ${params.min_sequence_length}
+
    debug_enabled             ${params.debug_enabled}
    report                    ${params.report}
+   force_pairwise_ortholog_generation    ${params.force_pairwise_ortholog_generation}
 """.stripIndent()
 
 
@@ -501,7 +508,7 @@ workflow {
 
     (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(all_rhog_pickle.collect(), gene_id_dic_xml, omamer_rhogs, species_tree_checked, params.fasta_header_id_transformer)
     c = hogmap.count().branch{ n->
-        TRUE: n<=25
+        TRUE: (n<=25 || params.force_pairwise_ortholog_generation)
         FALSE: n>25
     }
     extract_pairwise_ortholog_relations(orthoxml_file, c.TRUE)
