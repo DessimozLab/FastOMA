@@ -55,7 +55,13 @@ installed.
 ```bash
 nextflow run dessimozlab/FastOMA -profile docker  --input_folder /path/to/in_folder --output_folder /path/to/out_folder 
 ```
-You could also add specific version to be used by adding `-r v0.3.4` to the command line. 
+You could also add specific version to be used by adding `-r v0.3.4` to the command line. Without any `-r` argument, 
+always the latest available release will be used. With `-r dev` the latest development release can be used.
+
+> [!WARNING]
+> Nextflow caches pulled workflows. Git branches such as `dev` are therefore not automatically updated. You might need
+> to first run `nextflow drop dessimozlab/FastOMA` before pulling again.
+
 Nextflow will automatically fetch the [dessimozlab/FastOMA](https://github.com/dessimozlab/FastOMA) repository and starts 
 the `FastOMA.nf` workflow. The `-profile` argument must be used to specify the profile to use. We support `docker`, 
 `singularity` and `conda` which then automatically set up the necessary tools by downloading the required containers or creating 
@@ -88,7 +94,7 @@ There are four ways to run/install FastOMA detailed below:
 The FastOMA workflow can be run directly without any installation using nextflow's ability to fetch a workflow from github. A specific version can be selected by specifying the `-r` option to nextflow to select a specific version of FastOMA:
 
 ```bash
-nextflow run desimozlab/FastOMA -r v0.3.4 -profile conda 
+nextflow run dessimozlab/FastOMA -r v0.3.4 -profile conda 
 ```
 
 This will fetch version v0.3.4 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
