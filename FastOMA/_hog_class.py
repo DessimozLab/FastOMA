@@ -103,7 +103,7 @@ class HOG:
                 hog_members |= sub_hog.get_members()
             self._members = hog_members  # set.union(*tup)    # this also include dubious_members
             self._subhogs = list(input_instantiate)  # full members of subhog, children
-            self._num_species_tax_speciestree = len(taxnomic_range.get_leaves())
+            self._num_species_tax_speciestree = taxnomic_range.size
             self._representatives = [r for r in representatives]
             representatives_id = set(r.get_id() for r in representatives)
             assert len(representatives_id) == len(self._representatives), "Non-unique ids among representatives"
@@ -338,7 +338,7 @@ class HOG:
             #hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
             hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)}, )
             num_species_tax_hog = len(set([i.split("||")[1] for i in self._members]))  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
-            completeness_score = round(num_species_tax_hog/self._num_species_tax_speciestree,4)
+            completeness_score = round(num_species_tax_hog/self._num_species_tax_speciestree, 4)
             property_element = ET.SubElement(hog_elemnt, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
             property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(self._tax_now.name)})
 

@@ -249,8 +249,7 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, conf_infer
     return gene_tree, all_species_dubious_sd_dic, genetree_msa_file_addr
 
 
-
-def prepare_species_tree(rhog_i, species_tree, rhogid):
+def prepare_species_tree(rhog_i: List[SeqRecord], species_tree: Tree, rhogid: str):
     """
     orthoxml_to_newick.py function for extracting orthoxml_to_newick.py subtree from the input species tree  orthoxml_to_newick.py.k.orthoxml_to_newick.py pruning,
     based on the names of species in the rootHOG.
@@ -266,44 +265,22 @@ def prepare_species_tree(rhog_i, species_tree, rhogid):
         prot_id = rec.id.split("||")
         prot_name = prot_id[2]   # for debugging  prot_id[0] readable prot name,  for xml prot_id[2]
         species_name = prot_id[1]
-        bird_dataset = True
-        if species_name.endswith("_") and not bird_dataset:
-           species_name = prot_id[1][:-1]
-        # if species_name == 'RAT_': species_name = "RATNO_"
-        # gene_id = prot_id[2]
         species_names_rhog.append(species_name)
         prot_names_rhog.append(prot_name)
     assert len(species_names_rhog) > 0, "species names list is empty in rhog, probably issue in formating with || in previous step find rhog"
 
     species_names_uniqe = set(species_names_rhog)
 
+    # annotate the species tree with the original number of children at each
+    # node (`size`). this is used to compute the correct completeness score
+    for n in species_tree.traverse():
+        n.add_feature("size", len(n))
+
     first_common_ancestor_name = species_tree.get_common_ancestor(species_names_uniqe).name
     species_tree.prune(species_names_uniqe, preserve_branch_length=True)
     # todo check internal node with one child, we need to report for i or not ?
     species_tree.name = first_common_ancestor_name
-    # add internal node name to the tree
-    # this has an issue with root name, cannot add the root name
-    # print(species_tree.write(format=1, format_root_node=True))
-    # counter_internal = 0
-    # for node in species_tree.traverse(strategy="postorder"):
-    #     node_name = node.name
-    #     num_leaves_no_name = 0
-    #     if len(node_name) < 1:
-    #         if node.is_leaf():
-    #             node.name = "leaf_" + str(num_leaves_no_name)
-    #         else:
-    #             node_children = node.children
-    #             # list_children_names = [str(node_child.name) for node_child in node_children]
-    #             # node.name = '_'.join(list_children_names)
-    #             # ?? to imrpove, if the species tree has internal node name, keep it,
-    #             # then checn condition in  _infer_subhog.py, where logger.info("Finding hogs for rhogid: "+str(rh
-    #             node.name = "internal_" + str(counter_internal)  #  +"_rhg"+rhogid  #  for debuging
-    #             counter_internal += 1
-    # print("Working on the following species tree.")
-    # print(species_tree.write(format=1, format_root_node=True))
-
     return species_tree, species_names_rhog, prot_names_rhog
-
 
 
 def label_sd_internal_nodes(tree_out, threshold_dubious_sd):
