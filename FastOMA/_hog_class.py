@@ -80,7 +80,6 @@ class HOG:
         # 0070124
 
         self._hogid = "HOG_" + self._rhogid+ "_sub" + str(self.__class__._hogid_iter)
-        self._tax_least = taxnomic_range  #  least taxnomic level
         self._tax_now = taxnomic_range    # the taxnomic level that we are considering now, checking for duplication
         self.active = True
 
@@ -129,7 +128,7 @@ class HOG:
             assert False
 
     def __repr__(self):
-        return f"<HOG:{self.hogid},size={len(self._members)},taxLeast={self._tax_least.name},taxNow={self._tax_now.name}>"
+        return f"<HOG:{self.hogid},size={len(self._members)},tax={self._tax_now.name}>"
 
     @property
     def hogid(self):
