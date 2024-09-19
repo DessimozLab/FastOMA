@@ -276,11 +276,9 @@ def prepare_species_tree(rhog_i: List[SeqRecord], species_tree: Tree, rhogid: st
     for n in species_tree.traverse():
         n.add_feature("size", len(n))
 
-    first_common_ancestor_name = species_tree.get_common_ancestor(species_names_uniqe).name
-    species_tree.prune(species_names_uniqe, preserve_branch_length=True)
-    # todo check internal node with one child, we need to report for i or not ?
-    species_tree.name = first_common_ancestor_name
-    return species_tree, species_names_rhog, prot_names_rhog
+    mrca = species_tree.get_common_ancestor(species_names_uniqe)
+    mrca.prune(species_names_uniqe, preserve_branch_length=True)
+    return mrca, species_names_rhog, prot_names_rhog
 
 
 def label_sd_internal_nodes(tree_out, threshold_dubious_sd):
