@@ -5,6 +5,7 @@ from Bio import SeqIO
 import pickle
 from os import listdir
 import os
+import sys
 
 from .zoo.unionfind import UnionFind
 from ._wrappers import logger
@@ -613,14 +614,15 @@ def merge_rhogs2(hogmaps, rhogs_prots, conf_infer_roothogs):
     cluster_rhogs_list = cluster_rhogs(candidates_pair)
 
     print("There are " + str(len(cluster_rhogs_list)) + " clusters.")
+    logger.debug("There are " + str(len(cluster_rhogs_list)) + " clusters.")
 
+    print("** the recursion limit is "+str( sys.getrecursionlimit()))
+    logger.debug("** the recursion limit is "+str( sys.getrecursionlimit()))
     cluster_rhogs_list = cluster_rhogs_nx(cluster_rhogs_list, candidates_pair)
 
     print("There are " + str(len(cluster_rhogs_list)) + " selected clusters.")
 
-    #cluster_rhogs_list = cluster_rhogs(candidates_pair)
-
-
+    # cluster_rhogs_list = cluster_rhogs(candidates_pair)
 
     num_rhog_g1 = 0
     for rhg, list_pr in rhogs_prots.items():
@@ -628,7 +630,7 @@ def merge_rhogs2(hogmaps, rhogs_prots, conf_infer_roothogs):
             num_rhog_g1 += 1
 
     logger.debug("There are " + str(num_rhog_g1) + " rhogs (size>1) before merging.")
-    print(len(rhogs_prots))
+    print("len(rhogs_prots) is ", len(rhogs_prots))
 
     file_out_merge =  open("merging_rhogs.txt","w")
     file_out_merge.write("#first column is the host hog, the rest will be merged here.\n")
