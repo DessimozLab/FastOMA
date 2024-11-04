@@ -113,7 +113,7 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     with open(pickles_rhog_file, 'wb') as handle:
         # dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
         pickle.dump(hogs_rhogs_xml, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    logger.info("All subHOGs for the rootHOG %s as OrthoXML format is written in %s", rhogid, pickles_rhog_file)
+    logger.info("All subHOGs for the rootHOG %s as OrthoXML format is written in %s", rhogid, pickles_rhog_file) # todo report how many genes are in the group for this rootHOG (out of how many were in the initial grouping from omamer)
     # to see orthoxml as string, you might need to do it for different idx
     # idx=0; from xml.dom import minidom; import xml.etree.ElementTree as ET; minidom.parseString(ET.tostring(hogs_rhogs_xml[idx])).toprettyxml(indent="   ")
     del hogs_a_rhog  # to be memory efficient
