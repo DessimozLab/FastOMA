@@ -459,7 +459,8 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
             SeqIO.write(rhog_recs, address_rhogs_folder + "/HOG_" + rhogid + ".fa", "fasta")
             rhogid_written_list.append(rhogid)
         else:
-            logger.debug(" issue 12314405 to check" )
+            logger.debug("The roothog " +str(rhogid)+" was too small with size of "+str(len(rhog_recs))+" which is smaller than threshold "+str(min_rhog_size))
+            #logger.debug(" issue 12314405 to check" )
             #for prot1 in rhog_recs:
                 #logger.debug("we are removing due to omamer signleton hog |*|" + str(prot1.id))
 
