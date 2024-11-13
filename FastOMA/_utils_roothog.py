@@ -469,7 +469,7 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
     return rhogid_written_list
 
 
-def find_rhog_candidate_pairs(hogmaps, conf_infer_roothogs): # rhogs_prots
+def find_rhog_candidate_pairs(hogmaps, rhogs_prots, conf_infer_roothogs): # rhogs_prots
 
     pair_rhogs_count = {}
     rhogs_size = {}
@@ -492,18 +492,19 @@ def find_rhog_candidate_pairs(hogmaps, conf_infer_roothogs): # rhogs_prots
             for ii in range(len(rhogids)):
                 for jj in range(ii + 1, len(rhogids)):
                     hogi, hogj = rhogids[ii], rhogids[jj]
-                    # Below Yannis made it so the pair of HOG is ordered in alphabetic order, it makes it so (HOG:D0017631,HOG:D0863448) is considered the same as (HOG:D0863448,HOG:D0017631)
-                    pair = tuple(sorted((hogi, hogj)))
-                    if pair[0]==hogi:
-                        score_i, score_j = scores[ii], scores[jj]
-                    else:
-                        score_j, score_i = scores[ii], scores[jj]
+                    if hogi in rhogs_prots and hogj in rhogs_prots:
+                        # Below Yannis made it so the pair of HOG is ordered in alphabetic order, it makes it so (HOG:D0017631,HOG:D0863448) is considered the same as (HOG:D0863448,HOG:D0017631)
+                        pair = tuple(sorted((hogi, hogj)))
+                        if pair[0]==hogi:
+                            score_i, score_j = scores[ii], scores[jj]
+                        else:
+                            score_j, score_i = scores[ii], scores[jj]
 
-                    if pair in pair_rhogs_count:
-                        pair_rhogs_count[pair][0].append(score_i)  # += 1
-                        pair_rhogs_count[pair][1].append(score_j)  # += 1
-                    else:
-                        pair_rhogs_count[pair] = [[score_i], [score_j]]
+                        if pair in pair_rhogs_count:
+                            pair_rhogs_count[pair][0].append(score_i)  # += 1
+                            pair_rhogs_count[pair][1].append(score_j)  # += 1
+                        else:
+                            pair_rhogs_count[pair] = [[score_i], [score_j]]
 
                     # score_i, score_j = scores[ii], scores[jj]
                     # if (hogi, hogj) in pair_rhogs_count:
@@ -609,7 +610,7 @@ def cluster_rhogs(candidates_pair):
 def merge_rhogs2(hogmaps, rhogs_prots, conf_infer_roothogs):
     logger.debug("started merging  ")
 
-    candidates_pair = find_rhog_candidate_pairs(hogmaps, conf_infer_roothogs) # rhogs_prots
+    candidates_pair = find_rhog_candidate_pairs(hogmaps, rhogs_prots, conf_infer_roothogs) # rhogs_prots
 
     print("There are " + str(len(candidates_pair)) + " candidate pairs of rhogs for merging.")
     cluster_rhogs_list = cluster_rhogs(candidates_pair)
@@ -1151,10 +1152,14 @@ def cluster_rhogs_nx(cluster_rhogs_list,candidates_pair):
                     G.add_node(pairB)
                 if (pairA,pairB) in candidates_pair or (pairB,pairA) in candidates_pair:
                     G.add_edge(pairA,pairB)
-        density = nx.density(G)
+        density = nx.density(G) # todo: do we really need this line ?
+        if len(G) <1000: # todo make it as a parameter
+            # limit number of merging rootHOGs due to O(N^3) of HCS/cc
+            newG = HCS(G)
+            clusters = [ list(x) for x in nx.connected_components(newG) if len(x)>1]
+        else:
+            clusters =  [ [i] for i in list(G.nodes)] # do not merge at all
 
-        newG = HCS(G)
-        clusters = [ list(x) for x in nx.connected_components(newG) if len(x)>1]
         new_cluster += clusters
     return new_cluster
 
