@@ -444,7 +444,7 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
     rhogid_written_list = []
     for rhogid, rhog_prots in rhogs_prot_records.items():
         rhog_recs = []
-        for (species_name, prot_name) in rhog_prots:
+        for (species_name, prot_name) in rhog_prots: #
             if prot_name in prot_recs_all[species_name]: # some small prots are removed in the begining min_sequence_length
                 prot_rec = prot_recs_all[species_name][prot_name]
                 rhog_recs.append(prot_rec)
@@ -762,8 +762,9 @@ def collect_unmapped_singleton(rhogs_prots, unmapped,prot_recs_all,unmapped_sing
     unmapped_recs = []
     for species_name, prot_names in unmapped.items():
         for prot_name in prot_names:
-            prot_rec = prot_recs_all[species_name][prot_name]
-            unmapped_recs.append(prot_rec)
+            if prot_name in prot_recs_all[species_name]:  # some small prots are removed in the begining min_sequence_length
+                prot_rec = prot_recs_all[species_name][prot_name]
+                unmapped_recs.append(prot_rec)
 
     print(len(unmapped_recs))
     singleton_recs = []
