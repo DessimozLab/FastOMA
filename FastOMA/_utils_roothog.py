@@ -167,15 +167,18 @@ def parse_proteomes(folder=None, min_sequence_length=0):  # list_oma_species
 
     # todo accept all fasta formats in the input prtoeome folder, fasta, fa, fna, ..
     prot_recs_lists = {} # key: species name, value is a dic of query protein Biopython records. # 'MYCGE': [SeqRecord(seq=Seq('MDFDK
+    #smallprot_recs_lists ={}
     for species_name in species_names:
         prot_address = os.path.join(folder, species_name + "." + fasta_format_keep)
         prots_record = list(rec for rec in SeqIO.parse(prot_address, "fasta") if len(rec) >= min_sequence_length)
+        #prots_record_small = list(rec for rec in SeqIO.parse(prot_address, "fasta") if len(rec) < min_sequence_length)
         # logger.debug(prots_record)
         logger.info(f"{species_name} contains {len(prots_record)} that are at least {min_sequence_length} long.")
         prot_recs_lists[species_name] = prots_record
+        #smallprot_recs_lists[species_name]=prots_record_small
 
     logger.info("There are %d species in the proteome folder.", len(species_names))
-    return species_names, prot_recs_lists, fasta_format_keep
+    return species_names, prot_recs_lists, fasta_format_keep #, smallprot_recs_lists
 
 
 def add_species_name_prot_id( prot_recs_lists):
@@ -243,7 +246,7 @@ def parse_hogmap_omamer(proteomes, fasta_format_keep, folder=None):
                 if row['hogid'] == "N/A":
                     unmapped[species_name].append(row['qseqid'])
                 elif row['qseqid'] not in proteome:
-                    logger.info(f"Ignoring {row} [{species_name}] from hogmap as not in proteome")
+                    logger.debug(f"Ignoring {row} [{species_name}] from hogmap as not in proteome")
                 else:
                     cur_species_hogmap[row['qseqid']].append(
                         HOGMapData(row['hogid'], row['family_p'], row['qseqlen'], row['subfamily_medianseqlen']))
@@ -442,8 +445,10 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
     for rhogid, rhog_prots in rhogs_prot_records.items():
         rhog_recs = []
         for (species_name, prot_name) in rhog_prots:
-            prot_rec = prot_recs_all[species_name][prot_name]
-            rhog_recs.append(prot_rec)
+            if prot_name in prot_recs_all[species_name]: # some small prots are removed in the begining min_sequence_length
+                prot_rec = prot_recs_all[species_name][prot_name]
+                rhog_recs.append(prot_rec)
+
 
         if min_rhog_size <= len(rhog_recs):  # <= max_rhog_size:
             # todo add the release id   to file names  rhogids_list[:2] > ['HOG:C0884658', 'HOG:C0709155']
@@ -466,11 +471,11 @@ def find_rhog_candidate_pairs(hogmaps, rhogs_prots, conf_infer_roothogs): # rhog
     """
     pair_rhogs_count = collections.defaultdict(int)
     rhogs_size = collections.defaultdict(int)
-    for rhog, prt_prot_maps in hogmaps.items():
+    for species_name, prt_prot_maps in hogmaps.items():
         for prot, prot_maps in prt_prot_maps.items():
-            # [('HOG:D0017631.5a', '1771.7328874713658', '253', '234'), ('HOG:D0863448', '163.60700392437903', '253', '244'),
+            # prot_maps= [HOGMapData(hogid='HOG:E0315075.2a.2b.13b', score='3115.977589303038', seqlen='574', subfamily_medianseqlen='532'),
             rhogs = []
-            for prot_map in prot_maps:
+            for prot_map in prot_maps: #
                 # prot_map: HOGMapData record
                 if float(prot_map.score) > conf_infer_roothogs.mergHOG_fscore_thresh:
                     rhogid = prot_map.hogid.split(".")[0].split(":")[1]
@@ -1067,7 +1072,7 @@ def write_outgroups(dic_outgroup_prot, rhogid, address_outgorup,prot_recs_all):
 
 def write_outgroups_all(rhogs_prots,prot_recs_all):
     from ete3 import Tree
-    sp_folder = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/qfo/qfo_run_raw/in_folder/"
+    sp_folder = "in_folder/"
     address_outgorup = "./outgroup/"
     if not os.path.exists(address_outgorup):
         os.mkdir(address_outgorup)
@@ -1118,6 +1123,7 @@ def cluster_rhogs_nx(cluster_rhogs_list, candidates_pair):
             newG = HCS(G)
             clusters = [ list(x) for x in nx.connected_components(newG) if len(x)>1]
         else:
+            logger.debug("This cluster of rootHOg hit the limit of 1000 rHOGs, we are not merging these rootHOGs.")
             clusters =  [ [i] for i in list(G.nodes)] # do not merge at all
 
         new_cluster += clusters
