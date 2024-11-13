@@ -12,7 +12,7 @@ from FastOMA.infer_subhogs import fastoma_infer_subhogs
 #fastoma_infer_subhogs()
 #  proteome    --hogmap hogmaps   --splice splice  --out-rhog-folder out
 import sys
-logger.debug("hello ")
+
 folder="pycharm_projects/fastoma_test/"
 sys.argv.extend(['--proteomes', folder+"proteome"])
 sys.argv.extend(['--hogmap', folder+"hogmaps"])
