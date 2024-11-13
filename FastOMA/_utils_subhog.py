@@ -195,7 +195,7 @@ def genetree_sd(node_species_tree, gene_tree, genetree_msa_file_addr, conf_infer
             gene_tree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
         except:
             pass
-    elif  conf_infer_subhhogs.gene_rooting_method == "Nevers_rooting":
+    elif conf_infer_subhhogs.gene_rooting_method == "Nevers_rooting":
         logger.info("Nevers_rooting started for " +str(gene_tree.write(format=1, format_root_node=True)))
         species = Tree("species_tree.nwk", format=1)
         gene_tree = get_score_all_root(gene_tree, species)

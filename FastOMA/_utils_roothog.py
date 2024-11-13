@@ -1,5 +1,7 @@
 
 import csv
+import itertools
+
 import networkx as nx
 from Bio import SeqIO
 import pickle
@@ -260,29 +262,18 @@ def group_prots_roothogs(hogmaps):
     output: rhogs_dic
     """
 
-    rhogs_prots = {}
+    rhogs_prots = collections.defaultdict(list)
     for species_name, prots_map in hogmaps.items():
         # prot_recs = prot_recs_all[species_name]
 
         for prot_id, prot_map in prots_map.items():
             # omamer output is sorted based on normcount (not family-p). but that's intended by omamer developers
-            # this helps me in other functions like handle_singleton in this
-            #  this should be commented
-            # if len(prot_map)>1:
-            #     scores = [float(i[1]) for i in prot_map] # (hogid,score,seqlen,subfamily_medianseqlen)
-            #     rhogids =[i[0] for i in prot_map]
-            #     # select hog with the best score
-            #     max_index = scores.index(max(scores))
-            #     hogid =rhogids[max_index]
-            # else:
-            #     hogid = prot_map[0][0]
-            hogid = prot_map[0][0]
+            # first hit (highest score) -> get roothog
+            hogid = prot_map[0].hogid
             rhogid = hogid.split(".")[0].split(":")[1]
+            # add to species, prot_id to list for best roothog
+            rhogs_prots[rhogid].append((species_name, prot_id))
 
-            if rhogid in rhogs_prots:
-                rhogs_prots[rhogid].append((species_name, prot_id))
-            else:
-                rhogs_prots[rhogid] = [(species_name, prot_id)]
     logger.info("There are " + str(len(rhogs_prots)) + " rootHOGs.")
     # from old code, to check later: Keep prot seq in hog class. We can write species idx and prot idx to  improve speed of code for omamer thresholding
     return rhogs_prots
@@ -335,7 +326,7 @@ def handle_singleton(rhogs_prots, hogmaps, conf_infer_roothogs):
                 dic_singlton_remained[rhogid].add((species, prot))
     logger.debug(f"These are associated to {len(dic_singlton_remained)} HOGs considering all multi-hits.")
 
-    # get lookup from prot -> roothog (to be used for for deleting an new cluster assignment
+    # get lookup from prot -> roothog (to be used for deleting a new cluster assignment)
     prots_rhogs_dic = {sp_prots[0]: rhog for rhog, sp_prots in rhogs_prots.items() if len(sp_prots) == 1}
     clusters = UnionFind()
     for rhog, prot_set in dic_singlton_remained.items():
@@ -470,69 +461,39 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
 
 
 def find_rhog_candidate_pairs(hogmaps, rhogs_prots, conf_infer_roothogs): # rhogs_prots
-
-    pair_rhogs_count = {}
-    rhogs_size = {}
+    """find pairs of roothogs that could be merged based on the number
+    of shared assignments and sizes.
+    """
+    pair_rhogs_count = collections.defaultdict(int)
+    rhogs_size = collections.defaultdict(int)
     for rhog, prt_prot_maps in hogmaps.items():
         for prot, prot_maps in prt_prot_maps.items():
             # [('HOG:D0017631.5a', '1771.7328874713658', '253', '234'), ('HOG:D0863448', '163.60700392437903', '253', '244'),
-            rhogids = []
-            scores = []
+            rhogs = []
             for prot_map in prot_maps:
-                hog, score = prot_map[:2]
-                if float(score) > conf_infer_roothogs.mergHOG_fscore_thresh:
-                    rhogid = hog.split(".")[0].split(":")[1]
-                    if not rhogid in rhogs_size:
-                        rhogs_size[rhogid]  = 0
+                # prot_map: HOGMapData record
+                if float(prot_map.score) > conf_infer_roothogs.mergHOG_fscore_thresh:
+                    rhogid = prot_map.hogid.split(".")[0].split(":")[1]
                     rhogs_size[rhogid] += 1
-                    rhogids.append(rhogid)
-                    # rhogids.append(rhogid)
-                    scores.append(float(score))
+                    rhogs.append((rhogid, float(prot_map.score)))
 
-            for ii in range(len(rhogids)):
-                for jj in range(ii + 1, len(rhogids)):
-                    hogi, hogj = rhogids[ii], rhogids[jj]
-                    if hogi in rhogs_prots and hogj in rhogs_prots:
-                        # Below Yannis made it so the pair of HOG is ordered in alphabetic order, it makes it so (HOG:D0017631,HOG:D0863448) is considered the same as (HOG:D0863448,HOG:D0017631)
-                        pair = tuple(sorted((hogi, hogj)))
-                        if pair[0]==hogi:
-                            score_i, score_j = scores[ii], scores[jj]
-                        else:
-                            score_j, score_i = scores[ii], scores[jj]
-
-                        if pair in pair_rhogs_count:
-                            pair_rhogs_count[pair][0].append(score_i)  # += 1
-                            pair_rhogs_count[pair][1].append(score_j)  # += 1
-                        else:
-                            pair_rhogs_count[pair] = [[score_i], [score_j]]
-
-                    # score_i, score_j = scores[ii], scores[jj]
-                    # if (hogi, hogj) in pair_rhogs_count:
-                    #     pair_rhogs_count[(hogi, hogj)][0].append(score_i)  # += 1
-                    #     pair_rhogs_count[(hogi, hogj)][1].append(score_j)  # += 1
-                    # else:
-                    #     pair_rhogs_count[(hogi, hogj)] = [[score_i], [score_j]]
-                    #     pair_rhogs_count[(hogi, hogj)] += 1
-                    # else:
-                    #     pair_rhogs_count[(hogi, hogj)] = 1
+            rhogs.sort()  # once sorted, iteration will yield sorted tuples in pairs
+            for (hogi, score_i), (hogj, score_j) in itertools.combinations(rhogs, 2):
+                # skip pairs of hogs if one of them has not been identified as the best
+                # scoring hog in omamer. this could lead to big hairball graphs
+                if not (hogi in rhogs_prots and hogj in rhogs_prots):
+                    continue
+                pair = (hogi, hogj)
+                pair_rhogs_count[pair] += 1
 
     print(len(pair_rhogs_count))
     logger.debug("There are " + str(len(pair_rhogs_count)) + " pairs of rhogs.")
 
-    #rhogs_size = {}
-    #for rhog, list_prot in rhogs_prots.items():
-    #    rhogs_size[rhog] = len(list_prot)
-
     candidates_pair = []
-    # dic_pair_ratio = {}
-    for (hogi, hogj), score_shared_lists in pair_rhogs_count.items():
-        count_shared = len(score_shared_lists[0])
-        # list_lowest =[min(score_shared_lists[0][ik],score_shared_lists[1][ik]) for ik in range(len(score_shared_lists[0]))]
-        # mean_scores = sum(score_shared_lists[0]+score_shared_lists[1])/2*len(score_shared_lists[0])
+    for (hogi, hogj), count_shared in pair_rhogs_count.items():
         if hogi in rhogs_size and hogj in rhogs_size:  # during previous functions, we might
             ratioMax = count_shared / max(rhogs_size[hogi], rhogs_size[hogj])
             ratioMin = count_shared / min(rhogs_size[hogi], rhogs_size[hogj])
-            # mean_scores > _config.mergHOG_mean_thresh or
             # todo: big_rhog_size make it as a ratio, could be problometic when we have many more species -> merging too much
             condition_merge = (max(rhogs_size[hogi], rhogs_size[hogj]) < conf_infer_roothogs.big_rhog_size / 6 and \
                                 ((ratioMax > conf_infer_roothogs.mergHOG_ratioMax_thresh or ratioMin > conf_infer_roothogs.mergHOG_ratioMin_thresh) and count_shared > conf_infer_roothogs.mergHOG_shared_thresh))  \
@@ -546,10 +507,9 @@ def find_rhog_candidate_pairs(hogmaps, rhogs_prots, conf_infer_roothogs): # rhog
             # D0651051 ( 59 ) D0658569 ( 180 ) 62 0.34 1.05 # todo why bigger than 1?
             # D0646495 ( 2 ) D0631227 ( 14 ) 25 1.79 12.5
 
-    logger.debug("There are " + str(len(candidates_pair)) + " candidate pairs of rhogs for merging.")
-    print(len(candidates_pair))
-
+    logger.info("There are %d candidate pairs of rhogs for merging.", len(candidates_pair))
     return candidates_pair
+
 
 def cluster_rhogs(candidates_pair):
     cluster_rhogs_obj = UnionFind()
@@ -1132,7 +1092,7 @@ def write_outgroups_all(rhogs_prots,prot_recs_all):
 
 
 
-def cluster_rhogs_nx(cluster_rhogs_list,candidates_pair):
+def cluster_rhogs_nx(cluster_rhogs_list, candidates_pair):
     count=0
     candidates_pair = set(candidates_pair)
     new_cluster = []
