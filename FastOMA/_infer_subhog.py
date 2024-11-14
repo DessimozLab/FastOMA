@@ -309,7 +309,7 @@ class LevelHOGProcessor:
 
         :param genetree: the rooted tree (with distances) that should be processed
         :return: the N most divergent representatives for that tree. N is taken from self.conf"""
-        genetree = genetree_subtree.copy('newick-extended')
+        genetree = copy_tree(genetree_subtree)
 
         # we remove the non-enabled representatives from the tree
         keep = [n for n in genetree.iter_leaves() if self._rep_lookup[n.name].representative.enabled]
@@ -799,3 +799,21 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     #     [str(i) for i in prot_list_sbuhog_short]))
 
     return hogs_this_level_list
+
+
+def copy_tree(t:TreeNode):
+    """This function creates a deep copy of an ete3 tree while
+    preserving the names
+
+    standard code in ete3:
+       new_node = self.__class__(self.write(features=[]))
+    """
+    features = set([])
+    for n in t.traverse():
+        features.union(n.features)
+    features -= {"name"}
+    new_node = t.__class__(t.write(features=features, quoted_node_names=True, format_root_node=True),
+                           quoted_node_names=True)
+    return new_node
+
+
