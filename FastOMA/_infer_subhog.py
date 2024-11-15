@@ -153,13 +153,13 @@ def infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs
 
                     del pending_futures[future_id]
                     species_node = species_tree.search_nodes(name=species_node_name)[0]
-                    parent_node = species_node.up
-                    if not parent_node:  # we reach the root
+                    if species_node == species_tree:  # we reach the root
                         # assert len(pending_futures) == 0, str(species_node_name)+" "+rhogid_
                         assert species_node.name == species_tree.name
+                        assert len(pending_futures) == 0
                         break
+                    parent_node = species_node.up
                     parent_node.dependencies_fulfilled.add(species_node_name)  # a set
-
                     childrend_parent_nodes = set(node.name for node in parent_node.get_children())
                     if parent_node.dependencies_fulfilled == childrend_parent_nodes:
                         #  if not parent_node.infer_submitted:
