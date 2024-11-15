@@ -76,10 +76,9 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     logger.info("Number of unique species in rHOG " + rhogid + " is " + str(len(species_names_rhog)) + ".")
 
     if inferhog_concurrent_on:  # for big HOG we use parallelization at the level taxonomic level using concurrent
-        hogs_a_rhog_num = infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
+        infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
     else:
-        hogs_a_rhog_num = infer_hogs_for_rhog_levels_recursively(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
-    # Output value hogs_a_rhog_num  is an integer= length. We save the output as pickle file at each taxonomic level.
+        infer_hogs_for_rhog_levels_recursively(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
 
     #####  Now read the final pickle file for this rootHOG
     root_node_name = species_tree.name
@@ -169,8 +168,6 @@ def infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs
                         pending_futures[future_id_parent] = parent_node.name
                         # for future_id:  del pending_futures[future_id] i need another dictionary the other way arround to removes this futures
 
-    return len(pending_futures) + 1
-
 
 def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs):
     """
@@ -178,17 +175,13 @@ def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid, pickles_sub
     """
 
     if sub_species_tree.is_leaf():
-        singletone_hog_out = singletone_hog_(sub_species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder)
-        #  out 1 =  succesful
-        return singletone_hog_out
-    children_nodes = sub_species_tree.children
+        singletone_hog_(sub_species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder)
+        return
 
+    children_nodes = sub_species_tree.children
     for node_species_tree_child in children_nodes:
-        hogs_chrdn = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
-        # hogs_chrdn should be 1 hogs_chrdn_list.extend(hogs_chrdn)
-    infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, rhogid, pickles_subhog_folder_all, conf_infer_subhhogs)
-    # hogs_this_level_list should be one
-    return infer_hogs_this_level_out
+        infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
+    infer_hogs_this_level(sub_species_tree, rhogid, pickles_subhog_folder_all, conf_infer_subhhogs)
 
 
 def singletone_hog_(node_species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder):
