@@ -12,11 +12,17 @@ from FastOMA.collect_subhogs import iter_hogs
 from FastOMA.collect_subhogs import update_hogids
 from pathlib import Path
 
-mode = "selected_genes" #"no_header" # "selected_genes"  "all_genes"
+```
+python pickle2orthoxml.py  "no_header" "file_D0680685.pickle"
+
+python pickle2orthoxml.py "selected_genes"  pickle_folder gene_id_dic_xml.pickle  "species_tree_checked.nwk"     # this will be slow.  gene_id_dic_xml.pickle is in the output of infer_roothogs
+```
+
+mode = sys.argv[1]  #"selected_genes" #"no_header" # "selected_genes"  "all_genes"
 
 if mode=="no_header":
 
-    input_pickle= sys.argv[1]   # "file_D0680685.pickle"
+    input_pickle= sys.argv[2]   # "file_D0680685.pickle"
     handle=open(input_pickle,'rb')
     orthoxml_file = pickle.load(handle)
 
@@ -28,11 +34,11 @@ if mode=="no_header":
 
 if mode =="selected_genes":
 
-    input_pickle = sys.argv[1] # a folder  of pickles  pickle_folder
-    gene_id_pickle_file = sys.argv[2] # generated in infer_roothogs.
+    input_pickle = sys.argv[2] # a folder  of pickles  pickle_folder
+    gene_id_pickle_file = sys.argv[3] # generated in infer_roothogs.
     # available in out_folder/temp_output/gene_id_dic_xml.pickle
     # this keeps the gene name and the gene integer ID used in orthoxml.
-    species_tree = sys.argv[3] # "species_tree_checked.nwk"
+    species_tree = sys.argv[4] # "species_tree_checked.nwk"
 
     handle=open(input_pickle,'rb')
     orthoxml_file1 = pickle.load(handle) # todo might have two elements inside?

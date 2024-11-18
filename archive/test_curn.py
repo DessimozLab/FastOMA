@@ -1,6 +1,6 @@
 
 from FastOMA.infer_roothogs import fastoma_infer_roothogs
-
+from FastOMA._wrappers import logger
 from FastOMA.infer_subhogs import fastoma_infer_subhogs
 
 
@@ -10,9 +10,18 @@ from FastOMA.infer_subhogs import fastoma_infer_subhogs
 
 #a=2
 #fastoma_infer_subhogs()
+#  proteome    --hogmap hogmaps   --splice splice  --out-rhog-folder out
+import sys
+
+folder="pycharm_projects/fastoma_test/"
+sys.argv.extend(['--proteomes', folder+"proteome"])
+sys.argv.extend(['--hogmap', folder+"hogmaps"])
+sys.argv.extend(['--splice', folder+"splice"])
+sys.argv.extend(['--out-rhog-folder', folder+"out"])
+sys.argv.extend(['-vv'])
 fastoma_infer_roothogs()
 
-a=2
+a=2 # a
 #
 # from FastOMA.zoo.hog import transform
 #

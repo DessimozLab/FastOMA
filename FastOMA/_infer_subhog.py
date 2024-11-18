@@ -1,6 +1,7 @@
 import collections
 import csv
 import itertools
+import sys
 from pathlib import Path
 import gzip
 
@@ -75,10 +76,9 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     logger.info("Number of unique species in rHOG " + rhogid + " is " + str(len(species_names_rhog)) + ".")
 
     if inferhog_concurrent_on:  # for big HOG we use parallelization at the level taxonomic level using concurrent
-        hogs_a_rhog_num = infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
+        infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
     else:
-        hogs_a_rhog_num = infer_hogs_for_rhog_levels_recursively(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
-    # Output value hogs_a_rhog_num  is an integer= length. We save the output as pickle file at each taxonomic level.
+        infer_hogs_for_rhog_levels_recursively(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
 
     #####  Now read the final pickle file for this rootHOG
     root_node_name = species_tree.name
@@ -152,13 +152,13 @@ def infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs
 
                     del pending_futures[future_id]
                     species_node = species_tree.search_nodes(name=species_node_name)[0]
-                    parent_node = species_node.up
-                    if not parent_node:  # we reach the root
+                    if species_node == species_tree:  # we reach the root
                         # assert len(pending_futures) == 0, str(species_node_name)+" "+rhogid_
                         assert species_node.name == species_tree.name
+                        assert len(pending_futures) == 0
                         break
+                    parent_node = species_node.up
                     parent_node.dependencies_fulfilled.add(species_node_name)  # a set
-
                     childrend_parent_nodes = set(node.name for node in parent_node.get_children())
                     if parent_node.dependencies_fulfilled == childrend_parent_nodes:
                         #  if not parent_node.infer_submitted:
@@ -168,8 +168,6 @@ def infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs
                         pending_futures[future_id_parent] = parent_node.name
                         # for future_id:  del pending_futures[future_id] i need another dictionary the other way arround to removes this futures
 
-    return len(pending_futures) + 1
-
 
 def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs):
     """
@@ -177,17 +175,13 @@ def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid, pickles_sub
     """
 
     if sub_species_tree.is_leaf():
-        singletone_hog_out = singletone_hog_(sub_species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder)
-        #  out 1 =  succesful
-        return singletone_hog_out
-    children_nodes = sub_species_tree.children
+        singletone_hog_(sub_species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder)
+        return
 
+    children_nodes = sub_species_tree.children
     for node_species_tree_child in children_nodes:
-        hogs_chrdn = infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
-        # hogs_chrdn should be 1 hogs_chrdn_list.extend(hogs_chrdn)
-    infer_hogs_this_level_out = infer_hogs_this_level(sub_species_tree, rhogid, pickles_subhog_folder_all, conf_infer_subhhogs)
-    # hogs_this_level_list should be one
-    return infer_hogs_this_level_out
+        infer_hogs_for_rhog_levels_recursively(node_species_tree_child, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
+    infer_hogs_this_level(sub_species_tree, rhogid, pickles_subhog_folder_all, conf_infer_subhhogs)
 
 
 def singletone_hog_(node_species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder):
@@ -308,7 +302,8 @@ class LevelHOGProcessor:
 
         :param genetree: the rooted tree (with distances) that should be processed
         :return: the N most divergent representatives for that tree. N is taken from self.conf"""
-        genetree = genetree_subtree.copy()
+        genetree = copy_tree(genetree_subtree)
+
         # we remove the non-enabled representatives from the tree
         keep = [n for n in genetree.iter_leaves() if self._rep_lookup[n.name].representative.enabled]
         if len(keep) < len(genetree):
@@ -435,34 +430,33 @@ class LevelHOGProcessor:
         return genetree
 
     def infer_rooted_genetree(self, gene_tree: TreeNode):
-        genetree = gene_tree.copy()
         if self.conf.gene_rooting_method == "midpoint":
-            r_outgroup = genetree.get_midpoint_outgroup()
-            genetree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
+            r_outgroup = gene_tree.get_midpoint_outgroup()
+            gene_tree.set_outgroup(r_outgroup)  # print("Midpoint rooting is done for gene tree.")
 
         elif self.conf.gene_rooting_method == "midpoint-dendropy":
             dt = dendropy.Tree.get_from_string(gene_tree.write(format=1), schema="newick")
             dt.reroot_at_midpoint()
             nw = dt.as_string(schema="newick", suppress_rooting=True)
-            genetree = Tree(nw, format=1, quoted_node_names=True)
+            gene_tree = Tree(nw, format=1, quoted_node_names=True)
 
         elif self.conf.gene_rooting_method == "Nevers_rooting":
-            logger.info("Nevers_rooting started for " + str(genetree.write(format=1, format_root_node=True)))
+            logger.info("Nevers_rooting started for " + str(gene_tree.write(format=1, format_root_node=True)))
             species = Tree("species_tree.nwk", format=1)
-            genetree = _utils_subhog.get_score_all_root(genetree, species)
-            logger.info("Nevers_rooting finished for " + str(genetree.write(format=1, format_root_node=True)))
+            gene_tree = _utils_subhog.get_score_all_root(gene_tree, species)
+            logger.info("Nevers_rooting finished for " + str(gene_tree.write(format=1, format_root_node=True)))
 
         elif self.conf.gene_rooting_method == "mad":
-            genetree = _wrappers.mad_rooting(genetree)  # todo check with qouted gene tree
+            gene_tree = _wrappers.mad_rooting(gene_tree)  # todo check with qouted gene tree
 
         elif self.conf.gene_rooting_method == "outlier":  # not yet implmented completely, todo need check with new gene tree
-            outliers = _utils_subhog.find_outlier_leaves(genetree)
-            r_outgroup = _utils_subhog.midpoint_rooting_outgroup(genetree, leaves_to_exclude=outliers)
-            genetree.set_outgroup(r_outgroup)
+            outliers = _utils_subhog.find_outlier_leaves(gene_tree)
+            r_outgroup = _utils_subhog.midpoint_rooting_outgroup(gene_tree, leaves_to_exclude=outliers)
+            gene_tree.set_outgroup(r_outgroup)
         else:
             logger.warning("rooting method not found !!   * * * * *  *")
             raise ValueError("invalid rooting method: {}".format(self.conf.gene_rooting_method))
-        return genetree
+        return gene_tree
 
     def infer_reconciliation(self, genetree:TreeNode, sos_threshold=0.0):
         """Annotate each internal node with a 'evoltype' and 'sos' attribute.
@@ -798,3 +792,21 @@ def merge_subhogs(gene_tree, hogs_children_level_list, node_species_tree, rhogid
     #     [str(i) for i in prot_list_sbuhog_short]))
 
     return hogs_this_level_list
+
+
+def copy_tree(t:TreeNode):
+    """This function creates a deep copy of an ete3 tree while
+    preserving the names
+
+    standard code in ete3:
+       new_node = self.__class__(self.write(features=[]))
+    """
+    features = set([])
+    for n in t.traverse():
+        features.union(n.features)
+    features -= {"name"}
+    new_node = t.__class__(t.write(features=features, quoted_node_names=True, format_root_node=True),
+                           quoted_node_names=True)
+    return new_node
+
+

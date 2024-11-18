@@ -80,7 +80,6 @@ class HOG:
         # 0070124
 
         self._hogid = "HOG_" + self._rhogid+ "_sub" + str(self.__class__._hogid_iter)
-        self._tax_least = taxnomic_range  #  least taxnomic level
         self._tax_now = taxnomic_range    # the taxnomic level that we are considering now, checking for duplication
         self.active = True
 
@@ -91,7 +90,6 @@ class HOG:
             self._msa = MultipleSeqAlignment([only_protein])
             self._subhogs = []
             self._dubious_members = set()
-            self._num_species_tax_speciestree = 1  # at the leaf level, there is only one species in the species tree
             # <<class 'Bio.Align.MultipleSeqAlignment'> instance (1 records of length 314) at 7f0e86c713d0>
 
         elif msa and all(isinstance(x, HOG) for x in input_instantiate):
@@ -103,7 +101,6 @@ class HOG:
                 hog_members |= sub_hog.get_members()
             self._members = hog_members  # set.union(*tup)    # this also include dubious_members
             self._subhogs = list(input_instantiate)  # full members of subhog, children
-            self._num_species_tax_speciestree = len(taxnomic_range.get_leaves())
             self._representatives = [r for r in representatives]
             representatives_id = set(r.get_id() for r in representatives)
             assert len(representatives_id) == len(self._representatives), "Non-unique ids among representatives"
@@ -129,7 +126,7 @@ class HOG:
             assert False
 
     def __repr__(self):
-        return f"<HOG:{self.hogid},size={len(self._members)},taxLeast={self._tax_least.name},taxNow={self._tax_now.name}>"
+        return f"<HOG:{self.hogid},size={len(self._members)},tax={self._tax_now.name}>"
 
     @property
     def hogid(self):
@@ -338,7 +335,7 @@ class HOG:
             #hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
             hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)}, )
             num_species_tax_hog = len(set([i.split("||")[1] for i in self._members]))  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
-            completeness_score = round(num_species_tax_hog/self._num_species_tax_speciestree,4)
+            completeness_score = round(num_species_tax_hog/self._tax_now.size, 4)
             property_element = ET.SubElement(hog_elemnt, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
             property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(self._tax_now.name)})
 
