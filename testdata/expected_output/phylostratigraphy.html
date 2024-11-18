@@ -1,0 +1,79 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Phylo.io</title>
+            <meta charset="UTF-8">
+            <script src="https://peterolson.github.com/BigInteger.js/BigInteger.min.js"></script>
+            <script type="text/javascript" src="https://cdn.rawgit.com/DessimozLab/phylo-io/5e89fafc3b1746b22da33c20b2af621d5807b6fb/www/js/jquery-2.1.4.min.js"></script>
+            <script type="text/javascript" src="https://cdn.rawgit.com/DessimozLab/phylo-io/9eae3d2af33f1f75bff78e393909dccfdd400650/www/js/treecompare.js"></script>
+            <script type="text/javascript" src="https://underscorejs.org/underscore-min.js"></script>
+            <script type="text/javascript" src="https://cdn.rawgit.com/DessimozLab/phylo-io/5e89fafc3b1746b22da33c20b2af621d5807b6fb/www/js/d3.min.js"></script>
+            <script type="text/javascript" src="https://cdn.rawgit.com/DessimozLab/phylo-io/5e89fafc3b1746b22da33c20b2af621d5807b6fb/www/js/bootstrap.min.js"></script>
+            <script type="text/javascript" src="https://cdn.rawgit.com/DessimozLab/phylo-io/5e89fafc3b1746b22da33c20b2af621d5807b6fb/www/js/FileSaver.min.js"></script>
+            <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.8/css/solid.css" integrity="sha384-v2Tw72dyUXeU3y4aM2Y0tBJQkGfplr39mxZqlTBDUZAb9BGoC40+rdFCG0m10lXk" crossorigin="anonymous">
+            <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.8/css/fontawesome.css" integrity="sha384-q3jl8XQu1OpdLgGFvNRnPdj5VIlCvgsDQTQB6owSOHWlAurxul7f+JpUOVdAiJ5P" crossorigin="anonymous">
+            <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/DessimozLab/phylo-io/5e89fafc3b1746b22da33c20b2af621d5807b6fb/www/css/bootstrap.min.css">
+            <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/DessimozLab/phylo-io/5e89fafc3b1746b22da33c20b2af621d5807b6fb/www/css/bootstrap-theme.min.css">
+            <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/DessimozLab/phylo-io/5e89fafc3b1746b22da33c20b2af621d5807b6fb/www/css/style.css">
+            <style>
+
+            text {stroke: none;}
+
+            #help_modal_button {
+                position: fixed;
+                right: 10px;
+                margin-right: 10px; /*magic number */
+                bottom: 10px;
+                z-index: 99;
+            }
+
+            </style>
+        </head>
+        <body id="phylo">
+
+        <!-- Modal -->
+        <div class="modal  fade bs-example-modal-lg" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabel">Tree profile help</h4>
+                    </div>
+                    <div class="modal-body">
+
+                        <embed src="https://cdn.rawgit.com/DessimozLab/pyham/fc01fb94/help.pdf" frameborder="0" width="100%" height="400px">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Button trigger modal -->
+        <button id="help_modal_button" type="button" class="btn btn-sm" data-toggle="modal" data-target="#myModal">
+            Help
+        </button>
+
+
+
+        <div id="vis-container1" style="width: 100%; height: 100%;">
+        <div id="scale-1"> </div>
+        </div>
+        <script type="text/javascript">
+            var treecomp = TreeCompare().init({
+                enableScale: true,
+                scaleColor: "black",
+                showHistogramValues: true,
+                showHistogramSummaryValue: true
+            });
+            treeData = '{"name": "inter2", "numberGenes": 6, "numberEvents": null, "length": 0.01, "collapsed": "false", "evolutionaryEvents": false, "children": [{"name": "inter1", "numberGenes": 12, "numberEvents": 6, "length": 0.01, "collapsed": "false", "evolutionaryEvents": {"retained": 6, "duplicated": 0, "gained": 6, "lost": 0, "duplication": 0}, "children": [{"name": "AQUAE", "numberGenes": 12, "numberEvents": 0, "length": 0.01, "collapsed": "false", "evolutionaryEvents": {"retained": 12, "duplicated": 0, "gained": 0, "lost": 0, "duplication": 0}}, {"name": "CHLTR", "numberGenes": 10, "numberEvents": 2, "length": 0.01, "collapsed": "false", "evolutionaryEvents": {"retained": 10, "duplicated": 0, "gained": 0, "lost": 2, "duplication": 0}}]}, {"name": "MYCGE", "numberGenes": 6, "numberEvents": 0, "length": 0.01, "collapsed": "false", "evolutionaryEvents": {"retained": 6, "duplicated": 0, "gained": 0, "lost": 0, "duplication": 0}}]}';
+            var tree1 = treecomp.addTree(treeData, undefined, "single");
+            treecomp.viewTree(tree1.name, "vis-container1", "scale-1");
+            treecomp.addMainLegend(tree1.name);
+        </script>
+        </body>
+        </html>
+        

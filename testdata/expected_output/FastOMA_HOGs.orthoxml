@@ -1,0 +1,167 @@
+<?xml version='1.0' encoding='utf-8'?>
+<orthoXML xmlns="http://orthoXML.org/2011/" origin="FastOMA 0.3.4+dev" originVersion="2024-10-18 02:51:20" version="0.5">
+  <species name="MYCGE" taxonId="5" NCBITaxId="0">
+    <database name="database" version="2023">
+      <genes>
+        <gene id="1000000001" protId="sp|P47500|RF1_MYCGE" />
+        <gene id="1000000002" protId="sp|P13927|EFTU_MYCGE" />
+        <gene id="1000000003" protId="sp|P47639|ATPB_MYCGE" />
+        <gene id="1000000004" protId="sp|P47547|DNAK_MYCGE" />
+        <gene id="1000000005" protId="sp|P47543|G3P_MYCGE" />
+        <gene id="1000000006" protId="sp|P47641|ATPA_MYCGE" />
+      </genes>
+    </database>
+  </species>
+  <species name="CHLTR" taxonId="4" NCBITaxId="0">
+    <database name="database" version="2023">
+      <genes>
+        <gene id="1001000001" protId="sp|O84067|LEPA_CHLTR" />
+        <gene id="1001000002" protId="sp|O84026|RF1_CHLTR" />
+        <gene id="1001000003" protId="sp|O84591|ENO_CHLTR" />
+        <gene id="1001000004" protId="sp|P0CD71|EFTU_CHLTR" />
+        <gene id="1001000005" protId="tr|O84829|O84829_CHLTR" />
+        <gene id="1001000006" protId="sp|O84332|TPIS_CHLTR" />
+        <gene id="1001000007" protId="sp|P17821|DNAK_CHLTR" />
+        <gene id="1001000008" protId="sp|O84081|FOLD_CHLTR" />
+        <gene id="1001000009" protId="sp|P0CE13|G3P_CHLTR" />
+        <gene id="1001000010" protId="sp|P0C0Z7|CH60_CHLTR" />
+      </genes>
+    </database>
+  </species>
+  <species name="AQUAE" taxonId="3" NCBITaxId="0">
+    <database name="database" version="2023">
+      <genes>
+        <gene id="1002000001" protId="sp|O67618|LEPA_AQUAE" />
+        <gene id="1002000002" protId="sp|O67032|RF1_AQUAE" />
+        <gene id="1002000003" protId="sp|O66778|ENO_AQUAE" />
+        <gene id="1002000004" protId="sp|O66429|EFTU_AQUAE" />
+        <gene id="1002000005" protId="sp|O67547|SUCD_AQUAE" />
+        <gene id="1002000006" protId="sp|O66686|TPIS_AQUAE" />
+        <gene id="1002000007" protId="sp|O67828|ATPB_AQUAE" />
+        <gene id="1002000008" protId="sp|O67118|DNAK_AQUAE" />
+        <gene id="1002000009" protId="sp|O67736|FOLD_AQUAE" />
+        <gene id="1002000010" protId="sp|O67161|G3P_AQUAE" />
+        <gene id="1002000011" protId="sp|O67943|CH60_AQUAE" />
+        <gene id="1002000012" protId="sp|O66907|ATPA_AQUAE" />
+      </genes>
+    </database>
+  </species>
+  <taxonomy>
+    <taxon id="1" name="inter2">
+      <taxon id="2" name="inter1">
+        <taxon id="3" name="AQUAE" />
+        <taxon id="4" name="CHLTR" />
+      </taxon>
+      <taxon id="5" name="MYCGE" />
+    </taxon>
+  </taxonomy>
+  <scores>
+    <scoreDef id="CompletenessScore" desc="Fraction of expected species with genes in the (Sub)HOG" />
+  </scores>
+  <groups>
+    <orthologGroup id="HOG:0000001_1" taxonId="1">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E1027400" />
+      <property name="TaxRange" value="inter2" />
+      <geneRef id="1000000005" />
+      <orthologGroup id="HOG:0000001_2" taxonId="2">
+        <score id="CompletenessScore" value="1.0" />
+        <property name="TaxRange" value="inter1" />
+        <geneRef id="1002000010" />
+        <geneRef id="1001000009" />
+      </orthologGroup>
+    </orthologGroup>
+    <orthologGroup id="HOG:0000002_1" taxonId="1">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E0990770" />
+      <property name="TaxRange" value="inter2" />
+      <geneRef id="1000000004" />
+      <orthologGroup id="HOG:0000002_2" taxonId="2">
+        <score id="CompletenessScore" value="1.0" />
+        <property name="TaxRange" value="inter1" />
+        <geneRef id="1002000008" />
+        <geneRef id="1001000007" />
+      </orthologGroup>
+    </orthologGroup>
+    <orthologGroup id="HOG:0000003_2" taxonId="2">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E0990677" />
+      <property name="TaxRange" value="inter1" />
+      <geneRef id="1002000001" />
+      <geneRef id="1001000001" />
+    </orthologGroup>
+    <orthologGroup id="HOG:0000004_1" taxonId="1">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E0990677" />
+      <property name="TaxRange" value="inter2" />
+      <geneRef id="1000000002" />
+      <orthologGroup id="HOG:0000004_2" taxonId="2">
+        <score id="CompletenessScore" value="1.0" />
+        <property name="TaxRange" value="inter1" />
+        <geneRef id="1002000004" />
+        <geneRef id="1001000004" />
+      </orthologGroup>
+    </orthologGroup>
+    <orthologGroup id="HOG:0000005_2" taxonId="2">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E1027325" />
+      <property name="TaxRange" value="inter1" />
+      <geneRef id="1002000009" />
+      <geneRef id="1001000008" />
+    </orthologGroup>
+    <orthologGroup id="HOG:0000006_2" taxonId="2">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E1027829" />
+      <property name="TaxRange" value="inter1" />
+      <geneRef id="1002000006" />
+      <geneRef id="1001000006" />
+    </orthologGroup>
+    <orthologGroup id="HOG:0000007_2" taxonId="2">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E1027301" />
+      <property name="TaxRange" value="inter1" />
+      <geneRef id="1002000011" />
+      <geneRef id="1001000010" />
+    </orthologGroup>
+    <orthologGroup id="HOG:0000008_1" taxonId="1">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E0990823" />
+      <property name="TaxRange" value="inter2" />
+      <geneRef id="1002000007" />
+      <geneRef id="1000000003" />
+    </orthologGroup>
+    <orthologGroup id="HOG:0000009_1" taxonId="1">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E0990823" />
+      <property name="TaxRange" value="inter2" />
+      <geneRef id="1002000012" />
+      <geneRef id="1000000006" />
+    </orthologGroup>
+    <orthologGroup id="HOG:0000010_2" taxonId="2">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E1027309" />
+      <property name="TaxRange" value="inter1" />
+      <geneRef id="1002000003" />
+      <geneRef id="1001000003" />
+    </orthologGroup>
+    <orthologGroup id="HOG:0000011_1" taxonId="1">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E0990790" />
+      <property name="TaxRange" value="inter2" />
+      <geneRef id="1000000001" />
+      <orthologGroup id="HOG:0000011_2" taxonId="2">
+        <score id="CompletenessScore" value="1.0" />
+        <property name="TaxRange" value="inter1" />
+        <geneRef id="1002000002" />
+        <geneRef id="1001000002" />
+      </orthologGroup>
+    </orthologGroup>
+    <orthologGroup id="HOG:0000012_2" taxonId="2">
+      <score id="CompletenessScore" value="1.0" />
+      <property name="OMAmerRootHOG" value="HOG:E1027626" />
+      <property name="TaxRange" value="inter1" />
+      <geneRef id="1002000005" />
+      <geneRef id="1001000005" />
+    </orthologGroup>
+  </groups>
+</orthoXML>
