@@ -1,8 +1,14 @@
 FastOMA
 ======
-FastOMA is a scalable software package to infer orthology relationship.
+FastOMA is a scalable software package to infer orthology relationship. 
 
-Want to learn more about FastOMA and try it online, check out [FastOMA academy](https://omabrowser.org/oma/academy/module/fastOMA) and FastOMA talk at ISMB 2023 on [YouTube](https://youtu.be/KGetTUMDvlA?si=efeqKKarwpIFgXyN)!
+Want to learn more about FastOMA and try it online, check out [FastOMA academy](https://omabrowser.org/oma/academy/module/fastOMA) and FastOMA talk at ISMB 2023 on [YouTube](https://youtu.be/KGetTUMDvlA?si=efeqKKarwpIFgXyN)! And read FastOMA's publication in [Nature Methods](https://www.nature.com/articles/s41592-024-02552-8). 
+
+Have questions about FastOMA or want to learn how to get started with comparative genomics? Join our drop-in sessions on the first and third Tuesdays of each month at 3PM CET (9AM ET) to get your questions answered live on [Zoom](https://unil.zoom.us/j/2648825230) !
+
+<div align="center">
+  <img width="300px" src="./archive/fastOMA_logo.png" alt="FastOMA logo" />
+</div>
 
 # Input and Output: 
 
@@ -450,8 +456,7 @@ These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs`
 These are initial gene families that are used in `infer_subhogs` step, which could be split into a few smaller gene families. 
 
 ## Cite us
-
-Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick Vesztrocy, Stefano Pascarelli, David Moi, Natasha Glover, Adrian M. Altenhoff, and Christophe Dessimoz. "Orthology inference at scale with FastOMA." bioRxiv (2024): 2024-01. https://www.biorxiv.org/content/10.1101/2024.01.29.577392v1.full
+Citation:  Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick Vesztrocy, Stefano Pascarelli, David Moi, Natasha Glover, Adrian M. Altenhoff, and Christophe Dessimoz. "Orthology inference at scale with FastOMA." Nature Methods (2025). https://www.nature.com/articles/s41592-024-02552-8  [Preprint](https://www.biorxiv.org/content/10.1101/2024.01.29.577392v1.full). 
 
 
 ## Change log
