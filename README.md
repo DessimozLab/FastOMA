@@ -24,7 +24,7 @@ And there shouldn't be any repeated names in leaves names and internal node name
 3. The omamer database which is available for download from the [OMA browser](https://omabrowser.org/oma/current/).
 The FastOMA workflow will automatically download the omamer database for LUCA (7.7 GB) if the argument `--omamer_db` is not
 provided on the command line. The argument can be a local file (e.g. a previously downloaded omamer database file) or 
-a URL to an alternative omamer database, e.g. a subset of the LUCA database which is smaller, like Primates with this [link](https://omabrowser.org/All/Primates-v2.0.0.h5) which is ~100MB. However, to have a broader reference gene families, we recommend to use the LUCA database if possible. 
+a URL to an alternative omamer database, e.g. a subset of the LUCA database which is smaller, like Primates with this [link](https://omabrowser.org/All/Primates.h5) which is ~100MB. However, to have a broader reference gene families, we recommend to use the LUCA database if possible. 
 
 
 You can see an example in the [testdata](https://github.com/DessimozLab/FastOMA/tree/main/testdata/in_folder) folder.
@@ -225,10 +225,10 @@ Note : If you are using FastOMA with Docker or other profiles, check out the dif
 First, cd to the `testdata` folder and download the omamer database (optional) and change its name to `omamerdb.h5`.
 ```
 cd FastOMA/testdata
-wget https://omabrowser.org/All/Primates-v2.0.0.h5     # 105MB
-mv Primates-v2.0.0.h5    in_folder/omamerdb.h5 
+wget https://omabrowser.org/All/Primates.h5     # 105MB
+mv Primates.h5    in_folder/omamerdb.h5 
 ```
-(This is for the test however, I would suggest downloading the `LUCA-v2.0.0.h5` instead of `Primates-v2.0.0.h5` for your real analysis.).
+(This is for the test however, I would suggest downloading the `LUCA.h5` instead of `Primates.h5` for your real analysis.).
 Check the item 2 in the [input section](https://github.com/sinamajidian/FastOMA#input) for details.
 
 Now we have such a structure in our testdata folder.
@@ -438,7 +438,7 @@ HUMAN00036
 HUMAN00037
 ```
 
-The selected isoforms will be added as a new column to the input splice files stored as tsv at `out_folder/temp_output/selected_isoforms/`
+To find the selected isoforms you can follow the instruction [here](https://github.com/DessimozLab/FastOMA/wiki/How-to-find-the-selected-isoforms).
 
 ## Under the hood: what are FastOMA gene families?
 Firstly, those proteins that are mapped to the same OMAdb rootHOG (e.g. HOG:D0066142 for HOG:D0066142.1a.1a) by OMAmer are 
