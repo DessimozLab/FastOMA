@@ -51,7 +51,14 @@ def check_proteome(species_names, prot_recs_lists, proteome_folder):
                 logger.error("The protein ID %s is too long in species %s.fa, which should be changed. Please make sure it will be still unique. ",prot_rec_id,species_name) # (root cause issue due to truncatation by fastTree)
                 logger.error("Check input failed. FastOMA halted!")
                 return False
-
+                
+        # checking only first record in each species  # for ii in range(len(prot_recs_list)):
+        counter_seq = collections.Counter(prot_recs_list[0].seq)
+        total_atcg = sum([counter_seq[j_char] for j_char in ['a', 'A', 't', 'T', 'c', 'C', 'G', 'g']])
+        if total_atcg > 0.9 * len(prot_recs_list[0].seq):
+            # logger.error(str(total_atcg/len(prot_recs_list[0].seq)))
+            logger.error("Looks like genomics sequences in "+str(total_atcg)+" "+str(len(prot_recs_list[0].seq))+species_name+". Halting FastOMA because of invalid proteome input data")
+            sys.exit(1)
 
         num_prots = len(prot_recs_list) # >EP00159_Fonticula_alba_P004948_XP_009497064.1_small_nuclear_ribonucleoprotein_B_and_B'_Fonticula_alba||691883||1155004948
         num_prots_all += num_prots
