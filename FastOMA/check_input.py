@@ -1,7 +1,10 @@
+import itertools
 import sys
-from ete3 import Tree
 import os
 import collections
+
+from ete3 import Tree
+from Bio.Data.IUPACData import extended_protein_letters, unambiguous_dna_letters, unambiguous_rna_letters
 
 from . import _utils_roothog
 from ._wrappers import logger
@@ -47,28 +50,30 @@ def check_proteome(species_names, prot_recs_lists, proteome_folder):
             logger.error("Check input failed. FastOMA halted!")
             return False
         for prot_rec_id in prot_recs_ids:
-            if len(prot_rec_id)>60:   # todo 85 is the limit without considering ||s.
-                logger.error("The protein ID %s is too long in species %s.fa, which should be changed. Please make sure it will be still unique. ",prot_rec_id,species_name) # (root cause issue due to truncatation by fastTree)
+            if len(prot_rec_id) > 60:   # todo 85 is the limit without considering ||s.
+                logger.error("The protein ID %s is too long in species %s.fa, which should be changed. Please make sure it will be still unique.", prot_rec_id, species_name)  # (root cause issue due to truncation by fastTree)
                 logger.error("Check input failed. FastOMA halted!")
                 return False
                 
         # checking only first record in each species  # for ii in range(len(prot_recs_list)):
-        counter_seq = collections.Counter(prot_recs_list[0].seq)
-        total_atcg = sum([counter_seq[j_char] for j_char in ['a', 'A', 't', 'T', 'c', 'C', 'G', 'g']])
-        if total_atcg > 0.9 * len(prot_recs_list[0].seq):
-            # logger.error(str(total_atcg/len(prot_recs_list[0].seq)))
-            logger.error("Looks like genomics sequences in "+str(total_atcg)+" "+str(len(prot_recs_list[0].seq))+species_name+". Halting FastOMA because of invalid proteome input data")
-            sys.exit(1)
+        # check that at least 20% of all residue are not DNA/RNA characters (as a check for protein sequences)
+        residue_cnts = collections.Counter(itertools.chain.from_iterable(rec.seq.upper() for rec in prot_recs_list))
+        aa_chars = set(extended_protein_letters) - set(unambiguous_rna_letters) - set(unambiguous_rna_letters) - set('N')
+        total_aa = sum([residue_cnts[aa] for aa in aa_chars])
+        if total_aa / sum(residue_cnts.values()) < 0.2:
+            logger.error("Looks like genomics sequences used in '%s'. Proteome contains only %.1f%% amino acids letters.", species_name,  100 * total_aa / sum(residue_cnts.values()))
+            return False
 
-        num_prots = len(prot_recs_list) # >EP00159_Fonticula_alba_P004948_XP_009497064.1_small_nuclear_ribonucleoprotein_B_and_B'_Fonticula_alba||691883||1155004948
+        num_prots = len(prot_recs_list)  # >EP00159_Fonticula_alba_P004948_XP_009497064.1_small_nuclear_ribonucleoprotein_B_and_B'_Fonticula_alba||691883||1155004948
         num_prots_all += num_prots
         # todo , check duplicated Ids should it be done on all species ?
 
         if num_prots <= 2:
             logger.error("The input proteome looks empty or too few proteins or Bio.SeqIO couldn't read it, %s/%s.fa", proteome_folder, species_name)
             isOk = False
+
     # todo write new protoems with cleaned record ids, keep the mapping, to be used in orthoxml writing
-    # use the mapping back for orhtoxml
+    # use the mapping back for orthoxml
     logger.info("There are %d proteins in total in the input proteome folder.", num_prots_all)
     return isOk
 
@@ -86,9 +91,7 @@ def check_hogmap_files(hogmap_folder):
     return species_hogmaps
 
 
-
 def check_speciestree_internalnode(species_tree):
-
     # All the internal node of the input species tree should have a name
     for node in species_tree.traverse(strategy="postorder"):
         if not node.is_leaf():
