@@ -133,40 +133,44 @@ def infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs
             node.dependencies_fulfilled = set()  # a set
             # node.infer_submitted = False
             if node.is_leaf():
+                # submit the leaf node (extant species) to build HOGs to threadpool
                 future_id = executor.submit(singletone_hog_, node, rhogid, pickles_subhog_folder_all, rhogs_fa_folder)
-                # singletone_hog_(sub_species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder)
-                # {<Future at 0x7f1b48d9afa0 state=finished raised TypeError>: 'KORCO_'}
                 pending_futures[future_id] = node.name
-                # node.infer_submitted = True
-        # to keep, have a family
+
         while len(pending_futures) > 0:
             time.sleep(0.01)
             future_id_list = list(pending_futures.keys())
+            futures_to_remove = []
             for future_id in future_id_list:
-                if future_id.done(): # done means finished, but may be unsecussful.
-
+                if future_id.done():  # done means finished, but may be unsuccessful.
                     species_node_name = pending_futures[future_id]
-                    logger.debug("checking for rootHOG id "+str(rhogid)+" future object is done for node " +str(species_node_name))
-                    future_id.result()
-                    #logger.debug("the result of future is  " + str(future_id.result()))
+                    logger.debug("subhog inference for node %s is done", species_node_name)
+                    try:
+                        future_id.result()
+                    except (concurrent.futures.CancelledError, concurrent.futures.TimeoutError) as e:
+                        logger.error("subhog inference for node %s is terminated (%s)", species_node_name, str(e))
+                        raise
+                    except Exception as e:
+                        logger.exception("subhog inference for node %s failed with %s", species_node_name, str(e))
+                        raise
 
-                    del pending_futures[future_id]
+                    # store future_id for later removal (thread-safe) from pending_futures
+                    futures_to_remove.append(future_id)
                     species_node = species_tree.search_nodes(name=species_node_name)[0]
                     if species_node == species_tree:  # we reach the root
-                        # assert len(pending_futures) == 0, str(species_node_name)+" "+rhogid_
                         assert species_node.name == species_tree.name
-                        assert len(pending_futures) == 0
+                        assert len(pending_futures) == len(futures_to_remove)
                         break
                     parent_node = species_node.up
                     parent_node.dependencies_fulfilled.add(species_node_name)  # a set
                     childrend_parent_nodes = set(node.name for node in parent_node.get_children())
                     if parent_node.dependencies_fulfilled == childrend_parent_nodes:
-                        #  if not parent_node.infer_submitted:
                         future_id_parent = executor.submit(infer_hogs_this_level, parent_node, rhogid, pickles_subhog_folder_all, conf_infer_subhhogs)
-                        # parent_node.infer_submitted = True
-                        # future_id_parent= parent_node.name+"aaa"
                         pending_futures[future_id_parent] = parent_node.name
-                        # for future_id:  del pending_futures[future_id] i need another dictionary the other way arround to removes this futures
+
+            # Safely delete futures after iteration
+            for future_id in futures_to_remove:
+                del pending_futures[future_id]
 
 
 def infer_hogs_for_rhog_levels_recursively(sub_species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs):
