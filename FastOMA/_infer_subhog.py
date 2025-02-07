@@ -21,13 +21,12 @@ from typing import List
 
 # import networkx as nx
 # import matplotlib.pyplot as plt
-from . import _wrappers
+from . import _wrappers, logger
 from . import _utils_subhog
 from . import _utils_frag_SO_detection
 from ._hog_class import HOG, Representative, split_hog
 from ._utils_subhog import MSAFilter, MSAFilterElbow, MSAFilterTrimAL
 
-from ._wrappers import logger
 from .zoo.utils import unique
 
 low_so_detection = True # detection of proteins with low species overlap score in gene tree

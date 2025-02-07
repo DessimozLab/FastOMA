@@ -13,8 +13,7 @@ from ..options import StringOption, FlagOption, IntegerOption, FloatOption, Mult
 
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
+
 
 
 class PhymlCLI(AbstractCLI):

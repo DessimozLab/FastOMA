@@ -17,8 +17,6 @@ from ..options import OptionSet, StringOption, IntegerOption
 from ...file_utils import TempFile, TempDir
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
 
 
 

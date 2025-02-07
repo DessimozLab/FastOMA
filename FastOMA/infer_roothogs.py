@@ -1,9 +1,9 @@
 import os.path
 from shutil import which
 
-from . import _utils_roothog
-from ._wrappers import logger
+from . import _utils_roothog, logger
 from . import __version__ as fastoma_version
+from .logging_setup import setup_logging
 
 
 
@@ -34,7 +34,7 @@ def fastoma_infer_roothogs():
     parser.add_argument("--big-fscore-thresh", required=False, type=int, default=95, help="For huge rootHOGs, we have different heuristics, like filtering low family score protiens") # big_fscore_thresh
 
     conf = parser.parse_args()
-    logger.setLevel(level=30 - 10 * min(conf.v, 2))
+    setup_logging(conf.v)
     logger.debug("Arguments: %s", conf)
 
     species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes(conf.proteomes, conf.min_sequence_length)  # optional input folder

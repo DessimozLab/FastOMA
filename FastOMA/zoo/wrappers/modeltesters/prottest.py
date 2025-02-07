@@ -14,8 +14,6 @@ from ..abstract_cli import AbstractCLI
 from ..options import StringOption, FlagOption, OptionSet
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
 
 
 class ProtTestCLI(AbstractCLI):

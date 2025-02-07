@@ -1,6 +1,6 @@
 
 from FastOMA.infer_roothogs import fastoma_infer_roothogs
-from FastOMA._wrappers import logger
+from FastOMA import logger
 from FastOMA.infer_subhogs import fastoma_infer_subhogs
 
 

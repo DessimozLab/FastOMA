@@ -2,19 +2,21 @@ import itertools
 import sys
 import os
 import collections
+import logging
 
 from ete3 import Tree
 from Bio.Data.IUPACData import extended_protein_letters, unambiguous_dna_letters, unambiguous_rna_letters
 
-from . import _utils_roothog
-from ._wrappers import logger
+from . import _utils_roothog, logger
 from . import __version__ as fastoma_version
+from .logging_setup import setup_logging
 
 """
 
 fastoma-check-input --proteomes proteome --species-tree species_tree.nwk --out-tree species_tree_checked.nwk --hogmap hogmap -vv
 
 """
+
 
 def check_proteome_files(proteome_folder):
     proteome_files = os.listdir(proteome_folder)
@@ -220,17 +222,15 @@ def fastoma_check_input():
     parser.add_argument("--hogmap", help="Path to the folder containing the hogmap files")
     parser.add_argument("--omamer_db", help="Path to the omamer database")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
-    conf = parser.parse_args() # conf_check_input
+    conf = parser.parse_args()  # conf_check_input
 
-    logger.setLevel(level=30 - 10 * min(conf.v, 2))
+    setup_logging(conf.v)
     logger.debug("Arguments: %s", conf)
-
 
     species_names = check_proteome_files(conf.proteomes)
     if not species_names:
         logger.error("Halting FastOMA because of invalid proteome input data")
         sys.exit(1)
-
 
     try:
         species_tree = Tree(conf.species_tree, format=1)

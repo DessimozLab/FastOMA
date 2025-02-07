@@ -14,9 +14,8 @@ import numpy as np
 import sys
 from os import listdir
 
-from . import _utils_frag_SO_detection
+from . import _utils_frag_SO_detection, logger
 
-from ._wrappers import logger
 from . import _wrappers
 
 

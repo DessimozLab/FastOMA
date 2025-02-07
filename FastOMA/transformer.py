@@ -1,6 +1,6 @@
 import abc
 import re
-from ._wrappers import logger
+from . import logger
 
 
 class FastaHeaderTransformer(metaclass=abc.ABCMeta):

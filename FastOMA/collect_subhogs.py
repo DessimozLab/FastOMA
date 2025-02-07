@@ -9,12 +9,12 @@ from datetime import datetime
 from Bio import SeqIO
 from ete3 import Tree
 
-from ._wrappers import logger
 from ._utils_subhog import read_species_tree
 from .transformer import header_transformer
 from .zoo.hog import extract_flat_groups_at_level, extract_marker_groups_at_level
-# from .zoo.hog.convert import orthoxml_to_newick
-from . import __version__ as fastoma_version
+
+from . import __version__ as fastoma_version, logger
+from .logging_setup import setup_logging
 
 """
 
@@ -132,8 +132,8 @@ def fastoma_collect_subhogs():
                              Existing values are:
                                noop:      No transformation - entire ID of fasta header
                                UniProt:   '>sp|P68250|1433B_BOVIN' --> P68250""")
-    conf_collect_subhogs = parser.parse_args() # conf_collect_subhogs
-    logger.setLevel(level=30 - 10 * min(conf_collect_subhogs.v, 2))
+    conf_collect_subhogs = parser.parse_args()  # conf_collect_subhogs
+    setup_logging(conf_collect_subhogs.v)
     logger.debug(conf_collect_subhogs)
     id_transformer = header_transformer(conf_collect_subhogs.id_transform)
 

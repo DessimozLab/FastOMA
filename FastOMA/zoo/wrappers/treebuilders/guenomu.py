@@ -17,8 +17,6 @@ from ..options import StringOption, FlagOption, IntegerOption, FloatOption, Mult
 from ...file_utils import TempFile, TempDir
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
 
 
 class GuenomuCLI(AbstractCLI):

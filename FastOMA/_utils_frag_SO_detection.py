@@ -8,9 +8,8 @@ from Bio.SeqRecord import SeqRecord
 from ete3 import Tree
 
 
-from . import _wrappers
+from . import _wrappers, logger
 from . import _utils_subhog
-from ._wrappers import logger
 
 fragment_detection_msa_merge = True
 fragment_detection = True

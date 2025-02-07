@@ -10,7 +10,7 @@ import os
 import sys
 
 from .zoo.unionfind import UnionFind
-from ._wrappers import logger
+from . import logger
 import collections
 
 filter_nonchild_rootHOG= False

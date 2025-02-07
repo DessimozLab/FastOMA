@@ -1,5 +1,6 @@
 import argparse
-from ._wrappers import logger
+from . import logger
+from .logging_setup import setup_logging
 from .zoo.utils import auto_open
 
 
@@ -25,7 +26,7 @@ def main():
     parser_pw.set_defaults(func=extract_pw_rels)
 
     conf = parser.parse_args()
-    logger.setLevel(level=30 - 10 * min(conf.v, 2))
+    setup_logging(conf.v)
     logger.debug(conf)
     conf.func(conf)
 

@@ -20,8 +20,8 @@ hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 50
 
 
 import itertools
-from . import _utils_subhog
-from ._wrappers import logger
+from . import _utils_subhog, logger
+
 
 # from .infer_subhogs import conf_infer_subhhogs #fastoma_infer_subhogs #
 
