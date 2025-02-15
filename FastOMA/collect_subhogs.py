@@ -218,12 +218,12 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
     with open(output_file_og_tsv, 'w') as tsv:
         tsv.write("Group\tProtein\n")
         for grp, meta in extract_marker_groups_at_level(orthoxml, protein_attribute="protId", callback=callback_group_and_omamer):
-            group_members = {g.xref for g in grp}
+            group_members = {(g.xref, g.species) for g in grp}
             group_name = meta['group_id'].replace("HOG:", "OG_")
             nr_prot_in_groups += len(grp)
             nr_groups += 1
-            for gene in group_members:
-                tsv.write(f"{group_name}\t{gene}\n")
+            for gene_xref, gene_species in group_members:
+                tsv.write(f"{group_name}\t{gene_xref}\n")
 
             _write_group_fasta(fasta_format, group_members, group_name, id_transformer, meta, output_fasta_groups,
                                roothog_folder)
@@ -245,14 +245,14 @@ def write_roothogs(orthoxml: Path, roothog_folder: Path, output_file_roothog_tsv
     with open(output_file_roothog_tsv, 'wt') as tsv:
         tsv.write("RootHOG\tProtein\tOMAmerRootHOG\n")
         for grp, meta in extract_flat_groups_at_level(orthoxml, callback=callback_group_and_omamer):
-            group_members = {g.xref for g in grp}
+            group_members = {(g.xref, g.species) for g in grp}
             group_name = meta['group_id']
             # this is the id of the merged roothogs from the placement step
             omamer_roothog = meta['omamer_roothog']
             nr_prot_in_groups += len(grp)
             nr_groups += 1
-            for gene in group_members:
-                tsv.write(f"{group_name}\t{gene}\t{omamer_roothog}\n")
+            for gene_xref, _ in group_members:
+                tsv.write(f"{group_name}\t{gene_xref}\t{omamer_roothog}\n")
 
             _write_group_fasta(fasta_format, group_members, group_name.replace(":", ""), id_transformer, meta, output_fasta_groups,
                                roothog_folder)
@@ -268,7 +268,7 @@ def _write_group_fasta(fasta_format, group_members, group_name, id_transformer, 
     for rec in SeqIO.parse(rhog_fasta, "fasta"):
         orig_id, sp, *rest = rec.id.split("||")
         protid = id_transformer.transform(orig_id)
-        if protid in group_members:
+        if (protid, sp) in group_members:
             rec.id = protid
             rec.description += " [" + sp + "]"
             group_seqs.append(rec)
