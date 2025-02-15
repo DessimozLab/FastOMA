@@ -85,19 +85,19 @@ def infer_gene_tree(msa):
     tree_nwk = result_tree2["tree"].as_string(schema='newick') #str(result_tree2["tree"])
     return tree_nwk
 
+# to avoid confusion: right now we are using _utils_roothog.run_linclust in infer_roothogs.py
+# def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
 
-def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
+#     num_threads = 5
+#     command_clust= "mmseqs easy-linclust --threads" +str(num_threads) + " " +fasta_to_cluster+"singleton_unmapped tmp_linclust"
 
-    num_threads = 5
-    command_clust= "mmseqs easy-linclust --threads" +str(num_threads) + " " +fasta_to_cluster+"singleton_unmapped tmp_linclust"
+#     logger.debug("linclust rooting started" + command_clust)
+#     process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
+#     output, error = process.communicate()
+#     #if "Error analyzing file" in str(output) or error:
+#     #    try:
 
-    logger.debug("linclust rooting started" + command_clust)
-    process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-    #if "Error analyzing file" in str(output) or error:
-    #    try:
-
-    return "done"
+#     return "done"
 
 
 def trim_msa(msa):
