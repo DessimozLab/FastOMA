@@ -786,16 +786,16 @@ def collect_unmapped_singleton(rhogs_prots, unmapped,prot_recs_all,unmapped_sing
 import subprocess
 
 
-def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):   # todo move run_linclust to _wrapper.py
-    num_threads = 10  # todo how to assign more cpu for this step in nextflow
-    command_clust = mmseqs_executable_path +" easy-linclust --threads " + str(
-        num_threads) + " " + fasta_to_cluster + " singleton_unmapped tmp_linclust"
+def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):   # todo move run_linclust to _wrapper.py .  see easy-cluster below.
+    # todo: change FastOMA.nf to assgin more cpus to infer_roothog step.  mmseqs uses all cpus by default  # num_threads = 10  , --threads " + str(num_threads) + "
+    command_clust = mmseqs_executable_path +" easy-cluster  " + fasta_to_cluster + " singleton_unmapped tmp_linclust"
+    # easy-cluster is much better than easy-linclust but a bit slower. todo: make it as an arugment for user
 
     logger.debug("linclust rooting started" + command_clust)
     process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
 
-    # if verbose:
+    # if verbose: # todo print mmseqs logs/error/output for debugging
     #    print("output:\n", output)
     #    print("error:\n", error)
 
