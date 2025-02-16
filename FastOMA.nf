@@ -237,7 +237,6 @@ process infer_roothogs{
                                --hogmap hogmaps \
                                --splice ${splice_folder} \
                                --out-rhog-folder "omamer_rhogs" \
-                               --min-sequence-length ${params.min_sequence_length} \
                                -vv
     """
 }
