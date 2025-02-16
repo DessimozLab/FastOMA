@@ -39,7 +39,9 @@ def merge_msa(list_msas):
     #     wrapper_mafft_merge.options['--merge'].active = True
     # else:
     #     wrapper_mafft_merge.options['--merge'].active = False
-
+    
+    #mafft --auto Automatically selects an appropriate strategy from L-INS-i, FFT-NS-i and FFT-NS-2, according to data size. Default: off (always FFT-NS-2)
+    wrapper_mafft_merge.options['--auto'].set_value(False) # todo we can make it as an argument in fastoma-infer-subhogs. 
     # wrapper_mafft_merge.options['--anysymbol'].active = True
     wrapper_mafft_merge.options['--anysymbol'].set_value(True)
     wrapper_mafft_merge.options['--thread'].set_value(-1) # -1 uses a largely appropriate number of threads in each step, after automatically counting the number of physical cores the computer has.
