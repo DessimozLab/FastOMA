@@ -24,9 +24,9 @@ def setup_logging(verbosity: int, thread_names: bool = False):
     # Set sub-packages
     logging.getLogger("FastOMA.zoo").setLevel(sub_level)
     if thread_names:
-        fmt = "%(asctime)s %(levelname)-8s [%(threadName)s] %(message)s"
+        fmt = "%(asctime)s %(levelname)-8s [%(threadName)s] %(name)s: %(message)s"
     else:
-        fmt = "%(asctime)s %(levelname)-8s %(message)s"
+        fmt = "%(asctime)s %(levelname)-8s %(name)s: %(message)s"
 
     # Configure root logger
     logging.basicConfig(
