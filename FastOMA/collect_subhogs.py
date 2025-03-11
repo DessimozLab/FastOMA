@@ -34,13 +34,16 @@ def iter_hogs(pickle_folder: Path):
         for f in files:
             if f.startswith('file_') and f.endswith('.pickle'):
                 with open(os.path.join(root, f), 'rb') as handle:
-                    cur = pickle.load(handle)
+                    try:
+                        cur = pickle.load(handle)
+                    except pickle.PickleError as e:
+                        logger.error("Error reading pickle file %s: %s", os.path.join(root, f), e)
+                        raise
                 nr_hogs += len(cur)
                 yield from cur
                 cnt += 1
                 if cnt % 500 == 0:
-                    logger.info("read %d batch pickle files so far, resulting in %d roothogs so far",
-                                    cnt, nr_hogs)
+                    logger.info("read %d batch pickle files so far, resulting in %d roothogs so far", cnt, nr_hogs)
     logger.info("number of pickle files is %d.", cnt)
     logger.debug("number of hogs in all batches is %d", nr_hogs)
 
