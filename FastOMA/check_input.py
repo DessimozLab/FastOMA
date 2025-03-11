@@ -60,7 +60,7 @@ def check_proteome(species_names, prot_recs_lists, proteome_folder):
         # checking only first record in each species  # for ii in range(len(prot_recs_list)):
         # check that at least 20% of all residue are not DNA/RNA characters (as a check for protein sequences)
         residue_cnts = collections.Counter(itertools.chain.from_iterable(rec.seq.upper() for rec in prot_recs_list))
-        aa_chars = set(extended_protein_letters) - set(unambiguous_rna_letters) - set(unambiguous_rna_letters) - set('N')
+        aa_chars = set(extended_protein_letters) - set(unambiguous_dna_letters) - set(unambiguous_rna_letters) - set('N')
         total_aa = sum([residue_cnts[aa] for aa in aa_chars])
         if total_aa / sum(residue_cnts.values()) < 0.2:
             logger.error("Looks like genomics sequences used in '%s'. Proteome contains only %.1f%% amino acids letters.", species_name,  100 * total_aa / sum(residue_cnts.values()))
