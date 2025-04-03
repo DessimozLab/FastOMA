@@ -64,9 +64,9 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     #     os.makedirs("./genetrees")
 
     logger.info("\n" + "==" * 10 + "\n Start working on root hog: " + rhogid + ". \n")
-    rhog_i_prot_address = rhogs_fa_folder + "/HOG_" + rhogid+ ".fa"
+    rhog_i_prot_address = os.path.join(rhogs_fa_folder, f"HOG_{rhogid}.fa")
     rhog_i = list(SeqIO.parse(rhog_i_prot_address, "fasta"))
-    logger.info("number of proteins in the rHOG is " + str(len(rhog_i)) + ".")
+    logger.info("number of proteins in the rHOG is %d.", len(rhog_i))
     # the file "species_tree_checked.nwk" is created by the check_input.py
     (species_tree) = _utils_subhog.read_species_tree(conf_infer_subhhogs.species_tree)
 
@@ -88,9 +88,11 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     if not keep_subhog_each_pickle:
         shutil.rmtree(pickles_subhog_folder)
 
+    tot_genes, placed_genes = 0, 0
     hogs_rhogs_xml = []
     for hog_i in hogs_a_rhog:
-        if len(hog_i._members) >= inferhog_min_hog_size_xml:
+        tot_genes += len(hog_i)
+        if len(hog_i) >= inferhog_min_hog_size_xml:
             # could be improved   # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
             hogs_a_rhog_xml_raw = hog_i.to_orthoxml()    # <generef  >      <paralg object >
             if orthoxml_v03 and 'paralogGroup' in str(hogs_a_rhog_xml_raw) :
@@ -106,17 +108,25 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
             else:
                 hogs_a_rhog_xml = hogs_a_rhog_xml_raw
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
+            placed_genes += len(hog_i)
+            if conf_infer_subhhogs.v > 1:
+                logger.debug("writing an orthoxml stub file for hog %s", hog_i.hogid)
+                with open(f'orthostub_{rhogid}_xml_{hog_i.hogid}.xml', 'wb') as handle:
+                    ET.indent(hogs_a_rhog_xml, space='  ', level=0)
+                    oxml_et = ET.ElementTree(hogs_a_rhog_xml)
+                    oxml_et.write(handle, encoding="utf-8")
         else:
             logger.debug("we are not reporting due to fastoma singleton hog |*|  " + str(list(hog_i._members)[0]))
-            if len(hog_i._members) > 1:
+            if len(hog_i) > 1:
                 logger.warning("issue 166312309 this is not a singleton "+str(hog_i._members))
-
 
     pickles_rhog_file = pickles_rhog_folder + '/file_' + rhogid + '.pickle'
     with open(pickles_rhog_file, 'wb') as handle:
         # dill_pickle.dump(hogs_rhogs_xml, handle, protocol=dill_pickle.HIGHEST_PROTOCOL)
         pickle.dump(hogs_rhogs_xml, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    logger.info("All subHOGs for the rootHOG %s as OrthoXML format is written in %s", rhogid, pickles_rhog_file) # todo report how many genes are in the group for this rootHOG (out of how many were in the initial grouping from omamer)
+    logger.info("All subHOGs for the rootHOG %s as OrthoXML format is written in %s", rhogid, pickles_rhog_file)
+    logger.info(" --> placed %d out of %d proteins (%.2f%%). %d proteins in original roothog",
+                placed_genes, tot_genes, 100*placed_genes/tot_genes, len(rhog_i))
     # to see orthoxml as string, you might need to do it for different idx
     # idx=0; from xml.dom import minidom; import xml.etree.ElementTree as ET; minidom.parseString(ET.tostring(hogs_rhogs_xml[idx])).toprettyxml(indent="   ")
     del hogs_a_rhog  # to be memory efficient

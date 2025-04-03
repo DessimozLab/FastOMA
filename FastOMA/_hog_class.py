@@ -144,6 +144,9 @@ class HOG:
     def rhogid(self):
         return self._rhogid
 
+    def __len__(self):
+        return len(self._members)
+
     def get_members(self):
         return set(self._members)
 
