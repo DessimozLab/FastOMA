@@ -205,17 +205,16 @@ def singletone_hog_(node_species_tree, rhogid, pickles_subhog_folder_all, rhogs_
         pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name) + ".pickle"
         # open already calculated subhogs , but not completed till root in previous run
         if os.path.exists(pickle_subhog_file):
-            if os.path.getsize(pickle_subhog_file) > 3:  # 3 bytes
+            logger.debug("Level %s loading from pickle file %s", this_level_node_name, pickle_subhog_file)
+            try:
                 with open(pickle_subhog_file, 'rb') as handle:
-                    # i don't even need to open this even
-                    # is output of pickle.load(handle) is chlired or this level ?
-                    # todo I think I don't need to read the pickle file
-                    hogs_this_level_list = pickle.load(handle) #[object class HOG HOG:4027_sub1,len=1,taxono=PSETE]
-                    if hogs_this_level_list:
-                        logger.debug("Level " + str(this_level_node_name) + " with " + str(len(hogs_this_level_list)) + " hogs is read from pickle.")
-                        return len(hogs_this_level_list)
-                    else:
-                        logger.debug(" Issue  1238510: the pickle file for single tone is empty "+ str(hogs_this_level_list)+" " + rhogid)
+                    hogs_this_level_list = pickle.load(handle)
+            except (EOFError, IOError) as e:
+                logger.warning("pickle file %s seems corrupted or truncated. will redo this level: %s", pickle_subhog_file, this_level_node_name)
+                hogs_this_level_list = []
+            if len(hogs_this_level_list) > 0:
+                logger.debug("Level %s with %d hogs successfully read from pickle", this_level_node_name, len(hogs_this_level_list))
+                return len(hogs_this_level_list)
 
     # logger.debug("reading protien / singletone HOG of  " + str(this_level_node_name))
     hogs_this_level_list = []
