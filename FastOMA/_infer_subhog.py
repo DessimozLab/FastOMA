@@ -95,8 +95,12 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
             hogs_a_rhog_xml_raw = hog_i.to_orthoxml()    # <generef  >      <paralg object >
             if orthoxml_v03 and 'paralogGroup' in str(hogs_a_rhog_xml_raw) :
                 # in version v0.3 of orthoxml, there shouldn't be any paralogGroup at root level. Let's put them inside an orthogroup should be in
-                hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(hog_i._hogid)})
-                property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i._tax_now.name)})
+                hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(hog_i.hogid)})
+                num_species_tax_hog = len(set([i.split("||")[1] for i in hog_i.get_members()]))
+                completeness_score = round(num_species_tax_hog / hog_i.taxlevel.size, 4)
+                ET.SubElement(hog_elemnt, "score",
+                              attrib={"id": "CompletenessScore", "value": str(completeness_score)})
+                ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i.taxname)})
                 hog_elemnt.append(hogs_a_rhog_xml_raw)
                 hogs_a_rhog_xml = hog_elemnt
             else:
