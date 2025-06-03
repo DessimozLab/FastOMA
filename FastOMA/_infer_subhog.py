@@ -387,8 +387,21 @@ class LevelHOGProcessor:
                         for member in rep_val.representative.get_subelements():
                             writer.writerow([n.name, member])
 
+    def get_sequences_from_subhogs(self):
+        if self.conf.align_subhogs_seqs == "msa":
+            return [hog.get_msa() for hog in self.subhogs.values() if len(hog.get_msa()) > 0]
+        elif self.conf.align_subhogs_seqs == "full-seqs":
+            seqs = []
+            for hog in self.subhogs.values():
+                for rep in hog.get_representatives():
+                    seqs.append(MultipleSeqAlignment([rep.get_record()]))
+            assert len(seqs) == sum(len(subhog.get_msa()) for subhog in self.subhogs.values())
+            return seqs
+        else:
+            raise ValueError("Unknown align_subhogs_seqs value")
+
     def align_subhogs(self):
-        sub_msas = [hog.get_msa() for hog in self.subhogs.values() if len(hog.get_msa()) > 0]
+        sub_msas = self.get_sequences_from_subhogs()
         logger.debug(f"Merging {len(sub_msas)} MSAs for rhog: {self.rhogid}, level: {self.node_species_tree.name}")
         if len(sub_msas) == 0:
             logger.info(

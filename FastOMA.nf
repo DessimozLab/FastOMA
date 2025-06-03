@@ -372,6 +372,7 @@ process hog_big{
                                --gap-ratio-row ${params.filter_gap_ratio_row} \
                                --gap-ratio-col ${params.filter_gap_ratio_col} \
                                --number-of-samples-per-hog ${params.nr_repr_per_hog} \
+                               --align-subhogs-seqs full-seqs \
                                ${ params.write_msas ? "--msa-write" : ""} \
                                ${ params.write_genetrees ? "--gene-trees-write" : ""}
     """
@@ -404,6 +405,7 @@ process hog_rest{
                               --gap-ratio-row ${params.filter_gap_ratio_row} \
                               --gap-ratio-col ${params.filter_gap_ratio_col} \
                               --number-of-samples-per-hog ${params.nr_repr_per_hog} \
+                              --align-subhogs-seqs full-seqs \
                               ${ params.write_msas ? "--msa-write" : ""} \
                               ${ params.write_genetrees ? "--gene-trees-write" : ""}
     """

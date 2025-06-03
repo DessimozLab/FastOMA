@@ -49,6 +49,10 @@ def fastoma_infer_subhogs():
                         help="For trimming the MSA, the threshold of ratio of gaps for each column.")
     parser.add_argument("--min-col-trim", required=False, type=int, default=50,  # todo min rows trim
                         help="min no. columns in msa to consider for filtering")
+    parser.add_argument("--align-subhogs-seqs", default="msa", choices=("msa", "full-seqs"),
+                        help="Sequences used in ancestral nodes to build MSA from. 'msa' uses the trimmed, "
+                             "aligned sequences from the more recent taxonomic level, where as 'full-seqs' "
+                             "uses always the initial full protein sequences.")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
     conf_infer_subhhogs = parser.parse_args()
 
