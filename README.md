@@ -4,7 +4,6 @@ FastOMA is a scalable software package to infer orthology relationship.
 
 Want to learn more about FastOMA and try it online, check out [FastOMA academy](https://omabrowser.org/oma/academy/module/fastOMA) and FastOMA talk at ISMB 2023 on [YouTube](https://youtu.be/KGetTUMDvlA?si=efeqKKarwpIFgXyN)! And read FastOMA's publication in [Nature Methods](https://www.nature.com/articles/s41592-024-02552-8). 
 
-Have questions about FastOMA or want to learn how to get started with comparative genomics? Join our drop-in sessions on the first and third Tuesdays of each month at 3PM CET (9AM ET) to get your questions answered live on [Zoom](https://unil.zoom.us/j/2648825230) !
 
 <div align="center">
   <img width="300px" src="./archive/fastOMA_logo.png" alt="FastOMA logo" />
