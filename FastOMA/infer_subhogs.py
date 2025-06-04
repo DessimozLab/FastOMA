@@ -39,6 +39,8 @@ def fastoma_infer_subhogs():
                         help="writing the all gene trees .")  # the order seems to be nwk_SD_labeled.nwk, dubious_sd0.nwk_SD_labeled.nwk, dubious_sd1.nwk_SD_labeled.nwk
     parser.add_argument("--msa-write", action='store_true',
                         help="writing the raw MSAs (might have more genes that the final gene tree).")
+    parser.add_argument("--write-pairwise-distances", action='store_true',
+                        help="Write pairwise distances for all gene pairs on all gene trees.")
     parser.add_argument("--msa-filter-method",
                         choices=("col-row-threshold", "col-elbow-row-threshold", "trimal"),
                         default="col-row-threshold",
