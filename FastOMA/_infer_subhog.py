@@ -1,5 +1,6 @@
 import collections
 import csv
+import re
 import itertools
 import sys
 from pathlib import Path
@@ -90,7 +91,8 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
 
     tot_genes, placed_genes = 0, 0
     hogs_rhogs_xml = []
-    for hog_i in hogs_a_rhog:
+    geneRef2hogi = {}
+    for i, hog_i in enumerate(hogs_a_rhog):
         tot_genes += len(hog_i)
         if len(hog_i) >= inferhog_min_hog_size_xml:
             # could be improved   # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
@@ -109,6 +111,10 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
                 hogs_a_rhog_xml = hogs_a_rhog_xml_raw
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
             placed_genes += len(hog_i)
+            if conf_infer_subhhogs.write_pairwise_distances:
+                for gref in hogs_a_rhog_xml.iterfind('.//geneRef'):
+                    geneRef2hogi[int(gref.attrib['id'])] = i
+
             if conf_infer_subhhogs.v > 1:
                 logger.debug("writing an orthoxml stub file for hog %s", hog_i.hogid)
                 with open(f'orthostub_{rhogid}_xml_{hog_i.hogid}.xml', 'wb') as handle:
@@ -131,8 +137,33 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     # idx=0; from xml.dom import minidom; import xml.etree.ElementTree as ET; minidom.parseString(ET.tostring(hogs_rhogs_xml[idx])).toprettyxml(indent="   ")
     del hogs_a_rhog  # to be memory efficient
     gc.collect()
+    if conf_infer_subhhogs.write_pairwise_distances:
+        with gzip.open(f"Dist_{rhogid}.tsv.gz", "wt") as fh:
+            writer = csv.writer(fh, "excel-tab")
+            writer.writerow(["geneRef1", "geneRef2", "Estimated_at_level", "Distance"])
+            writer.writerows(collect_pairwise_distances_among_hogs(rhogid, geneRef2hogi))
+
     hogs_rhogs_xml_len = len(hogs_rhogs_xml)
     return hogs_rhogs_xml_len
+
+
+def collect_pairwise_distances_among_hogs(rhogid:str, geneRef2hogi:dict):
+    all_dists = []
+    for fn in Path('./').glob(f"Dist_{rhogid}_*.pickle"):
+        if (m := re.match(rf"Dist_{rhogid}_(?P<level>.*)\.pickle", fn.name)) is not None:
+            lev = m.group('level')
+        else:
+            lev = "n/a"
+
+        with open(fn, 'rb') as handle:
+            dist = pickle.load(handle)
+        for (gref1, gref2), d in dist.items():
+            try:
+                if geneRef2hogi[gref1] == geneRef2hogi[gref2]:
+                    all_dists.append((gref1, gref2, lev, f"{d:.6f}"))
+            except KeyError:
+                pass
+    return sorted(all_dists)
 
 
 def infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs):
@@ -645,6 +676,7 @@ class LevelHOGProcessor:
         gene_tree = self.infer_genetree_from_msa(filtered_msa)
         if len(gene_tree) > 1:
             rooted_gene_tree = self.infer_rooted_genetree(gene_tree)
+            self.dump_distances(rooted_gene_tree)
             # TODO: dealing with fragments is not done yet.
             self.infer_reconciliation(rooted_gene_tree, sos_threshold=self.conf.threshold_dubious_sd)
         else:
@@ -652,6 +684,18 @@ class LevelHOGProcessor:
         new_hogs = self.merge_subhogs(rooted_gene_tree, msa=filtered_msa)
         new_hogs.extend(self._frozen_hogs_before)
         return new_hogs
+
+    def dump_distances(self, gene_tree):
+        if self.conf.write_pairwise_distances:
+            dist = {}
+            for l1, l2 in itertools.combinations(gene_tree.iter_leaves(), 2):
+                geneRef1 = int(l1.name.split("||")[2])
+                geneRef2 = int(l2.name.split("||")[2])
+                tup = (geneRef1, geneRef2) if geneRef1 < geneRef2 else (geneRef2, geneRef1)
+                dist[tup] = gene_tree.get_distance(l1, l2)
+            fn = f"Dist_{self.rhogid}_{self.node_species_tree.name}.pickle"
+            with open(fn, 'wb') as fh:
+                pickle.dump(dist, fh)
 
 
 def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, conf_infer_subhhogs):
