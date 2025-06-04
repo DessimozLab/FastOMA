@@ -9,6 +9,13 @@ params.hogmap_in       = params.hogmap_in ?: "${params.input}/hogmap_in"
 params.splice_folder   = params.splice_folder ?: "${params.input}/splice"
 params.species_tree    = params.species_tree ?: "${params.input}/species_tree.nwk"
 
+// output subfolder definition
+params.genetrees_folder = params.output_folder + "/genetrees"
+params.msa_folder = params.output_folder + "/msa"
+params.dist_folder = params.output_folder + "/distances"
+params.hogmap_folder = params.output_folder + "/hogmap"
+params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
+
 // Utility process to fetch remote datasets
 process fetchRemoteData {
     // Cache in a dedicated cache directory
@@ -195,8 +202,9 @@ process hog_big{
   publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
   publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
-  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv"
-  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv.gz"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "HOG*tsv"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "HOG*tsv.gz"
+  publishDir path: params.dist_folder, pattern: "Dist_*tsv.gz"
 
   input:
     each rhogsbig
@@ -207,9 +215,9 @@ process hog_big{
     path "pickle_hogs"
     path "*.fa" , optional: true          // msa         if write True
     path "*.nwk" , optional: true  // gene trees  if write True
-    path "*.tsv", optional: true
-    path "*.tsv.gz", optional: true
-
+    path "HOG*.tsv", optional: true
+    path "HOG*.tsv.gz", optional: true
+    path "Dist_*tsv.gz"
   script:
     """
         fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig}  \
@@ -217,6 +225,7 @@ process hog_big{
                                --output-pickles pickle_hogs \
                                --parallel  \
                                -vv \
+                               --write-pairwise-distances \
                                --msa-filter-method ${params.filter_method} \
                                --gap-ratio-row ${params.filter_gap_ratio_row} \
                                --gap-ratio-col ${params.filter_gap_ratio_col} \
@@ -232,8 +241,9 @@ process hog_rest{
   publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
   publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
-  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv"
-  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv.gz"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "HOG*tsv"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "HOG*tsv.gz"
+  publishDir path: params.dist_folder, pattern: "Dist_*tsv.gz"
 
   input:
     each rhogsrest
@@ -242,14 +252,16 @@ process hog_rest{
     path "pickle_hogs"
     path "*.fa" , optional: true   // msa         if write True
     path "*.nwk" , optional: true  // gene trees  if write True
-    path "*.tsv", optional: true
-    path "*.tsv.gz", optional: true
+    path "HOG*.tsv", optional: true
+    path "HOG*.tsv.gz", optional: true
+    path "Dist_*tsv.gz"
   script:
     """
         fastoma-infer-subhogs --input-rhog-folder ${rhogsrest}  \
                               --species-tree ${species_tree} \
                               --output-pickles pickle_hogs \
                               -vv \
+                              --write-pairwise-distances \
                               --msa-filter-method ${params.filter_method} \
                               --gap-ratio-row ${params.filter_gap_ratio_row} \
                               --gap-ratio-col ${params.filter_gap_ratio_col} \
