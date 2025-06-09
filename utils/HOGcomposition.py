@@ -5,7 +5,7 @@ import sys
 in_folder=sys.argv[1] 
 fastoma_out_folder=sys.argv[2] 
 
-```
+"""
 To run
 python HOGcomposition.py in_folder output
 in_folder : where proteome folder is
@@ -13,9 +13,7 @@ output: where RootHOGs.tsv is
 
 output: 
 species composition table (HOGs in rows, species in columns and each cell to be the protein names of that HOG for each species)
-
-```
-
+"""
 project_files = os.listdir(in_folder+"/proteome/")
 
 
@@ -37,7 +35,7 @@ for species_name in species_names:
     file_prot = open(prot_address,'r')
     for line in file_prot:
         if line.startswith(">"):
-            prot_name=line.strip().split(" ")[0][1:]
+            prot_name=line.strip().split("\t")[0].split(" ")[0][1:]
             prot2species[prot_name] = species_name
 print("total number of proteins in the fasta files",len(prot2species))
 
@@ -69,10 +67,10 @@ for roothog, prots in roothog_dic.items():
     prot_species=[]
     for species_name in species_names:
         prots_raw= prot_species_dic[species_name]
-        if prots:
+        if prots_raw:
             prot_species.append(str(prots_raw)[1:-1])
         else:
-            prot_species.append('')
+            prot_species.append('NA')
         
             
     #prot_species_str=','.join(prot_species)
