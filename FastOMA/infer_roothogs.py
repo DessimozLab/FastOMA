@@ -43,7 +43,7 @@ def fastoma_infer_roothogs():
     hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(prot_recs_lists, fasta_format_keep, folder=conf.hogmap)  # optional input folder
 
     splice_files = conf.splice is not None and os.path.exists(conf.splice)
-    if splice_files:
+    if splice_files: # todo print some log on parsing the splice files eg number of isoforms 
         isoform_by_gene_all = _utils_roothog.parse_isoform_file(species_names, folder=conf.splice)
         isoform_selected,  isoform_not_selected = _utils_roothog.find_nonbest_isoform(
             species_names, isoform_by_gene_all, hogmaps
