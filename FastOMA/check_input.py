@@ -279,5 +279,5 @@ def fastoma_check_input():
         check_splice(isoform_by_gene_all)
     else:
         logger.info("Splice folder doesn't exist and that's ok.")
-    logger.info("Input check finished ! ")
+    logger.info("Input check finished successfully (since no error is found)! ")
 
