@@ -202,7 +202,7 @@ def check_splice(isoform_by_gene_all):
 
     logger.debug("For "+str(spliced_species_num)+"  species, out of "+str(len(isoform_by_gene_all))+" , we have splice files.")
     if total_genes ==0:
-        logger.debug("It seems that in all of the splice files, each line has only one item. Make sure that the splitter in each line is semicolon ; ")
+        logger.debug("No splice information found. It could be that each line of  splice files has only one item. Make sure that the splitter in each line is semicolon ; . Or the splice folder is empty. You need to delete the empty splice folder. FastOMA check input failed! Exiting...")
         sys.exit(1)
 
     logger.debug("In total, for "+ str(total_genes)+" genes, we have " + str(total_isoforms)+"  splices.")
@@ -229,7 +229,7 @@ def fastoma_check_input():
 
     species_names = check_proteome_files(conf.proteomes)
     if not species_names:
-        logger.error("Halting FastOMA because of invalid proteome input data")
+        logger.error("Halting FastOMA because of invalid proteome input data. FastOMA check input failed! Exiting...")
         sys.exit(1)
 
     try:
@@ -239,7 +239,7 @@ def fastoma_check_input():
             species_tree = Tree(conf.species_tree)
             # todo add check fro Phyloxml
         except:
-            logger.error("We have problem with parsing species tree %s using ete3 Tree. Maybe there are some special chars.", conf.species_tree)
+            logger.error("We have problem with parsing species tree %s using ete3 Tree. Maybe there are some special chars. FastOMA check input failed! Exiting...", conf.species_tree)
             sys.exit(1)
 
     check_speciestree_internalnode(species_tree)
@@ -250,7 +250,7 @@ def fastoma_check_input():
 
     species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes(conf.proteomes)
     if not check_proteome(species_names, prot_recs_lists, conf.proteomes):
-        logger.error("Halting FastOMA because of invalid proteome input data")
+        logger.error("Halting FastOMA because of invalid proteome input data. FastOMA check input failed! Exiting...")
         sys.exit(1)
 
     hogmap_files = conf.hogmap is not None and os.path.exists(conf.hogmap)
