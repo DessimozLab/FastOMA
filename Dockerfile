@@ -37,6 +37,7 @@ RUN apt-get update \
        mafft \
        mmseqs2 \
        procps \
+       time \
     && apt-get -y autoremove \
     && apt-get -y autoclean \
     && rm -rf /var/lib/apt/lists/*
