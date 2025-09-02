@@ -15,6 +15,8 @@ import shutil
 import pickle
 import gc
 import random
+
+from Bio.SeqRecord import SeqRecord
 from ete3 import Tree, TreeNode
 import xml.etree.ElementTree as ET
 from typing import List
@@ -127,12 +129,39 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     logger.info("All subHOGs for the rootHOG %s as OrthoXML format is written in %s", rhogid, pickles_rhog_file)
     logger.info(" --> placed %d out of %d proteins (%.2f%%). %d proteins in original roothog",
                 placed_genes, tot_genes, 100*placed_genes/tot_genes, len(rhog_i))
+    hogs_rhogs_xml_len = len(hogs_rhogs_xml)
+
+    # let's also dump an orthoxml file with the hogs from this rootHOG for debugging purposes
+    if conf_infer_subhhogs.v > 1:
+        oxml = build_xml_from_rhog(rhogid, rhog_i, hogs_rhogs_xml)
+        with open(f"ortho_{rhogid}.orthoxml", 'wb') as handle:
+            oxml.write(handle, encoding="utf-8", xml_declaration=True)
     # to see orthoxml as string, you might need to do it for different idx
     # idx=0; from xml.dom import minidom; import xml.etree.ElementTree as ET; minidom.parseString(ET.tostring(hogs_rhogs_xml[idx])).toprettyxml(indent="   ")
     del hogs_a_rhog  # to be memory efficient
     gc.collect()
-    hogs_rhogs_xml_len = len(hogs_rhogs_xml)
     return hogs_rhogs_xml_len
+
+
+def build_xml_from_rhog(rhogid:str, seqs:List[SeqRecord], hogs:List[ET.Element]) -> ET.ElementTree:
+    seqs.sort(key=lambda rec: rec.id.split('||')[1])  # sort by species name
+    root = ET.Element('orthoXML', attrib={"xmlns": "http://orthoXML.org/2011/", "origin": "FastOMA-infer-subhogs"})
+    ET.SubElement(root, "notes").text = f"HOGs inferred during infer-subhog step from RootHOG {rhogid}."
+    for sp, recs in itertools.groupby(seqs, lambda rec: rec.id.split('||')[1]):
+        sp_elem = ET.SubElement(root, 'species', attrib={"name": sp, "NCBITaxId": "0"})
+        db_elem = ET.SubElement(sp_elem, 'database', attrib={"name": sp, "version": "0"})
+        genes = ET.SubElement(db_elem, 'genes')
+        for rec in recs:
+            ref, _, id_ = rec.id.split('||')
+            ET.SubElement(genes, 'gene', attrib={"id": id_, "protId": ref})
+    scores = ET.SubElement(root, "scores")
+    ET.SubElement(scores, "scoreDef",
+                  {"id": "CompletenessScore","desc": "Fraction of expected species with genes in the (Sub)HOG"})
+    groups = ET.SubElement(root, 'groups')
+    for hog in hogs:
+        groups.append(hog)
+    ET.indent(root, space='  ', level=0)
+    return ET.ElementTree(root)
 
 
 def infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs):
