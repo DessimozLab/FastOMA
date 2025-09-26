@@ -1,4 +1,5 @@
 import os.path
+import subprocess
 from shutil import which
 
 from . import _utils_roothog, logger
@@ -59,15 +60,24 @@ def fastoma_infer_roothogs():
 
     min_rhog_size = 2
     rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, conf.out_rhog_folder, min_rhog_size)
-    linclust_available=which("mmseqs")  # True #
+    linclust_available = which("mmseqs")  # True #
     # if memseqs is not installed the output will be empty / None
     if linclust_available:
-        num_unmapped_singleton = _utils_roothog.collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all,  "singleton_unmapped.fa")
-        if num_unmapped_singleton:
-            result_linclust = _utils_roothog.run_linclust(fasta_to_cluster="singleton_unmapped.fa")
-            logger.debug(" linclust is done %s", result_linclust)
-            num_clusters = _utils_roothog.write_clusters(conf.out_rhog_folder, min_rhog_size)
-            logger.debug("we wrote %d new clusters with linclust ", num_clusters)
+        try:
+            res = subprocess.run([linclust_available, "-h"], check=True, text=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            logger.error("mmseqs linclust is not working: %s", e)
+            logger.error("Skipping clustering of unmapped singletons")
+            linclust_available = False
+    if linclust_available:
+        singleton_unmapped_path = "singleton_unmapped.fa"
+        cnt_unmapped_singleton = _utils_roothog.collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all, unmapped_singleton_fasta=singleton_unmapped_path)
+        if cnt_unmapped_singleton:
+            cluster_file = _utils_roothog.run_linclust(fasta_to_cluster="singleton_unmapped.fa")
+            num_clusters = _utils_roothog.write_clusters(cluster_file, conf.out_rhog_folder, min_rhog_size)
+            logger.debug("we wrote %d new clusters with linclust", num_clusters)
+    else:
+        logger.info("mmseqs linclust / easy-cluster not available, skipping clustering of unmapped and singletons")
 
 
 if __name__ == "__main__":
