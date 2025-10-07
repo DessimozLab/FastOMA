@@ -1,17 +1,22 @@
+import itertools
 import sys
-from ete3 import Tree
 import os
 import collections
+import logging
 
-from . import _utils_roothog
-from ._wrappers import logger
+from ete3 import Tree
+from Bio.Data.IUPACData import extended_protein_letters, unambiguous_dna_letters, unambiguous_rna_letters
+
+from . import _utils_roothog, logger
 from . import __version__ as fastoma_version
+from .logging_setup import setup_logging
 
 """
 
 fastoma-check-input --proteomes proteome --species-tree species_tree.nwk --out-tree species_tree_checked.nwk --hogmap hogmap -vv
 
 """
+
 
 def check_proteome_files(proteome_folder):
     proteome_files = os.listdir(proteome_folder)
@@ -47,21 +52,30 @@ def check_proteome(species_names, prot_recs_lists, proteome_folder):
             logger.error("Check input failed. FastOMA halted!")
             return False
         for prot_rec_id in prot_recs_ids:
-            if len(prot_rec_id)>60:   # todo 85 is the limit without considering ||s.
-                logger.error("The protein ID %s is too long in species %s.fa, which should be changed. Please make sure it will be still unique. ",prot_rec_id,species_name) # (root cause issue due to truncatation by fastTree)
+            if len(prot_rec_id) > 60:   # todo 85 is the limit without considering ||s.
+                logger.error("The protein ID %s is too long in species %s.fa, which should be changed. Please make sure it will be still unique.", prot_rec_id, species_name)  # (root cause issue due to truncation by fastTree)
                 logger.error("Check input failed. FastOMA halted!")
                 return False
+                
+        # checking only first record in each species  # for ii in range(len(prot_recs_list)):
+        # check that at least 20% of all residue are not DNA/RNA characters (as a check for protein sequences)
+        residue_cnts = collections.Counter(itertools.chain.from_iterable(rec.seq.upper() for rec in prot_recs_list))
+        aa_chars = set(extended_protein_letters) - set(unambiguous_dna_letters) - set(unambiguous_rna_letters) - set('N')
+        total_aa = sum([residue_cnts[aa] for aa in aa_chars])
+        if total_aa / sum(residue_cnts.values()) < 0.2:
+            logger.error("Looks like genomics sequences used in '%s'. Proteome contains only %.1f%% amino acids letters.", species_name,  100 * total_aa / sum(residue_cnts.values()))
+            return False
 
-
-        num_prots = len(prot_recs_list) # >EP00159_Fonticula_alba_P004948_XP_009497064.1_small_nuclear_ribonucleoprotein_B_and_B'_Fonticula_alba||691883||1155004948
+        num_prots = len(prot_recs_list)  # >EP00159_Fonticula_alba_P004948_XP_009497064.1_small_nuclear_ribonucleoprotein_B_and_B'_Fonticula_alba||691883||1155004948
         num_prots_all += num_prots
         # todo , check duplicated Ids should it be done on all species ?
 
         if num_prots <= 2:
             logger.error("The input proteome looks empty or too few proteins or Bio.SeqIO couldn't read it, %s/%s.fa", proteome_folder, species_name)
             isOk = False
+
     # todo write new protoems with cleaned record ids, keep the mapping, to be used in orthoxml writing
-    # use the mapping back for orhtoxml
+    # use the mapping back for orthoxml
     logger.info("There are %d proteins in total in the input proteome folder.", num_prots_all)
     return isOk
 
@@ -79,9 +93,7 @@ def check_hogmap_files(hogmap_folder):
     return species_hogmaps
 
 
-
 def check_speciestree_internalnode(species_tree):
-
     # All the internal node of the input species tree should have a name
     for node in species_tree.traverse(strategy="postorder"):
         if not node.is_leaf():
@@ -190,7 +202,7 @@ def check_splice(isoform_by_gene_all):
 
     logger.debug("For "+str(spliced_species_num)+"  species, out of "+str(len(isoform_by_gene_all))+" , we have splice files.")
     if total_genes ==0:
-        logger.debug("It seems that in all of the splice files, each line has only one item. Make sure that the splitter in each line is semicolon ; ")
+        logger.debug("No splice information found. It could be that each line of  splice files has only one item. Make sure that the splitter in each line is semicolon ; . Or the splice folder is empty. You need to delete the empty splice folder. FastOMA check input failed! Exiting...")
         sys.exit(1)
 
     logger.debug("In total, for "+ str(total_genes)+" genes, we have " + str(total_isoforms)+"  splices.")
@@ -210,17 +222,15 @@ def fastoma_check_input():
     parser.add_argument("--hogmap", help="Path to the folder containing the hogmap files")
     parser.add_argument("--omamer_db", help="Path to the omamer database")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
-    conf = parser.parse_args() # conf_check_input
+    conf = parser.parse_args()  # conf_check_input
 
-    logger.setLevel(level=30 - 10 * min(conf.v, 2))
+    setup_logging(conf.v)
     logger.debug("Arguments: %s", conf)
-
 
     species_names = check_proteome_files(conf.proteomes)
     if not species_names:
-        logger.error("Halting FastOMA because of invalid proteome input data")
+        logger.error("Halting FastOMA because of invalid proteome input data. FastOMA check input failed! Exiting...")
         sys.exit(1)
-
 
     try:
         species_tree = Tree(conf.species_tree, format=1)
@@ -229,7 +239,7 @@ def fastoma_check_input():
             species_tree = Tree(conf.species_tree)
             # todo add check fro Phyloxml
         except:
-            logger.error("We have problem with parsing species tree %s using ete3 Tree. Maybe there are some special chars.", conf.species_tree)
+            logger.error("We have problem with parsing species tree %s using ete3 Tree. Maybe there are some special chars. FastOMA check input failed! Exiting...", conf.species_tree)
             sys.exit(1)
 
     check_speciestree_internalnode(species_tree)
@@ -240,7 +250,7 @@ def fastoma_check_input():
 
     species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes(conf.proteomes)
     if not check_proteome(species_names, prot_recs_lists, conf.proteomes):
-        logger.error("Halting FastOMA because of invalid proteome input data")
+        logger.error("Halting FastOMA because of invalid proteome input data. FastOMA check input failed! Exiting...")
         sys.exit(1)
 
     hogmap_files = conf.hogmap is not None and os.path.exists(conf.hogmap)
@@ -269,5 +279,5 @@ def fastoma_check_input():
         check_splice(isoform_by_gene_all)
     else:
         logger.info("Splice folder doesn't exist and that's ok.")
-    logger.info("Input check finished ! ")
+    logger.info("Input check finished successfully (since no error is found)! ")
 

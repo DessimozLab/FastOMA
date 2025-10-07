@@ -1,11 +1,11 @@
-FROM python:3.11-slim as basis
+FROM python:3.11-slim AS basis
 
 # set environment varibles
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 
-FROM basis as builder
+FROM basis AS builder
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        build-essential \
@@ -29,7 +29,7 @@ RUN ls -la \
     && /app/bin/pip install dist/*.whl
 
 
-FROM basis as runtime
+FROM basis AS runtime
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        fasttree \
@@ -37,6 +37,7 @@ RUN apt-get update \
        mafft \
        mmseqs2 \
        procps \
+       time \
     && apt-get -y autoremove \
     && apt-get -y autoclean \
     && rm -rf /var/lib/apt/lists/*

@@ -9,12 +9,12 @@ from datetime import datetime
 from Bio import SeqIO
 from ete3 import Tree
 
-from ._wrappers import logger
 from ._utils_subhog import read_species_tree
 from .transformer import header_transformer
 from .zoo.hog import extract_flat_groups_at_level, extract_marker_groups_at_level
-# from .zoo.hog.convert import orthoxml_to_newick
-from . import __version__ as fastoma_version
+
+from . import __version__ as fastoma_version, logger
+from .logging_setup import setup_logging
 
 """
 
@@ -34,13 +34,16 @@ def iter_hogs(pickle_folder: Path):
         for f in files:
             if f.startswith('file_') and f.endswith('.pickle'):
                 with open(os.path.join(root, f), 'rb') as handle:
-                    cur = pickle.load(handle)
+                    try:
+                        cur = pickle.load(handle)
+                    except pickle.PickleError as e:
+                        logger.error("Error reading pickle file %s: %s", os.path.join(root, f), e)
+                        raise
                 nr_hogs += len(cur)
                 yield from cur
                 cnt += 1
                 if cnt % 500 == 0:
-                    logger.info("read %d batch pickle files so far, resulting in %d roothogs so far",
-                                    cnt, nr_hogs)
+                    logger.info("read %d batch pickle files so far, resulting in %d roothogs so far", cnt, nr_hogs)
     logger.info("number of pickle files is %d.", cnt)
     logger.debug("number of hogs in all batches is %d", nr_hogs)
 
@@ -132,8 +135,8 @@ def fastoma_collect_subhogs():
                              Existing values are:
                                noop:      No transformation - entire ID of fasta header
                                UniProt:   '>sp|P68250|1433B_BOVIN' --> P68250""")
-    conf_collect_subhogs = parser.parse_args() # conf_collect_subhogs
-    logger.setLevel(level=30 - 10 * min(conf_collect_subhogs.v, 2))
+    conf_collect_subhogs = parser.parse_args()  # conf_collect_subhogs
+    setup_logging(conf_collect_subhogs.v)
     logger.debug(conf_collect_subhogs)
     id_transformer = header_transformer(conf_collect_subhogs.id_transform)
 
@@ -218,12 +221,12 @@ def write_group_files(orthoxml: Path, roothog_folder: Path, output_file_og_tsv=N
     with open(output_file_og_tsv, 'w') as tsv:
         tsv.write("Group\tProtein\n")
         for grp, meta in extract_marker_groups_at_level(orthoxml, protein_attribute="protId", callback=callback_group_and_omamer):
-            group_members = {g.xref for g in grp}
+            group_members = {(g.xref, g.species) for g in grp}
             group_name = meta['group_id'].replace("HOG:", "OG_")
             nr_prot_in_groups += len(grp)
             nr_groups += 1
-            for gene in group_members:
-                tsv.write(f"{group_name}\t{gene}\n")
+            for gene_xref, gene_species in group_members:
+                tsv.write(f"{group_name}\t{gene_xref}\n")
 
             _write_group_fasta(fasta_format, group_members, group_name, id_transformer, meta, output_fasta_groups,
                                roothog_folder)
@@ -245,14 +248,14 @@ def write_roothogs(orthoxml: Path, roothog_folder: Path, output_file_roothog_tsv
     with open(output_file_roothog_tsv, 'wt') as tsv:
         tsv.write("RootHOG\tProtein\tOMAmerRootHOG\n")
         for grp, meta in extract_flat_groups_at_level(orthoxml, callback=callback_group_and_omamer):
-            group_members = {g.xref for g in grp}
+            group_members = {(g.xref, g.species) for g in grp}
             group_name = meta['group_id']
             # this is the id of the merged roothogs from the placement step
             omamer_roothog = meta['omamer_roothog']
             nr_prot_in_groups += len(grp)
             nr_groups += 1
-            for gene in group_members:
-                tsv.write(f"{group_name}\t{gene}\t{omamer_roothog}\n")
+            for gene_xref, _ in group_members:
+                tsv.write(f"{group_name}\t{gene_xref}\t{omamer_roothog}\n")
 
             _write_group_fasta(fasta_format, group_members, group_name.replace(":", ""), id_transformer, meta, output_fasta_groups,
                                roothog_folder)
@@ -268,7 +271,7 @@ def _write_group_fasta(fasta_format, group_members, group_name, id_transformer, 
     for rec in SeqIO.parse(rhog_fasta, "fasta"):
         orig_id, sp, *rest = rec.id.split("||")
         protid = id_transformer.transform(orig_id)
-        if protid in group_members:
+        if (protid, sp) in group_members:
             rec.id = protid
             rec.description += " [" + sp + "]"
             group_seqs.append(rec)

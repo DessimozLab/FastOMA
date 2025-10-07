@@ -20,8 +20,8 @@ hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 50
 
 
 import itertools
-from . import _utils_subhog
-from ._wrappers import logger
+from . import _utils_subhog, logger
+
 
 # from .infer_subhogs import conf_infer_subhhogs #fastoma_infer_subhogs #
 
@@ -143,6 +143,9 @@ class HOG:
     @property
     def rhogid(self):
         return self._rhogid
+
+    def __len__(self):
+        return len(self._members)
 
     def get_members(self):
         return set(self._members)
@@ -334,10 +337,17 @@ class HOG:
         elif len(element_list) > 1:
             #hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
             hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)}, )
-            num_species_tax_hog = len(set([i.split("||")[1] for i in self._members]))  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
-            completeness_score = round(num_species_tax_hog/self._tax_now.size, 4)
+            species_of_members = set([i.split("||")[1] for i in self._members])  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
+            num_species_tax_hog = len(species_of_members)
+            mrca = self.taxlevel.get_common_ancestor(
+                *[self.taxlevel.search_nodes(name=x)[0] for x in species_of_members])
+            if mrca != self.taxlevel:
+                logger.info(f"mrca ({mrca.name}) != self.taxlevel ({self.taxlevel.name})")
+                logger.info(f"<{hog_elemnt.tag} {hog_elemnt.attrib}>")
+
+            completeness_score = round(num_species_tax_hog/mrca.size, 4)
             property_element = ET.SubElement(hog_elemnt, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
-            property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(self._tax_now.name)})
+            property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(mrca.name)})
 
             for element in element_list:
                 hog_elemnt.append(element)

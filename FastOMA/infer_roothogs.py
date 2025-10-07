@@ -1,9 +1,10 @@
 import os.path
+import subprocess
 from shutil import which
 
-from . import _utils_roothog
-from ._wrappers import logger
+from . import _utils_roothog, logger
 from . import __version__ as fastoma_version
+from .logging_setup import setup_logging
 
 
 
@@ -34,7 +35,7 @@ def fastoma_infer_roothogs():
     parser.add_argument("--big-fscore-thresh", required=False, type=int, default=95, help="For huge rootHOGs, we have different heuristics, like filtering low family score protiens") # big_fscore_thresh
 
     conf = parser.parse_args()
-    logger.setLevel(level=30 - 10 * min(conf.v, 2))
+    setup_logging(conf.v)
     logger.debug("Arguments: %s", conf)
 
     species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes(conf.proteomes, conf.min_sequence_length)  # optional input folder
@@ -43,7 +44,7 @@ def fastoma_infer_roothogs():
     hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(prot_recs_lists, fasta_format_keep, folder=conf.hogmap)  # optional input folder
 
     splice_files = conf.splice is not None and os.path.exists(conf.splice)
-    if splice_files:
+    if splice_files: # todo print some log on parsing the splice files eg number of isoforms 
         isoform_by_gene_all = _utils_roothog.parse_isoform_file(species_names, folder=conf.splice)
         isoform_selected,  isoform_not_selected = _utils_roothog.find_nonbest_isoform(
             species_names, isoform_by_gene_all, hogmaps
@@ -59,15 +60,24 @@ def fastoma_infer_roothogs():
 
     min_rhog_size = 2
     rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, conf.out_rhog_folder, min_rhog_size)
-    linclust_available=which("mmseqs")  # True #
+    linclust_available = which("mmseqs")  # True #
     # if memseqs is not installed the output will be empty / None
     if linclust_available:
-        num_unmapped_singleton = _utils_roothog.collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all,  "singleton_unmapped.fa")
-        if num_unmapped_singleton:
-            result_linclust = _utils_roothog.run_linclust(fasta_to_cluster="singleton_unmapped.fa")
-            logger.debug(" linclust is done %s", result_linclust)
-            num_clusters = _utils_roothog.write_clusters(conf.out_rhog_folder, min_rhog_size)
-            logger.debug("we wrote %d new clusters with linclust ", num_clusters)
+        try:
+            res = subprocess.run([linclust_available, "-h"], check=True, text=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            logger.error("mmseqs linclust is not working: %s", e)
+            logger.error("Skipping clustering of unmapped singletons")
+            linclust_available = False
+    if linclust_available:
+        singleton_unmapped_path = "singleton_unmapped.fa"
+        cnt_unmapped_singleton = _utils_roothog.collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all, unmapped_singleton_fasta=singleton_unmapped_path)
+        if cnt_unmapped_singleton:
+            cluster_file = _utils_roothog.run_linclust(fasta_to_cluster="singleton_unmapped.fa")
+            num_clusters = _utils_roothog.write_clusters(cluster_file, conf.out_rhog_folder, min_rhog_size)
+            logger.debug("we wrote %d new clusters with linclust", num_clusters)
+    else:
+        logger.info("mmseqs linclust / easy-cluster not available, skipping clustering of unmapped and singletons")
 
 
 if __name__ == "__main__":

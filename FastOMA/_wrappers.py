@@ -1,25 +1,18 @@
-from Bio import SeqIO
+import subprocess
+import logging
+
+from ete3 import Tree
+
 from .zoo.wrappers.aligners import mafft
 from .zoo.wrappers.treebuilders import fasttree
 from .zoo.wrappers.trimmers.trimal import TrimAl
-from ete3 import Tree
 
-import subprocess
+logger = logging.getLogger(__name__)
 
-import logging
-
-seed_random=1234 # Also in _hog_class.py
-tree_tool = "fasttree"  #  "fasttree"  "iqtree"  # todo iqtree is very slow and not tested properly
+seed_random = 1234  # Also in _hog_class.py
+tree_tool = "fasttree"   #  "fasttree"  "iqtree"   # todo iqtree is very slow and not tested properly
 rooting_mad_executable_path = "mad"  # it could be also a full address ends with mad like  /user/myfolder/mad
 # mmseqs_executable_path ="mmseqs" # todo move run_linclust to _wrapper.py
-
-logger_level = "DEBUG"            # DEBUG INFO  # TRACE  DEBUG INFO  WARN  ERROR  FATAL
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
-logger = logging.getLogger("hog")
-if logger_level == "INFO":
-    logger.setLevel(logging.INFO)
-if logger_level == "DEBUG":
-    logger.setLevel(logging.DEBUG)
 
 
 def merge_msa(list_msas):
@@ -30,9 +23,9 @@ def merge_msa(list_msas):
 
     output: merged (msa)
     """
-    logger.debug("Number of items in list_msas "+str(len(list_msas)))
-    logger.debug(str(list_msas[:4])+"...")
-    logger.debug("max length is "+ str(max([len(i[0]) for i in list_msas]))+" .")
+    logger.debug("Number of items in list_msas " + str(len(list_msas)))
+    logger.debug(str(list_msas[:4]) + "...")
+    logger.debug("max length is " + str(max([len(i[0]) for i in list_msas])) + " .")
 
     #logger.debug("we are mergin subhogs"+len(list_msas))
     # logger.debug(str(list_msas[0][0].id ) + "\n")
@@ -46,14 +39,16 @@ def merge_msa(list_msas):
     #     wrapper_mafft_merge.options['--merge'].active = True
     # else:
     #     wrapper_mafft_merge.options['--merge'].active = False
-
+    
+    #mafft --auto Automatically selects an appropriate strategy from L-INS-i, FFT-NS-i and FFT-NS-2, according to data size. Default: off (always FFT-NS-2)
+    wrapper_mafft_merge.options['--auto'].set_value(False) # todo we can make it as an argument in fastoma-infer-subhogs. 
     # wrapper_mafft_merge.options['--anysymbol'].active = True
     wrapper_mafft_merge.options['--anysymbol'].set_value(True)
     wrapper_mafft_merge.options['--thread'].set_value(-1) # -1 uses a largely appropriate number of threads in each step, after automatically counting the number of physical cores the computer has.
     # --randomseed
     wrapper_mafft_merge.options['--randomseed'].set_value(seed_random)
     merged = wrapper_mafft_merge()
-    logger.debug("running mafft took "+str(wrapper_mafft_merge.elapsed_time))
+    logger.debug("running mafft took " + str(wrapper_mafft_merge.elapsed_time))
     return merged
 
 
@@ -92,18 +87,19 @@ def infer_gene_tree(msa):
     tree_nwk = result_tree2["tree"].as_string(schema='newick') #str(result_tree2["tree"])
     return tree_nwk
 
-def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
+# to avoid confusion: right now we are using _utils_roothog.run_linclust in infer_roothogs.py
+# def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
 
-    num_threads = 5
-    command_clust= "mmseqs easy-linclust --threads" +str(num_threads) + " " +fasta_to_cluster+"singleton_unmapped tmp_linclust"
+#     num_threads = 5
+#     command_clust= "mmseqs easy-linclust --threads" +str(num_threads) + " " +fasta_to_cluster+"singleton_unmapped tmp_linclust"
 
-    logger.debug("linclust rooting started" + command_clust)
-    process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-    #if "Error analyzing file" in str(output) or error:
-    #    try:
+#     logger.debug("linclust rooting started" + command_clust)
+#     process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
+#     output, error = process.communicate()
+#     #if "Error analyzing file" in str(output) or error:
+#     #    try:
 
-    return "done"
+#     return "done"
 
 
 def trim_msa(msa):
@@ -148,9 +144,6 @@ def mad_rooting(input_tree_file_path: str):  # , mad_executable_path: str = "./m
     #bashCommand = f"mad {gene_tree_address}"
     process = subprocess.Popen(mad_command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
-    #if verbose:
-    #    print("output:\n", output)
-    #    print("error:\n", error)
 
     if "Error analyzing file" in str(output) or error:
         raise RuntimeError("Error running MAD rooting: \n{}\n{}".format(output, error))
@@ -163,7 +156,7 @@ def mad_rooting(input_tree_file_path: str):  # , mad_executable_path: str = "./m
                     trees.append(line_tree1.strip())
         # todo which one to choose ?
         rooted_tree = Tree(trees[0])
-    else:#Rooted tree written to 'tree_672375_Theria.nwk.rooted'
+    else:  # Rooted tree written to 'tree_672375_Theria.nwk.rooted'
         rooted_tree = Tree(input_tree_file_path + ".rooted")
     logger.debug("MAD rooting finished")
     return rooted_tree

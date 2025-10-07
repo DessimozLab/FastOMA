@@ -1,8 +1,8 @@
 
 import shutil
 from pathlib import Path
-from ._wrappers import logger
-from . import __version__ as fastoma_version
+from . import __version__ as fastoma_version, logger
+from .logging_setup import setup_logging
 
 big_rhog_filesize_thresh = 400 * 1000
 sum_list_rhogs_filesize_thresh = 2 * 1e6
@@ -71,7 +71,7 @@ def fastoma_batch_roothogs():
                                                           "batch subfolder structure.")
     parser.add_argument('-v', default=0, action="count", help="incrase verbosity")
     conf_batch_roothogs = parser.parse_args()
-    logger.setLevel(level=30 - 10 * min(conf_batch_roothogs.v, 2))
+    setup_logging(conf_batch_roothogs.v)
     logger.debug("Arguments: %s", conf_batch_roothogs)
 
     folder_1h_rhog(Path(conf_batch_roothogs.input_roothogs), Path(conf_batch_roothogs.out_big), Path(conf_batch_roothogs.out_rest))

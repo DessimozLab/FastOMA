@@ -16,8 +16,6 @@ from ...seq_utils.utils import iter_seqrecs_from_any
 from ...file_utils import TempFile, TempDir
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
 
 
 class TrimAlCLI(AbstractCLI):

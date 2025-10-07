@@ -1,6 +1,7 @@
 
 import csv
 import itertools
+import subprocess
 
 import networkx as nx
 from Bio import SeqIO
@@ -10,7 +11,7 @@ import os
 import sys
 
 from .zoo.unionfind import UnionFind
-from ._wrappers import logger
+from . import logger
 import collections
 
 filter_nonchild_rootHOG= False
@@ -577,13 +578,9 @@ def merge_rhogs2(hogmaps, rhogs_prots, conf_infer_roothogs):
 
     candidates_pair = find_rhog_candidate_pairs(hogmaps, rhogs_prots, conf_infer_roothogs) # rhogs_prots
 
-    print("There are " + str(len(candidates_pair)) + " candidate pairs of rhogs for merging.")
+    logger.debug(f"There are {len(candidates_pair)} candidate pairs of rhogs for merging.")
     cluster_rhogs_list = cluster_rhogs(candidates_pair)
-
-    print("There are " + str(len(cluster_rhogs_list)) + " clusters.")
-    logger.debug("There are " + str(len(cluster_rhogs_list)) + " clusters.")
-
-    print("** the recursion limit is "+str( sys.getrecursionlimit()))
+    logger.debug(f"There are {len(cluster_rhogs_list)} clusters.")
     logger.debug("** the recursion limit is "+str( sys.getrecursionlimit()))
     cluster_rhogs_list = cluster_rhogs_nx(cluster_rhogs_list, candidates_pair)
 
@@ -758,15 +755,18 @@ def merge_rhogs2(hogmaps, rhogs_prots, conf_infer_roothogs):
 #     return rhogs_prots
 
 
-def collect_unmapped_singleton(rhogs_prots, unmapped,prot_recs_all,unmapped_singleton_fasta= "singleton_unmapped.fa"):
+def collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all, unmapped_singleton_fasta="singleton_unmapped.fa"):
     unmapped_recs = []
     for species_name, prot_names in unmapped.items():
+        all_recs_of_species = prot_recs_all[species_name]
         for prot_name in prot_names:
-            if prot_name in prot_recs_all[species_name]:  # some small prots are removed in the begining min_sequence_length
-                prot_rec = prot_recs_all[species_name][prot_name]
-                unmapped_recs.append(prot_rec)
+            try:
+                unmapped_recs.append(all_recs_of_species[prot_name])
+            except KeyError:
+                # some small prots are removed in the begining min_sequence_length
+                pass
+    logger.debug(f"collected sequence records of {len(unmapped_recs)} unmapped proteins.")
 
-    print(len(unmapped_recs))
     singleton_recs = []
     for rhogid, sp_prot_list in rhogs_prots.items():
         if len(sp_prot_list) == 1:
@@ -774,105 +774,90 @@ def collect_unmapped_singleton(rhogs_prots, unmapped,prot_recs_all,unmapped_sing
             prot_name = sp_prot_list[0][1]
             prot_rec = prot_recs_all[species_name][prot_name]
             singleton_recs.append(prot_rec)
-    print(len(singleton_recs))
+    logger.debug(f"collected sequence records of {len(singleton_recs)} singleton proteins.")
 
     singleton_unmapped_recs = unmapped_recs + singleton_recs
-
     SeqIO.write(singleton_unmapped_recs, unmapped_singleton_fasta , "fasta")
-
+    logger.debug(f"Wrote {len(singleton_unmapped_recs)} sequences of unmapped and singleton proteins to {unmapped_singleton_fasta}.")
     return len(singleton_unmapped_recs)
 
 
-import subprocess
+def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):   # todo move run_linclust to _wrapper.py .  see easy-cluster below.
+    # todo: change FastOMA.nf to assgin more cpus to infer_roothog step.  mmseqs uses all cpus by default  # num_threads = 10  , --threads " + str(num_threads) + "
+    command_clust = mmseqs_executable_path +" easy-cluster  " + fasta_to_cluster + " singleton_unmapped tmp_linclust"
+    # easy-cluster is much better than easy-linclust but a bit slower. todo: make it as an arugment for user
 
-
-def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):   # todo move run_linclust to _wrapper.py
-    num_threads = 10  # todo how to assign more cpu for this step in nextflow
-    command_clust = mmseqs_executable_path +" easy-linclust --threads " + str(
-        num_threads) + " " + fasta_to_cluster + " singleton_unmapped tmp_linclust"
-
-    logger.debug("linclust rooting started" + command_clust)
-    process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
+    logger.debug("clustering rooting started " + command_clust)
+    process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
-
-    # if verbose:
-    #    print("output:\n", output)
-    #    print("error:\n", error)
-
-    # if "Error analyzing file" in str(output) or error:
-    #    try:
-
-    return "done"
+    logger.debug(f"clustering rooting finished with returncode {process.returncode}.")
+    if process.returncode != 0:
+        logger.error(f"mmseqs easy-cluster failed with returncode {process.returncode}.")
+        logger.error(f"stdout:\n{output.decode('utf-8')}\n******************")
+        logger.error(f"stderr:\n{error.decode('utf-8')}\n******************")
+        raise RuntimeError("mmseqs easy-cluster failed.")
+    return "singleton_unmapped_all_seqs.fasta"  # the fasta-like file of clusters
 
 
-def write_clusters(address_rhogs_folder, min_rhog_size):
-    cluster_output_address = "singleton_unmapped_all_seqs.fasta"
-    cluster_file = open(cluster_output_address, 'r')
-    # cluster_dic = {}
-    previous_line_start = " "
-    # parsing memseqs fasta-like format https://github.com/soedinglab/MMseqs2/wiki#cluster-fasta-like-format
-    # >A0A0R4IFW6
-    # >tr|A0A0R4IFW6|A0A0R4IFW6_DANRE||DANRE||1000001584 tr|A0A0R
-    # MSRKTTSKRHYKPSSEIDDAALARKREYW
-    clusters = []
-    cluster = []
-    # line_strip = " "
-    # line_number =1
-    for line in cluster_file:
-        line_strip = line.strip()
-        # print(line_number,previous_line_start,line_strip[0],cluster )# "_",previous_line_start,line_strip[0])
-        if previous_line_start == " ":
-            clusters = []
-            cluster = []
-        elif line_strip[0] == ">" and previous_line_start == ">":  # new cluster started at previous line
-            if len(cluster) >= 5:  # more than one records [ID1, seq1,ID2, seq2, newcluster_id]
-                clusters.append(cluster[:-1])  # last item is the id of new cluster
-            cluster = [line_strip]
-        elif line_strip[0] == ">" and previous_line_start != ">":
-            cluster.append(line_strip)
-        elif line_strip[0] != ">":
-            cluster.append(line_strip)
+def write_clusters(fasta_clustered, address_rhogs_folder, min_rhog_size):
+    """parse the fasta-like output of mmseqs linclust and write each cluster
 
-        previous_line_start = line_strip[0]
-        # line_number+=1
+    The format is described here: https://github.com/soedinglab/MMseqs2/wiki#cluster-fasta-like-format
+    Example:
+        >O67032                                 <- cluster 1
+        >sp|O67032|RF1_AQUAE                    <- member1 of cluster 1
+        MLKEAYISRLDKLQEKYRKLQEELSKPEVIQD...
+        >sp|O84026|RF1_CHLTR                    <- member2 of cluster 1
+        MEIKVLECLKRLEEVEKQISDPNIFSNPKEYS...
+        >sp|P47500|RF1_MYCGE                    <- member3 of cluster 1
+        MDFDKQLFFNVEKIVELTEQLEKDLNKPNLSF...
+        >O66429                                 <- cluster 2
+        >sp|O66429|EFTU_AQUAE                   <- member1 of cluster 2
+        MAKEKFERTKEHVNVGTIGHVDHGKS
+        >sp|P0CD71|EFTU_CHLTR                   <- member1 of cluster 1
+        MSKETFQRNKPHINIGTIGHVDHGKTTLTAAITRAL
+    """
+
+    with open(fasta_clustered, 'rt') as cluster_file:
+        previous_line_start = " "
+        clusters = []
+        cluster = []
+        for line in cluster_file:
+            line_strip = line.strip()
+            if previous_line_start == " ":
+                clusters = []
+                cluster = []
+            elif line_strip[0] == ">" and previous_line_start == ">":  # new cluster started at previous line
+                if len(cluster) >= 5:
+                    # more than one records [ID1, seq1,ID2, seq2, newcluster_id], i.e. non-trivial cluster
+                    clusters.append(cluster[:-1])  # last item is the id of new cluster
+                cluster = [line_strip]
+            elif line_strip[0] == ">" and previous_line_start != ">":
+                cluster.append(line_strip)
+            elif line_strip[0] != ">":
+                cluster.append(line_strip)
+            previous_line_start = line_strip[0]
 
     # for last cluster
     if len(cluster) >= 4:  # more than one records  [ID1, seq1,ID2, seq2]
         clusters.append(cluster)
+    logger.debug(f"Number of non-trivial linclust clusters raw is {len(clusters)}.")
 
-    logger.debug("Number of linclust clusters raw is " + str(len(clusters)))
-    # the record id is parsed by mmseqs very ad hoc. so better use the fasta-like file
-    # cluster_output_address = "singleton_unmapped_cluster.tsv"
-    # cluster_file = open(cluster_output_address, 'r')
-    # cluster_dic = {}
-    # for line in cluster_file:
-    #     line_strip = line.strip()
-    #     rep, prot= line_strip.split()
-    #     if rep in cluster_dic:
-    #         cluster_dic[rep].append(prot) # the frist line includ (rep,rep)
-    #     else:
-    #         cluster_dic[rep]=[prot]
-    # cluster_list = []
-    # for rep, prot_list in cluster_dic.items():
-    #     if len(prot_list)>1:
-    #         cluster_list.append(prot_list)
-
-
-    cluster_iter= 1000*10
+    cluster_iter = 10000
     for cluster in clusters:
+        # cluster is like ['>sp|O67032|RF1_AQUAE', 'MLKEAYISRLDKLQEKYRKLQEELSKPEVIQD...', ...], i.e. an id and its sequence.
+        # thus, check for double the min_rhog_size to have at least min_rhog_size proteins
         if len(cluster) >= 2 * min_rhog_size:
-            species_names= []     # it seems that genes from same species tend to cluster together, discard such clusters
-            for pr_idi in  range(int(len(cluster)/2)):
+            species_names = set([])     # it seems that genes from same species tend to cluster together, discard such clusters
+            for pr_idi in range(int(len(cluster)/2)):
                 species_name = cluster[pr_idi*2].split(" ")[0].split("||")[1]
-                species_names.append(species_name)
-            if len(set(species_names))>1:
-                file_idx = open(address_rhogs_folder + "/HOG_clust" + str(cluster_iter) + ".fa", "w")
-                for line in cluster:
-                    file_idx.write(line + "\n")
-                file_idx.close()
-                cluster_iter+=1
-
-    return cluster_iter-1
+                species_names.add(species_name)
+            if len(species_names) > 1:
+                with open(address_rhogs_folder + "/HOG_clust" + str(cluster_iter) + ".fa", "w") as file_idx:
+                    for line in cluster:
+                        file_idx.write(line + "\n")
+                cluster_iter += 1
+    return cluster_iter - 10000
 
 
 def parse_isoform_file(species_names, folder=None):

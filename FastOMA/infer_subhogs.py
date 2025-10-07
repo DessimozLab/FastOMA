@@ -1,9 +1,11 @@
 import os
+import logging
 
 from . import _utils_subhog
 from . import _infer_subhog
-from ._wrappers import logger
 from . import __version__ as fastoma_version
+from .logging_setup import setup_logging
+logger = logging.getLogger(__name__)
 
 """
 
@@ -49,14 +51,15 @@ def fastoma_infer_subhogs():
                         help="min no. columns in msa to consider for filtering")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
     conf_infer_subhhogs = parser.parse_args()
-    logger.setLevel(level=30 - 10 * min(conf_infer_subhhogs.v, 2))
+
+    setup_logging(conf_infer_subhhogs.v, conf_infer_subhhogs.parallel)
     logger.debug("Arguments: %s", conf_infer_subhhogs)
 
     address_rhogs_folder = conf_infer_subhhogs.input_rhog_folder
     # address_rhogs_folder = "./"  # _config.input_rhog_folder
     inferhog_concurrent_on = conf_infer_subhhogs.parallel
     if inferhog_concurrent_on:
-        print("parallelization for subhog inference is on.")
+        logger.info("parallelization for subhog inference is on.")
 
     if not os.path.exists(conf_infer_subhhogs.output_pickles):
         os.makedirs(conf_infer_subhhogs.output_pickles)
