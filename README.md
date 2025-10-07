@@ -1,8 +1,13 @@
 FastOMA
 ======
-FastOMA is a scalable software package to infer orthology relationship.
+FastOMA is a scalable software package to infer orthology relationship. 
 
-Want to learn more about FastOMA and try it online, check out [FastOMA academy](https://omabrowser.org/oma/academy/module/fastOMA_2023) and FastOMA talk at ISMB 2023 on [YouTube](https://youtu.be/KGetTUMDvlA?si=efeqKKarwpIFgXyN)!
+Want to learn more about FastOMA and try it online, check out [FastOMA academy](https://omabrowser.org/oma/academy/module/fastOMA) and FastOMA talk at ISMB 2023 on [YouTube](https://youtu.be/KGetTUMDvlA?si=efeqKKarwpIFgXyN)! And read FastOMA's publication in [Nature Methods](https://www.nature.com/articles/s41592-024-02552-8). 
+
+
+<div align="center">
+  <img width="300px" src="./archive/fastOMA_logo.png" alt="FastOMA logo" />
+</div>
 
 # Input and Output: 
 
@@ -55,7 +60,7 @@ installed.
 ```bash
 nextflow run dessimozlab/FastOMA -profile docker  --input_folder /path/to/in_folder --output_folder /path/to/out_folder 
 ```
-You could also add specific version to be used by adding `-r v0.3.5` to the command line. Without any `-r` argument, 
+You could also add specific version to be used by adding `-r v0.4.0` to the command line. Without any `-r` argument, 
 always the latest available release will be used. With `-r dev` the latest development release can be used.
 
 > [!WARNING]
@@ -94,10 +99,10 @@ There are four ways to run/install FastOMA detailed below:
 The FastOMA workflow can be run directly without any installation using nextflow's ability to fetch a workflow from github. A specific version can be selected by specifying the `-r` option to nextflow to select a specific version of FastOMA:
 
 ```bash
-nextflow run dessimozlab/FastOMA -r v0.3.5 -profile conda 
+nextflow run dessimozlab/FastOMA -r v0.4.0 -profile conda 
 ```
 
-This will fetch version v0.3.5 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
+This will fetch version v0.4.0 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
 
 ### 2. Cloning the FastOMA repo and running from there
 
@@ -145,7 +150,7 @@ bashMiniconda3.sh
 
 Then follow the instruction on the terminal. Finally, close and re-open the terminal and run
 ```
-conda create -n fastoma python=3.9 --file environment-conda.yml
+conda env create -n fastoma python=3.9 --file environment-conda.yml
 conda activate fastoma
 ```
 Then, clone and install fastOMA using
@@ -190,7 +195,7 @@ nextflow run FastOMA.nf -profile docker \
     --output_folder myresult/
 ```
 This will use the container that is tagged with the current commit id. Similarly, one could also use 
-`--container_version "0.3.5"` to use the container with version `dessimozlab/fastoma:0.3.5` from dockerhub. Check the latest version on the [DockerHub](https://hub.docker.com/r/dessimozlab/fastoma/tags).
+`--container_version "0.4.0"` to use the container with version `dessimozlab/fastoma:0.4.0` from dockerhub. Check the latest version on the [DockerHub](https://hub.docker.com/r/dessimozlab/fastoma/tags).
 
 ### Singularity
 Since Docker needs administrator privileges (root access), [Singluarity](https://apptainer.org/index.html) (a.k.a Apptainer) is a good alternative. This can be installed using [Conda](https://anaconda.org/conda-forge/singularity) with `conda install conda-forge::singularity`. However, in most of the academic HPC cluster, singluarity is already installed and can be called with `module load`.
@@ -419,8 +424,8 @@ You may need to increase the number of opoened files in your system with `ulimit
 
 ## Handle splice files
 You can put the splice files in the folder `in_folder/splice`. They should be named as `species_name.splice` for each species.
-For each row of different isforoms of a preotien, FastOMA selects the best one (based on omamer family score and isoform length). 
-We also use those proteins that are not in splice file but present in the FASTA proteome file. 
+For each row of different isoforms of a protein, FastOMA selects the best one (based on OMAmer family score and isoform length). 
+We also use those proteins that are not in the splice file but present in the FASTA proteome file. 
 ```
 $ head HUMAN.splice 
 HUMAN00001;HUMAN00002;HUMAN00003;HUMAN00004;HUMAN00005;HUMAN00006
@@ -432,29 +437,37 @@ HUMAN00036
 HUMAN00037
 ```
 
-The selected isforoms will be added as a new column to the input splice files stored as tsv at `out_folder/temp_output/selected_isoforms/`
+To find the selected isoforms you can follow the instruction [here](https://github.com/DessimozLab/FastOMA/wiki/How-to-find-the-selected-isoforms).
 
-## Under the hood: what are fastOMA gene families?
+## Under the hood: what are FastOMA gene families?
 Firstly, those proteins that are mapped to the same OMAdb rootHOG (e.g. HOG:D0066142 for HOG:D0066142.1a.1a) by OMAmer are 
 grouped together to create query rootHOGs (no protein from OMAdb is stored), from now on called rootHOG.
-Then, as OMAmer provide us with alternative mapping, we try to merge those rootHOGs (high chance of split HOGs) that have 
+Then, as OMAmer provides us with alternative mapping, we try to merge those rootHOGs (high chance of split HOGs) that have 
 many shared mappings. The query proteins of these rootHOGs will be stored in only one rootHOG. 
 These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_LXXXXX.fa`. `L` is the release ID of OMADB. 
 Replacing `_` with ':' gives the HOG ID which could be investigated in the [OMA Browser](https://omabrowser.org/oma/hog/HOG:D0114562/Sar/iham/).
 
 There are some cases that only one protein is mapped to one rootHOG, called singleton (which is not good, we are hoping for orthologous groups/pairs).
-Using alternative OMAmer mapping, FastOMA tries to put these to other rootHOGs. Still some will be left. 
+Using alternative OMAmer mappings, FastOMA tries to put these to other rootHOGs. Still some will be left. 
 
-FastOMA uses the [linclust](https://github.com/soedinglab/MMseqs2#cluster) software to find new gene families on set of unmapped proteins and singletons.
-These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_clustXXXXX.fa`.
+FastOMA uses the [linclust](https://github.com/soedinglab/MMseqs2#cluster) software to find new gene families on the set of unmapped proteins and singletons.
+These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with a file names format as `HOG_clustXXXXX.fa`.
 These are initial gene families that are used in `infer_subhogs` step, which could be split into a few smaller gene families. 
 
 ## Cite us
-
-Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick Vesztrocy, Stefano Pascarelli, David Moi, Natasha Glover, Adrian M. Altenhoff, and Christophe Dessimoz. "Orthology inference at scale with FastOMA." bioRxiv (2024): 2024-01. https://www.biorxiv.org/content/10.1101/2024.01.29.577392v1.full
+Citation:  Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick Vesztrocy, Stefano Pascarelli, David Moi, Natasha Glover, Adrian M. Altenhoff, and Christophe Dessimoz. "Orthology inference at scale with FastOMA." Nature Methods (2025). https://www.nature.com/articles/s41592-024-02552-8  [Preprint](https://www.biorxiv.org/content/10.1101/2024.01.29.577392v1.full). 
 
 
 ## Change log
+- Update  v0.4.0:
+  - Improvements for nextflow: alternative version selection, README updates
+  - Split HOG and sampling improvements
+  - ensure orthologGroup at the MRCA of all genes in the group
+  - Docker improvements, additional labels and tools
+  - New gene families with mmseqs easy-cluster if mmseqs is installed
+  - Improved input checking
+  - Merge rootHOGs, improved handling of singleton using omamer multi-hits
+  - Various documentation and usability updates
 - Update  v0.3.5:
   - Fixes an issue with reaching the maximum recursion limit. (#31)
   - Fixes a problem with parallel execution for big families. (#44)
