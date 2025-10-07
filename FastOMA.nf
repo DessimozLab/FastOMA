@@ -217,7 +217,7 @@ process omamer_run{
 
 
 process infer_roothogs{
-  label "process_single"
+  label "process_medium"
   publishDir = [
     path: params.temp_output,
     enabled: params.debug_enabled,
@@ -237,7 +237,6 @@ process infer_roothogs{
                                --hogmap hogmaps \
                                --splice ${splice_folder} \
                                --out-rhog-folder "omamer_rhogs" \
-                               --min-sequence-length ${params.min_sequence_length} \
                                -vv
     """
 }
@@ -411,6 +410,7 @@ process hog_rest{
 
 
 process collect_subhogs{
+  label "process_high"
   publishDir params.output_folder, mode: 'copy'
   input:
     path pickles, stageAs: "pickle_folders/?"
@@ -456,6 +456,7 @@ process extract_pairwise_ortholog_relations {
 
 
 process fastoma_report {
+  label "process_medium"
   publishDir params.output_folder, mode: 'copy'
   input:
     path notebook

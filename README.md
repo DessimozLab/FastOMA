@@ -1,8 +1,13 @@
 FastOMA
 ======
-FastOMA is a scalable software package to infer orthology relationship.
+FastOMA is a scalable software package to infer orthology relationship. 
 
-Want to learn more about FastOMA and try it online, check out [FastOMA academy](https://omabrowser.org/oma/academy/module/fastOMA_2023) and FastOMA talk at ISMB 2023 on [YouTube](https://youtu.be/KGetTUMDvlA?si=efeqKKarwpIFgXyN)!
+Want to learn more about FastOMA and try it online, check out [FastOMA academy](https://omabrowser.org/oma/academy/module/fastOMA) and FastOMA talk at ISMB 2023 on [YouTube](https://youtu.be/KGetTUMDvlA?si=efeqKKarwpIFgXyN)! And read FastOMA's publication in [Nature Methods](https://www.nature.com/articles/s41592-024-02552-8). 
+
+
+<div align="center">
+  <img width="300px" src="./archive/fastOMA_logo.png" alt="FastOMA logo" />
+</div>
 
 # Input and Output: 
 
@@ -145,7 +150,7 @@ bashMiniconda3.sh
 
 Then follow the instruction on the terminal. Finally, close and re-open the terminal and run
 ```
-conda create -n fastoma python=3.9 --file environment-conda.yml
+conda env create -n fastoma python=3.9 --file environment-conda.yml
 conda activate fastoma
 ```
 Then, clone and install fastOMA using
@@ -419,8 +424,8 @@ You may need to increase the number of opoened files in your system with `ulimit
 
 ## Handle splice files
 You can put the splice files in the folder `in_folder/splice`. They should be named as `species_name.splice` for each species.
-For each row of different isforoms of a preotien, FastOMA selects the best one (based on omamer family score and isoform length). 
-We also use those proteins that are not in splice file but present in the FASTA proteome file. 
+For each row of different isoforms of a protein, FastOMA selects the best one (based on OMAmer family score and isoform length). 
+We also use those proteins that are not in the splice file but present in the FASTA proteome file. 
 ```
 $ head HUMAN.splice 
 HUMAN00001;HUMAN00002;HUMAN00003;HUMAN00004;HUMAN00005;HUMAN00006
@@ -432,26 +437,25 @@ HUMAN00036
 HUMAN00037
 ```
 
-The selected isforoms will be added as a new column to the input splice files stored as tsv at `out_folder/temp_output/selected_isoforms/`
+To find the selected isoforms you can follow the instruction [here](https://github.com/DessimozLab/FastOMA/wiki/How-to-find-the-selected-isoforms).
 
-## Under the hood: what are fastOMA gene families?
+## Under the hood: what are FastOMA gene families?
 Firstly, those proteins that are mapped to the same OMAdb rootHOG (e.g. HOG:D0066142 for HOG:D0066142.1a.1a) by OMAmer are 
 grouped together to create query rootHOGs (no protein from OMAdb is stored), from now on called rootHOG.
-Then, as OMAmer provide us with alternative mapping, we try to merge those rootHOGs (high chance of split HOGs) that have 
+Then, as OMAmer provides us with alternative mapping, we try to merge those rootHOGs (high chance of split HOGs) that have 
 many shared mappings. The query proteins of these rootHOGs will be stored in only one rootHOG. 
 These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_LXXXXX.fa`. `L` is the release ID of OMADB. 
 Replacing `_` with ':' gives the HOG ID which could be investigated in the [OMA Browser](https://omabrowser.org/oma/hog/HOG:D0114562/Sar/iham/).
 
 There are some cases that only one protein is mapped to one rootHOG, called singleton (which is not good, we are hoping for orthologous groups/pairs).
-Using alternative OMAmer mapping, FastOMA tries to put these to other rootHOGs. Still some will be left. 
+Using alternative OMAmer mappings, FastOMA tries to put these to other rootHOGs. Still some will be left. 
 
-FastOMA uses the [linclust](https://github.com/soedinglab/MMseqs2#cluster) software to find new gene families on set of unmapped proteins and singletons.
-These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with file names format `HOG_clustXXXXX.fa`.
+FastOMA uses the [linclust](https://github.com/soedinglab/MMseqs2#cluster) software to find new gene families on the set of unmapped proteins and singletons.
+These will be saved as fasta files in `out_folder/temp_output/temp_omamer_rhogs` with a file names format as `HOG_clustXXXXX.fa`.
 These are initial gene families that are used in `infer_subhogs` step, which could be split into a few smaller gene families. 
 
 ## Cite us
-
-Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick Vesztrocy, Stefano Pascarelli, David Moi, Natasha Glover, Adrian M. Altenhoff, and Christophe Dessimoz. "Orthology inference at scale with FastOMA." bioRxiv (2024): 2024-01. https://www.biorxiv.org/content/10.1101/2024.01.29.577392v1.full
+Citation:  Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick Vesztrocy, Stefano Pascarelli, David Moi, Natasha Glover, Adrian M. Altenhoff, and Christophe Dessimoz. "Orthology inference at scale with FastOMA." Nature Methods (2025). https://www.nature.com/articles/s41592-024-02552-8  [Preprint](https://www.biorxiv.org/content/10.1101/2024.01.29.577392v1.full). 
 
 
 ## Change log
