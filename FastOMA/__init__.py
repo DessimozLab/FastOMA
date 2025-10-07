@@ -1,6 +1,6 @@
 
 __packagename__ = "FastOMA"
-__version__ = "0.4.0"
+__version__ = "0.4.0+dev"
 
 import logging
 logger = logging.getLogger("FastOMA")
