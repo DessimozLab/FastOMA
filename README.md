@@ -55,7 +55,7 @@ installed.
 ```bash
 nextflow run dessimozlab/FastOMA -profile docker  --input_folder /path/to/in_folder --output_folder /path/to/out_folder 
 ```
-You could also add specific version to be used by adding `-r v0.3.5` to the command line. Without any `-r` argument, 
+You could also add specific version to be used by adding `-r v0.4.0` to the command line. Without any `-r` argument, 
 always the latest available release will be used. With `-r dev` the latest development release can be used.
 
 > [!WARNING]
@@ -94,10 +94,10 @@ There are four ways to run/install FastOMA detailed below:
 The FastOMA workflow can be run directly without any installation using nextflow's ability to fetch a workflow from github. A specific version can be selected by specifying the `-r` option to nextflow to select a specific version of FastOMA:
 
 ```bash
-nextflow run dessimozlab/FastOMA -r v0.3.5 -profile conda 
+nextflow run dessimozlab/FastOMA -r v0.4.0 -profile conda 
 ```
 
-This will fetch version v0.3.5 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
+This will fetch version v0.4.0 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
 
 ### 2. Cloning the FastOMA repo and running from there
 
@@ -190,7 +190,7 @@ nextflow run FastOMA.nf -profile docker \
     --output_folder myresult/
 ```
 This will use the container that is tagged with the current commit id. Similarly, one could also use 
-`--container_version "0.3.5"` to use the container with version `dessimozlab/fastoma:0.3.5` from dockerhub. Check the latest version on the [DockerHub](https://hub.docker.com/r/dessimozlab/fastoma/tags).
+`--container_version "0.4.0"` to use the container with version `dessimozlab/fastoma:0.4.0` from dockerhub. Check the latest version on the [DockerHub](https://hub.docker.com/r/dessimozlab/fastoma/tags).
 
 ### Singularity
 Since Docker needs administrator privileges (root access), [Singluarity](https://apptainer.org/index.html) (a.k.a Apptainer) is a good alternative. This can be installed using [Conda](https://anaconda.org/conda-forge/singularity) with `conda install conda-forge::singularity`. However, in most of the academic HPC cluster, singluarity is already installed and can be called with `module load`.
@@ -455,6 +455,15 @@ Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick Vesztrocy, 
 
 
 ## Change log
+- Update  v0.4.0:
+  - Improvements for nextflow: alternative version selection, README updates
+  - Split HOG and sampling improvements
+  - ensure orthologGroup at the MRCA of all genes in the group
+  - Docker improvements, additional labels and tools
+  - New gene families with mmseqs easy-cluster if mmseqs is installed
+  - Improved input checking
+  - Merge rootHOGs, improved handling of singleton using omamer multi-hits
+  - Various documentation and usability updates
 - Update  v0.3.5:
   - Fixes an issue with reaching the maximum recursion limit. (#31)
   - Fixes a problem with parallel execution for big families. (#44)
