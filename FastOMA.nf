@@ -370,6 +370,7 @@ process collect_subhogs{
 }
 
 process extract_pairwise_ortholog_relations {
+  label "process_medium"
   publishDir params.output_folder, mode: 'copy'
   input:
     path orthoxml
@@ -388,8 +389,6 @@ process extract_pairwise_ortholog_relations {
 
 process fastoma_report {
   label "process_medium"
-
-  cpus { 1 }
 
   publishDir params.output_folder, mode: 'copy'
 
