@@ -1,24 +1,15 @@
-import groovy.json.JsonBuilder;
-
-// NXF_WRAPPER_STAGE_FILE_THRESHOLD='50000'
-
-params.input_folder = "${projectDir}/testdata/in_folder"
-params.output_folder = "out_folder/"
-params.proteome_folder = params.input_folder + "/proteome"
-params.hogmap_in = params.input_folder + "/hogmap_in"
-params.splice_folder = params.input_folder + "/splice"
-params.species_tree = params.input_folder + "/species_tree.nwk"
-params.fasta_header_id_transformer = "noop"
+// Import nf-schema functions
+include { validateParameters; paramsHelp; paramsSummaryLog } from 'plugin/nf-schema'
 
 
+//Set dynamic defaults for input/output paths before validation
+params.input_folder    = params.input_folder ?: "${projectDir}/testdata/in_folder"
+params.proteome_folder = params.proteome_folder ?: "${params.input_folder}/proteome"
+params.hogmap_in       = params.hogmap_in ?: "${params.input_folder}/hogmap_in"
+params.splice_folder   = params.splice_folder ?: "${params.input_folder}/splice"
+params.species_tree    = params.species_tree ?: "${params.input_folder}/species_tree.nwk"
 
-// output subfolder definition
-params.genetrees_folder = params.output_folder + "/genetrees"
-params.msa_folder = params.output_folder + "/msa"
-params.hogmap_folder = params.output_folder + "/hogmap"
-params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
-
-
+/*
 
 if (params.help) {
     log.info """
@@ -166,7 +157,7 @@ Parameters:
    report                    ${params.report}
    force_pairwise_ortholog_generation    ${params.force_pairwise_ortholog_generation}
 """.stripIndent()
-
+*/
 
 process check_input{
   label "process_single"
@@ -197,6 +188,7 @@ process check_input{
 process omamer_run{
   label "process_single"
   tag "$proteome"
+
   publishDir params.hogmap_folder, mode: 'copy'
 
   input:
@@ -218,19 +210,19 @@ process omamer_run{
 
 process infer_roothogs{
   label "process_medium"
-  publishDir = [
-    path: params.temp_output,
-    enabled: params.debug_enabled,
-  ]
+  
+  publishDir params.temp_output, enabled: params.debug_enabled
 
   input:
     path hogmaps, stageAs: "hogmaps/*"
     path proteome_folder
     path splice_folder
+
   output:
     path "omamer_rhogs"
     path "gene_id_dic_xml.pickle"
     path "selected_isoforms" , optional: true
+
   script:
     """
        fastoma-infer-roothogs  --proteomes ${proteome_folder} \
@@ -244,11 +236,15 @@ process infer_roothogs{
 
 
 process batch_roothogs{
+  label "process_single"
+
   input:
     path rhogs
+  
   output:
-    path "rhogs_rest/*", optional: true
-    path "rhogs_big/*" , optional: true
+    path "rhogs_rest/*", optional: true, emit: rhogs_rest_batches
+    path "rhogs_big/*" , optional: true, emit: rhogs_big_batches
+  
   script:
     """
         fastoma-batch-roothogs --input-roothogs omamer_rhogs/ \
@@ -259,91 +255,18 @@ process batch_roothogs{
 }
 
 
-def getMaxFileSize = { Path folderPath ->
-    def maxFileSize = 0L // Initialize maximum file size
-
-    def traverseFolder = { Path currentPath ->
-        def currentFile = currentPath.toFile()
-
-        if (currentFile.isDirectory()) {
-            def files = currentFile.listFiles()
-            if (files) {
-                files.each { file ->
-                    if (file.isDirectory()) {
-                        traverseFolder(file.toPath()) // Recursively traverse subdirectories
-                    } else {
-                        def fileSize = file.length()
-                        if (fileSize > maxFileSize) {
-                            maxFileSize = fileSize // Update maximum file size if larger
-                        }
-                    }
-                }
-            }
-        } else {
-            def fileSize = currentFile.length()
-            if (fileSize > maxFileSize) {
-                maxFileSize = fileSize // Update maximum file size if larger
-            }
-        }
-    }
-
-    traverseFolder(folderPath)
-    return maxFileSize
-}
-
-// function to check maximum resources
-def check_max(obj, type) {
-    if (type == 'memory') {
-        try {
-            if (obj.compareTo(params.max_memory as nextflow.util.MemoryUnit) == 1)
-                return params.max_memory as nextflow.util.MemoryUnit
-            else
-                return obj
-        } catch (all) {
-            println "   ### ERROR ###   Max memory '${params.max_memory}' is not valid! Using default value: $obj"
-            return obj
-        }
-    } else if (type == 'time') {
-        try {
-            if (obj.compareTo(params.max_time as nextflow.util.Duration) == 1)
-                return params.max_time as nextflow.util.Duration
-            else
-                return obj
-        } catch (all) {
-            println "   ### ERROR ###   Max time '${params.max_time}' is not valid! Using default value: $obj"
-            return obj
-        }
-    } else if (type == 'cpus') {
-        try {
-            return Math.min( obj, params.max_cpus as int )
-        } catch (all) {
-            println "   ### ERROR ###   Max cpus '${params.max_cpus}' is not valid! Using default value: $obj"
-            return obj
-        }
-    }
-}
-
-def mem_cat(filesize, nr_genomes){
-    def fac = 1;
-    if (nr_genomes > 500) fac = 2;
-    if (filesize < 1000000) return 12.GB * fac;
-    else if (filesize < 2000000) return 20.GB * fac;
-    else if (filesize < 5000000) return 32.GB * fac;
-    else return 64.GB * fac;
-}
-
-def time_cat(filesize, nr_genomes){
-    def fac = 1;
-    if (nr_genomes > 500) fac = 2;
-    if (filesize < 1000000) return 4.h * fac;
-    else if (filesize < 20000000) return 24.h * fac;
-    else return 72.h * fac;
-}
-
 process hog_big{
-  cpus { check_max( 4, "cpus") }
-  memory { check_max( mem_cat(getMaxFileSize(rhogsbig), nr_species as int) * task.attempt, "memory") }
-  time { check_max( time_cat(getMaxFileSize(rhogsbig), nr_species as int) * task.attempt, "time") }
+  cpus { 4 }
+  memory { 
+    def max_filesize = Utils.getMaxFileSize(rhogsbig)
+    def mem_base = Utils.mem_cat( max_filesize, nr_species as int )
+    return Math.max( 6.GB, mem_base ) * params.memory_multiplier * task.attempt
+  }
+  time {
+    def max_filesize = Utils.getMaxFileSize(rhogsbig)
+    def time_base = Utils.time_cat(max_filesize, nr_species as int)
+    return Math.max( 2.h, time_base) * params.time_multiplier * task.attempt 
+  }
 
   publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
   publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
@@ -355,12 +278,14 @@ process hog_big{
     each rhogsbig
     path species_tree
     val nr_species
+
   output:
     path "pickle_hogs"
     path "*.fa" , optional: true          // msa         if write True
     path "*.nwk" , optional: true  // gene trees  if write True
     path "*.tsv", optional: true
     path "*.tsv.gz", optional: true
+
   script:
     """
         fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig}  \
@@ -379,6 +304,7 @@ process hog_big{
 
 process hog_rest{
   label "process_single"
+
   publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
   publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
@@ -412,19 +338,23 @@ process hog_rest{
 
 process collect_subhogs{
   label "process_high"
+  
   publishDir params.output_folder, mode: 'copy'
+
   input:
     path pickles, stageAs: "pickle_folders/?"
     path "gene_id_dic_xml.pickle"
     path rhogs
     path species_tree
     val  id_transform
+
   output:
     path "FastOMA_HOGs.orthoxml"
     path "OrthologousGroupsFasta"
     path "OrthologousGroups.tsv"
     path "RootHOGs.tsv"
     path "RootHOGsFasta"
+
   script:
     """
         fastoma-collect-subhogs --pickle-folder pickle_folders/ \
@@ -458,12 +388,17 @@ process extract_pairwise_ortholog_relations {
 
 process fastoma_report {
   label "process_medium"
+
+  cpus { 1 }
+
   publishDir params.output_folder, mode: 'copy'
+
   input:
     path notebook
     path orthoxml
     path proteome_folder
     path species_tree_checked
+
   output:
     path "report.ipynb"
     path "report.html"
@@ -486,6 +421,20 @@ process fastoma_report {
 }
 
 workflow {
+    // Print help message if requested
+    if (params.help) {
+        log.info paramsHelp("nextflow run FastOMA.nf")
+        exit 0
+    }
+
+    // Validate input parameters
+    validateParameters()
+
+    // Print parameter summary
+    log.info paramsSummaryLog(workflow)
+
+    
+
     proteome_folder = Channel.fromPath(params.proteome_folder, type: "dir", checkIfExists:true).first()
     proteomes = Channel.fromPath(params.proteome_folder + "/*", type:'any', checkIfExists:true)
     species_tree = Channel.fromPath(params.species_tree, type: "file", checkIfExists:true).first()
@@ -515,9 +464,9 @@ workflow {
     }
     extract_pairwise_ortholog_relations(orthoxml_file, c.TRUE)
     fastoma_report(notebook, orthoxml_file, proteome_folder, species_tree_checked)
-}
 
-workflow.onComplete {
+
+  workflow.onComplete = {
     def String report = ( params.report ? "\nNextflow report : ${params.statsdir}" : "");
     println ""
     println "Completed at    : $workflow.complete"
@@ -525,6 +474,6 @@ workflow.onComplete {
     println "Processes       : $workflow.workflowStats.succeedCount (success), $workflow.workflowStats.failedCount (failed)"
     println "Output in       : $params.output_folder" + report
     println ( workflow.success ? "Done!" : "Oops .. something went wrong" )
+  }
 }
-
 
