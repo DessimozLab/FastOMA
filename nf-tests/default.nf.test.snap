@@ -1,0 +1,99 @@
+{
+    "Run with profile test": {
+        "content": [
+            10,
+            [
+                "FastOMA_HOGs.orthoxml",
+                "OrthologousGroups.tsv",
+                "OrthologousGroupsFasta",
+                "OrthologousGroupsFasta/OG_0000001.fa.gz",
+                "OrthologousGroupsFasta/OG_0000002.fa.gz",
+                "OrthologousGroupsFasta/OG_0000003.fa.gz",
+                "OrthologousGroupsFasta/OG_0000004.fa.gz",
+                "OrthologousGroupsFasta/OG_0000005.fa.gz",
+                "OrthologousGroupsFasta/OG_0000006.fa.gz",
+                "OrthologousGroupsFasta/OG_0000007.fa.gz",
+                "OrthologousGroupsFasta/OG_0000008.fa.gz",
+                "OrthologousGroupsFasta/OG_0000009.fa.gz",
+                "OrthologousGroupsFasta/OG_0000010.fa.gz",
+                "OrthologousGroupsFasta/OG_0000011.fa.gz",
+                "OrthologousGroupsFasta/OG_0000012.fa.gz",
+                "RootHOGs.tsv",
+                "RootHOGsFasta",
+                "RootHOGsFasta/HOG0000001.fa.gz",
+                "RootHOGsFasta/HOG0000002.fa.gz",
+                "RootHOGsFasta/HOG0000003.fa.gz",
+                "RootHOGsFasta/HOG0000004.fa.gz",
+                "RootHOGsFasta/HOG0000005.fa.gz",
+                "RootHOGsFasta/HOG0000006.fa.gz",
+                "RootHOGsFasta/HOG0000007.fa.gz",
+                "RootHOGsFasta/HOG0000008.fa.gz",
+                "RootHOGsFasta/HOG0000009.fa.gz",
+                "RootHOGsFasta/HOG0000010.fa.gz",
+                "RootHOGsFasta/HOG0000011.fa.gz",
+                "RootHOGsFasta/HOG0000012.fa.gz",
+                "hogmap",
+                "hogmap/AQUAE.fa.hogmap",
+                "hogmap/CHLTR.fa.hogmap",
+                "hogmap/MYCGE.fa.hogmap",
+                "orthologs.tsv.gz",
+                "phylostratigraphy.html",
+                "report.html",
+                "report.ipynb",
+                "species_tree_checked.nwk",
+                "stats"
+            ],
+            [
+                "OG_0000001.fa.gz:md5,0d66f05814d8ae19cfc92e9c524732ec",
+                "OG_0000002.fa.gz:md5,ef9c8f91804962843307a71b115398ca",
+                "OG_0000003.fa.gz:md5,a9a53b274a2ee456e8f42f29f7cdd041",
+                "OG_0000004.fa.gz:md5,ae11efbff2957ec2fd5f26e7043f1044",
+                "OG_0000005.fa.gz:md5,9747e7267109929d902a0cd921b9a4a9",
+                "OG_0000006.fa.gz:md5,cc5b8cfcb48b384c870b39c36182add9",
+                "OG_0000007.fa.gz:md5,ad8c0d95094dd8817fe510e752ae7e89",
+                "OG_0000008.fa.gz:md5,b5de472745972a17a29bdf2f0129d8fa",
+                "OG_0000009.fa.gz:md5,4bad2b524cb84aecdf19b0f93ea8534e",
+                "OG_0000010.fa.gz:md5,d9b8763576656b3e747d5a87de6f74b8",
+                "OG_0000011.fa.gz:md5,443fab9c4961ebfb8187165be27a9577",
+                "OG_0000012.fa.gz:md5,e4b128f477155cd74ff10528d7adc09f",
+                "HOG0000001.fa.gz:md5,0d66f05814d8ae19cfc92e9c524732ec",
+                "HOG0000002.fa.gz:md5,ef9c8f91804962843307a71b115398ca",
+                "HOG0000003.fa.gz:md5,a9a53b274a2ee456e8f42f29f7cdd041",
+                "HOG0000004.fa.gz:md5,ae11efbff2957ec2fd5f26e7043f1044",
+                "HOG0000005.fa.gz:md5,9747e7267109929d902a0cd921b9a4a9",
+                "HOG0000006.fa.gz:md5,cc5b8cfcb48b384c870b39c36182add9",
+                "HOG0000007.fa.gz:md5,ad8c0d95094dd8817fe510e752ae7e89",
+                "HOG0000008.fa.gz:md5,b5de472745972a17a29bdf2f0129d8fa",
+                "HOG0000009.fa.gz:md5,4bad2b524cb84aecdf19b0f93ea8534e",
+                "HOG0000010.fa.gz:md5,d9b8763576656b3e747d5a87de6f74b8",
+                "HOG0000011.fa.gz:md5,443fab9c4961ebfb8187165be27a9577",
+                "HOG0000012.fa.gz:md5,e4b128f477155cd74ff10528d7adc09f",
+                "phylostratigraphy.html:md5,060aafe142edbe56cd004090d695177d",
+                "species_tree_checked.nwk:md5,4c82a2f2ffa72a595aaf2fd3deddeff7"
+            ],
+            [
+                {
+                    "name": "FastOMA_HOGs.orthoxml",
+                    "md5": "ac011cd1d734cae01beee5bcb5cda143"
+                },
+                {
+                    "name": "AQUAE.fa.hogmap",
+                    "md5": "7a8c848990c9dce91d6c50d48ae1ddd1"
+                },
+                {
+                    "name": "CHLTR.fa.hogmap",
+                    "md5": "f81877dc801f04e105dbedabe16c5cc0"
+                },
+                {
+                    "name": "MYCGE.fa.hogmap",
+                    "md5": "8715ee4eff99f751ca1d3d90b770574c"
+                }
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2025-10-14T16:11:27.355334"
+    }
+}
