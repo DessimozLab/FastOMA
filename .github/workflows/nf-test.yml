@@ -35,14 +35,7 @@ jobs:
         filter: ["workflow", "pipeline"]
         # filter: ["process", "workflow", "function", "pipeline"]
         profile: ["conda", "docker", "singularity"]
-        shard: [1, 2, 3, 4, 5]
-        #isMaster:
-        #  - ${{ github.base_ref == 'main' }}
-        #exclude:
-        #  - isMaster: false
-        #    profile: "conda"
-        #  - isMaster: false
-        #    profile: "singularity"
+        shard: [1] #, 2, 3, 4, 5]
 
     steps:
       - name: Check out pipeline code
@@ -111,21 +104,21 @@ jobs:
             --ci \
             --dryRun \
             --junitxml="TEST-${{ matrix.filter }}_${{ matrix.profile }}_${{ matrix.shard }}.xml" \
-            --shard ${{ matrix.shard }}/5 \
+            --shard ${{ matrix.shard }}/1 \
             --changed-since HEAD^ \
             --follow-dependencies \
             --profile "+${{ matrix.profile }}" \
             --filter ${{ matrix.filter }} \
             | grep PASSED | cut -d "'" -f 2 | sed 's/^/- /' | sort -u >> $GITHUB_STEP_SUMMARY
 
-      - name: "Run tests | ${{ matrix.filter }}_${{ matrix.profile }} | ${{ matrix.shard }}/5"
+      - name: "Run tests | ${{ matrix.filter }}_${{ matrix.profile }} | ${{ matrix.shard }}/1"
         run: |
           nf-test test \
               --ci \
               --debug \
               --verbose \
               --junitxml="TEST-${{ matrix.filter }}_${{ matrix.profile }}_${{ matrix.shard }}.xml" \
-              --shard ${{ matrix.shard }}/5 \
+              --shard ${{ matrix.shard }}/1 \
               --changed-since HEAD^ \
               --follow-dependencies \
               --profile "+${{ matrix.profile }}" \
