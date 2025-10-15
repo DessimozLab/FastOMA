@@ -90,8 +90,8 @@ jobs:
           echo $(realpath $CONDA)/condabin >> $GITHUB_PATH
           echo $(realpath python) >> $GITHUB_PATH
 
-      - name: Disk space cleanup
-        uses: jlumbroso/free-disk-space@v1.3.1
+      #- name: Disk space cleanup
+      #  uses: jlumbroso/free-disk-space@v1.3.1
 
       - name: Start summary
         id: print-test
@@ -105,7 +105,6 @@ jobs:
             --dryRun \
             --junitxml="TEST-${{ matrix.filter }}_${{ matrix.profile }}_${{ matrix.shard }}.xml" \
             --shard ${{ matrix.shard }}/1 \
-            --changed-since HEAD^ \
             --follow-dependencies \
             --profile "+${{ matrix.profile }}" \
             --filter ${{ matrix.filter }} \
@@ -119,7 +118,6 @@ jobs:
               --verbose \
               --junitxml="TEST-${{ matrix.filter }}_${{ matrix.profile }}_${{ matrix.shard }}.xml" \
               --shard ${{ matrix.shard }}/1 \
-              --changed-since HEAD^ \
               --follow-dependencies \
               --profile "+${{ matrix.profile }}" \
               --filter ${{ matrix.filter }}
