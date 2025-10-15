@@ -1,0 +1,8 @@
+.DS_Store
+RootHOGs.tsv
+OrthologousGroups.tsv
+FastOMA_HOGs.orthoxml
+orthologs.tsv.gz
+report.*
+**/*.html
+**/*.hogmap

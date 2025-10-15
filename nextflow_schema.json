@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/dessimozlab/FastOMA/main/nextflow_schema.json",
+  "title": "FastOMA Pipeline Parameters",
+  "description": "Fast orthologous matrix analysis pipeline",
+  "type": "object",
+  "$defs": {
+    "input_options": {
+      "title": "Input options",
+      "type": "object",
+      "description": "Define where the pipeline should find input data ",
+      "required": ["input_folder", "species_tree"],
+      "properties": {
+        "input_folder": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to input directory containing proteomes and species tree",
+          "fa_icon": "fas fa-folder-open"
+        },
+        "proteome_folder": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to input directory containing the proteome files in fasta format",
+          "help": "If not provided, the proteomes are asumed to be in the input_folder/proteomes directory.",
+          "fa_icon": "fas fa-folder-open"
+        },
+        "hogmap_in": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to input directory containing the hogmap files",
+          "fa_icon": "fas fa-folder-open",
+          "help": "If provided, the hogmap files will be used instead of computing them from scratch with OMAmer. This can save time if you have already computed the hogmaps for your proteomes."
+        },
+        "species_tree": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Path to species tree file",
+          "fa_icon": "fas fa-tree",
+          "pattern": "^\\S+\\.(nhx|nh|nwk)",
+          "help": "The species tree should be in Newick or NHX format. By default, the pipeline looks for a file named species_tree.nwk in the input_folder."
+        },
+        "splice_folder": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to input directory containing the splice files",
+          "fa_icon": "fas fa-folder-open",
+          "help": "If provided, FastOMA will use the splice files to identify and handle alternative splicing isoforms in the proteomes and select the best representative isoform for each gene."
+        },
+        "omamer_db": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Path to OMAmer database against which the proteomes will be mapped",
+          "fa_icon": "fas fa-database",
+          "help": "If not provided, the default OMAmer database (LUCA) will be used.",
+          "default": "https://omabrowser.org/All/LUCA.h5"
+        }
+      }
+    },
+    "output_options": {
+      "title": "Output options",
+      "type": "object",
+      "description": "Define where the pipeline should store the output data",
+      "required": ["output_folder"],
+      "properties": {
+        "output_folder": {
+          "type": "string",
+          "default": "Output",
+          "format": "directory-path",
+          "description": "The output directory where the results will be saved",
+          "fa_icon": "fas fa-folder-open"
+        },
+        "hogmap_folder": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "The output directory where the omamer hogmap files will be saved",
+          "help": "If not provided, the hogmap files will be saved in the output_folder/hogmap directory.",
+          "fa_icon": "fas fa-folder-open",
+          "default": "Output/hogmap"
+        }
+      }
+    },
+    "processing_options": {
+      "title": "Processing options",
+      "type": "object",
+      "description": "Parameters for processing and analysis",
+      "properties": {
+        "fasta_header_id_transformer": {
+          "type": "string",
+          "default": "noop",
+          "enum": ["noop", "UniProt"],
+          "description": "FASTA header ID transformer method"
+        },
+        "filter_method": {
+          "type": "string",
+          "default": "col-row-threshold",
+          "description": "MSA filtering method",
+          "enum": ["col-row-threshold", "col-elbow-row-threshold", "trimal"]
+        },
+        "filter_gap_ratio_row": {
+          "type": "number",
+          "default": 0.3,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Gap ratio threshold for row filtering"
+        },
+        "filter_gap_ratio_col": {
+          "type": "number",
+          "default": 0.5,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "nr_repr_per_hog": {
+          "type": "integer",
+          "default": 5,
+          "minimum": 1
+        },
+        "min_sequence_length": {
+          "type": "integer",
+          "default": 20
+        }
+      }
+    },
+    "output_control": {
+      "title": "Output control",
+      "type": "object",
+      "description": "Control what outputs are saved",
+      "properties": {
+        "write_msas": {
+          "type": "boolean",
+          "description": "Write multiple sequence alignments"
+        },
+        "write_genetrees": {
+          "type": "boolean",
+          "description": "Write gene trees"
+        },
+        "debug_enabled": {
+          "type": "boolean",
+          "description": "Enable debug mode"
+        },
+        "msa_folder": {
+          "type": "string",
+          "default": "Output/msa"
+        },
+        "temp_output": {
+          "type": "string",
+          "default": "Output/temp_output"
+        },
+        "genetrees_folder": {
+          "type": "string",
+          "default": "Output/genetrees"
+        },
+        "force_pairwise_ortholog_generation": {
+          "type": "boolean",
+          "description": "Force generation of pairwise orthologs even for large datasets (may be slow)",
+          "help": "By default, pairwise orthologs are not generated for datasets with more than 25 species to avoid long runtimes. Enable this option to override this behavior."
+        }
+      }
+    },
+    "resource_options": {
+      "title": "Resource options",
+      "type": "object",
+      "description": "",
+      "default": "",
+      "properties": {
+        "time_multiplier": {
+          "type": "integer",
+          "default": 1
+        },
+        "memory_multiplier": {
+          "type": "integer",
+          "default": 1
+        }
+      }
+    },
+    "generic_options": {
+      "title": "Generic options",
+      "type": "object",
+      "description": "Less common options for the pipeline",
+      "properties": {
+        "help": {
+          "type": "boolean",
+          "description": "Display help text",
+          "fa_icon": "fas fa-question-circle",
+          "hidden": true
+        },
+        "report": {
+          "type": "boolean",
+          "description": "Generate nextflow reports"
+        },
+        "statsdir": {
+          "type": "string",
+          "fa_icon": "fas fa-folder-open",
+          "default": "Output/stats"
+        },
+        "trace_report_suffix": {
+          "type": "string",
+          "fa_icon": "far calendar",
+          "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
+          "hidden": true
+        },
+        "custom_config_version": {
+          "type": "string",
+          "default": "master"
+        },
+        "custom_config_base": {
+          "type": "string",
+          "default": "https://raw.githubusercontent.com/nf-core/configs/master"
+        },
+        "container_name": {
+          "type": "string",
+          "default": "dessimozlab/fastoma"
+        },
+        "container_version": {
+          "type": "string",
+          "default": "dev"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/$defs/input_options"
+    },
+    {
+      "$ref": "#/$defs/output_options"
+    },
+    {
+      "$ref": "#/$defs/processing_options"
+    },
+    {
+      "$ref": "#/$defs/output_control"
+    },
+    {
+      "$ref": "#/$defs/resource_options"
+    },
+    {
+      "$ref": "#/$defs/generic_options"
+    }
+  ]
+}
