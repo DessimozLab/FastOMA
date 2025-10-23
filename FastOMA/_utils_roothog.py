@@ -166,6 +166,7 @@ def parse_proteomes(folder=None, min_sequence_length=0):  # list_oma_species
             species_names.append(species_name)
             fasta_format_keep = ext  # last one is stored either fa or fasta
 
+    species_names.sort()   # sort the species names alphabetically -> reproducible results
     # todo accept all fasta formats in the input prtoeome folder, fasta, fa, fna, ..
     prot_recs_lists = {} # key: species name, value is a dic of query protein Biopython records. # 'MYCGE': [SeqRecord(seq=Seq('MDFDK
     #smallprot_recs_lists ={}
