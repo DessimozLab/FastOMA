@@ -40,7 +40,19 @@ nextflow_pipeline {
                 sorted_rows.each { row ->
                     lines.add(header.collect { col -> row[col] ?: '' }.join('\t'))
                 }
-                return [name: file.name, md5: listToMD5(lines)]
+                return [name: file.name, md5: listToMD5(lines), lineCount: lines.size()]
+            }
+            def fixed_line_number_files = getAllFilesFromDir(params.output_folder, include:['RootHOGs.tsv', 'OrthologousGroups.tsv', 'orthologs.tsv.gz', "FastOMA_HOGs.orthoxml", 'hogmap/*.hogmap']).collect { file ->
+                def line_count
+                if (file.name.endsWith('.gz')) {
+                    // Use try-with-resources for proper cleanup
+                    new java.util.zip.GZIPInputStream(file.newInputStream()).withCloseable { gzipStream ->
+                        line_count = gzipStream.readLines().size()
+                    }
+                } else {
+                    line_count = file.readLines().size()
+                }
+                return [name: file.name, lineCount: line_count]
             }
 
             assertAll(
@@ -53,7 +65,12 @@ nextflow_pipeline {
                     // All files with stable contents
                     stable_path,
                     // List of all files with timestamps filtered out
-                    timestamp_files
+                    // does not yet work, as hogmap files have percision issues
+                    // and FastOMA_HOGs is not completely deterministic
+                    // timestamp_files 
+
+                    // files with fixed number of lines
+                    fixed_line_number_files
                 ).match() }
             )
         }

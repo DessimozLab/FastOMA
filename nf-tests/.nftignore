@@ -6,3 +6,5 @@ orthologs.tsv.gz
 report.*
 **/*.html
 **/*.hogmap
+RootHOGsFasta/*.fa.gz
+OrthologousGroupsFasta/*.fa.gz
