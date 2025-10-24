@@ -413,6 +413,7 @@ process fastoma_report {
     papermill $notebook \
               report.ipynb \
               -p output_folder "./" \
+              -p min_sequence_length ${params.min_sequence_length} \
               -p proteome_folder "$proteome_folder"
 
     jupyter nbconvert --to html report.ipynb
