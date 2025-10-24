@@ -260,12 +260,12 @@ process hog_big{
   memory { 
     def max_filesize = Utils.getMaxFileSize(rhogsbig)
     def mem_base = Utils.mem_cat( max_filesize, nr_species as int )
-    return Math.max( 6.GB, mem_base ) * params.memory_multiplier * task.attempt
+    return [6.GB, mem_base].max() * params.memory_multiplier * task.attempt
   }
   time {
     def max_filesize = Utils.getMaxFileSize(rhogsbig)
     def time_base = Utils.time_cat(max_filesize, nr_species as int)
-    return Math.max( 2.h, time_base) * params.time_multiplier * task.attempt 
+    return [2.h, time_base].max() * params.time_multiplier * task.attempt 
   }
 
   publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
