@@ -342,7 +342,7 @@ def resolve_singletons(rhogs_prots, hogmaps, conf):
         could_resolve = False
         for alt_mapping in prot_mappings[1:]:
             if float(alt_mapping.score) < conf.mergHOG_fscore_thresh:
-                break
+                continue
                 
             alt_rhog = extract_root_hog_id(alt_mapping.hogid)
             
@@ -357,7 +357,7 @@ def resolve_singletons(rhogs_prots, hogmaps, conf):
             remained_count += 1
             for alt_mapping in prot_mappings[1:]:
                 if float(alt_mapping.score) < conf.mergHOG_fscore_thresh:
-                    break
+                    continue
                 singletons_remained[extract_root_hog_id(alt_mapping.hogid)].add((species, prot))    
     
     logger.info(f"Resolved {resolved_count} singleton HOGs based on omammer multi-hits.")
@@ -514,7 +514,7 @@ def find_rhog_candidate_pairs(hogmaps, rhogs_prots, conf_infer_roothogs): # rhog
             for prot_map in prot_maps: #
                 # prot_map: HOGMapData record
                 if float(prot_map.score) > conf_infer_roothogs.mergHOG_fscore_thresh:
-                    rhogid = prot_map.hogid.split(".")[0].split(":")[1]
+                    rhogid = extract_root_hog_id(prot_map.hogid)
                     rhogs_size[rhogid] += 1
                     rhogs.append((rhogid, float(prot_map.score)))
 
