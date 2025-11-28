@@ -6,7 +6,7 @@ import subprocess
 from itertools import chain
 
 import networkx as nx
-from Bio import SeqIO, SeqRecord
+from Bio import SeqIO
 import pickle
 from os import listdir
 import os
@@ -965,7 +965,7 @@ def write_selected_isoforms(isoform_data, prot_recs_lists, output_folder="select
     write isoforms to a tsv file for each species
     """
     selected_isoforms_folder = Path(output_folder)
-    select_best_isoforms.mkdir(exist_ok=True)
+    selected_isoforms_folder.mkdir(exist_ok=True)
 
     isoform_selected = isoform_data['selected_isoforms']
     isoform_by_gene_all = isoform_data['isoform_by_gene']
