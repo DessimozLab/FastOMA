@@ -1,10 +1,12 @@
 
 import csv
 import itertools
+from pathlib import Path
 import subprocess
+from itertools import chain
 
 import networkx as nx
-from Bio import SeqIO
+from Bio import SeqIO, SeqRecord
 import pickle
 from os import listdir
 import os
@@ -183,6 +185,52 @@ def parse_proteomes(folder=None, min_sequence_length=0):  # list_oma_species
     return species_names, prot_recs_lists, fasta_format_keep #, smallprot_recs_lists
 
 
+
+def create_root_hogs(hogmaps, conf):
+    """Create root HOGs from HOG mappings"""
+    
+    # Initial grouping
+    rhogs_prots = group_prots_by_roothogs(hogmaps)
+    logger.info(f"Initial grouping: {len(rhogs_prots)} root HOGs")
+    
+    # Handle singletons
+    rhogs_prots = resolve_singletons(rhogs_prots, hogmaps, conf)
+
+    rhogs_prots = merge_rhogs2(hogmaps, rhogs_prots, conf)
+    rhogs_prots = filter_big_roothogs(hogmaps, rhogs_prots, conf)
+    
+    # # Merge similar HOGs
+    # if conf.enable_merging:
+    #     rhogs_prots = merge_similar_hogs(rhogs_prots, hogmaps, conf)
+    #
+    # # Filter large HOGs
+    # rhogs_prots = filter_large_hogs(rhogs_prots, hogmaps, conf)
+    
+    return rhogs_prots
+
+
+def handle_splice_variants(species_names, hogmaps, splice_folder):
+    """Handle splice variants and return filtered data"""
+    
+    # Parse isoform files
+    isoform_by_gene = parse_isoform_files(species_names, splice_folder)
+    
+    # Select best isoforms
+    selected_isoforms, non_selected = select_best_isoforms(
+        species_names, isoform_by_gene, hogmaps
+    )
+    
+    # Filter hogmaps to keep only selected isoforms
+    filtered_hogmaps = filter_hogmaps_by_isoforms(hogmaps, non_selected)
+    
+    return {
+        'isoform_by_gene': isoform_by_gene,
+        'selected_isoforms': selected_isoforms,
+        'non_selected': non_selected,
+        'filtered_hogmaps': filtered_hogmaps
+    }
+
+
 def add_species_name_prot_id( prot_recs_lists):
     """
     adding the name of species to each protein record
@@ -260,111 +308,97 @@ def parse_hogmap_omamer(proteomes, fasta_format_keep, folder=None):
     logger.info("There are %d species in the hogmap folder.", len(hogmaps))
     return hogmaps, unmapped
 
-
-def group_prots_roothogs(hogmaps):
-    """
-    function for finding those proteins that are mapped to the same rootHOG.
-    output: rhogs_dic
-    """
-
+def group_prots_by_roothogs(hogmaps):
+    """Group proteins by their root HOG assignments"""
+    
     rhogs_prots = collections.defaultdict(list)
+    
     for species_name, prots_map in hogmaps.items():
-        # prot_recs = prot_recs_all[species_name]
-
-        for prot_id, prot_map in prots_map.items():
-            # omamer output is sorted based on normcount (not family-p). but that's intended by omamer developers
-            # first hit (highest score) -> get roothog
-            hogid = prot_map[0].hogid
-            rhogid = hogid.split(".")[0].split(":")[1]
-            # add to species, prot_id to list for best roothog
+        for prot_id, prot_mappings in prots_map.items():
+            # Get best mapping (first one, as they're sorted by score)
+            best_mapping = prot_mappings[0]
+            rhogid = extract_root_hog_id(best_mapping.hogid)
             rhogs_prots[rhogid].append((species_name, prot_id))
+    
+    logger.info(f"Grouped proteins into {len(rhogs_prots)} root HOGs")
+    return dict(rhogs_prots)
 
-    logger.info("There are " + str(len(rhogs_prots)) + " rootHOGs.")
-    # from old code, to check later: Keep prot seq in hog class. We can write species idx and prot idx to  improve speed of code for omamer thresholding
-    return rhogs_prots
+def extract_root_hog_id(hogid):
+    """Extract root HOG ID from full HOG ID"""
+    return hogid.split(".")[0].split(":")[1]
 
 
-def handle_singleton(rhogs_prots, hogmaps, conf_infer_roothogs):
-    query_singleton_rhog = []  # they are the only one to hit to this HOG
-    for rhog, prot_sp_list in rhogs_prots.items():  # 'C0602129': [('GORGO', 'GORGO00025'), ('GORGO', 'GORGO00026')],
-        if len(prot_sp_list) == 1:
-            query_singleton_rhog += prot_sp_list
-    logger.debug("There are " + str(len(query_singleton_rhog)) + " singleton. The hog on which only one query proteins mapped.")
+def resolve_singletons(rhogs_prots, hogmaps, conf):
+    """Resolve singleton HOGs by checking alternative mappings"""
+    
+    singletons = [(rhog, prots[0]) for rhog, prots in rhogs_prots.items() if len(prots) == 1]
+    resolved_count, remained_count = 0, 0
+    singletons_remained = collections.defaultdict(set)
 
-    # adding singleton to already rhogs with >1 members
-    query_singleton_rhog_solved = []
-    for (species, prot) in query_singleton_rhog:
-        prot_maps = hogmaps[species][prot]
-        if len(prot_maps) > 1:
-            #prot_maps2 = prot_maps
-            # omamer output is sorted based on normcount. but that's intended by omamer developers
-            # family_p	family_count	family_normcount
-            best, minor_mappings = prot_maps[0], prot_maps[1:]
-            # consistency check: assert that best roothog id is indeed singleton
-            rhogid0 = best.hogid.split(".")[0].split(":")[-1]
-            if len(rhogs_prots[rhogid0]) != 1:
-                logger.error(f"singleton roothog is not singleton: {species}, {prot}: rhog: {rhogid0}: {rhogs_prots[rhogid0]}")
-                raise RuntimeError("singleton roothog is not singleton")
-
-            for cand_map in minor_mappings:
-                rhogid = cand_map.hogid.split(".")[0].split(":")[-1]
-                if rhogid in rhogs_prots:
-                    if len(rhogs_prots[rhogid]) > 1 and float(cand_map.score) > conf_infer_roothogs.mergHOG_fscore_thresh: # todo  check
-                        rhogs_prots[rhogid].append((species, prot))
-                        del rhogs_prots[rhogid0]
-                        query_singleton_rhog_solved.append((species, prot))
-                        break
-    logger.debug("We add " + str(
-        len(query_singleton_rhog_solved)) + " proteins/singleton to another rHOG based on omamer multi-hit.")
-
-    query_singleton_rhog_solved_set = set(query_singleton_rhog_solved)
-    query_singleton_rhog_remained = [i for i in query_singleton_rhog if i not in query_singleton_rhog_solved_set]
-    logger.debug("However, " + str(len(query_singleton_rhog_remained)) + " proteins/singletons are remained.")
-
-    # try to create group from multi-hits of remained singleton
-    dic_singlton_remained = collections.defaultdict(set)
-    for (species, prot) in query_singleton_rhog_remained:
-        prot_maps = hogmaps[species][prot]
-        for cand_map in prot_maps[1:]:
-            if float(cand_map.score) > conf_infer_roothogs.mergHOG_fscore_thresh:
-                rhogid = cand_map.hogid.split(".")[0].split(":")[-1]
-                dic_singlton_remained[rhogid].add((species, prot))
-    logger.debug(f"These are associated to {len(dic_singlton_remained)} HOGs considering all multi-hits.")
-
+    for singleton_rhog, (species, prot) in singletons:
+        prot_mappings = hogmaps[species][prot]
+        
+        # Check alternative mappings
+        could_resolve = False
+        for alt_mapping in prot_mappings[1:]:
+            if float(alt_mapping.score) < conf.mergHOG_fscore_thresh:
+                break
+                
+            alt_rhog = extract_root_hog_id(alt_mapping.hogid)
+            
+            # If alternative HOG has multiple members, move protein there
+            if alt_rhog in rhogs_prots and len(rhogs_prots[alt_rhog]) > 1:
+                rhogs_prots[alt_rhog].append((species, prot))
+                del rhogs_prots[singleton_rhog]
+                resolved_count += 1
+                could_resolve = True
+                break
+        if not could_resolve:
+            remained_count += 1
+            for alt_mapping in prot_mappings[1:]:
+                if float(alt_mapping.score) < conf.mergHOG_fscore_thresh:
+                    break
+                singletons_remained[extract_root_hog_id(alt_mapping.hogid)].add((species, prot))    
+    
+    logger.info(f"Resolved {resolved_count} singleton HOGs based on omammer multi-hits.")
+    logger.info(f"{remained_count} singleton HOGs remained before merging based on minor mappings.")
+    
     # get lookup from prot -> roothog (to be used for deleting a new cluster assignment)
     prots_rhogs_dic = {sp_prots[0]: rhog for rhog, sp_prots in rhogs_prots.items() if len(sp_prots) == 1}
+
+    # Merge remaining singletons into groups based on shared alternative mappings of multi-hits
     clusters = UnionFind()
-    for rhog, prot_set in dic_singlton_remained.items():
+    for rhog, prot_set in singletons_remained.items():
         clusters.union(*prot_set)
 
     nr_new_rhogs, nr_prot_in_new_rhogs = 0, 0
     for cc in clusters.get_components():
-        if len(cc) > 1:
-            nr_new_rhogs += 1
-            # check that indeed the proteins are singletons in the rhog_prots dict
-            if any(len(rhogs_prots.get(prots_rhogs_dic[prot], [])) > 1 for prot in cc):
-                raise RuntimeError("issue 15219325")
-            for prot in cc:
-                rhog = prots_rhogs_dic[prot]
-                if rhog in rhogs_prots:
-                    del rhogs_prots[rhog]
-            cc = list(cc)
-            rhog = prots_rhogs_dic[cc[0]]
-            rhogs_prots[rhog] = cc
-            nr_prot_in_new_rhogs += len(cc)
+        if len(cc) <= 1:
+            continue
 
-    logger.debug(f"We merged {nr_prot_in_new_rhogs} in {nr_new_rhogs} additional groups with >1 members.")
+        nr_new_rhogs += 1
+        # check that indeed the proteins are singletons in the rhog_prots dict
+        if any(len(rhogs_prots.get(prots_rhogs_dic[prot], [])) > 1 for prot in cc):
+            raise RuntimeError("issue 15219325")
+            
+        for prot in cc:
+            rhog = prots_rhogs_dic[prot]
+            if rhog in rhogs_prots:
+                del rhogs_prots[rhog]
+        cc = list(cc)
+        rhog = prots_rhogs_dic[cc[0]]
+        rhogs_prots[rhog] = cc
+        nr_prot_in_new_rhogs += len(cc)
+    logger.info(f"We merged {nr_prot_in_new_rhogs} in {nr_new_rhogs} additional groups with >1 members.")
 
-    counter_rhog_singlton_final = 0
-    counter_notsingl_final = 0
+    counter_rhog_singleton = 0
+    counter_not_singleton  = 0
     for rhogid, spec_prot_list in rhogs_prots.items():
         if len(set(spec_prot_list)) > 1:
-            counter_notsingl_final += 1
+            counter_not_singleton += 1
         else:
-            counter_rhog_singlton_final += 1
-    logger.debug("Now, we have " + str(counter_notsingl_final) + " rootHOGs with >1 proteins and  and " + str(
-        counter_rhog_singlton_final) + " singleton rootHOGs ")
-
+            counter_rhog_singleton += 1
+    logger.info(f"Now, we have {counter_not_singleton} rootHOGs with >1 proteins and {counter_rhog_singleton} singleton rootHOGs")
     return rhogs_prots
 
 
@@ -861,7 +895,7 @@ def write_clusters(fasta_clustered, address_rhogs_folder, min_rhog_size):
     return cluster_iter - 10000
 
 
-def parse_isoform_file(species_names, folder=None):
+def parse_isoform_files(species_names, folder=None):
     if folder is None:
         folder = "./splice"
     isoform_by_gene_all = {}
@@ -882,7 +916,7 @@ def parse_isoform_file(species_names, folder=None):
     return isoform_by_gene_all
 
 
-def find_nonbest_isoform(species_names, isoform_by_gene_all, hogmaps):
+def select_best_isoforms(species_names, isoform_by_gene_all, hogmaps):
     isoform_selected = {}
     isoform_not_selected = {}
 
@@ -921,167 +955,53 @@ def find_nonbest_isoform(species_names, isoform_by_gene_all, hogmaps):
                         score_isof_best = score_isof
 
             isoform_selected[species_name].append(protname_best)
-            isoform_not_selected[species_name] += [i for i in isoform_list if i != protname_best]  # flatten for all
+            isoform_not_selected[species_name].extend([i for i in isoform_list if i != protname_best])  # flatten for all
 
     return isoform_selected, isoform_not_selected
 
 
-def write_isoform_selected(isoform_by_gene_all, isoform_selected, prot_recs_lists):
+def write_selected_isoforms(isoform_data, prot_recs_lists, output_folder="selected_isoforms"):
     """
-    write isoforms
-
+    write isoforms to a tsv file for each species
     """
-    selected_isoforms_folder = "selected_isoforms/"
-    if not os.path.exists(selected_isoforms_folder):
-        os.mkdir(selected_isoforms_folder)
+    selected_isoforms_folder = Path(output_folder)
+    select_best_isoforms.mkdir(exist_ok=True)
 
+    isoform_selected = isoform_data['selected_isoforms']
+    isoform_by_gene_all = isoform_data['isoform_by_gene']
+    
     for species, isoform_selected_sp in isoform_selected.items():
         isoform_by_gene = isoform_by_gene_all[species]
         assert len(isoform_by_gene) == len(isoform_selected_sp)
 
-        file_handle = open(selected_isoforms_folder+species + "_selected_isoforms.tsv", "w")
-        for gene_idx, isof_list in enumerate(isoform_by_gene):
-            isoform_selected_sp_i = isoform_selected_sp[gene_idx]
-            file_handle.write(";".join(isof_list) + "\t")
-            file_handle.write(isoform_selected_sp_i + "\n")
-
-        all_genes = []
-        for list_genes in isoform_by_gene_all[species]:
-            all_genes += list_genes
-        len(all_genes)
-
-        prot_all = [i.id.split("||")[0] for i in prot_recs_lists[species]]
-        len(prot_all), len(all_genes)
-
-        not_in_isoform = set(prot_all) - set(all_genes)
-
-        for isof1 in not_in_isoform:  # for these there is no isoform information, we write them at end of file
-            file_handle.write(isof1 + "\t" + isof1 + "\n")
-
-        file_handle.close()
-
-    return 1
+        main_to_minor = {
+            main: set(gene_isoforms) - {main}
+            for main, gene_isoforms in zip(isoform_selected_sp, isoform_by_gene)
+        }
+        all_isoforms = set(chain.from_iterable(isoform_by_gene))
+        fpath = selected_isoforms_folder / f"{species}_selected_isoforms.fa"
+        with open(fpath, "wt") as fout:
+            for rec in prot_recs_lists[species]:
+                id_ = rec.id.split("||")[0]
+                if id_ in main_to_minor or id_ not in all_isoforms:
+                    if id_ in main_to_minor:
+                        desc_ = "minor_isoforms=" + ",".join(main_to_minor.get(id_, []))
+                    else:
+                        desc_ = ""
+                    fout.write(f">{id_} {desc_}\n{rec.seq}\n")
 
 
-def handle_splice(hogmaps,isoform_not_selected):
+def filter_hogmaps_by_isoforms(hogmaps, non_selected_isoforms):
     hogmaps_selected_isof = {}
     for species, hogmap in hogmaps.items():
         hogmaps_selected_isof[species]={}
 
-        isoform_not_selected_sp = set(isoform_not_selected[species])
+        non_selected_isoforms_sp = set(non_selected_isoforms[species])
         for prot in hogmap:
-            if prot not in isoform_not_selected_sp:
+            if prot not in non_selected_isoforms_sp:
                 hogmaps_selected_isof[species][prot]=hogmap[prot]
 
     return hogmaps_selected_isof
-
-
-
-
-
-def find_outgroup_species(species_tree):
-    dic_outgroup_species = {}
-    outgroup_species = []
-
-    for node in species_tree.traverse():
-        if node.is_leaf() or node.is_root():
-            continue
-
-        parent_node = node.up
-        outgroup_leaves = []
-        if parent_node:
-            grandparent_node = parent_node.up
-            if grandparent_node:
-                # parent_node, grandparent_node,grandparent_node.children
-                great_grandparent_node = grandparent_node.up
-                if great_grandparent_node:
-                    if great_grandparent_node.children:
-                        very_distant_cousins = [i for i in great_grandparent_node.children if i != grandparent_node]
-                        for i in very_distant_cousins:
-                            outgroup_leaves += i.get_leaves()  # a list
-                if grandparent_node.children and len(outgroup_leaves) <= 5:
-                    distant_cousins = [i for i in grandparent_node.children if i != parent_node]
-                    for i in distant_cousins:
-                        outgroup_leaves += i.get_leaves()  # a list
-
-            if parent_node.children and len(outgroup_leaves) <= 5:
-                cousins = [i for i in parent_node.children if i != node]
-                for i in cousins:
-                    outgroup_leaves += i.get_leaves()  # a list
-
-        if outgroup_leaves:
-            outgroup_species = [i.name for i in outgroup_leaves][:5]
-
-        # print(node.name, outgroup_species)
-        dic_outgroup_species[node.name] = outgroup_species
-
-    return dic_outgroup_species
-
-
-def find_outgroup_prot(dic_outgroup_species, rhog_prot):
-    dic_prot_sp = {}
-    for sp, prot in rhog_prot:
-        if sp in dic_prot_sp:
-            dic_prot_sp[sp].append(prot)
-        else:
-            dic_prot_sp[sp] = [prot]
-
-    dic_outgroup_prot = {}
-    for tax, outgroup_species in dic_outgroup_species.items():
-        outgroup_prots = []
-        for sp in outgroup_species:
-            prot_list = dic_prot_sp[sp]
-            if len(prot_list) > 1:
-                outgroup_prots.append((sp, prot_list[0]))
-                outgroup_prots.append((sp, prot_list[1]))
-            else:
-                outgroup_prots.append((sp, prot_list[0]))
-
-        dic_outgroup_prot[tax] = outgroup_prots
-
-    return dic_outgroup_prot
-
-
-def write_outgroups(dic_outgroup_prot, rhogid, address_outgorup,prot_recs_all):
-    dic_rhog_recs = {}
-    for tax, outgroup_prot in dic_outgroup_prot.items():
-        rhog_recs = []
-        for (species_name, prot_name) in outgroup_prot:
-            prot_rec = prot_recs_all[species_name][prot_name]
-            rhog_recs.append(prot_rec)
-        dic_rhog_recs[tax] = rhog_recs
-
-    for tax, rhog_recs in dic_rhog_recs.items():
-        SeqIO.write(rhog_recs, address_outgorup + "/outgroup_" + str(rhogid) + "_" + tax + ".fa", "fasta")
-
-    return 1
-
-
-def write_outgroups_all(rhogs_prots,prot_recs_all):
-    from ete3 import Tree
-    sp_folder = "in_folder/"
-    address_outgorup = "./outgroup/"
-    if not os.path.exists(address_outgorup):
-        os.mkdir(address_outgorup)
-
-    print("start working on  outgroup generation for rhogs  "+str(len(rhogs_prots)))
-    for rhog, rhog_prot in rhogs_prots.items():
-        if len(rhog_prot) > 2:
-            # print(rhog)
-            species_tree = Tree(sp_folder + "species_tree.nwk", format=1)
-            list_species = list(set([i[0] for i in rhog_prot]))
-            species_tree.prune(list_species)
-            # species_tree.write(format=1)
-            # if len(species_tree)>2:
-            #    counter+=1
-            dic_outgroup_species = find_outgroup_species(species_tree)
-
-            dic_outgroup_prot = find_outgroup_prot(dic_outgroup_species, rhog_prot)
-
-            write_outgroups(dic_outgroup_prot, rhog, address_outgorup,prot_recs_all)
-    print("done writing")
-    return 1
-
 
 
 def cluster_rhogs_nx(cluster_rhogs_list, candidates_pair):
