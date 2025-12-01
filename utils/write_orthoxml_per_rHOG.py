@@ -50,10 +50,10 @@ for idx, pickle_file_adress in enumerate(pickle_files_adress):
 
     query_species_name_list = []
     for query_species_name, list_prots in gene_id_name.items():
-
-        for (gene_idx_integer, query_prot_name) in list_prots:
-            if gene_idx_integer in list_geneid:
+        for gene in list_prots:
+            if gene.numeric_id in list_geneid:
                 query_species_name_list.append(query_species_name)
+                break  # early abort as we found one protein for this species
 
     query_species_name_set = list(set(query_species_name_list))
 
@@ -67,11 +67,12 @@ for idx, pickle_file_adress in enumerate(pickle_files_adress):
             database_xml = ET.SubElement(species_xml, "database", attrib={"name": " database ", "version": "2020"})
             genes_xml = ET.SubElement(database_xml, "genes")
 
-            for (gene_idx_integer, query_prot_name) in list_prots:
-                if gene_idx_integer in list_geneid:  # +[1007003758]
-                    query_prot_name_pure = query_prot_name
-                    gene_xml = ET.SubElement(genes_xml, "gene",
-                                             attrib={"id": str(gene_idx_integer), "protId": query_prot_name_pure})
+            for gene in list_prots:
+                if gene.numeric_id in list_geneid:  # +[1007003758]
+                    attribs = {"id": str(gene.numeric_id), "protId": gene.prot_id}
+                    if gene.main_isoform is not None:
+                        attribs["main_isoform"] = str(gene.main_isoform)
+                    gene_xml = ET.SubElement(genes_xml, "gene", attrib=attribs)
 
     groups_xml = ET.SubElement(orthoxml_file, "groups")
 

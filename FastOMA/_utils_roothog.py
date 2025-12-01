@@ -20,7 +20,8 @@ filter_nonchild_rootHOG= False
 mmseqs_executable_path ="mmseqs"
 
 HOGMapData = collections.namedtuple("HOGMapData", ("hogid", "score", "seqlen", "subfamily_medianseqlen"))
-
+Gene = collections.namedtuple("Gene", ("numeric_id", "prot_id", "main_isoform"), defaults=(None,) )
+    
 
 """UnionFind.py
 
@@ -231,24 +232,21 @@ def handle_splice_variants(species_names, hogmaps, splice_folder):
     }
 
 
-def add_species_name_prot_id( prot_recs_lists):
+def add_species_name_prot_id(prot_recs_lists):
     """
     adding the name of species to each protein record
         - based on file name
     adding protein idx number, integer needed by xml format
     output:  prot_recs_all =  {'MYCGE': {'sp|P47500|RF1_MYCGE||MYCGE||1000000001': SeqRecord(seq=
     """
-    prot_idx_name_pickle_file = "./gene_id_dic_xml.pickle"
     start_num_prot = int(1e9)
     start_num_prot_per_sp = int(1e6) #
     prot_recs_all = {} # {'MYCGE': {'sp|P47500|RF1_MYCGE||MYCGE||1000000001': SeqRecord(seq=
-    prot_idx_name = {} # {'MYCGE': [(1000000001, 'sp|P47500|RF1_MYCGE'),(1000000002, 'sp|P13927|EFTU_MYCGE'),
     species_idx = -1
     for species_name, prot_recs_list in prot_recs_lists.items():
         species_idx += 1
         prot_idx = start_num_prot + species_idx * start_num_prot_per_sp
         prot_recs_all[species_name]={}
-        prot_idx_name[species_name] = []
         for prot_rec in prot_recs_list:
             prot_idx+=1
             prot_name= prot_rec.id
@@ -257,16 +255,9 @@ def add_species_name_prot_id( prot_recs_lists):
                 logger.info("We are truncating the prot name as it may be problematic for mafft, " + str(prot_name))
                 prot_name = prot_name[:230]
 
-            # todo, this could be a dic
-            prot_idx_name[species_name].append((prot_idx, prot_name))
-
             prot_name_new = prot_name+ "||"+species_name+"||"+str(prot_idx) # orthoxml file needs an integer as
             prot_rec.id = prot_name_new
             prot_recs_all[species_name][prot_name] = prot_rec
-
-    with open(prot_idx_name_pickle_file, 'wb') as handle:
-        pickle.dump(prot_idx_name, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
     return prot_recs_all
 
 
@@ -400,6 +391,36 @@ def resolve_singletons(rhogs_prots, hogmaps, conf):
             counter_rhog_singleton += 1
     logger.info(f"Now, we have {counter_not_singleton} rootHOGs with >1 proteins and {counter_rhog_singleton} singleton rootHOGs")
     return rhogs_prots
+
+def save_gene_id_mapping(prot_recs_all, isoform_data=None, out_path="gene_id_dic_xml.pickle"):
+    """Save comprehensive gene ID mapping including isoform information"""
+    
+    gene_mapping = {}
+    for species_name, prot_dict in prot_recs_all.items():
+        species_data = []
+
+        isoform_to_main = {}
+        if isoform_data and species_name in isoform_data['selected_isoforms']:
+            isoform_to_main = {gene: main for main, genes in zip(
+                    isoform_data['selected_isoforms'][species_name], isoform_data['isoform_by_gene'][species_name]
+                ) for gene in genes}
+        
+        id2numeric = {}
+        for prot_name, prot_rec in prot_dict.items():
+            parts = prot_rec.id.split('||')
+            original_id = parts[0]
+            numeric_id = int(parts[2])
+            id2numeric[original_id] = numeric_id
+        
+        species_data = [Gene(num, orig_id, id2numeric.get(isoform_to_main.get(orig_id))) for orig_id, num in id2numeric.items()]
+        gene_mapping[species_name] = species_data
+    
+    # Save to pickle file
+    with open(out_path, 'wb') as handle:
+        pickle.dump(gene_mapping, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
+    logger.info(f"Saved comprehensive gene ID mapping to {out_path}")
+    return gene_mapping
 
 
 def filter_big_roothogs(hogmaps, rhogs_prots, conf_infer_roothogs):

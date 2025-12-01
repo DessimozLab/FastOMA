@@ -70,8 +70,8 @@ def fastoma_infer_roothogs():
 
 
     # Step 4: Save results
-    # logger.info("Saving results...")
-    # _utils_roothog.save_gene_id_mapping(prot_recs_all, isoform_data)
+    logger.info("Saving results...")
+    _utils_roothog.save_gene_id_mapping(prot_recs_all, isoform_data)
     # _utils_roothog.write_root_hogs(rhogs_prots, prot_recs_all, conf.out_rhog_folder)
     
     logger.info(f"Successfully created {len(rhogs_prots)} root HOGs")
