@@ -211,11 +211,17 @@ yourself, this can be achieved as described in [](#manual-installation-for-devel
 
 ### Slurm (with singularity/conda)
 On a HPC system you typically run processes using a scheduler system such as slurm or LSF. We provide 
-profiles `-profile slurm`, `-profile slurm_singularity` and `-profile slurm_conda` to run FastOMA with 
-the respective engine using [slurm](https://slurm.schedmd.com/overview.html) as a scheduler system. 
-If you need a different scheduler, it is quite straight forward to 
-set it up in `nextflow.config` based on the existing profiles and the documentation of 
-[nextflow executors](https://www.nextflow.io/docs/latest/executor.html).
+a basic profile for slurm `-profile slurm` to run FastOMA with [slurm](https://slurm.schedmd.com/overview.html) as a scheduler system.
+Note that multiple profiles can be combined, e.g. `-profile slurm,singularity`, or `-profile slurm,conda`.
+
+For many HPC systems, there exists already a nf-core profile, which can be directly used with FastOMA. Check the 
+available profiles interactively [here](https://nf-co.re/configs/) or on [github](https://github.com/nf-core/configs/tree/master/conf).
+If you found one for your HPC, you can use it directly with `-profile <profile_name>`, e.g. `-profile ethz_euler`
+
+If none of those profiles fit directly your needs, you can create your own profile file somewhere on your system and 
+specify it with the `-c <path_to_profile_file>` argument. The nf-core profiles should give you a 
+good overview of what is possible, together with the 
+[nextflow documentation on executors](https://www.nextflow.io/docs/latest/executor.html).
 
 
 # How to run FastOMA on the test data
@@ -407,19 +413,21 @@ Let's save the planet together with
 
 
 ### Run on a cluster 
-For running on a SLURM cluster you can add `-c ../nextflow_slurm.config`  to the commond line.
+For running on a SLURM cluster, you can add the slurm profile argument:  `-profile slurm`  to the command line.
 
 ```
 # cd FastOMA/testdata
 # rm -r out_folder work          # You may remove stuff from previous run
 # ls ../FastOMA.nf 
 
-nextflow ../FastOMA.nf  -c ../nextflow_slurm.config   --input_folder in_folder   --output_folder out_folder
+nextflow ../FastOMA.nf -profile slurm \
+   --input_folder in_folder \
+   --output_folder out_folder
 ```
 
 You may need to re-run nextflow command line by adding `-resume`, if the allocated time is not enough for your dataset.
 
-You may need to increase the number of opoened files in your system with `ulimit -n 131072` or higher as nextflow generates hundreds of files depending on the size of your input dataset.
+You may need to increase the limit of number of opened file handles in your system with `ulimit -n 131072` or higher as nextflow generates hundreds of files depending on the size of your input dataset.
 
 
 ## Handle splice files
@@ -459,6 +467,11 @@ Citation:  Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick 
 
 
 ## Change log
+- Update  v0.5dev (not released yet):
+  - better configuration setup (close to nf-core)
+  - improved resource allocation for nextflow
+  - improved handling of alternative splicing variants in reporting
+  - adding test profile and nf-test based CI checks
 - Update  v0.4.0:
   - Improvements for nextflow: alternative version selection, README updates
   - Split HOG and sampling improvements
