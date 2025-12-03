@@ -159,29 +159,57 @@ Parameters:
 """.stripIndent()
 */
 
-
 process fetchTestData {
-    // Cache in testdata folder so repeated runs don't redownload
-    storeDir "${params.input_folder}"
+    // Cache in a dedicated cache directory, not input_folder
+    storeDir "${params.test_data_cache ?: "${launchDir}/.test-datasets"}"
+    tag "fetch data from ${url}"
 
     input:
-      val url
+    val url
 
     output:
-      path 'in_folder', emit: testDataDir
+    path "${dataset_name}", emit: testDataDir
 
     script:
-      """
-      rm -rf infolder || true
-      mkdir -p in_folder
-      echo "Downloading test dataset from ${url}"
-      wget -O test_data.tar.gz '${url}'
-
-      echo "Extracting..."
-      tar -xzf test_data.tar.gz -C in_folder
-      
-      ls in_folder
-      """
+    dataset_name=url.tokenize('/').last().replaceAll(/\.(tar\.gz|tgz|zip)\?.*$/, '')
+    """
+    echo "Downloading test dataset from ${url}"
+    
+    # Create output directory
+    mkdir -p ${dataset_name}
+    
+    # Download with better error handling
+    if ! wget --no-check-certificate -O test_data.tar.gz '${url}'; then
+        echo "Failed to download from ${url}"
+        exit 1
+    fi
+    
+    # Verify download
+    if [ ! -f test_data.tar.gz ] || [ ! -s test_data.tar.gz ]; then
+        echo "Download failed or file is empty"
+        exit 1
+    fi
+    
+    echo "Extracting test data..."
+    
+    # Extract with error checking
+    if ! tar -tf test_data.tar.gz >/dev/null 2>&1; then
+        echo "Downloaded file is not a valid tar.gz archive"
+        exit 1
+    fi
+    
+    # Extract to test_data directory
+    tar -xzf test_data.tar.gz -C ${dataset_name}
+    
+    # Verify extraction
+    if [ ! -d "${dataset_name}" ] || [ -z "\$(ls -A ${dataset_name} 2>/dev/null)" ]; then
+        echo "Extraction failed or directory is empty"
+        exit 1
+    fi
+    
+    echo "Successfully extracted test data:"
+    ls -la ${dataset_name}/
+    """
 }
 
 
@@ -459,24 +487,29 @@ workflow {
     // Print parameter summary
     log.info paramsSummaryLog(workflow)
 
-    def testDataDir = null
+    // Handle data source
     if (params.test_data_url) {
-        // Use test dataset from remote url
-	testDataDir = fetchTestData(params.test_data_url).first()
-        log.info "Using fetched test dataset at: ${testDataDir}"
+        // Fetch test dataset from remote URL
+        log.info "Fetching test dataset from: ${params.test_data_url}"
+        input_folder_path = fetchTestData(params.test_data_url)
+    } else {
+        input_folder_path = Channel.value(params.input_folder)
     }
-    proteome_folder = testDataDir ? testDataDir.resolve('proteome') : 
-                         Channel.fromPath(params.proteome_folder, type: "dir", checkIfExists:true).first()
-    proteomes = Channel.fromPath((testDataDir ? testDataDir.resolve('proteome').toString() : params.proteome_folder) + "/*", type: "any", checkIfExists:true)
-    species_tree = testDataDir ? testDataDir.resolve('species_tree.nwk').first() : Channel.fromPath(params.species_tree, type: "file", checkIfExists:true).first()
 
-    splice_folder = testDataDir ? testDataDir.resolve('splice') : Channel.fromPath(params.splice_folder, type: "dir")
-    hogmap_in = testDataDir ? testDataDir.resolve('hogmap_in')  : Channel.fromPath(params.hogmap_in, type:'dir')
+    // Set up all channels based on the single input folder
+    proteome_folder = input_folder_path.map { "${it}/proteome" }
+    proteomes = input_folder_path.flatMap { dir -> 
+        Channel.fromPath("${dir}/proteome/*.{fa,fasta,faa}", checkIfExists: true) 
+    }
+    species_tree = input_folder_path.map { "${it}/species_tree.nwk" }
+    splice_folder = input_folder_path.map { "${it}/splice" }
+    hogmap_in = input_folder_path.map { "${it}/hogmap_in" }
 
+    // Static channels
     omamerdb = Channel.fromPath(params.omamer_db)
     notebook = Channel.fromPath("$workflow.projectDir/FastOMA/fastoma_notebook_stat.ipynb", type: "file", checkIfExists: true).first()
 
-
+    // Run the pipeline
     (species_tree_checked, ready_input_check) = check_input(proteome_folder, hogmap_in, species_tree, omamerdb, splice_folder)
     omamer_input_channel = proteomes.combine(omamerdb).combine(hogmap_in).combine(ready_input_check)
     hogmap = omamer_run(omamer_input_channel)
