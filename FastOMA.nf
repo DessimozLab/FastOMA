@@ -159,6 +159,32 @@ Parameters:
 """.stripIndent()
 */
 
+
+process fetchTestData {
+    // Cache in testdata folder so repeated runs don't redownload
+    storeDir "${params.input_folder}"
+
+    input:
+      val url
+
+    output:
+      path 'in_folder', emit: testDataDir
+
+    script:
+      """
+      rm -rf infolder || true
+      mkdir -p in_folder
+      echo "Downloading test dataset from ${url}"
+      wget -O test_data.tar.gz '${url}'
+
+      echo "Extracting..."
+      tar -xzf test_data.tar.gz -C in_folder
+      
+      ls in_folder
+      """
+}
+
+
 process check_input{
   label "process_single"
   publishDir params.output_folder, mode: 'copy'
@@ -433,17 +459,24 @@ workflow {
     // Print parameter summary
     log.info paramsSummaryLog(workflow)
 
-    
+    def testDataDir = null
+    if (params.test_data_url) {
+        // Use test dataset from remote url
+	testDataDir = fetchTestData(params.test_data_url).first()
+        log.info "Using fetched test dataset at: ${testDataDir}"
+    }
+    proteome_folder = testDataDir ? testDataDir.resolve('proteome') : 
+                         Channel.fromPath(params.proteome_folder, type: "dir", checkIfExists:true).first()
+    proteomes = Channel.fromPath((testDataDir ? testDataDir.resolve('proteome').toString() : params.proteome_folder) + "/*", type: "any", checkIfExists:true)
+    species_tree = testDataDir ? testDataDir.resolve('species_tree.nwk').first() : Channel.fromPath(params.species_tree, type: "file", checkIfExists:true).first()
 
-    proteome_folder = Channel.fromPath(params.proteome_folder, type: "dir", checkIfExists:true).first()
-    proteomes = Channel.fromPath(params.proteome_folder + "/*", type:'any', checkIfExists:true)
-    species_tree = Channel.fromPath(params.species_tree, type: "file", checkIfExists:true).first()
-
-    splice_folder = Channel.fromPath(params.splice_folder, type: "dir")
-    hogmap_in = Channel.fromPath(params.hogmap_in, type:'dir')
+    splice_folder = testDataDir ? testDataDir.resolve('splice') : Channel.fromPath(params.splice_folder, type: "dir")
+    hogmap_in = testDataDir ? testDataDir.resolve('hogmap_in')  : Channel.fromPath(params.hogmap_in, type:'dir')
 
     omamerdb = Channel.fromPath(params.omamer_db)
     notebook = Channel.fromPath("$workflow.projectDir/FastOMA/fastoma_notebook_stat.ipynb", type: "file", checkIfExists: true).first()
+
+
     (species_tree_checked, ready_input_check) = check_input(proteome_folder, hogmap_in, species_tree, omamerdb, splice_folder)
     omamer_input_channel = proteomes.combine(omamerdb).combine(hogmap_in).combine(ready_input_check)
     hogmap = omamer_run(omamer_input_channel)
