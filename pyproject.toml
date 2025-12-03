@@ -18,7 +18,7 @@ dependencies = [
     "DendroPy >=4.5,<=4.6.1",
     "ete3 ~=3.1",
     "lxml >=4.6,<6",
-    "omamer ~=2.0",
+    "omamer ~=2.0, !=2.1.1",
     "pyham ~=1.1",
     "numpy",
     "pyparsing",
