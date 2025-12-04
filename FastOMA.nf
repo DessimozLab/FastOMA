@@ -173,42 +173,32 @@ process fetchTestData {
     script:
     dataset_name=url.tokenize('/').last().replaceAll(/\.(tar\.gz|tgz|zip)\?.*$/, '')
     """
-    echo "Downloading test dataset from ${url}"
-    
-    # Create output directory
-    mkdir -p ${dataset_name}
-    
-    # Download with better error handling
-    if ! wget --no-check-certificate -O test_data.tar.gz '${url}'; then
-        echo "Failed to download from ${url}"
-        exit 1
-    fi
-    
-    # Verify download
-    if [ ! -f test_data.tar.gz ] || [ ! -s test_data.tar.gz ]; then
-        echo "Download failed or file is empty"
-        exit 1
-    fi
-    
-    echo "Extracting test data..."
-    
-    # Extract with error checking
-    if ! tar -tf test_data.tar.gz >/dev/null 2>&1; then
-        echo "Downloaded file is not a valid tar.gz archive"
-        exit 1
-    fi
-    
-    # Extract to test_data directory
-    tar -xzf test_data.tar.gz -C ${dataset_name}
-    
-    # Verify extraction
-    if [ ! -d "${dataset_name}" ] || [ -z "\$(ls -A ${dataset_name} 2>/dev/null)" ]; then
-        echo "Extraction failed or directory is empty"
-        exit 1
-    fi
-    
-    echo "Successfully extracted test data:"
-    ls -la ${dataset_name}/
+    python3 - <<'EOF'
+import os
+import requests
+import tarfile
+
+url = "${url}"
+outfile = "dataset.tar.gz"
+outdir = "${dataset_name}"
+
+os.makedirs(outdir, exist_ok=True)
+
+# Download dataset
+print("Downloading dataset from:", url)
+with requests.get(url, stream=True) as r:
+    r.raise_for_status()
+    with open(outfile, "wb") as f:
+        for chunk in r.iter_content(chunk_size=8192):
+            f.write(chunk)
+
+# Extract tar.gz
+print("Extracting dataset to:", outdir)
+with tarfile.open(outfile, "r:gz") as tar:
+    tar.extractall(outdir)
+
+print("Download and extraction completed.")
+EOF
     """
 }
 
@@ -498,8 +488,10 @@ workflow {
 
     // Set up all channels based on the single input folder
     proteome_folder = input_folder_path.map { "${it}/proteome" }
-    proteomes = input_folder_path.flatMap { dir -> 
-        Channel.fromPath("${dir}/proteome/*.{fa,fasta,faa}", checkIfExists: true) 
+    proteomes = input_folder_path.flatMap{ dir ->
+        file("${dir}/proteome").listFiles().findAll {
+            it.name.endsWith('.fa') || it.name.endsWith('.fasta')
+        }
     }
     species_tree = input_folder_path.map { "${it}/species_tree.nwk" }
     splice_folder = input_folder_path.map { "${it}/splice" }
@@ -511,7 +503,10 @@ workflow {
 
     // Run the pipeline
     (species_tree_checked, ready_input_check) = check_input(proteome_folder, hogmap_in, species_tree, omamerdb, splice_folder)
-    omamer_input_channel = proteomes.combine(omamerdb).combine(hogmap_in).combine(ready_input_check)
+    omamer_input_channel = proteomes
+        .combine(omamerdb)
+        .combine(hogmap_in)
+        .combine(ready_input_check)
     hogmap = omamer_run(omamer_input_channel)
     nr_species = hogmap.count()
 
