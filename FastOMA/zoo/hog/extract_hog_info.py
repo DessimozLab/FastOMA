@@ -42,7 +42,11 @@ class SpeciesAnalyser:
         single = collections.defaultdict(int)
         for g in self.genes.values():
             single[g.species] += 1 if g.is_main_isoform else 0
-        return [{'species': g, 'genes': self.nr_genes_per_species[g], 'not_in_group': single[g]}
+        return [{'species': g, 
+                 'genes': self.nr_genes_per_species[g], 
+                 'not_in_group': single[g], 
+                 'proteins': self.nr_proteins_per_species[g], 
+                 'minor_splice': self.nr_proteins_per_species[g] - self.nr_genes_per_species[g]}
                 for g in self.nr_genes_per_species]
 
 
