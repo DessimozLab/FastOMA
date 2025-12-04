@@ -160,7 +160,7 @@ Parameters:
 */
 
 process fetchTestData {
-    // Cache in a dedicated cache directory, not input_folder
+    // Cache in a dedicated cache directory
     storeDir "${params.test_data_cache ?: "${launchDir}/.test-datasets"}"
     tag "fetch data from ${url}"
 
@@ -482,20 +482,25 @@ workflow {
         // Fetch test dataset from remote URL
         log.info "Fetching test dataset from: ${params.test_data_url}"
         input_folder_path = fetchTestData(params.test_data_url)
-    } else {
-        input_folder_path = Channel.value(params.input_folder)
-    }
 
-    // Set up all channels based on the single input folder
-    proteome_folder = input_folder_path.map { "${it}/proteome" }
-    proteomes = input_folder_path.flatMap{ dir ->
-        file("${dir}/proteome").listFiles().findAll {
-            it.name.endsWith('.fa') || it.name.endsWith('.fasta')
+        // Set up all channels based on the downloaded folder structure
+        proteome_folder = input_folder_path.map { "${it}/proteome" }
+        proteomes = input_folder_path.flatMap { dir ->
+            file("${dir}/proteome").listFiles().findAll {
+                it.name.endsWith('.fa') || it.name.endsWith('.fasta') || it.name.endsWith('.faa')
+            }
         }
+        species_tree = input_folder_path.map { "${it}/species_tree.nwk" }
+        splice_folder = input_folder_path.map { "${it}/splice" }
+        hogmap_in = input_folder_path.map { "${it}/hogmap_in" }
+    } else {
+        // Local/custom dataset - allow parameter overrides
+        proteome_folder = Channel.value(params.proteome_folder)
+        proteomes = Channel.fromPath("${params.proteome_folder}/*.{fa,fasta}", checkIfExists: true)
+        species_tree = Channel.value(params.species_tree)
+        splice_folder = Channel.value(params.splice_folder)
+        hogmap_in = Channel.value(params.hogmap_in)
     }
-    species_tree = input_folder_path.map { "${it}/species_tree.nwk" }
-    splice_folder = input_folder_path.map { "${it}/splice" }
-    hogmap_in = input_folder_path.map { "${it}/hogmap_in" }
 
     // Static channels
     omamerdb = Channel.fromPath(params.omamer_db)
