@@ -9,19 +9,24 @@
       "title": "Input options",
       "type": "object",
       "description": "Define where the pipeline should find input data ",
-      "required": ["input_folder", "species_tree"],
+      "required": ["input", "species_tree"],
       "properties": {
-        "input_folder": {
+        "input": {
           "type": "string",
-          "format": "directory-path",
-          "description": "Path to input directory containing proteomes and species tree",
-          "fa_icon": "fas fa-folder-open"
+          "description": "Input data source: local directory, archive file, or remote URL",
+          "help": "Can be: (1) Path to a local directory containing proteome/ subfolder and species_tree.nwk file, (2) Path to a local archive file (.tar.gz, .tgz, .zip), or (3) HTTP/HTTPS URL to download an archive. Archives will be automatically extracted and cached.",
+          "fa_icon": "fas fa-folder-open",
+          "examples": [
+            "/path/to/dataset/",
+            "/path/to/dataset.tar.gz",
+            "https://zenodo.org/records/12345/files/dataset.tar.gz"
+          ]
         },
         "proteome_folder": {
           "type": "string",
           "format": "directory-path",
           "description": "Path to input directory containing the proteome files in fasta format",
-          "help": "If not provided, the proteomes are asumed to be in the input_folder/proteomes directory.",
+          "help": "Override the default proteome folder location. Only used when input is a local directory. If not specified, defaults to input/proteome/.",
           "fa_icon": "fas fa-folder-open"
         },
         "hogmap_in": {
@@ -34,17 +39,17 @@
         "species_tree": {
           "type": "string",
           "format": "file-path",
-          "description": "Path to species tree file",
+          "description": "Path to species tree file in Newick format",
           "fa_icon": "fas fa-tree",
           "pattern": "^\\S+\\.(nhx|nh|nwk)",
-          "help": "The species tree should be in Newick or NHX format. By default, the pipeline looks for a file named species_tree.nwk in the input_folder."
+          "help": "Override the default species tree location. Only used when input is a local directory. If not specified, defaults to input/species_tree.nwk."
         },
         "splice_folder": {
           "type": "string",
           "format": "directory-path",
           "description": "Path to input directory containing the splice files",
           "fa_icon": "fas fa-folder-open",
-          "help": "If provided, FastOMA will use the splice files to identify and handle alternative splicing isoforms in the proteomes and select the best representative isoform for each gene."
+          "help": "If provided, FastOMA will use splice variant information to select representative isoforms for each gene. Only used when input is a local directory."
         },
         "omamer_db": {
           "type": "string",
@@ -53,6 +58,19 @@
           "fa_icon": "fas fa-database",
           "help": "If not provided, the default OMAmer database (LUCA) will be used.",
           "default": "https://omabrowser.org/All/LUCA.h5"
+        },
+        "test_data_cache": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path where (remote) input archives will be stored and permanently cached",
+          "fa_ison": "fas fa-folder-open"
+        },
+        "input_folder": {
+          "type": "string",
+          "hidden": true,
+          "format": "directory-path",
+          "description": "DEPRECATED: Use --input instead",
+          "help_text": "This parameter has been renamed to --input. Please update your command line or configuration files."
         }
       }
     },
