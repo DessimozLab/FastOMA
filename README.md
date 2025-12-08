@@ -468,6 +468,7 @@ Citation:  Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick 
 
 ## Change log
 - Update  v0.5dev (not released yet):
+  - renamed input_folder parameter to input. input accepts now also (remote) archive tarball files.
   - better configuration setup (close to nf-core)
   - improved resource allocation for nextflow
   - improved handling of alternative splicing variants in reporting
