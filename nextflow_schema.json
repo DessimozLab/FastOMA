@@ -13,7 +13,6 @@
       "properties": {
         "input_folder": {
           "type": "string",
-          "format": "directory-path",
           "description": "Path to input directory containing proteomes and species tree",
           "fa_icon": "fas fa-folder-open"
         },
@@ -53,6 +52,13 @@
           "fa_icon": "fas fa-database",
           "help": "If not provided, the default OMAmer database (LUCA) will be used.",
           "default": "https://omabrowser.org/All/LUCA.h5"
+        },
+        "test_data_cache": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path where (remote) input archives will be stored and permanently cached",
+          "fa_ison": "fas fa-folder-open",
+          "default": "./.test-datasets"
         }
       }
     },
