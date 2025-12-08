@@ -18,7 +18,7 @@
           "fa_icon": "fas fa-folder-open",
           "examples": [
             "/path/to/dataset/",
-            "/path/to/dataset.tar.gz", 
+            "/path/to/dataset.tar.gz",
             "https://zenodo.org/records/12345/files/dataset.tar.gz"
           ]
         },
@@ -63,8 +63,14 @@
           "type": "string",
           "format": "directory-path",
           "description": "Path where (remote) input archives will be stored and permanently cached",
-          "fa_ison": "fas fa-folder-open",
-          "default": "./.test-datasets"
+          "fa_ison": "fas fa-folder-open"
+        },
+        "input_folder": {
+          "type": "string",
+          "hidden": true,
+          "format": "directory-path",
+          "description": "DEPRECATED: Use --input instead",
+          "help_text": "This parameter has been renamed to --input. Please update your command line or configuration files."
         }
       }
     },

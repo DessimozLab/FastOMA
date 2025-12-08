@@ -365,7 +365,32 @@ def detectInputType(input) {
     }
 }
 
+// handle deprecated parameters
+def handleDeprecatedParameters() {
+    if (params.input_folder && !params.input) {
+        log.warn ""
+        log.warn "╔══════════════════════════════════════════════════════════════╗"
+        log.warn "║                    DEPRECATION WARNING                       ║"
+        log.warn "║                                                              ║"
+        log.warn "║  --input_folder is deprecated and has been removed.          ║"
+        log.warn "║  Please use --input instead of --input_folder                ║"
+        log.warn "║                                                              ║"
+        log.warn "╚══════════════════════════════════════════════════════════════╝"
+        log.warn ""
+        exit 1
+        
+    } else if (params.input_folder && params.input) {
+        log.error ""
+        log.error "ERROR: Both --input_folder (deprecated) and --input specified."
+        log.error "Please use only --input parameter."
+        log.error ""
+        exit 1
+    }
+}
+
 workflow {
+    handleDeprecatedParameters()
+
     // Print help message if requested
     if (params.help) {
         log.info paramsHelp("nextflow run FastOMA.nf")
@@ -380,9 +405,7 @@ workflow {
 
     // Detect input type 
     def inputType = detectInputType(params.input)
-    log.info "Detected input type '${inputType}' for: ${params.input}"       
     if (inputType == "directory") {
-        log.info "Using local input folder: ${params.input}"
         // Local/custom dataset - allow parameter overrides
         proteome_folder = Channel.value(params.proteome_folder)
         proteomes = Channel.fromPath("${params.proteome_folder}/*.{fa,fasta}", checkIfExists: true)
@@ -393,11 +416,8 @@ workflow {
         // Input is either a URL or an archive file - fetch and extract
         // Fetch test dataset from remote URL
         if (inputType == "url") {
-            log.info "Fetching test dataset from URL: ${params.input}"
             input_path = fetchRemoteData(Channel.value(params.input))
         } else if (inputType == "archive") {
-            log.info "Extracting test dataset from local archive: ${params.input}"
-
             input_path = extractLocalArchive(Channel.fromPath(params.input))
         }
         
