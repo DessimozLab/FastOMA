@@ -3,11 +3,11 @@ include { validateParameters; paramsHelp; paramsSummaryLog } from 'plugin/nf-sch
 
 
 //Set dynamic defaults for input/output paths before validation
-params.input_folder    = params.input_folder ?: "${projectDir}/testdata/in_folder"
-params.proteome_folder = params.proteome_folder ?: "${params.input_folder}/proteome"
-params.hogmap_in       = params.hogmap_in ?: "${params.input_folder}/hogmap_in"
-params.splice_folder   = params.splice_folder ?: "${params.input_folder}/splice"
-params.species_tree    = params.species_tree ?: "${params.input_folder}/species_tree.nwk"
+params.input           = params.input ?: "${projectDir}/testdata/in_folder"
+params.proteome_folder = params.proteome_folder ?: "${params.input}/proteome"
+params.hogmap_in       = params.hogmap_in ?: "${params.input}/hogmap_in"
+params.splice_folder   = params.splice_folder ?: "${params.input}/splice"
+params.species_tree    = params.species_tree ?: "${params.input}/species_tree.nwk"
 
 // Utility process to fetch remote datasets
 process fetchRemoteData {
@@ -379,10 +379,10 @@ workflow {
     log.info paramsSummaryLog(workflow)
 
     // Detect input type 
-    def inputType = detectInputType(params.input_folder)
-    log.info "Detected input type '${inputType}' for: ${params.input_folder}"       
+    def inputType = detectInputType(params.input)
+    log.info "Detected input type '${inputType}' for: ${params.input}"       
     if (inputType == "directory") {
-        log.info "Using local input folder: ${params.input_folder}"
+        log.info "Using local input folder: ${params.input}"
         // Local/custom dataset - allow parameter overrides
         proteome_folder = Channel.value(params.proteome_folder)
         proteomes = Channel.fromPath("${params.proteome_folder}/*.{fa,fasta}", checkIfExists: true)
@@ -393,24 +393,24 @@ workflow {
         // Input is either a URL or an archive file - fetch and extract
         // Fetch test dataset from remote URL
         if (inputType == "url") {
-            log.info "Fetching test dataset from URL: ${params.input_folder}"
-            input_folder_path = fetchRemoteData(Channel.value(params.input_folder))
+            log.info "Fetching test dataset from URL: ${params.input}"
+            input_path = fetchRemoteData(Channel.value(params.input))
         } else if (inputType == "archive") {
-            log.info "Extracting test dataset from local archive: ${params.input_folder}"
+            log.info "Extracting test dataset from local archive: ${params.input}"
 
-            input_folder_path = extractLocalArchive(Channel.fromPath(params.input_folder))
+            input_path = extractLocalArchive(Channel.fromPath(params.input))
         }
         
         // Set up all channels based on the downloaded folder structure
-        proteome_folder = input_folder_path.map { "${it}/proteome" }
-        proteomes = input_folder_path.flatMap { dir ->
+        proteome_folder = input_path.map { "${it}/proteome" }
+        proteomes = input_path.flatMap { dir ->
             file("${dir}/proteome").listFiles().findAll {
                 it.name.endsWith('.fa') || it.name.endsWith('.fasta') || it.name.endsWith('.faa')
             }
         }
-        species_tree = input_folder_path.map { "${it}/species_tree.nwk" }
-        splice_folder = input_folder_path.map { "${it}/splice" }
-        hogmap_in = input_folder_path.map { "${it}/hogmap_in" }
+        species_tree = input_path.map { "${it}/species_tree.nwk" }
+        splice_folder = input_path.map { "${it}/splice" }
+        hogmap_in = input_path.map { "${it}/hogmap_in" }
     } 
 
     // Static channels

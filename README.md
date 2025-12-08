@@ -58,7 +58,7 @@ any installation steps given the system supports running either docker container
 installed.
 
 ```bash
-nextflow run dessimozlab/FastOMA -profile docker  --input_folder /path/to/in_folder --output_folder /path/to/out_folder 
+nextflow run dessimozlab/FastOMA -profile docker  --input /path/to/in_folder --output_folder /path/to/out_folder 
 ```
 You could also add specific version to be used by adding `-r v0.4.0` to the command line. Without any `-r` argument, 
 always the latest available release will be used. With `-r dev` the latest development release can be used.
@@ -85,7 +85,7 @@ git checkout version, you can specify this in the following way:
 ```bash
 nextflow run FastOMA.nf -profile docker \
     --container_version "sha-$(git rev-list --max-count=1 --abbrev-commit HEAD)" \
-    --input_folder testdata/in_folder \
+    --input testdata/in_folder \
     --output_folder myresult/
 ```
 
@@ -126,7 +126,7 @@ nextflow run FastOMA.nf -profile docker --container_version "sha-$(git rev-list 
 
 - run pipeline including with some testdata (For more details, see the section [How to run FastOMA on the test data](https://github.com/DessimozLab/fastoma?tab=readme-ov-file#how-to-run-fastoma-on-the-test-data) )
   ```bash
-  nextflow run FastOMA.nf -profile standard --input_folder testdata/in_folder --output_folder output -with-report
+  nextflow run FastOMA.nf -profile standard --input testdata/in_folder --output_folder output -with-report
   ```
 
 
@@ -172,7 +172,7 @@ mamba activate FastOMA
 Afterwards, you can run the workflow using nextflow (which is installed as part of the conda environment)
 
 ```
-nextflow run FastOMA.nf -profile standard|slurm --input_folder /path/to/input_folder --output_folder /path/to/output
+nextflow run FastOMA.nf -profile standard|slurm --input /path/to/input --output_folder /path/to/output
 ```
 Note that you should use either the profile `standard` or `slurm` such the nextflow executor will use the activated environment.
 
@@ -191,7 +191,7 @@ One can select the desired container via the `--container_version` argument
 ```
 nextflow run FastOMA.nf -profile docker \
     --container_version "sha-$(git rev-list --max-count=1 --abbrev-commit HEAD)" \
-    --input_folder testdata/in_folder \
+    --input testdata/in_folder \
     --output_folder myresult/
 ```
 This will use the container that is tagged with the current commit id. Similarly, one could also use 
@@ -251,7 +251,7 @@ Finally, run the package using nextflow as below:
 ```
 # cd FastOMA/testdata
 nextflow run ../FastOMA.nf  \
-         --input_folder in_folder  \
+         --input in_folder  \
          --omamer_db in_folder/omamerdb.h5 \
          --output_folder out_folder \
          --report \
@@ -421,7 +421,7 @@ For running on a SLURM cluster, you can add the slurm profile argument:  `-profi
 # ls ../FastOMA.nf 
 
 nextflow ../FastOMA.nf -profile slurm \
-   --input_folder in_folder \
+   --input in_folder \
    --output_folder out_folder
 ```
 
