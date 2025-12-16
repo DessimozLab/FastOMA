@@ -69,7 +69,7 @@ jobs:
         id: set_platforms
         run: |
           echo "github ref: ${GITHUB_REF}"
-          if [[ "${GITHUB_REF##*/}" == "main" || "${GITHUB_REF##*/}" == "dev" ]]; then
+          if [[ "${GITHUB_REF##*/}" == "main" || "${GITHUB_REF##*/}" == "dev" || "${GITHUB_REF}" == "refs/tags/"* ]]; then
             echo "platforms=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
           else
             echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
