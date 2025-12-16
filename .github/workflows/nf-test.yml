@@ -143,7 +143,7 @@ jobs:
 
       - name: Upload test results
         if: always()  # run even if tests fail
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: nf-test-results-${{ matrix.filter }}-${{ matrix.profile }}-${{ matrix.NXF_VER }}-${{ matrix.shard }}
           path: |
