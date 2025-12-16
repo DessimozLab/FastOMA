@@ -38,25 +38,44 @@ def fastoma_infer_roothogs():
     setup_logging(conf.v)
     logger.debug("Arguments: %s", conf)
 
-    species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes(conf.proteomes, conf.min_sequence_length)  # optional input folder
+    # Step 1: Parse input data
+    logger.info("Parsing proteomes...")
+    species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes(
+        conf.proteomes, conf.min_sequence_length
+    )
+    logger.info("Processing protein records...")
     prot_recs_all = _utils_roothog.add_species_name_prot_id(prot_recs_lists)
 
-    hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(prot_recs_lists, fasta_format_keep, folder=conf.hogmap)  # optional input folder
+    logger.info("Parsing HOGMAP files...")
+    hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(
+        prot_recs_lists, fasta_format_keep, folder=conf.hogmap
+    )
 
-    splice_files = conf.splice is not None and os.path.exists(conf.splice)
-    if splice_files: # todo print some log on parsing the splice files eg number of isoforms 
-        isoform_by_gene_all = _utils_roothog.parse_isoform_file(species_names, folder=conf.splice)
-        isoform_selected,  isoform_not_selected = _utils_roothog.find_nonbest_isoform(
-            species_names, isoform_by_gene_all, hogmaps
-        )
-        _utils_roothog.write_isoform_selected(isoform_by_gene_all, isoform_selected, prot_recs_lists)
-        # for each isoform file, there will be a file ending with _selected_isoforms.tsv
-        hogmaps = _utils_roothog.handle_splice(hogmaps, isoform_not_selected)
+    # Step 2: Handle splice isoforms
+    isoform_data = None
+    if conf.splice is not None and os.path.exists(conf.splice): 
+        logger.info("Processing splice variants...")
+        isoform_data = _utils_roothog.handle_splice_variants(species_names, hogmaps, conf.splice)
+        _utils_roothog.write_selected_isoforms(isoform_data, prot_recs_lists)
+        hogmaps = isoform_data['filtered_hogmaps']
 
-    rhogs_prots = _utils_roothog.group_prots_roothogs(hogmaps)
-    rhogs_prots = _utils_roothog.handle_singleton(rhogs_prots, hogmaps, conf)
-    rhogs_prots = _utils_roothog.merge_rhogs2(hogmaps, rhogs_prots, conf)
-    rhogs_prots = _utils_roothog.filter_big_roothogs(hogmaps, rhogs_prots, conf)
+    # Step 3: Group proteins into root HOGs
+    logger.info("Grouping proteins into root HOGs...")
+    # rhogs_prots = _utils_roothog.group_prots_roothogs(hogmaps)
+    # rhogs_prots = _utils_roothog.handle_singleton(rhogs_prots, hogmaps, conf)
+    # rhogs_prots = _utils_roothog.merge_rhogs2(hogmaps, rhogs_prots, conf)
+    # rhogs_prots = _utils_roothog.filter_big_roothogs(hogmaps, rhogs_prots, conf)
+
+    rhogs_prots = _utils_roothog.create_root_hogs(hogmaps, conf)
+
+
+    # Step 4: Save results
+    logger.info("Saving results...")
+    _utils_roothog.save_gene_id_mapping(prot_recs_all, isoform_data)
+    # _utils_roothog.write_root_hogs(rhogs_prots, prot_recs_all, conf.out_rhog_folder)
+    
+    logger.info(f"Successfully created {len(rhogs_prots)} root HOGs")
+
 
     min_rhog_size = 2
     rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, conf.out_rhog_folder, min_rhog_size)

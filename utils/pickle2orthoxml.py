@@ -12,11 +12,11 @@ from FastOMA.collect_subhogs import iter_hogs
 from FastOMA.collect_subhogs import update_hogids
 from pathlib import Path
 
-```
+"""
 python pickle2orthoxml.py  "no_header" "file_D0680685.pickle"
 
 python pickle2orthoxml.py "selected_genes"  pickle_folder gene_id_dic_xml.pickle  "species_tree_checked.nwk"     # this will be slow.  gene_id_dic_xml.pickle is in the output of infer_roothogs
-```
+"""
 
 mode = sys.argv[1]  #"selected_genes" #"no_header" # "selected_genes"  "all_genes"
 
@@ -71,19 +71,24 @@ if mode =="selected_genes":
     #  #### create the header of orthoxml ####
     for query_species_name, list_prots in gene_id_name.items():
         first=True
-        for (gene_idx_integer, query_prot_name) in list_prots:
-            if gene_idx_integer in gene_int_set:
+        for gene in list_prots:
+            if gene.numeric_id in gene_int_set:
                 if first:
                     species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": query_species_name, "taxonId": str(name2taxid[query_species_name]), "NCBITaxId": "0"})
                     database_xml = ET.SubElement(species_xml, "database", attrib={"name": "database", "version": "2023"})
                     genes_xml = ET.SubElement(database_xml, "genes")
-                    prot_id = id_transformer.transform(query_prot_name)
-                    gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": prot_id})
+                    prot_id = id_transformer.transform(gene.prot_id)
+                    attribs = {"id": str(gene.numeric_id), "protId": prot_id}
+                    if gene.main_isoform is not None:
+                        attribs["main_isoform"]= str(gene.main_isoform)
+                    gene_xml = ET.SubElement(genes_xml, "gene", attrib=attribs)
                     first=False
                 else:
-                    prot_id = id_transformer.transform(query_prot_name)
-                    gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": prot_id})
-
+                    prot_id = id_transformer.transform(gene.prot_id)
+                    attribs = {"id": str(gene.numeric_id), "protId": prot_id}
+                    if gene.main_isoform is not None:
+                        attribs["main_isoform"]= str(gene.main_isoform)
+                    gene_xml = ET.SubElement(genes_xml, "gene", attrib=attribs)
 
 
     print("gene_xml is created.")

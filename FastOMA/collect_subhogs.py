@@ -178,9 +178,11 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
         species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": query_species_name, "taxonId": str(name2taxid[query_species_name]), "NCBITaxId": "0"})
         database_xml = ET.SubElement(species_xml, "database", attrib={"name": "database", "version": "2023"})
         genes_xml = ET.SubElement(database_xml, "genes")
-        for (gene_idx_integer, query_prot_name) in list_prots:
-            prot_id = id_transformer.transform(query_prot_name)
-            gene_xml = ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": prot_id})
+        for gene in list_prots:
+            attribs = {"id": str(gene.numeric_id), "protId": id_transformer.transform(gene.prot_id)}
+            if gene.main_isoform is not None:
+                attribs["main_isoform"] = str(gene.main_isoform)
+            gene_xml = ET.SubElement(genes_xml, "gene", attrib=attribs)
     logger.debug("gene_xml is created.")
     orthoxml_file.append(taxonomy)
 

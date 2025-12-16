@@ -6,7 +6,7 @@ from pathlib import Path
 import logging
 logger = logging.getLogger(__name__)
 
-Gene = collections.namedtuple("Gene", "xref species internal_id")
+Gene = collections.namedtuple("Gene", "xref species internal_id is_main_isoform")
 
 
 class SpeciesAnalyser:
@@ -14,6 +14,7 @@ class SpeciesAnalyser:
         self.gene_attr = gene_attr
         self.genes = {}
         self.nr_genes_per_species = collections.defaultdict(int)
+        self.nr_proteins_per_species = collections.defaultdict(int)
 
     def add_genome_genes(self, genome_node):
         genome_name = genome_node.get('name', None)
@@ -24,8 +25,11 @@ class SpeciesAnalyser:
         for gene in genome_node.findall('.//{http://orthoXML.org/2011/}gene'):
             gene_id = gene.get('id')
             gene_prot_id = gene.get(self.gene_attr)
-            generef_2_xref[gene_id] = Gene(gene_prot_id, genome_name, gene_id)
-            self.nr_genes_per_species[genome_name] += 1
+            is_main = gene.get('main_isoform', gene_id) == gene_id
+            generef_2_xref[gene_id] = Gene(gene_prot_id, genome_name, gene_id, is_main)
+            if is_main:
+                self.nr_genes_per_species[genome_name] += 1
+            self.nr_proteins_per_species[genome_name] += 1
         self.genes.update(generef_2_xref)
 
     def gene_in_group(self, gene_id):
@@ -37,8 +41,12 @@ class SpeciesAnalyser:
     def summary(self):
         single = collections.defaultdict(int)
         for g in self.genes.values():
-            single[g.species] += 1
-        return [{'species': g, 'genes': self.nr_genes_per_species[g], 'not_in_group': single[g]}
+            single[g.species] += 1 if g.is_main_isoform else 0
+        return [{'species': g, 
+                 'genes': self.nr_genes_per_species[g], 
+                 'not_in_group': single[g], 
+                 'proteins': self.nr_proteins_per_species[g], 
+                 'minor_splice': self.nr_proteins_per_species[g] - self.nr_genes_per_species[g]}
                 for g in self.nr_genes_per_species]
 
 

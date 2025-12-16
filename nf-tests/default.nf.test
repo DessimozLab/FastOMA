@@ -1,0 +1,79 @@
+nextflow_pipeline {
+
+    name "Test pipeline FastOMA"
+    script "../FastOMA.nf"
+    tag "pipeline"
+    tag "pipeline_fastoma"
+
+    test("Run with profile test") {
+
+        when {
+            params {
+                outdir = "$outputDir" // Use nf-test global variable to output dir
+                output_folder = "$outputDir"
+            }
+        }
+
+        then {
+            
+            // Custom function to filter timestamp lines
+            def filterTimestamps = { file ->
+                return file.readLines()
+                    .findAll { !it.contains('!date-run') && !it.contains('originVersion') }
+            }
+
+            // stable_name: All files + folders in ${params.output_folder}/ with a stable name
+            def stable_name = getAllFilesFromDir(params.output_folder, relative: true, includeDir: true, ignore: ['stats/*.{html,json,txt}'])
+            // stable_path: All files in ${params.output_folder}/ with stable content
+            def stable_path = getAllFilesFromDir(params.output_folder, ignoreFile: 'nf-tests/.nftignore')
+            def timestamp_files = getAllFilesFromDir(params.output_folder, include:['hogmap/*.hogmap', "FastOMA_HOGs.orthoxml"]).collect { file -> 
+                [name: file.name, md5: listToMD5(filterTimestamps(file))]
+            }
+            def csv_files = getAllFilesFromDir(params.output_folder, include:['RootHOGs.tsv', 'OrthologousGroups.tsv', 'orthologs.tsv.gz']).collect { file ->
+                def csv_data = path(file.path).csv(sep: '\t', header: file.name != 'orthologs.tsv.gz', decompress: file.name.endsWith('.gz'))
+                def header = csv_data.getColumnNames()
+                def sorted_rows = csv_data.sort().rows
+    
+                // Convert back to list of strings
+                def lines = []
+                lines.add(header.join('\t'))  // Add header line
+                sorted_rows.each { row ->
+                    lines.add(header.collect { col -> row[col] ?: '' }.join('\t'))
+                }
+                return [name: file.name, md5: listToMD5(lines), lineCount: lines.size()]
+            }
+            def fixed_line_number_files = getAllFilesFromDir(params.output_folder, include:['RootHOGs.tsv', 'OrthologousGroups.tsv', 'orthologs.tsv.gz', "FastOMA_HOGs.orthoxml", 'hogmap/*.hogmap']).collect { file ->
+                def line_count
+                if (file.name.endsWith('.gz')) {
+                    // Use try-with-resources for proper cleanup
+                    new java.util.zip.GZIPInputStream(file.newInputStream()).withCloseable { gzipStream ->
+                        line_count = gzipStream.readLines().size()
+                    }
+                } else {
+                    line_count = file.readLines().size()
+                }
+                return [name: file.name, lineCount: line_count]
+            }
+
+            assertAll(
+                { assert workflow.success},
+                { assert snapshot(
+                    // Number of successful tasks
+                    workflow.trace.succeeded().size(),
+                    // All stable path name, with a relative path
+                    stable_name,
+                    // All files with stable contents
+                    stable_path,
+                    // List of all files with timestamps filtered out
+                    // does not yet work, as hogmap files have percision issues
+                    // and FastOMA_HOGs is not completely deterministic
+                    // timestamp_files 
+
+                    // files with fixed number of lines
+                    fixed_line_number_files
+                ).match() }
+            )
+        }
+
+    }
+}

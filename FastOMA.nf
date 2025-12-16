@@ -1,171 +1,86 @@
-import groovy.json.JsonBuilder;
-
-// NXF_WRAPPER_STAGE_FILE_THRESHOLD='50000'
-
-params.input_folder = "${projectDir}/testdata/in_folder"
-params.output_folder = "out_folder/"
-params.proteome_folder = params.input_folder + "/proteome"
-params.hogmap_in = params.input_folder + "/hogmap_in"
-params.splice_folder = params.input_folder + "/splice"
-params.species_tree = params.input_folder + "/species_tree.nwk"
-params.fasta_header_id_transformer = "noop"
+// Import nf-schema functions
+include { validateParameters; paramsHelp; paramsSummaryLog } from 'plugin/nf-schema'
 
 
+//Set dynamic defaults for input/output paths before validation
+params.input           = params.input ?: "${projectDir}/testdata/in_folder"
+params.proteome_folder = params.proteome_folder ?: "${params.input}/proteome"
+params.hogmap_in       = params.hogmap_in ?: "${params.input}/hogmap_in"
+params.splice_folder   = params.splice_folder ?: "${params.input}/splice"
+params.species_tree    = params.species_tree ?: "${params.input}/species_tree.nwk"
 
-// output subfolder definition
-params.genetrees_folder = params.output_folder + "/genetrees"
-params.msa_folder = params.output_folder + "/msa"
-params.hogmap_folder = params.output_folder + "/hogmap"
-params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
+// Utility process to fetch remote datasets
+process fetchRemoteData {
+    // Cache in a dedicated cache directory
+    storeDir "${params.test_data_cache ?: "${launchDir}/.test-datasets"}"
+    tag "fetch data from ${url}"
 
+    input:
+    val url
 
+    output:
+    path "${dataset_name}", emit: testDataDir
 
-if (params.help) {
-    log.info """
-    ===========================================
-      FastOMA -- PIPELINE
-    ===========================================
-    Usage:
-    Run the pipeline with default parameters:
-    nexflow run FastOMA.nf
+    script:
+    dataset_name=url.toString().tokenize('/').last().replaceAll(/\.(tar\.gz|tgz)(\?.*)?$/, '')
+    """
+    python3 - <<'EOF'
+import os
+import requests
+import tarfile
 
-    Run with user parameters:
-    nextflow run FastOMA.nf --input_folder {input.dir}  --output_folder {results.dir}
+url = "${url}"
+outfile = "dataset.tar.gz"
+outdir = "${dataset_name}"
 
-    Mandatory arguments:
-        --input_folder          Input data folder. Defaults to ${params.input_folder}. This folder
-                                must contain the proteomes (in a subfolder named 'proteome') and
-                                a species tree file. Optionally the folder might contain
-                                 - a sub-folder 'splice' containing splicing variant mappings
-                                 - a sub-folder 'hogmap_in' containing precomputed OMAmer
-                                   placement results for all proteomes
+os.makedirs(outdir, exist_ok=True)
 
-                                All sub-folders and sub-files can also be placed in orther
-                                locations if you provide alternative values for them (see below on
-                                optional arguments section).
+# Download dataset
+print("Downloading dataset from:", url)
+with requests.get(url, stream=True) as r:
+    r.raise_for_status()
+    with open(outfile, "wb") as f:
+        for chunk in r.iter_content(chunk_size=8192):
+            f.write(chunk)
 
-        --output_folder         Path where all the output should be stored. Defaults to
-                                ${params.output_folder}
+# Extract tar.gz
+print("Extracting dataset to:", outdir)
+with tarfile.open(outfile, "r:gz") as tar:
+    tar.extractall(outdir)
 
-
-    Profile selection:
-        -profile                FastOMA can be run using several execution profiles. The default
-                                set of available profiles is
-                                 - docker       Run pipeline using docker containers. Docker needs
-                                                to be installed on your system. Containers will be
-                                                fetched automatically from dockerhub. See also
-                                                additional options '--container_version' and
-                                                '--container_name'.
-
-                                 - singlularity Run pipeline using singularity. Singularity needs
-                                                to be installed on your system. On HPC clusters,
-                                                it often needs to be loaded as a seperate module.
-                                                Containers will be fetched automatically from
-                                                dockerhub. See also additional options
-                                                '--container_version' and '--container_name'.
-
-                                 - conda        Run pipeline in a conda environment. Conda needs
-                                                to be installed on your system. The environment
-                                                will be created automatically.
-
-                                 - standard     Run pipeline on your local system. Mainly intended
-                                                for development purpose. All dependencies must be
-                                                installed in the calling environment.
-
-                                 - slurm_singularity
-                                                Run pipeline using SLURM job scheduler and
-                                                singularity containers. This profile can also be a
-                                                template for other HPC clusters that use different
-                                                schedulers.
-
-                                 - slurm_conda  Run pipeline using SLURM job scheduler and conda
-                                                environment.
-
-                                Profiles are defined in nextflow.config and can be extended or
-                                adjusted according to your needs.
-
-
-    Additional options:
-        --proteome_folder       Overwrite location of proteomes (default ${params.proteome_folder})
-        --species_tree          Overwrite location of species tree file (newick format).
-                                Defaults to ${params.species_tree}
-        --splice_folder         Overwrite location of splice file folder. The splice files must be
-                                named <proteome_file>.splice.
-                                Defaults to ${params.splice_folder}
-        --omamer_db             Path or URL to download the OMAmer database from.
-                                Defaults to ${params.omamer_db}
-        --hogmap_in             Optional path where precomputed omamer mapping files are located.
-                                Defaults to ${params.hogmap_in}
-        --fasta_header_id_transformer
-                                choice of transformers of input proteome fasta header
-                                to reported IDs in output files (e.g. orthoxml files)
-                                Defaults to '${params.fasta_header_id_transformer}', and can be set to
-                                  - noop         : no transformation (input header == output header)
-                                  - UniProt      : extract accession from uniprot header
-                                                   e.g. '>sp|P68250|1433B_BOVIN' --> 'P68250'
-
-    Algorithmic parameters:
-        --nr_repr_per_hog       The maximum number of representatives per subhog to keep during the
-                                inference. Higher values lead to slighlty higher runtime.
-                                Default to ${params.nr_repr_per_hog}.
-        --filter_method         The applied filtering method on the MSAs before tree building.
-                                must be one of "col-row-threshold", "col-elbow-row-threshold", "trimal".
-                                Defaults to ${params.filter_method}.
-        --min_sequence_length   Minimum length of a sequence to be considered for orthology
-                                inference. Too short sequences tend to be problematic.
-                                Defaults to ${params.min_sequence_length}.
-
-
-    Flags:
-        --help                  Display this message
-        --debug_enabled         Store addtional information that might be helpful to debug in case
-                                of a problem with FastOMA.
-        --write_msas            MSAs used during inference of subhogs will be stored at
-                                every taxonomic level.
-        --write_genetrees       Inferred gene trees will be stored at every taxonomic level.
-        --force_pairwise_ortholog_generation
-                                Force producing the pairwise orthologs.tsv.gz file even if the
-                                dataset contains many proteomes. By default, FastOMA produces the
-                                pairwise ortholog file only if there are at most 25 proteomes in
-                                the dataset.
-        --report                Produce nextflow report and timeline and store in in
-                                $params.statdir
-
-    """.stripIndent()
-
-    exit 1
+print("Download and extraction completed.")
+EOF
+    """
 }
 
 
-log.info """
-===========================================
-  FastOMA -- PIPELINE
-===========================================
+// Utility Process to extract a local archive file as input data
+process extractLocalArchive {
+    storeDir "${params.test_data_cache ?: "${launchDir}/.test-datasets"}"
+    tag "extract ${archive.name}"
 
- Project : ${workflow.projectDir}
- Git info: ${workflow.repository} - ${workflow.revision} [${workflow.commitId}]
- Cmd line: ${workflow.commandLine}
- Manifest's pipeline version: ${workflow.manifest.version}
+    input:
+    path archive
 
-Parameters:
-   input_folder              ${params.input_folder}
-   proteome folder           ${params.proteome_folder}
-   species_tree              ${params.species_tree}
-   splice_folder             ${params.splice_folder}
-   omamer_db                 ${params.omamer_db}
-   hogmap_in                 ${params.hogmap_in}
-   fasta_header_id_transformer    ${params.fasta_header_id_transformer}
+    output:
+    path "${archive.baseName}", emit: extractedDir
 
-   filter_method             ${params.filter_method}
-   filter_gap_ratio_row      ${params.filter_gap_ratio_row}
-   filter_gap_ratio_col      ${params.filter_gap_ratio_col}
-   nr_repr_per_hog           ${params.nr_repr_per_hog}
-   min_sequence_length       ${params.min_sequence_length}
-
-   debug_enabled             ${params.debug_enabled}
-   report                    ${params.report}
-   force_pairwise_ortholog_generation    ${params.force_pairwise_ortholog_generation}
-""".stripIndent()
+    script:
+    """
+    echo "Extracting local archive: ${archive}"
+    
+    mkdir -p ${archive.baseName}
+    
+    if [[ "${archive}" == *.zip ]]; then
+        unzip -q ${archive} -d ${archive.baseName}
+    else
+        tar -xzf ${archive} -C ${archive.baseName}
+    fi
+    
+    echo "Extraction completed."
+    ls -la ${archive.baseName}/
+    """
+}
 
 
 process check_input{
@@ -197,6 +112,7 @@ process check_input{
 process omamer_run{
   label "process_single"
   tag "$proteome"
+
   publishDir params.hogmap_folder, mode: 'copy'
 
   input:
@@ -218,19 +134,19 @@ process omamer_run{
 
 process infer_roothogs{
   label "process_medium"
-  publishDir = [
-    path: params.temp_output,
-    enabled: params.debug_enabled,
-  ]
+  
+  publishDir params.temp_output, enabled: params.debug_enabled
 
   input:
     path hogmaps, stageAs: "hogmaps/*"
     path proteome_folder
     path splice_folder
+
   output:
     path "omamer_rhogs"
     path "gene_id_dic_xml.pickle"
     path "selected_isoforms" , optional: true
+
   script:
     """
        fastoma-infer-roothogs  --proteomes ${proteome_folder} \
@@ -244,11 +160,15 @@ process infer_roothogs{
 
 
 process batch_roothogs{
+  label "process_single"
+
   input:
     path rhogs
+  
   output:
-    path "rhogs_rest/*", optional: true
-    path "rhogs_big/*" , optional: true
+    path "rhogs_rest/*", optional: true, emit: rhogs_rest_batches
+    path "rhogs_big/*" , optional: true, emit: rhogs_big_batches
+  
   script:
     """
         fastoma-batch-roothogs --input-roothogs omamer_rhogs/ \
@@ -259,91 +179,18 @@ process batch_roothogs{
 }
 
 
-def getMaxFileSize = { Path folderPath ->
-    def maxFileSize = 0L // Initialize maximum file size
-
-    def traverseFolder = { Path currentPath ->
-        def currentFile = currentPath.toFile()
-
-        if (currentFile.isDirectory()) {
-            def files = currentFile.listFiles()
-            if (files) {
-                files.each { file ->
-                    if (file.isDirectory()) {
-                        traverseFolder(file.toPath()) // Recursively traverse subdirectories
-                    } else {
-                        def fileSize = file.length()
-                        if (fileSize > maxFileSize) {
-                            maxFileSize = fileSize // Update maximum file size if larger
-                        }
-                    }
-                }
-            }
-        } else {
-            def fileSize = currentFile.length()
-            if (fileSize > maxFileSize) {
-                maxFileSize = fileSize // Update maximum file size if larger
-            }
-        }
-    }
-
-    traverseFolder(folderPath)
-    return maxFileSize
-}
-
-// function to check maximum resources
-def check_max(obj, type) {
-    if (type == 'memory') {
-        try {
-            if (obj.compareTo(params.max_memory as nextflow.util.MemoryUnit) == 1)
-                return params.max_memory as nextflow.util.MemoryUnit
-            else
-                return obj
-        } catch (all) {
-            println "   ### ERROR ###   Max memory '${params.max_memory}' is not valid! Using default value: $obj"
-            return obj
-        }
-    } else if (type == 'time') {
-        try {
-            if (obj.compareTo(params.max_time as nextflow.util.Duration) == 1)
-                return params.max_time as nextflow.util.Duration
-            else
-                return obj
-        } catch (all) {
-            println "   ### ERROR ###   Max time '${params.max_time}' is not valid! Using default value: $obj"
-            return obj
-        }
-    } else if (type == 'cpus') {
-        try {
-            return Math.min( obj, params.max_cpus as int )
-        } catch (all) {
-            println "   ### ERROR ###   Max cpus '${params.max_cpus}' is not valid! Using default value: $obj"
-            return obj
-        }
-    }
-}
-
-def mem_cat(filesize, nr_genomes){
-    def fac = 1;
-    if (nr_genomes > 500) fac = 2;
-    if (filesize < 1000000) return 12.GB * fac;
-    else if (filesize < 2000000) return 20.GB * fac;
-    else if (filesize < 5000000) return 32.GB * fac;
-    else return 64.GB * fac;
-}
-
-def time_cat(filesize, nr_genomes){
-    def fac = 1;
-    if (nr_genomes > 500) fac = 2;
-    if (filesize < 1000000) return 4.h * fac;
-    else if (filesize < 20000000) return 24.h * fac;
-    else return 72.h * fac;
-}
-
 process hog_big{
-  cpus { check_max( 4, "cpus") }
-  memory { check_max( mem_cat(getMaxFileSize(rhogsbig), nr_species as int) * task.attempt, "memory") }
-  time { check_max( time_cat(getMaxFileSize(rhogsbig), nr_species as int) * task.attempt, "time") }
+  cpus { 4 }
+  memory { 
+    def max_filesize = Utils.getMaxFileSize(rhogsbig)
+    def mem_base = Utils.mem_cat( max_filesize, nr_species as int )
+    return [6.GB, mem_base].max() * params.memory_multiplier * task.attempt
+  }
+  time {
+    def max_filesize = Utils.getMaxFileSize(rhogsbig)
+    def time_base = Utils.time_cat(max_filesize, nr_species as int)
+    return [2.h, time_base].max() * params.time_multiplier * task.attempt 
+  }
 
   publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
   publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
@@ -355,12 +202,14 @@ process hog_big{
     each rhogsbig
     path species_tree
     val nr_species
+
   output:
     path "pickle_hogs"
     path "*.fa" , optional: true          // msa         if write True
     path "*.nwk" , optional: true  // gene trees  if write True
     path "*.tsv", optional: true
     path "*.tsv.gz", optional: true
+
   script:
     """
         fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig}  \
@@ -379,6 +228,7 @@ process hog_big{
 
 process hog_rest{
   label "process_single"
+
   publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
   publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
@@ -412,19 +262,23 @@ process hog_rest{
 
 process collect_subhogs{
   label "process_high"
+  
   publishDir params.output_folder, mode: 'copy'
+
   input:
     path pickles, stageAs: "pickle_folders/?"
     path "gene_id_dic_xml.pickle"
     path rhogs
     path species_tree
     val  id_transform
+
   output:
     path "FastOMA_HOGs.orthoxml"
     path "OrthologousGroupsFasta"
     path "OrthologousGroups.tsv"
     path "RootHOGs.tsv"
     path "RootHOGsFasta"
+
   script:
     """
         fastoma-collect-subhogs --pickle-folder pickle_folders/ \
@@ -440,6 +294,7 @@ process collect_subhogs{
 }
 
 process extract_pairwise_ortholog_relations {
+  label "process_medium"
   publishDir params.output_folder, mode: 'copy'
   input:
     path orthoxml
@@ -458,12 +313,15 @@ process extract_pairwise_ortholog_relations {
 
 process fastoma_report {
   label "process_medium"
+
   publishDir params.output_folder, mode: 'copy'
+
   input:
     path notebook
     path orthoxml
     path proteome_folder
     path species_tree_checked
+
   output:
     path "report.ipynb"
     path "report.html"
@@ -479,24 +337,112 @@ process fastoma_report {
     papermill $notebook \
               report.ipynb \
               -p output_folder "./" \
+              -p min_sequence_length ${params.min_sequence_length} \
               -p proteome_folder "$proteome_folder"
 
     jupyter nbconvert --to html report.ipynb
     """
 }
 
+// Helper function to detect input type
+def detectInputType(input) {
+    if (input.startsWith('http://') || input.startsWith('https://') || input.startsWith('ftp://')) {
+        return 'url'
+    } else if (input.endsWith('.tar.gz') || input.endsWith('.tgz') || input.endsWith('.zip')) {
+        def archive=file(input)
+        if (!archive.exists() || !archive.isFile()) {
+            log.error "Input archive file does not exist: ${input}"
+            exit 1
+        }
+        return 'archive'
+    } else {
+        def dir=file(input)
+        if (!dir.exists() || !dir.isDirectory()) {
+            log.error "Input directory does not exist: ${input}"
+            exit 1
+        }
+        return 'directory'
+    }
+}
+
+// handle deprecated parameters
+def handleDeprecatedParameters() {
+    if (params.input_folder && !params.input) {
+        log.warn ""
+        log.warn "╔══════════════════════════════════════════════════════════════╗"
+        log.warn "║                    DEPRECATION WARNING                       ║"
+        log.warn "║                                                              ║"
+        log.warn "║  --input_folder is deprecated and has been removed.          ║"
+        log.warn "║  Please use --input instead of --input_folder                ║"
+        log.warn "║                                                              ║"
+        log.warn "╚══════════════════════════════════════════════════════════════╝"
+        log.warn ""
+        exit 1
+        
+    } else if (params.input_folder && params.input) {
+        log.error ""
+        log.error "ERROR: Both --input_folder (deprecated) and --input specified."
+        log.error "Please use only --input parameter."
+        log.error ""
+        exit 1
+    }
+}
+
 workflow {
-    proteome_folder = Channel.fromPath(params.proteome_folder, type: "dir", checkIfExists:true).first()
-    proteomes = Channel.fromPath(params.proteome_folder + "/*", type:'any', checkIfExists:true)
-    species_tree = Channel.fromPath(params.species_tree, type: "file", checkIfExists:true).first()
+    handleDeprecatedParameters()
 
-    splice_folder = Channel.fromPath(params.splice_folder, type: "dir")
-    hogmap_in = Channel.fromPath(params.hogmap_in, type:'dir')
+    // Print help message if requested
+    if (params.help) {
+        log.info paramsHelp("nextflow run FastOMA.nf")
+        exit 0
+    }
 
+    // Validate input parameters
+    validateParameters()
+
+    // Print parameter summary
+    log.info paramsSummaryLog(workflow)
+
+    // Detect input type 
+    def inputType = detectInputType(params.input)
+    if (inputType == "directory") {
+        // Local/custom dataset - allow parameter overrides
+        proteome_folder = Channel.value(params.proteome_folder)
+        proteomes = Channel.fromPath("${params.proteome_folder}/*.{fa,fasta}", checkIfExists: true)
+        species_tree = Channel.value(params.species_tree)
+        splice_folder = Channel.value(params.splice_folder)
+        hogmap_in = Channel.value(params.hogmap_in)
+    } else {
+        // Input is either a URL or an archive file - fetch and extract
+        // Fetch test dataset from remote URL
+        if (inputType == "url") {
+            input_path = fetchRemoteData(Channel.value(params.input))
+        } else if (inputType == "archive") {
+            input_path = extractLocalArchive(Channel.fromPath(params.input))
+        }
+        
+        // Set up all channels based on the downloaded folder structure
+        proteome_folder = input_path.map { "${it}/proteome" }
+        proteomes = input_path.flatMap { dir ->
+            file("${dir}/proteome").listFiles().findAll {
+                it.name.endsWith('.fa') || it.name.endsWith('.fasta') || it.name.endsWith('.faa')
+            }
+        }
+        species_tree = input_path.map { "${it}/species_tree.nwk" }
+        splice_folder = input_path.map { "${it}/splice" }
+        hogmap_in = input_path.map { "${it}/hogmap_in" }
+    } 
+
+    // Static channels
     omamerdb = Channel.fromPath(params.omamer_db)
     notebook = Channel.fromPath("$workflow.projectDir/FastOMA/fastoma_notebook_stat.ipynb", type: "file", checkIfExists: true).first()
+
+    // Run the pipeline
     (species_tree_checked, ready_input_check) = check_input(proteome_folder, hogmap_in, species_tree, omamerdb, splice_folder)
-    omamer_input_channel = proteomes.combine(omamerdb).combine(hogmap_in).combine(ready_input_check)
+    omamer_input_channel = proteomes
+        .combine(omamerdb)
+        .combine(hogmap_in)
+        .combine(ready_input_check)
     hogmap = omamer_run(omamer_input_channel)
     nr_species = hogmap.count()
 
@@ -515,9 +461,9 @@ workflow {
     }
     extract_pairwise_ortholog_relations(orthoxml_file, c.TRUE)
     fastoma_report(notebook, orthoxml_file, proteome_folder, species_tree_checked)
-}
 
-workflow.onComplete {
+
+  workflow.onComplete = {
     def String report = ( params.report ? "\nNextflow report : ${params.statsdir}" : "");
     println ""
     println "Completed at    : $workflow.complete"
@@ -525,6 +471,6 @@ workflow.onComplete {
     println "Processes       : $workflow.workflowStats.succeedCount (success), $workflow.workflowStats.failedCount (failed)"
     println "Output in       : $params.output_folder" + report
     println ( workflow.success ? "Done!" : "Oops .. something went wrong" )
+  }
 }
-
 

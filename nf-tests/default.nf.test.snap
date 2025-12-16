@@ -1,0 +1,87 @@
+{
+    "Run with profile test": {
+        "content": [
+            10,
+            [
+                "FastOMA_HOGs.orthoxml",
+                "OrthologousGroups.tsv",
+                "OrthologousGroupsFasta",
+                "OrthologousGroupsFasta/OG_0000001.fa.gz",
+                "OrthologousGroupsFasta/OG_0000002.fa.gz",
+                "OrthologousGroupsFasta/OG_0000003.fa.gz",
+                "OrthologousGroupsFasta/OG_0000004.fa.gz",
+                "OrthologousGroupsFasta/OG_0000005.fa.gz",
+                "OrthologousGroupsFasta/OG_0000006.fa.gz",
+                "OrthologousGroupsFasta/OG_0000007.fa.gz",
+                "OrthologousGroupsFasta/OG_0000008.fa.gz",
+                "OrthologousGroupsFasta/OG_0000009.fa.gz",
+                "OrthologousGroupsFasta/OG_0000010.fa.gz",
+                "OrthologousGroupsFasta/OG_0000011.fa.gz",
+                "OrthologousGroupsFasta/OG_0000012.fa.gz",
+                "RootHOGs.tsv",
+                "RootHOGsFasta",
+                "RootHOGsFasta/HOG0000001.fa.gz",
+                "RootHOGsFasta/HOG0000002.fa.gz",
+                "RootHOGsFasta/HOG0000003.fa.gz",
+                "RootHOGsFasta/HOG0000004.fa.gz",
+                "RootHOGsFasta/HOG0000005.fa.gz",
+                "RootHOGsFasta/HOG0000006.fa.gz",
+                "RootHOGsFasta/HOG0000007.fa.gz",
+                "RootHOGsFasta/HOG0000008.fa.gz",
+                "RootHOGsFasta/HOG0000009.fa.gz",
+                "RootHOGsFasta/HOG0000010.fa.gz",
+                "RootHOGsFasta/HOG0000011.fa.gz",
+                "RootHOGsFasta/HOG0000012.fa.gz",
+                "hogmap",
+                "hogmap/AQUAE.fa.hogmap",
+                "hogmap/CHLTR.fa.hogmap",
+                "hogmap/MYCGE.fa.hogmap",
+                "orthologs.tsv.gz",
+                "phylostratigraphy.html",
+                "report.html",
+                "report.ipynb",
+                "species_tree_checked.nwk",
+                "stats"
+            ],
+            [
+                "phylostratigraphy.html:md5,060aafe142edbe56cd004090d695177d",
+                "species_tree_checked.nwk:md5,4c82a2f2ffa72a595aaf2fd3deddeff7"
+            ],
+            [
+                {
+                    "name": "FastOMA_HOGs.orthoxml",
+                    "lineCount": 162
+                },
+                {
+                    "name": "OrthologousGroups.tsv",
+                    "lineCount": 28
+                },
+                {
+                    "name": "RootHOGs.tsv",
+                    "lineCount": 28
+                },
+                {
+                    "name": "AQUAE.fa.hogmap",
+                    "lineCount": 20
+                },
+                {
+                    "name": "CHLTR.fa.hogmap",
+                    "lineCount": 18
+                },
+                {
+                    "name": "MYCGE.fa.hogmap",
+                    "lineCount": 14
+                },
+                {
+                    "name": "orthologs.tsv.gz",
+                    "lineCount": 18
+                }
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2025-10-23T12:09:08.301966"
+    }
+}

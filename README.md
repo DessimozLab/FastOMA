@@ -58,9 +58,9 @@ any installation steps given the system supports running either docker container
 installed.
 
 ```bash
-nextflow run dessimozlab/FastOMA -profile docker  --input_folder /path/to/in_folder --output_folder /path/to/out_folder 
+nextflow run dessimozlab/FastOMA -profile docker  --input /path/to/in_folder --output_folder /path/to/out_folder 
 ```
-You could also add specific version to be used by adding `-r v0.4.1` to the command line. Without any `-r` argument, 
+You could also add specific version to be used by adding `-r v0.5.0` to the command line. Without any `-r` argument, 
 always the latest available release will be used. With `-r dev` the latest development release can be used.
 
 > [!WARNING]
@@ -85,7 +85,7 @@ git checkout version, you can specify this in the following way:
 ```bash
 nextflow run FastOMA.nf -profile docker \
     --container_version "sha-$(git rev-list --max-count=1 --abbrev-commit HEAD)" \
-    --input_folder testdata/in_folder \
+    --input testdata/in_folder \
     --output_folder myresult/
 ```
 
@@ -99,10 +99,10 @@ There are four ways to run/install FastOMA detailed below:
 The FastOMA workflow can be run directly without any installation using nextflow's ability to fetch a workflow from github. A specific version can be selected by specifying the `-r` option to nextflow to select a specific version of FastOMA:
 
 ```bash
-nextflow run dessimozlab/FastOMA -r v0.4.1 -profile conda 
+nextflow run dessimozlab/FastOMA -r v0.5.0 -profile conda 
 ```
 
-This will fetch version v0.4.1 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
+This will fetch version v0.5.0 from github and run the FastOMA workflow using the conda profile. See section [How to run fastOMA](#how-to-run-fastoma). 
 
 ### 2. Cloning the FastOMA repo and running from there
 
@@ -126,7 +126,7 @@ nextflow run FastOMA.nf -profile docker --container_version "sha-$(git rev-list 
 
 - run pipeline including with some testdata (For more details, see the section [How to run FastOMA on the test data](https://github.com/DessimozLab/fastoma?tab=readme-ov-file#how-to-run-fastoma-on-the-test-data) )
   ```bash
-  nextflow run FastOMA.nf -profile standard --input_folder testdata/in_folder --output_folder output -with-report
+  nextflow run FastOMA.nf -profile standard --input testdata/in_folder --output_folder output -with-report
   ```
 
 
@@ -172,7 +172,7 @@ mamba activate FastOMA
 Afterwards, you can run the workflow using nextflow (which is installed as part of the conda environment)
 
 ```
-nextflow run FastOMA.nf -profile standard|slurm --input_folder /path/to/input_folder --output_folder /path/to/output
+nextflow run FastOMA.nf -profile standard|slurm --input /path/to/input --output_folder /path/to/output
 ```
 Note that you should use either the profile `standard` or `slurm` such the nextflow executor will use the activated environment.
 
@@ -191,11 +191,11 @@ One can select the desired container via the `--container_version` argument
 ```
 nextflow run FastOMA.nf -profile docker \
     --container_version "sha-$(git rev-list --max-count=1 --abbrev-commit HEAD)" \
-    --input_folder testdata/in_folder \
+    --input testdata/in_folder \
     --output_folder myresult/
 ```
 This will use the container that is tagged with the current commit id. Similarly, one could also use 
-`--container_version "0.4.1"` to use the container with version `dessimozlab/fastoma:0.4.1` from dockerhub. Check the latest version on the [DockerHub](https://hub.docker.com/r/dessimozlab/fastoma/tags).
+`--container_version "0.5.0"` to use the container with version `dessimozlab/fastoma:0.5.0` from dockerhub. Check the latest version on the [DockerHub](https://hub.docker.com/r/dessimozlab/fastoma/tags).
 
 ### Singularity
 Since Docker needs administrator privileges (root access), [Singluarity](https://apptainer.org/index.html) (a.k.a Apptainer) is a good alternative. This can be installed using [Conda](https://anaconda.org/conda-forge/singularity) with `conda install conda-forge::singularity`. However, in most of the academic HPC cluster, singluarity is already installed and can be called with `module load`.
@@ -211,11 +211,17 @@ yourself, this can be achieved as described in [](#manual-installation-for-devel
 
 ### Slurm (with singularity/conda)
 On a HPC system you typically run processes using a scheduler system such as slurm or LSF. We provide 
-profiles `-profile slurm`, `-profile slurm_singularity` and `-profile slurm_conda` to run FastOMA with 
-the respective engine using [slurm](https://slurm.schedmd.com/overview.html) as a scheduler system. 
-If you need a different scheduler, it is quite straight forward to 
-set it up in `nextflow.config` based on the existing profiles and the documentation of 
-[nextflow executors](https://www.nextflow.io/docs/latest/executor.html).
+a basic profile for slurm `-profile slurm` to run FastOMA with [slurm](https://slurm.schedmd.com/overview.html) as a scheduler system.
+Note that multiple profiles can be combined, e.g. `-profile slurm,singularity`, or `-profile slurm,conda`.
+
+For many HPC systems, there exists already a nf-core profile, which can be directly used with FastOMA. Check the 
+available profiles interactively [here](https://nf-co.re/configs/) or on [github](https://github.com/nf-core/configs/tree/master/conf).
+If you found one for your HPC, you can use it directly with `-profile <profile_name>`, e.g. `-profile ethz_euler`
+
+If none of those profiles fit directly your needs, you can create your own profile file somewhere on your system and 
+specify it with the `-c <path_to_profile_file>` argument. The nf-core profiles should give you a 
+good overview of what is possible, together with the 
+[nextflow documentation on executors](https://www.nextflow.io/docs/latest/executor.html).
 
 
 # How to run FastOMA on the test data
@@ -245,7 +251,7 @@ Finally, run the package using nextflow as below:
 ```
 # cd FastOMA/testdata
 nextflow run ../FastOMA.nf  \
-         --input_folder in_folder  \
+         --input in_folder  \
          --omamer_db in_folder/omamerdb.h5 \
          --output_folder out_folder \
          --report \
@@ -407,19 +413,21 @@ Let's save the planet together with
 
 
 ### Run on a cluster 
-For running on a SLURM cluster you can add `-c ../nextflow_slurm.config`  to the commond line.
+For running on a SLURM cluster, you can add the slurm profile argument:  `-profile slurm`  to the command line.
 
 ```
 # cd FastOMA/testdata
 # rm -r out_folder work          # You may remove stuff from previous run
 # ls ../FastOMA.nf 
 
-nextflow ../FastOMA.nf  -c ../nextflow_slurm.config   --input_folder in_folder   --output_folder out_folder
+nextflow ../FastOMA.nf -profile slurm \
+   --input in_folder \
+   --output_folder out_folder
 ```
 
 You may need to re-run nextflow command line by adding `-resume`, if the allocated time is not enough for your dataset.
 
-You may need to increase the number of opoened files in your system with `ulimit -n 131072` or higher as nextflow generates hundreds of files depending on the size of your input dataset.
+You may need to increase the limit of number of opened file handles in your system with `ulimit -n 131072` or higher as nextflow generates hundreds of files depending on the size of your input dataset.
 
 
 ## Handle splice files
@@ -459,6 +467,13 @@ Citation:  Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick 
 
 
 ## Change log
+=======
+- Update  v0.5.0:
+  - renamed input_folder parameter to input. input accepts now also (remote) archive tarball files.
+  - better configuration setup (close to nf-core)
+  - improved resource allocation for nextflow
+  - improved handling of alternative splicing variants in reporting
+  - adding test profile and nf-test based CI checks
 - Update  v0.4.1:
   - bump omamer to 2.1.2 (fixes a bug in the version 2.1.1, see [#74](https://github.com/DessimozLab/omamer/issues/74)
 - Update  v0.4.0:

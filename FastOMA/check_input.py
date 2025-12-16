@@ -202,13 +202,10 @@ def check_splice(isoform_by_gene_all):
 
     logger.debug("For "+str(spliced_species_num)+"  species, out of "+str(len(isoform_by_gene_all))+" , we have splice files.")
     if total_genes ==0:
-        logger.debug("No splice information found. It could be that each line of  splice files has only one item. Make sure that the splitter in each line is semicolon ; . Or the splice folder is empty. You need to delete the empty splice folder. FastOMA check input failed! Exiting...")
+        logger.error("No splice information found. It could be that each line of  splice files has only one item. Make sure that the splitter in each line is semicolon ; . Or the splice folder is empty. You need to delete the empty splice folder. FastOMA check input failed! Exiting...")
         sys.exit(1)
 
     logger.debug("In total, for "+ str(total_genes)+" genes, we have " + str(total_isoforms)+"  splices.")
-
-    # make sys back
-    return 1
 
 
 def fastoma_check_input():
@@ -275,7 +272,7 @@ def fastoma_check_input():
     splice_files = conf.splice is not None and os.path.exists(conf.splice)
     if splice_files:
         logger.debug("splice folder exist. Let's see its inside.")
-        isoform_by_gene_all = _utils_roothog.parse_isoform_file(species_names, conf.splice)
+        isoform_by_gene_all = _utils_roothog.parse_isoform_files(species_names, conf.splice)
         check_splice(isoform_by_gene_all)
     else:
         logger.info("Splice folder doesn't exist and that's ok.")

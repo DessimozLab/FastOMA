@@ -65,11 +65,21 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
+      - name: Set platforms
+        id: set_platforms
+        run: |
+          echo "github ref: ${GITHUB_REF}"
+          if [[ "${GITHUB_REF##*/}" == "main" || "${GITHUB_REF##*/}" == "dev" ]]; then
+            echo "platforms=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
+          else
+            echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ steps.set_platforms.outputs.platforms }}
           push: true
           #${{ github.event_name != 'push' && github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
