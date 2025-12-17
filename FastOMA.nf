@@ -365,6 +365,41 @@ def detectInputType(input) {
     }
 }
 
+// Helper to prefer user-specified value if set, else derive from input_root
+def resolveFolderParam(input_root_ch, param_value, default_subdir, required=true) {
+    if (param_value) {
+        return Channel.fromPath(param_value, type: 'dir', checkIfExists: true)
+    } else {
+        return resolveSubPath(input_root_ch, default_subdir, 'dir', required)
+    }
+}
+
+
+//Resolve a subpath inside an input directory and return a path channel
+def resolveSubPath(base_ch, subpath, type='dir', required=true) {
+    base_ch.map { base ->
+      def fullPath = "${base}/${subpath}"
+      def targetFile =  file(fullPath)
+
+      if (required) {
+        if (type == 'dir' && (!targetFile.exists() || !targetFile.isDirectory())){
+            log.error "Required directory not found: ${fullPath}"
+            exit 1
+        } else if (type == 'file' && (!targetFile.exists() || !targetFile.isFile())) {
+            log.error "Required file not found: ${fullPath}"
+            exit 1
+        }
+      }
+      return targetFile
+    }
+}
+
+// Resolve a single file (emit once)
+def resolveFile(base_ch, filename, required=true) {
+    resolveSubPath(base_ch, filename, 'file', required).first()
+}
+
+
 // handle deprecated parameters
 def handleDeprecatedParameters() {
     if (params.input_folder && !params.input) {
@@ -405,33 +440,29 @@ workflow {
 
     // Detect input type 
     def inputType = detectInputType(params.input)
-    if (inputType == "directory") {
-        // Local/custom dataset - allow parameter overrides
-        proteome_folder = Channel.value(params.proteome_folder)
-        proteomes = Channel.fromPath("${params.proteome_folder}/*.{fa,fasta}", checkIfExists: true)
-        species_tree = Channel.value(params.species_tree)
-        splice_folder = Channel.value(params.splice_folder)
-        hogmap_in = Channel.value(params.hogmap_in)
-    } else {
-        // Input is either a URL or an archive file - fetch and extract
-        // Fetch test dataset from remote URL
-        if (inputType == "url") {
-            input_path = fetchRemoteData(Channel.value(params.input))
-        } else if (inputType == "archive") {
-            input_path = extractLocalArchive(Channel.fromPath(params.input))
-        }
-        
-        // Set up all channels based on the downloaded folder structure
-        proteome_folder = input_path.map { "${it}/proteome" }
-        proteomes = input_path.flatMap { dir ->
-            file("${dir}/proteome").listFiles().findAll {
-                it.name.endsWith('.fa') || it.name.endsWith('.fasta') || it.name.endsWith('.faa')
-            }
-        }
-        species_tree = input_path.map { "${it}/species_tree.nwk" }
-        splice_folder = input_path.map { "${it}/splice" }
-        hogmap_in = input_path.map { "${it}/hogmap_in" }
-    } 
+    if (inputType == 'directory') {
+        input_root = Channel.fromPath(params.input, type: 'dir', checkIfExists: true)
+
+    } else if (inputType == 'url') {
+        input_root = fetchRemoteData(Channel.value(params.input)).testDataDir
+
+    } else if (inputType == 'archive') {
+        input_root = extractLocalArchive(Channel.fromPath(params.input)).extractedDir
+    }
+    // Now resolve each folder
+    proteome_folder = resolveFolderParam(input_root, params.proteome_folder, 'proteome')
+    splice_folder   = resolveFolderParam(input_root, params.splice_folder, 'splice', false)
+    hogmap_in       = resolveFolderParam(input_root, params.hogmap_in, 'hogmap_in', false)
+    species_tree    = params.species_tree ?
+                     Channel.fromPath(params.species_tree, type: 'file', checkIfExists: true).first() :
+                     resolveFile(input_root, 'species_tree.nwk')
+    proteomes = proteome_folder.flatMap { dir ->
+        // Use file() to list files, don't create new channels
+        def proteomeDir = file(dir.toString())
+        return proteomeDir.listFiles().findAll { 
+            it.name.endsWith('.fa') || it.name.endsWith('.fasta')
+        } 
+    }
 
     // Static channels
     omamerdb = Channel.fromPath(params.omamer_db)
@@ -439,7 +470,7 @@ workflow {
 
     // Run the pipeline
     (species_tree_checked, ready_input_check) = check_input(proteome_folder, hogmap_in, species_tree, omamerdb, splice_folder)
-    omamer_input_channel = proteomes
+        omamer_input_channel = proteomes
         .combine(omamerdb)
         .combine(hogmap_in)
         .combine(ready_input_check)
