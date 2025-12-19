@@ -230,7 +230,7 @@
         },
         "container_version": {
           "type": "string",
-          "default": "0.5.0"
+          "default": "0.5.1"
         }
       }
     }
