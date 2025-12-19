@@ -9,7 +9,7 @@
       "title": "Input options",
       "type": "object",
       "description": "Define where the pipeline should find input data ",
-      "required": ["input", "species_tree"],
+      "required": ["input"],
       "properties": {
         "input": {
           "type": "string",
@@ -230,7 +230,7 @@
         },
         "container_version": {
           "type": "string",
-          "default": "0.5.0"
+          "default": "0.5.1"
         }
       }
     }
