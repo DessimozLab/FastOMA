@@ -1,0 +1,3 @@
+[submodule "fold_tree"]
+	path = fold_tree
+	url = git@github.com:DessimozLab/fold_tree.git
