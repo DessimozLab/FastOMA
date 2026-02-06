@@ -160,3 +160,268 @@ def mad_rooting(input_tree_file_path: str):  # , mad_executable_path: str = "./m
         rooted_tree = Tree(input_tree_file_path + ".rooted")
     logger.debug("MAD rooting finished")
     return rooted_tree
+
+
+def infer_gene_tree(members_list_lowerLevel_ready, gene_tree_file_addr):
+    """
+    infere gene tree using fastTree for the input msa
+    and write it as orthoxml_to_newick.py file
+
+
+    output: gene tree in nwk format
+    """
+    #
+    # if _config.tree_tool == "fasttree":
+    #     wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
+    #     wrapper_tree.options.options['-fastest'].active = True   # .set_value(True)  is wrong.
+    #     #wrapper_tree.options.options['-quote'].active = True
+    #     #wrapper_tree.options.options['-nt'].active = True
+    #
+    # # todo using more cpus ?
+    # # elif _config.tree_tool == "iqtree": # very slow not recommanded
+    # #     wrapper_tree = iqtree.Iqtree(msa, datatype="PROTEIN")
+    # #     wrapper_tree.options.options['-m'].set_value("LG+I+G")
+    # #     wrapper_tree.options.options['-nt'].set_value(1)
+    #
+    # result_tree1 = wrapper_tree()
+    # if wrapper_tree.stderr:
+    #     logger_hog.debug("tree inference stderr " + str(wrapper_tree.stderr))
+    # time_taken_tree = wrapper_tree.elapsed_time
+    # result_tree2 = wrapper_tree.result
+    # tree_nwk = str(result_tree2["tree"])
+    # print(time_taken_tree)
+
+
+    # tree_nwk=1
+
+
+    import os
+    import glob
+    import json
+    import datetime
+    import re
+    import numpy as np
+    import pandas as pd
+    import toytree
+    import shutil
+    import subprocess
+    import shutil
+
+    #from Bio.PDB import *
+    from FastOMA.fold_tree import AFDB_tools
+    from FastOMA.fold_tree import foldseek2tree
+    #from fold_tree.src import AFDB_tools
+    #from fold_tree.src import foldseek2tree
+    #
+    # def filter_plddt(pdb_path, thresh=.6, minthresh=.5):
+    #     '''
+    #     Extracts the plddt (in the beta factor column) of the first atom of each residue in a PDB file and returns bool if the pdb is accepted or not.
+    #
+    #     Parameters:
+    #         pdb_path (str): The path to the PDB file.'''
+    #
+    #     thresh =  40
+    #     minthresh =  0
+    #     lddt = []
+    #     parser = PDBParser()
+    #     struc = parser.get_structure("a", pdb_path)
+    #     for res in struc.get_residues():
+    #         for at in res.get_atoms():
+    #             lddt.append(at.get_bfactor())
+    #             break
+    #     if np.mean(lddt) < thresh or np.amin(lddt) < minthresh:
+    #         return False
+    #     else:
+    #         return True
+    #     return 1
+
+    def struct_f(ids, infolder):
+
+
+        structfolder = infolder + 'structs/'
+        rejectedfolder = infolder + 'rejected/'
+        try:
+            os.mkdir(structfolder)
+        except:
+            print("folder exist " + structfolder)
+        try:
+            os.mkdir(rejectedfolder)
+        except:
+            print("folder exist " + rejectedfolder)
+
+        resdf = AFDB_tools.grab_entries(ids, verbose=False) # download structures
+        # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
+
+        missing = [AFDB_tools.grab_struct(i, structfolder, rejectedfolder) for i in ids]
+        found = glob.glob(structfolder + '*.pdb') + glob.glob(rejectedfolder + '*.pdb')
+        found = {i.split('/')[-1].replace('.pdb', ''): i for i in found}
+        #missing_structs = set(ids) - set(found.keys())
+
+        return  len(set(found.keys()))
+
+
+    def struct_f2(ids, infolder):
+        structfolder = infolder + 'structs/'
+        #rejectedfolder = infolder + 'rejected/'
+        try:
+            os.mkdir(structfolder)
+        except:
+            print("folder exist " + structfolder)
+        #try:
+        #    os.mkdir(rejectedfolder)
+        #except:
+        #    print("folder exist " + rejectedfolder)
+
+        not_found=[]
+        for id1 in ids:
+            try :
+                logger_hog.debug(" *1* we are copying this file struct pdb  " + "/scratch/smajidi1/qfo_fold/structs/"+id1+".pdb")
+                shutil.copyfile("/scratch/smajidi1/qfo_fold/structs/"+id1+".pdb", structfolder+id1+".pdb")
+            except:
+                not_found.append(id1)
+                print("struct pdb file not found"+id1)
+                logger_hog.debug(" *2*  struct pdb file not found"+id1)
+
+        #resdf = AFDB_tools.grab_entries(ids, verbose=False) # download structures
+        # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
+
+        #missing = [AFDB_tools.grab_struct(i, structfolder, rejectedfolder) for i in ids]
+        #found = glob.glob(structfolder + '*.pdb') + glob.glob(rejectedfolder + '*.pdb')
+        #found = {i.split('/')[-1].replace('.pdb', ''): i for i in found}
+        #missing_structs = set(ids) - set(found.keys())
+
+        return  len(ids)-len(not_found)
+
+    def foldseek_dist(infolder):
+        # fold_tree/foldseek/foldseek
+        #
+        logger_hog.debug("foldseek started")
+        #command = "foldseek easy-search " + infolder + "structs/  " + infolder + "structs/ " + infolder + "allvall_1.csv " + infolder + "tmp --format-output query,target,fident,evalue,bits --exhaustive-search --alignment-type 2 -e inf"
+        command = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/miniconda/envs/fold/bin/foldseek easy-search " + infolder + "structs/  " + infolder + "structs/ " + infolder + "allvall_1.csv " + infolder + "tmp --format-output query,target,fident,evalue,bits --exhaustive-search --alignment-type 2 -e inf"
+        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+
+        # output allvall_1.csv
+        logger_hog.debug("foldseek finished")
+        res = pd.read_table(infolder + "allvall_1.csv", header=None)
+        print(res.head())
+        # get the folder of the input file
+        # infolder = snakemake.input[0].split('/')[:-1]
+        # infolder = ''.join( [i + '/' for i in infolder])+'/'
+        res[0] = res[0].map(lambda x: x.replace('.pdb', ''))
+        res[1] = res[1].map(lambda x: x.replace('.pdb', ''))
+        res.columns = 'query,target,fident,evalue,bits'.split(',')
+        ids = list(set(list(res['query'].unique()) + list(res['target'].unique())))
+        pos = {protid: i for i, protid in enumerate(ids)}
+        kernels = ['fident']
+
+        # set kernel columns to float
+        for k in kernels:
+            res[k] = res[k].astype(float)
+        # change nan to 0
+        res = res.fillna(0)
+        matrices = {k: np.zeros((len(pos), len(pos))) for k in kernels}
+        print(res)
+
+        # calc kernel for tm, aln score, lddt
+        for idx, row in res.iterrows():
+            for k in matrices:
+                matrices[k][pos[row['query']], pos[row['target']]] += row[k]
+                matrices[k][pos[row['target']], pos[row['query']]] += row[k]
+
+        output = ["foldtree_fastmemat.txt"]
+        for i, k in enumerate(matrices):
+            matrices[k] /= 2
+            matrices[k] = 1 - matrices[k]
+            print(matrices[k], np.amax(matrices[k]), np.amin(matrices[k]))
+            #np.save(infolder + k + '_distmat.npy', matrices[k])
+            distmat_txt = foldseek2tree.distmat_to_txt(ids, matrices[k], infolder + output[i])
+
+        return 1
+
+    def quicktree_f(infolder):
+        delta=0
+        logger_hog.debug("quicktree started")
+        #command = "quicktree -i m " + infolder + "foldtree_fastmemat.txt "  # > foldtree_struct_tree.nwk
+        command = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/miniconda/envs/fold/bin/quicktree -i m " + infolder + "foldtree_fastmemat.txt "  # > foldtree_struct_tree.nwk
+        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        logger_hog.debug("quicktree finished")
+        # treefile = foldseek2tree.postprocess("foldtree_struct_tree.nwk" , )
+
+        outree = infolder + "foldtree_struct_tree.PP.nwk"
+        t = str(output)[2:-1]
+        treein = t.split("\\n")
+        treestr = ' '.join([i.strip() for i in treein])
+        tre = toytree.tree(treestr, format=0)
+        # print(tre)
+        for n in tre.treenode.traverse():
+            if n.dist < 0:
+                n.dist = delta
+        tre.write(outree, tree_format=0)
+        tree1 = tre.write(tree_format=0)
+
+        return tree1
+
+    from Bio.Align import MultipleSeqAlignment
+    ids_dic = {}
+    ids = [i.split("|")[1] for i in members_list_lowerLevel_ready]
+
+    for prot_i in members_list_lowerLevel_ready:
+        ids_dic[prot_i.split("|")[1]] = prot_i
+
+    #
+    # for in_msa in msa:
+    #     # msa could be a list of MSAs. [for structure tree we don't do msa]
+    #     if isinstance(in_msa, MultipleSeqAlignment):
+    #         msa_i=in_msa
+    #         for prot_ii in msa_i:
+    #             ids_dic[prot_ii.id.split("|")[1]] = prot_ii.id
+    #             ids.append(prot_ii.id.split("|")[1])
+    #     else:
+    #         prot_i = in_msa
+    #         ids_dic[prot_i.id.split("|")[1]]=prot_i.id
+    #         ids.append(prot_i.id.split("|")[1])
+    #ids = [i.id.split("|")[1] for i in msa]
+
+
+
+    time_date_raw =str(datetime.datetime.now())
+    infolder ="fold_tmp/" +re.sub('[^A-Za-z0-9]+', '', time_date_raw)+"/"
+    try:
+        os.makedirs(infolder)
+    except:
+        print("folder exist "+infolder )
+
+    num_prot_struct = struct_f2(ids,infolder)
+    if num_prot_struct >1:
+        foldseek_dist(infolder)
+
+        tree_nwk_raw = quicktree_f(infolder)
+        tree1= Tree(tree_nwk_raw)
+        for node in tree1.traverse():
+            if node.is_leaf():
+                node_name_old = node.name  #
+                node.name = ids_dic[node_name_old]
+        tree_nwk = tree1.write()
+
+        print("\n \n " + tree_nwk)
+        a=2
+        # current_time = datetime.now().strftime("%H:%M:%S")
+        # for development we write the gene tree, the name of file should be limit in size in linux.
+        # danger of overwriting
+        # instead -> hash thing
+        # ??? hashlib.md5(original_name).hexdig..it()
+
+        if _config.gene_trees_write_all or _config.rooting_method == "mad":
+            file_gene_tree = open(gene_tree_file_addr, "w")
+            file_gene_tree.write(tree_nwk)
+            #file_gene_tree.write(";\n")
+            file_gene_tree.close()
+    else:
+        # not enough structures  downlaoded  to use
+        tree_nwk="("+str(ids[0])+");"
+
+    return tree_nwk
+
+
