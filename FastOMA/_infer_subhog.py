@@ -315,6 +315,7 @@ class LevelHOGProcessor:
         self._removed_rep = set([])
         self._rep_lookup = self._prepare_lookups()
         self._msa_filter = self._instantiate_msa_filter()
+        self.merging_report=conf.merging_report
 
     def _instantiate_msa_filter(self):
         if self.conf.msa_filter_method == "col-row-threshold":
@@ -653,6 +654,12 @@ class LevelHOGProcessor:
                           representatives=new_repr,
                           conf_infer_subhhogs=self.conf)
                 new_hogs.append(hog)
+                if self.merging_report:
+                    logger.debug(f"MERGING_REPORT: At the level of {self.node_species_tree.name} we are merging  these HOGs: {subtree.hogids}.")
+                    logger.debug("MERGING_REPORT: gene \thog_previouslevel \t merged_hog")
+                    for h in subtree.hogids:
+                        for gene in self.subhogs[h].get_members():
+                            logger.debug(f"MERGING_REPORT: {gene}\t{self.subhogs[h]} {hog}.")
         return new_hogs
 
     def process(self) -> List[HOG]:

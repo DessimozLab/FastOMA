@@ -50,6 +50,8 @@ def fastoma_infer_subhogs():
     parser.add_argument("--min-col-trim", required=False, type=int, default=50,  # todo min rows trim
                         help="min no. columns in msa to consider for filtering")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
+    parser.add_argument("--merging-report", action='store_true',
+                        help="writing log files of member of each HOG and which are merged.")
     conf_infer_subhhogs = parser.parse_args()
 
     setup_logging(conf_infer_subhhogs.v, conf_infer_subhhogs.parallel)
