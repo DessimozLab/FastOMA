@@ -316,6 +316,19 @@ class LevelHOGProcessor:
         self._rep_lookup = self._prepare_lookups()
         self._msa_filter = self._instantiate_msa_filter()
         self.merging_report=conf.merging_report
+        self.species_weights_sos = self._species_weights_sos_func()
+
+    def _species_weights_sos_func(self): # working on speies tree and see subtrees of the node on the species tree
+        species_weights = {}
+        subtrees =  self.node_species_tree.get_children()
+        num_children=len(subtrees)
+        for child in subtrees:
+            species_leaves=[c.name for c in child.get_leaves()]
+            num_species= len(species_leaves)
+            for species in species_leaves:
+                species_weights[species]=1/num_species/num_children
+        return species_weights # sum(list(w.values()))=1
+
 
     def _instantiate_msa_filter(self):
         if self.conf.msa_filter_method == "col-row-threshold":
@@ -529,9 +542,11 @@ class LevelHOGProcessor:
                     c.del_feature('species')  # cleanup to avoid excessive memory
                 sp_inter = set.intersection(*specs)
                 sp_union = set.union(*specs)
-                sos = len(sp_inter) / len(sp_union)
+                sos = sum([self.species_weights_sos[sp] for sp in sp_inter]) /sum([self.species_weights_sos[sp] for sp in sp_union])
+                sos_unweighted = len(sp_inter) / len(sp_union)
                 n.add_feature('species', sp_union)
                 n.add_feature('sos', sos)
+                n.add_feature('sos_unweighted', sos_unweighted)
                 n.add_feature('so_tuple', (len(sp_inter), len(sp_union)))
                 n.add_feature('evoltype', 'D' if sos > sos_threshold else 'S')
                 if sos > sos_threshold:
@@ -541,7 +556,7 @@ class LevelHOGProcessor:
                     cnt_S += 1
                     n.name = f"S{cnt_S}"
         genetree.del_feature('species')
-        self.write_msa_or_tree_if_necessary(genetree, fn_suffix="_rec.nwk", features=['evoltype', 'sos', 'so_tuple', 'hogid'])
+        self.write_msa_or_tree_if_necessary(genetree, fn_suffix="_rec.nwk", features=['evoltype', 'sos', 'so_tuple', 'sos_unweighted', 'hogid'])
 
     def _compute_between_and_within_distances(self, genetree, subtrees_node, partitions):
         mrca = genetree.get_common_ancestor(*subtrees_node)
