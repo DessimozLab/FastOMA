@@ -15,17 +15,20 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
-RUN pip install --upgrade hatch pip
+RUN pip install --upgrade pip \
+    && pip install "hatch<1.17" "virtualenv<20.26"
 COPY pyproject.toml .
-RUN python -m venv /app \
-    && hatch dep show requirements --all > requirements.txt \
-    && /app/bin/pip install wheel setuptools \
-    && /app/bin/pip install -r requirements.txt
+
+RUN hatch dep show requirements --all > requirements.txt \
+    && pip install wheel setuptools -r requirements.txt
 
 COPY . .
-RUN ls -la \
-    && hatch build \
-    && ls -la dist/ \
+RUN hatch build \
+    && ls -la dist/
+
+# Create a clean venv for runtime and install the wheel
+RUN python -m venv /app \
+    && /app/bin/pip install --upgrade pip wheel setuptools \
     && /app/bin/pip install dist/*.whl
 
 
@@ -44,3 +47,5 @@ RUN apt-get update \
 
 COPY --from=builder /app /app
 ENV PATH="/app/bin:$PATH"
+
+RUN python -c "import FastOMA; print(FastOMA.__version__)"
