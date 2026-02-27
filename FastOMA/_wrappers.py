@@ -275,8 +275,9 @@ def infer_gene_tree(members_list_lowerLevel_ready, gene_tree_file_addr):
         not_found=[]
         for id1 in ids:
             try :
-                logger_hog.debug(" *1* we are copying this file struct pdb  " + "/scratch/smajidi1/qfo_fold/structs/"+id1+".pdb")
-                shutil.copyfile("/scratch/smajidi1/qfo_fold/structs/"+id1+".pdb", structfolder+id1+".pdb")
+                structs_folders="downloaded_structures/"
+                logger_hog.debug(" *1* we are copying this file struct pdb  " + structs_folders +id1+".pdb")
+                shutil.copyfile(structs_folders+id1+".pdb", structfolder+id1+".pdb")
             except:
                 not_found.append(id1)
                 print("struct pdb file not found"+id1)
@@ -297,7 +298,7 @@ def infer_gene_tree(members_list_lowerLevel_ready, gene_tree_file_addr):
         #
         logger_hog.debug("foldseek started")
         #command = "foldseek easy-search " + infolder + "structs/  " + infolder + "structs/ " + infolder + "allvall_1.csv " + infolder + "tmp --format-output query,target,fident,evalue,bits --exhaustive-search --alignment-type 2 -e inf"
-        command = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/miniconda/envs/fold/bin/foldseek easy-search " + infolder + "structs/  " + infolder + "structs/ " + infolder + "allvall_1.csv " + infolder + "tmp --format-output query,target,fident,evalue,bits --exhaustive-search --alignment-type 2 -e inf"
+        command = "foldseek easy-search " + infolder + "structs/  " + infolder + "structs/ " + infolder + "allvall_1.csv " + infolder + "tmp --format-output query,target,fident,evalue,bits --exhaustive-search --alignment-type 2 -e inf"
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
@@ -343,7 +344,7 @@ def infer_gene_tree(members_list_lowerLevel_ready, gene_tree_file_addr):
         delta=0
         logger_hog.debug("quicktree started")
         #command = "quicktree -i m " + infolder + "foldtree_fastmemat.txt "  # > foldtree_struct_tree.nwk
-        command = "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/software/miniconda/envs/fold/bin/quicktree -i m " + infolder + "foldtree_fastmemat.txt "  # > foldtree_struct_tree.nwk
+        command = "quicktree -i m " + infolder + "foldtree_fastmemat.txt "  # > foldtree_struct_tree.nwk
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
         logger_hog.debug("quicktree finished")
