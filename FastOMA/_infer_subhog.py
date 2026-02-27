@@ -30,6 +30,7 @@ from ._hog_class import HOG, Representative, split_hog
 from ._utils_subhog import MSAFilter, MSAFilterElbow, MSAFilterTrimAL
 
 from .zoo.utils import unique
+from .zoo.wrappers import WrapperError
 
 low_so_detection = True # detection of proteins with low species overlap score in gene tree
 fragment_detection = True  # this also need to be consistent in _hog_class.py
@@ -76,10 +77,15 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     species_names_rhog = list(set(species_names_rhog))
     logger.info("Number of unique species in rHOG " + rhogid + " is " + str(len(species_names_rhog)) + ".")
 
-    if inferhog_concurrent_on:  # for big HOG we use parallelization at the level taxonomic level using concurrent
-        infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
-    else:
-        infer_hogs_for_rhog_levels_recursively(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
+    try:
+        if inferhog_concurrent_on:  # for big HOG we use parallelization at the level taxonomic level using concurrent
+            infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
+        else:
+            infer_hogs_for_rhog_levels_recursively(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs)
+    except WrapperError as e:
+        logger.exception("Error of external tool during subhog inference: %s", str(e))
+        sys.exit(getattr(e, "exit_code", 1))
+
 
     #####  Now read the final pickle file for this rootHOG
     root_node_name = species_tree.name

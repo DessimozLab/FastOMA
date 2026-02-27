@@ -7,6 +7,7 @@ from ..abstract_cli import AbstractCLI
 from .base_aligner import Aligner, AlignmentInput, DataType
 from ...seq_utils.utils import iter_seqrecs_from_any
 from ...wrappers import WrapperError
+from ...utils import summarize_long_message
 from ..options import StringOption, FlagOption, IntegerOption, FloatOption, MultiOption, OptionSet
 import tempfile
 import logging
@@ -120,7 +121,8 @@ class Mafft(Aligner):
         logger.debug('Output of Mafft: stdout={}; stderr={}'.format(output, error))
         if len(output) == 0 and len(error) > 0:
             logger.warning('is MAFFT_BINARIES set correctly: {}'.format(os.getenv('MAFFT_BINARIES', '')))
-            raise WrapperError('Mafft did not compute any alignments. StdErr: {}'.format(error))
+            logger.warning("Mafft did not compute any alignments. StdErr:\n%s", summarize_long_message(error))
+            raise WrapperError('Mafft did not compute any alignments')
         self.result = self._read_result(output)  # store result
         self.stdout = output
         self.stderr = error
@@ -140,6 +142,18 @@ class Mafft(Aligner):
         """
         self.cli('{} {}'.format(self.command(), filename),
                  wait=True)
+
+        ret = self.cli.process.returncode
+        if ret != 0:
+            logger.error('Mafft returned non-zero exit status: {}'.format(ret))
+            logger.error('Output of Mafft:\n\n%s\nstdout=\n%s\n{}\n\n%s\nstderr=\n%s\n{}\n\n',
+                         "=" * 30, "=" * 30, summarize_long_message(self.cli.get_stdout()),
+                         "=" * 30, "=" * 30, summarize_long_message(self.cli.get_stderr()))
+            if ret < 0:
+                sig = -ret
+                raise WrapperError(f'Mafft was terminated by signal {sig}', exit_code=128 + sig)
+            else:
+                raise WrapperError(f'Mafft exited with code {ret}', exit_code=ret)
         return self.cli.get_stdout(), self.cli.get_stderr()
 
     def command(self):
