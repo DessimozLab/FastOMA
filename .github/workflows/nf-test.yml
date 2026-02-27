@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Check out pipeline code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # v4
         with:
           fetch-depth: 0
 
@@ -50,7 +50,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - uses: actions/setup-java@f2beeb24e141e01a676f977032f5a29d81c9e27e # v4
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v4
         with:
           distribution: "temurin"
           java-version: "17"
@@ -80,7 +80,7 @@ jobs:
 
       - name: Set up miniconda
         if: matrix.profile == 'conda'
-        uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3
+        uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3
         with:
           miniconda-version: "latest"
           auto-update-conda: true
@@ -145,7 +145,7 @@ jobs:
 
       - name: Upload test results
         if: always()  # run even if tests fail
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: nf-test-results-${{ matrix.filter }}-${{ matrix.profile }}-${{ matrix.NXF_VER }}-${{ matrix.shard }}
           path: |
