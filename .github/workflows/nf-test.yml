@@ -12,7 +12,7 @@ on:
 env:
   NFT_DIFF: "pdiff"
   NFT_DIFF_ARGS: "--line-numbers --width 120 --expand-tabs=2"
-  NFT_VER: "0.9.2"
+  NFT_VER: "0.9.4"
   NFT_WORKDIR: "${{ github.workspace }}/nf-test-work"
   NXF_ANSI_LOG: false
   NXF_SINGULARITY_CACHEDIR: ${{ github.workspace }}/.singularity
