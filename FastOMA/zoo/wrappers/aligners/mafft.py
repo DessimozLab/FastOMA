@@ -146,13 +146,15 @@ class Mafft(Aligner):
         ret = self.cli.process.returncode
         if ret != 0:
             logger.error('Mafft returned non-zero exit status: {}'.format(ret))
-            logger.error('Output of Mafft:\n\n%s\nstdout=\n%s\n{}\n\n%s\nstderr=\n%s\n{}\n\n',
+            logger.error('Output of Mafft:\n\n%s\nstdout=\n%s\n%s\n\n%s\nstderr=\n%s\n%s\n\n',
                          "=" * 30, "=" * 30, summarize_long_message(self.cli.get_stdout()),
                          "=" * 30, "=" * 30, summarize_long_message(self.cli.get_stderr()))
             if ret < 0:
                 sig = -ret
                 raise WrapperError(f'Mafft was terminated by signal {sig}', exit_code=128 + sig)
             else:
+                if ret == 1 and (was_oom_killed() or "Killed" in self.cli.get_stderr()):
+                    raise WrapperError(f'Mafft was killed by the kernel due to running out of memory', exit_code=137)
                 raise WrapperError(f'Mafft exited with code {ret}', exit_code=ret)
         return self.cli.get_stdout(), self.cli.get_stderr()
 
@@ -348,3 +350,17 @@ def get_default_options():
         StringOption('--merge', '', active=False),
         IntegerOption('--thread', -1, active=False),
     ])
+
+
+def was_oom_killed():
+    """
+    Check if the process was killed by the kernel due to running out of memory.
+    """
+    try:
+        with open("/sys/fs/cgroup/memory.events") as f:
+            for line in f:
+                if line.startswith("oom_kill"):
+                    return int(line.split()[1]) > 0
+    except FileNotFoundError:
+        return False
+    return False
