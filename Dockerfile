@@ -29,6 +29,7 @@ RUN hatch build \
 # Create a clean venv for runtime and install the wheel
 RUN python -m venv /app \
     && /app/bin/pip install --upgrade pip wheel setuptools \
+    && /app/bin/pip install -r requirements.txt \
     && /app/bin/pip install dist/*.whl
 
 
