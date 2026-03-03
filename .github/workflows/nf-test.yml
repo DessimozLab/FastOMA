@@ -13,10 +13,12 @@ env:
   NFT_DIFF: "pdiff"
   NFT_DIFF_ARGS: "--line-numbers --width 120 --expand-tabs=2"
   NFT_VER: "0.9.4"
-  NFT_WORKDIR: "${{ github.workspace }}/nf-test-work"
+  NFT_WORKDIR: "/tmp/nft-test"
+  NXF_WORK: "/tmp/nxf-work"
   NXF_ANSI_LOG: false
   NXF_SINGULARITY_CACHEDIR: ${{ github.workspace }}/.singularity
   NXF_SINGULARITY_LIBRARYDIR: ${{ github.workspace }}/.singularity
+  NXF_CONDA_CACHEDIR: "/tmp/conda"
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
