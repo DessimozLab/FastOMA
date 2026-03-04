@@ -143,3 +143,20 @@ jobs:
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+
+  publish-doc:
+    runs-on: ubuntu-latest
+    needs:
+      - merge
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Update repo description
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          repository: ${{ env.REGISTRY_IMAGE }}
+          readme-filepath: ./README.md
