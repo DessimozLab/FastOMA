@@ -6,6 +6,10 @@ on:
   release:
     type: [published]
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   REGISTRY_IMAGE: dessimozlab/fastoma
 
@@ -75,6 +79,8 @@ jobs:
           tags: ${{ env.REGISTRY_IMAGE }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          provenance: mode=max
+          sbom: true
 
       - name: Export digest
         run: |
