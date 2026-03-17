@@ -14,6 +14,7 @@ from .parsers import FasttreeParser
 
 from ..abstract_cli import AbstractCLI
 from ..options import OptionSet, StringOption, IntegerOption
+from ...utils import summarize_long_message
 from ...file_utils import TempFile, TempDir
 
 logger = logging.getLogger(__name__)
@@ -89,13 +90,24 @@ class Fasttree(TreeBuilder):
         self.returncode = self.cli.process.returncode
 
         if self.returncode != 0:
+            self.stdout = self.cli.get_stdout()
             self.stderr = self.cli.get_stderr()
             last_error_line = self.stderr.split('\n')[-1].strip()
-            msg = f"Fasttree failed on {filename}: {last_error_line}"
+            logger.error('FastTree returned non-zero exit status: {}'.format(self.returncode))
+            logger.error('Output of FastTree:\n\n%s\nstdout=\n%s\n{}\n\n%s\nstderr=\n%s\n{}\n\n',
+                         "=" * 30, "=" * 30, summarize_long_message(self.stdout),
+                         "=" * 30, "=" * 30, summarize_long_message(self.stderr))
+            if self.returncode < 0:
+                termination = f"was terminated by signal {-self.returncode}"
+                exit_code = 128 - self.returncode
+            else:
+                termination = f"exited with code {self.returncode}"
+                exit_code = self.returncode
+            msg = f"Fasttree {termination} on {filename}: {last_error_line}"
             logger.error(msg)
-            raise WrapperError(msg, self.stderr)
+            raise WrapperError(msg, exit_code=exit_code)
 
-        return (self.cli.get_stdout(), self.cli.get_stderr())
+        return self.cli.get_stdout(), self.cli.get_stderr()
 
     def command(self):
         return str(self.options)

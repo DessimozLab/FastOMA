@@ -6,18 +6,36 @@ on:
   release:
     type: [published]
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
-  TEST_TAG: dessimozlab/fastoma:test
+  REGISTRY_IMAGE: dessimozlab/fastoma
 
 jobs:
 
   build:
 
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - platform: linux/amd64
+          runner: ubuntu-latest
+        - platform: linux/arm64
+          runner: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+
       - name: Checkout
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -26,8 +44,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           # list of Docker images to use as base name for tags
-          images: |
-            dessimozlab/fastoma
+          images: ${{ env.REGISTRY_IMAGE }}
           # generate Docker tags based on the following events/attributes
           tags: |
             type=schedule
@@ -47,17 +64,49 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and export to docker for testing
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and push by digest only
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
-          load: true
-          tags: ${{ env.TEST_TAG }}
+          platforms: ${{ matrix.platform }}
+          tags: ${{ env.REGISTRY_IMAGE }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          provenance: mode=max
+          sbom: true
 
-      #- name: Test
-      #  run: |
-      #    docker run --rm -i -v $PWD/tests:/input -v $PWD/tests/:/reads -v $PWD/output:/out -v $PWD/run:/run ${{ env.TEST_TAG }} --tree --standalone_path /input/marker_genes --dna_reference /input/cds-marker_genes.fasta.gz --reads /reads/sample_1.fastq --output_path /out
-      #    if [ ! -f output/tree_sample_1.nwk ] ; then exit 1; fi
+      - name: Export digest
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v7
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
@@ -65,22 +114,49 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Set platforms
-        id: set_platforms
-        run: |
-          echo "github ref: ${GITHUB_REF}"
-          if [[ "${GITHUB_REF##*/}" == "main" || "${GITHUB_REF##*/}" == "dev" || "${GITHUB_REF}" == "refs/tags/"* ]]; then
-            echo "platforms=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
-          else
-            echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
-          fi
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          context: .
-          platforms: ${{ steps.set_platforms.outputs.platforms }}
-          push: true
-          #${{ github.event_name != 'push' && github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          images: ${{ env.REGISTRY_IMAGE }}
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+
+  publish-doc:
+    runs-on: ubuntu-latest
+    needs:
+      - merge
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Update repo description
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          repository: ${{ env.REGISTRY_IMAGE }}
+          readme-filepath: ./README.md
