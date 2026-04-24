@@ -465,7 +465,12 @@ class LevelHOGProcessor:
 
 
     def infer_genetree_from_msa(self, msa):
-        genetree_nwk = _wrappers.infer_gene_tree(msa)
+        fold = True
+        foldwdir= self.conf.foldwdir
+        if fold:
+            genetree_nwk = _wrappers.infer_gene_tree_fold(msa,foldwdir)
+        else:
+            genetree_nwk = _wrappers.infer_gene_tree(msa)
         try:
             genetree = Tree(genetree_nwk + ";", format=0, quoted_node_names=True)
         except ValueError:

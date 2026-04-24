@@ -21,6 +21,7 @@ def fastoma_infer_subhogs():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--version", action="version", version="FastOMA v"+fastoma_version)
     parser.add_argument("--input-rhog-folder", required=True, help="Path to the input rootHOG folder.")
+    parser.add_argument("--foldwdir", required=True, help="fold working dir.")
     parser.add_argument("--parallel", action='store_true', help="use concurrent parallel per rootHOG")
     parser.add_argument("--species-tree", required=True,
                         help="Path to the input species tree file in newick format")
@@ -50,6 +51,7 @@ def fastoma_infer_subhogs():
     parser.add_argument("--min-col-trim", required=False, type=int, default=50,  # todo min rows trim
                         help="min no. columns in msa to consider for filtering")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
+
     conf_infer_subhhogs = parser.parse_args()
 
     setup_logging(conf_infer_subhhogs.v, conf_infer_subhhogs.parallel)

@@ -162,42 +162,16 @@ def mad_rooting(input_tree_file_path: str):  # , mad_executable_path: str = "./m
     return rooted_tree
 
 
-def infer_gene_tree(members_list_lowerLevel_ready, gene_tree_file_addr):
+def infer_gene_tree_fold(msa, foldwdir):
     """
-    infere gene tree using fastTree for the input msa
-    and write it as orthoxml_to_newick.py file
+    infer gene tree using foldseek and foldtree
 
-
-    output: gene tree in nwk format
     """
-    #
-    # if _config.tree_tool == "fasttree":
-    #     wrapper_tree = fasttree.Fasttree(msa, datatype="PROTEIN")
-    #     wrapper_tree.options.options['-fastest'].active = True   # .set_value(True)  is wrong.
-    #     #wrapper_tree.options.options['-quote'].active = True
-    #     #wrapper_tree.options.options['-nt'].active = True
-    #
-    # # todo using more cpus ?
-    # # elif _config.tree_tool == "iqtree": # very slow not recommanded
-    # #     wrapper_tree = iqtree.Iqtree(msa, datatype="PROTEIN")
-    # #     wrapper_tree.options.options['-m'].set_value("LG+I+G")
-    # #     wrapper_tree.options.options['-nt'].set_value(1)
-    #
-    # result_tree1 = wrapper_tree()
-    # if wrapper_tree.stderr:
-    #     logger_hog.debug("tree inference stderr " + str(wrapper_tree.stderr))
-    # time_taken_tree = wrapper_tree.elapsed_time
-    # result_tree2 = wrapper_tree.result
-    # tree_nwk = str(result_tree2["tree"])
-    # print(time_taken_tree)
 
-
-    # tree_nwk=1
-
-
+    logger.debug("we are here at infer_gene_tree_fold ")
     import os
     import glob
-    import json
+
     import datetime
     import re
     import numpy as np
@@ -276,12 +250,12 @@ def infer_gene_tree(members_list_lowerLevel_ready, gene_tree_file_addr):
         for id1 in ids:
             try :
                 structs_folders="downloaded_structures/"
-                logger_hog.debug(" *1* we are copying this file struct pdb  " + structs_folders +id1+".pdb")
+                logger.debug(" *1* we are copying this file struct pdb  " + structs_folders +id1+".pdb")
                 shutil.copyfile(structs_folders+id1+".pdb", structfolder+id1+".pdb")
             except:
                 not_found.append(id1)
                 print("struct pdb file not found"+id1)
-                logger_hog.debug(" *2*  struct pdb file not found"+id1)
+                logger.debug(" *2*  struct pdb file not found"+id1)
 
         #resdf = AFDB_tools.grab_entries(ids, verbose=False) # download structures
         # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
@@ -296,14 +270,14 @@ def infer_gene_tree(members_list_lowerLevel_ready, gene_tree_file_addr):
     def foldseek_dist(infolder):
         # fold_tree/foldseek/foldseek
         #
-        logger_hog.debug("foldseek started")
+        logger.debug("foldseek started")
         #command = "foldseek easy-search " + infolder + "structs/  " + infolder + "structs/ " + infolder + "allvall_1.csv " + infolder + "tmp --format-output query,target,fident,evalue,bits --exhaustive-search --alignment-type 2 -e inf"
         command = "foldseek easy-search " + infolder + "structs/  " + infolder + "structs/ " + infolder + "allvall_1.csv " + infolder + "tmp --format-output query,target,fident,evalue,bits --exhaustive-search --alignment-type 2 -e inf"
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
         # output allvall_1.csv
-        logger_hog.debug("foldseek finished")
+        logger.debug("foldseek finished")
         res = pd.read_table(infolder + "allvall_1.csv", header=None)
         print(res.head())
         # get the folder of the input file
@@ -342,12 +316,12 @@ def infer_gene_tree(members_list_lowerLevel_ready, gene_tree_file_addr):
 
     def quicktree_f(infolder):
         delta=0
-        logger_hog.debug("quicktree started")
+        logger.debug("quicktree started")
         #command = "quicktree -i m " + infolder + "foldtree_fastmemat.txt "  # > foldtree_struct_tree.nwk
         command = "quicktree -i m " + infolder + "foldtree_fastmemat.txt "  # > foldtree_struct_tree.nwk
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
-        logger_hog.debug("quicktree finished")
+        logger.debug("quicktree finished")
         # treefile = foldseek2tree.postprocess("foldtree_struct_tree.nwk" , )
 
         outree = infolder + "foldtree_struct_tree.PP.nwk"
