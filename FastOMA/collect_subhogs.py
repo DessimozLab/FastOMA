@@ -178,14 +178,17 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
 
         speciestree = read_species_tree(species_tree)
         taxonomy, name2taxid = convert_speciestree_to_orthoxml_taxonomy(speciestree)
+        logger.debug("Now creating the header of orthoxml")
 
         for query_species_name, list_prots in gene_id_name.items():
             species_xml = lxml_ET.Element("species", attrib={"name": query_species_name, "taxonId": str(name2taxid[query_species_name]), "NCBITaxId": "0"})
-            database_xml = lxml_ET.SubElement(species_xml, "database", attrib={"name": "database", "version": "2023"})
+            database_xml = lxml_ET.SubElement(species_xml, "database", attrib={"name": "database", "version": "2023"})  ## TODO: update to be similar to standalone
             genes_xml = lxml_ET.SubElement(database_xml, "genes")
-            for (gene_idx_integer, query_prot_name) in list_prots:
-                prot_id = id_transformer.transform(query_prot_name)
-                gene_xml = lxml_ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": prot_id})
+            for gene in list_prots:
+                attribs = {"id": str(gene.numeric_id), "protId": id_transformer.transform(gene.prot_id)}
+                if gene.main_isoform is not None:
+                    attribs["main_isoform"] = str(gene.main_isoform)
+                gene_xml = lxml_ET.SubElement(genes_xml, "gene", attrib=attribs)
 
             # write single species table
             oxml_writer.write_element('species', species_xml)
@@ -201,7 +204,8 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
         scores = lxml_ET.Element("scores")
         lxml_ET.SubElement(scores, "scoreDef", {"id": "CompletenessScore",
                                                 "desc": "Fraction of expected species with genes in the (Sub)HOG"})
-        # TODO: add BranchLength score here as well.
+        lxml_ET.SubElement(scores, "scoreDef", {"id": "BranchLength",
+                                                "desc": "Fitted distance between orthologGroup / paralogGroup / geneRef nodes (i.e., ancestral and extant genes) in implied gene tree."})
         oxml_writer.write_element('scores', scores)
 
         # - Step 4. iter-load and write all root-level hogs

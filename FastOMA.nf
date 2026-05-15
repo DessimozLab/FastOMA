@@ -12,7 +12,6 @@ params.species_tree    = params.species_tree ?: "${params.input}/species_tree.nw
 // output subfolder definition
 params.genetrees_folder = params.output_folder + "/genetrees"
 params.msa_folder = params.output_folder + "/msa"
-params.dist_folder = params.output_folder + "/distances"
 params.hogmap_folder = params.output_folder + "/hogmap"
 params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
 
