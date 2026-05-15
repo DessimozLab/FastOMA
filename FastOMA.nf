@@ -15,6 +15,8 @@ params.msa_folder = params.output_folder + "/msa"
 params.hogmap_folder = params.output_folder + "/hogmap"
 params.temp_output = params.output_folder +"/temp_output" //"/temp_omamer_rhogs"
 
+params.nwk_folder = params.output_folder + "/distnwk"
+
 // Utility process to fetch remote datasets
 process fetchRemoteData {
     // Cache in a dedicated cache directory
@@ -240,6 +242,7 @@ process hog_rest{
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "HOG*tsv"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "HOG*tsv.gz"
+  publishDir path: params.nwk_folder, pattern: "*_hogdist.nwk"
 
   input:
     each rhogsrest

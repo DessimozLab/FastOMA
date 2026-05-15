@@ -21,4 +21,4 @@ def fit_distances(hog_xml, dist_df, delta=1e-3, tag_name='BranchLength'):
 
     map_distances_to_xml(tm.t.seed_node, hog_xml, tag_name=tag_name)
     save_stats_to_xml(hog_xml, tag_name=tag_name, NrIter=it, Resid=r, SolveTime=t_solve)
-    #return tm.t.as_string('newick')
+    return (nwk, tm.t.as_string('newick'))

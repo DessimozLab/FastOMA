@@ -146,9 +146,18 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
             # speed up as we sometimes have multiple |<g1,g2>| estimates, especially when subsampling less
             hog_dist_df = hog_dist_df.groupby(['geneRef1', 'geneRef2']).Distance.mean().reset_index()
             #fit_distances(hogs_rhogs_xml[i], hog_dist_df, delta=1e-3, tag_name='BranchLength')
-            fit_distances(hogs_rhogs_xml[i], hog_dist_df, delta=1e-3, tag_name='BranchLength3')
-            fit_distances(hogs_rhogs_xml[i], hog_dist_df, delta=1e-6, tag_name='BranchLength6')
-            fit_distances(hogs_rhogs_xml[i], hog_dist_df, delta=1e-9, tag_name='BranchLength9')
+            (nwk, nwk3) = fit_distances(hogs_rhogs_xml[i], hog_dist_df, delta=1e-3, tag_name='BranchLength3')
+            (nwk, nwk6) = fit_distances(hogs_rhogs_xml[i], hog_dist_df, delta=1e-6, tag_name='BranchLength6')
+            (nwk, nwk9) = fit_distances(hogs_rhogs_xml[i], hog_dist_df, delta=1e-9, tag_name='BranchLength9')
+
+            with open(f'hog_{rhogid}_nwk_{hog_i.hogid}_hogdist.nwk', 'wt') as fp:
+                print(nwk, file=fp)
+            with open(f'hog_{rhogid}_nwk3_{hog_i.hogid}_hogdist.nwk', 'wt') as fp:
+                print(nwk3, file=fp)
+            with open(f'hog_{rhogid}_nwk6_{hog_i.hogid}_hogdist.nwk', 'wt') as fp:
+                print(nwk6, file=fp)
+            with open(f'hog_{rhogid}_nwk9_{hog_i.hogid}_hogdist.nwk', 'wt') as fp:
+                print(nwk9, file=fp)
 
             if conf_infer_subhhogs.v > 1:
                 logger.debug("writing an orthoxml stub file with distances for hog %s", hog_i.hogid)
