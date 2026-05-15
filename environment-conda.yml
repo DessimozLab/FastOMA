@@ -17,4 +17,5 @@ dependencies:
   - mmseqs2
   - pip
   - pip:
+    - orthoxml-tools
     - .[report]

@@ -7,3 +7,4 @@ archive
 .gitignore
 __pycache__
 *.orig
+.*.swp

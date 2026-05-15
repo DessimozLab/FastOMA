@@ -8,6 +8,8 @@ from pathlib import Path
 from datetime import datetime
 from Bio import SeqIO
 from ete3 import Tree
+from lxml import etree as lxml_ET
+from orthoxml.parsers import OrthoXMLStreamWriter
 
 from ._utils_subhog import read_species_tree
 from .transformer import header_transformer
@@ -158,48 +160,58 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
     # in benchamrk dataset the output prot names should be short
     # tr|A0A0N7KCI6|A0A0N7KCI6_ORYSJ
     # for qfo benchmark, the middle should be written in the file
+    def convert_xml_to_lxml_etree(xml):
+        # temporary fix until other functions converted to lxml.etree
+        return lxml_ET.fromstring(ET.tostring(xml))
 
-    orthoxml_file = ET.Element("orthoXML", attrib={"xmlns": "http://orthoXML.org/2011/",
-                                                   "origin": "FastOMA "+fastoma_version,
-                                                   "originVersion": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                                   "version": "0.5"})  #
+    xmlns = "http://orthoXML.org/2011/"
+    attribs = {"origin": "FastOMA "+fastoma_version,
+               "originVersion": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+               "version": "0.5"}
 
-    with open(gene_id_pickle_file, 'rb') as handle:
-        gene_id_name = pickle.load(handle)
-        # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
-    logger.debug("We read the gene_id_name dictionary with %d items", len(gene_id_name))
+    with OrthoXMLStreamWriter(target=output_xml_name, xmlns=xmlns, attrib=attribs) as oxml_writer:
+        # - Step 1. create species -> gene tables
+        with open(gene_id_pickle_file, 'rb') as handle:
+            gene_id_name = pickle.load(handle)
+            # gene_id_name[query_species_name] = (gene_idx_integer, query_prot_name)
+        logger.debug("Finished reading gene_id_name dict with %d items", len(gene_id_name))
 
-    speciestree = read_species_tree(species_tree)
-    taxonomy, name2taxid = convert_speciestree_to_orthoxml_taxonomy(speciestree)
-    logger.debug("Now creating the header of orthoxml")
+        speciestree = read_species_tree(species_tree)
+        taxonomy, name2taxid = convert_speciestree_to_orthoxml_taxonomy(speciestree)
 
-   #  #### create the header of orthoxml ####
-    for query_species_name, list_prots in gene_id_name.items():
-        species_xml = ET.SubElement(orthoxml_file, "species", attrib={"name": query_species_name, "taxonId": str(name2taxid[query_species_name]), "NCBITaxId": "0"})
-        database_xml = ET.SubElement(species_xml, "database", attrib={"name": "database", "version": "2023"})
-        genes_xml = ET.SubElement(database_xml, "genes")
-        for gene in list_prots:
-            attribs = {"id": str(gene.numeric_id), "protId": id_transformer.transform(gene.prot_id)}
-            if gene.main_isoform is not None:
-                attribs["main_isoform"] = str(gene.main_isoform)
-            gene_xml = ET.SubElement(genes_xml, "gene", attrib=attribs)
-    logger.debug("gene_xml is created.")
-    orthoxml_file.append(taxonomy)
+        for query_species_name, list_prots in gene_id_name.items():
+            species_xml = lxml_ET.Element("species", attrib={"name": query_species_name, "taxonId": str(name2taxid[query_species_name]), "NCBITaxId": "0"})
+            database_xml = lxml_ET.SubElement(species_xml, "database", attrib={"name": "database", "version": "2023"})
+            genes_xml = lxml_ET.SubElement(database_xml, "genes")
+            for (gene_idx_integer, query_prot_name) in list_prots:
+                prot_id = id_transformer.transform(query_prot_name)
+                gene_xml = lxml_ET.SubElement(genes_xml, "gene", attrib={"id": str(gene_idx_integer), "protId": prot_id})
 
-    scores = ET.SubElement(orthoxml_file, "scores")
-    ET.SubElement(scores, "scoreDef", {"id": "CompletenessScore",
-                                       "desc": "Fraction of expected species with genes in the (Sub)HOG"})
+            # write single species table
+            oxml_writer.write_element('species', species_xml)
 
-    #  #### create the groups of orthoxml   ####
-    groups_xml = ET.SubElement(orthoxml_file, "groups")
-    for fam, hogs_a_rhog_xml in enumerate(iter_hogs(Path(pickle_folder)), start=1):
-        groups_xml.append(update_hogids(fam, hogs_a_rhog_xml, name2taxid))
-    logger.debug("converting the xml object to string.")
-    with open(output_xml_name, 'wb') as fh:
-        ET.indent(orthoxml_file, space='  ', level=0)
-        orthoxml = ET.ElementTree(orthoxml_file)
-        orthoxml.write(fh, encoding="utf-8", xml_declaration=True, )
-    logger.info("orthoxml is written in %s", output_xml_name)
+        del gene_id_name  # cleanup
+        logger.debug("Finished writing species section.")
+
+        # - Step 2. add taxonomy
+        oxml_writer.write_element('taxonomy', convert_xml_to_lxml_etree(taxonomy))
+        logger.debug("Finished writing species taxonomy to file.")
+
+        # - Step 3. define any scores used in the xml
+        scores = lxml_ET.Element("scores")
+        lxml_ET.SubElement(scores, "scoreDef", {"id": "CompletenessScore",
+                                                "desc": "Fraction of expected species with genes in the (Sub)HOG"})
+        # TODO: add BranchLength score here as well.
+        oxml_writer.write_element('scores', scores)
+
+        # - Step 4. iter-load and write all root-level hogs
+        oxml_writer.write_element('start_groups', elem=None)
+        for (fam_ii, fam_xml) in enumerate(iter_hogs(Path(pickle_folder)), start=1):
+            oxml_writer.write_element('root_hog', convert_xml_to_lxml_etree(update_hogids(fam_ii, fam_xml, name2taxid)))
+        oxml_writer.write_element('end_groups', elem=None)
+        logger.debug("Finished writing root hogs.")
+
+    logger.info("orthoxml has been written in %s", output_xml_name)
 
 
 def callback_group_and_omamer(node):

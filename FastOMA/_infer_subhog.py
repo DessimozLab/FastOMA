@@ -119,9 +119,9 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
                 hogs_a_rhog_xml = hogs_a_rhog_xml_raw
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
             placed_genes += len(hog_i)
-            if conf_infer_subhhogs.write_pairwise_distances:
+            if conf_infer_subhhogs.estimate_distances:
                 for gref in hogs_a_rhog_xml.iterfind('.//geneRef'):
-                    geneRef2hogi[int(gref.attrib['id'])] = i
+                    geneRef2hogi[int(gref.attrib['id'])] = (len(hogs_rhogs_xml) - 1)
 
             if conf_infer_subhhogs.v > 1:
                 logger.debug("writing an orthoxml stub file for hog %s", hog_i.hogid)
@@ -133,6 +133,28 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
             logger.debug("we are not reporting due to fastoma singleton hog |*|  " + str(list(hog_i._members)[0]))
             if len(hog_i) > 1:
                 logger.warning("issue 166312309 this is not a singleton "+str(hog_i._members))
+
+    # ----- distance estimation -----
+    if conf_infer_subhhogs.estimate_distances:
+        from .distance_fitting.fitting import fit_distances
+        import pandas as pd
+
+        dist_df = pd.DataFrame(extract_pairwise_distances_among_hogs(rhogid, geneRef2hogi),
+                               columns=["geneRef1", "geneRef2", "Estimated_at_level", "Distance", "hog_idx"])
+
+        for (i, hog_dist_df) in dist_df.groupby("hog_idx"):
+            # speed up as we sometimes have multiple |<g1,g2>| estimates, especially when subsampling less
+            hog_dist_df = hog_dist_df.groupby(['geneRef1', 'geneRef2']).Distance.mean().reset_index()
+            fit_distances(hogs_rhogs_xml[i], hog_dist_df)
+
+            if conf_infer_subhhogs.v > 1:
+                logger.debug("writing an orthoxml stub file with distances for hog %s", hog_i.hogid)
+                with open(f'orthostub_{rhogid}_xml_{hog_i.hogid}_dist.xml', 'wb') as handle:
+                    ET.indent(hogs_rhogs_xml[i], space='  ', level=0)
+                    oxml_et = ET.ElementTree(hogs_rhogs_xml[i])
+                    oxml_et.write(handle, encoding="utf-8")
+
+    # ----- end distance estimation -----
 
     pickles_rhog_file = pickles_rhog_folder + '/file_' + rhogid + '.pickle'
     with open(pickles_rhog_file, 'wb') as handle:
@@ -153,12 +175,6 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     del hogs_a_rhog  # to be memory efficient
     gc.collect()
     
-    if conf_infer_subhhogs.write_pairwise_distances:
-        with gzip.open(f"Dist_{rhogid}.tsv.gz", "wt") as fh:
-            writer = csv.writer(fh, "excel-tab")
-            writer.writerow(["geneRef1", "geneRef2", "Estimated_at_level", "Distance"])
-            writer.writerows(collect_pairwise_distances_among_hogs(rhogid, geneRef2hogi))
-
     hogs_rhogs_xml_len = len(hogs_rhogs_xml)
     return hogs_rhogs_xml_len
 
@@ -184,7 +200,7 @@ def build_xml_from_rhog(rhogid:str, seqs:List[SeqRecord], hogs:List[ET.Element])
     return ET.ElementTree(root)
 
 
-def collect_pairwise_distances_among_hogs(rhogid:str, geneRef2hogi:dict):
+def extract_pairwise_distances_among_hogs(rhogid:str, geneRef2hogi:dict):
     all_dists = []
     for fn in Path('./').glob(f"Dist_{rhogid}_*.pickle"):
         if (m := re.match(rf"Dist_{rhogid}_(?P<level>.*)\.pickle", fn.name)) is not None:
@@ -197,10 +213,9 @@ def collect_pairwise_distances_among_hogs(rhogid:str, geneRef2hogi:dict):
         for (gref1, gref2), d in dist.items():
             try:
                 if geneRef2hogi[gref1] == geneRef2hogi[gref2]:
-                    all_dists.append((gref1, gref2, lev, f"{d:.6f}"))
+                    yield (gref1, gref2, lev, d, geneRef2hogi[gref1])
             except KeyError:
                 pass
-    return sorted(all_dists)
 
 
 def infer_hogs_concurrent(species_tree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs):
@@ -723,7 +738,7 @@ class LevelHOGProcessor:
         return new_hogs
 
     def dump_distances(self, gene_tree):
-        if self.conf.write_pairwise_distances:
+        if self.conf.estimate_distances:
             dist = {}
             for l1, l2 in itertools.combinations(gene_tree.iter_leaves(), 2):
                 geneRef1 = int(l1.name.split("||")[2])

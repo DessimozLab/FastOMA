@@ -204,7 +204,6 @@ process hog_big{
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "HOG*tsv"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "HOG*tsv.gz"
-  publishDir path: params.dist_folder, pattern: "Dist_*tsv.gz"
 
   input:
     each rhogsbig
@@ -217,7 +216,6 @@ process hog_big{
     path "*.nwk" , optional: true  // gene trees  if write True
     path "HOG*.tsv", optional: true
     path "HOG*.tsv.gz", optional: true
-    path "Dist_*tsv.gz"
   script:
     """
         fastoma-infer-subhogs  --input-rhog-folder ${rhogsbig}  \
@@ -225,7 +223,7 @@ process hog_big{
                                --output-pickles pickle_hogs \
                                --parallel  \
                                -vv \
-                               --write-pairwise-distances \
+                               --estimate-distances \
                                --msa-filter-method ${params.filter_method} \
                                --gap-ratio-row ${params.filter_gap_ratio_row} \
                                --gap-ratio-col ${params.filter_gap_ratio_col} \
@@ -243,7 +241,6 @@ process hog_rest{
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "HOG*tsv"
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "HOG*tsv.gz"
-  publishDir path: params.dist_folder, pattern: "Dist_*tsv.gz"
 
   input:
     each rhogsrest
@@ -254,14 +251,13 @@ process hog_rest{
     path "*.nwk" , optional: true  // gene trees  if write True
     path "HOG*.tsv", optional: true
     path "HOG*.tsv.gz", optional: true
-    path "Dist_*tsv.gz"
   script:
     """
         fastoma-infer-subhogs --input-rhog-folder ${rhogsrest}  \
                               --species-tree ${species_tree} \
                               --output-pickles pickle_hogs \
                               -vv \
-                              --write-pairwise-distances \
+                              --estimate-distances \
                               --msa-filter-method ${params.filter_method} \
                               --gap-ratio-row ${params.filter_gap_ratio_row} \
                               --gap-ratio-col ${params.filter_gap_ratio_col} \
@@ -285,7 +281,7 @@ process collect_subhogs{
     val  id_transform
 
   output:
-    path "FastOMA_HOGs.orthoxml"
+    path "FastOMA_HOGs.orthoxml.gz"
     path "OrthologousGroupsFasta"
     path "OrthologousGroups.tsv"
     path "RootHOGs.tsv"
@@ -296,7 +292,7 @@ process collect_subhogs{
         fastoma-collect-subhogs --pickle-folder pickle_folders/ \
                                 --roothogs-folder omamer_rhogs/ \
                                 --gene-id-pickle-file gene_id_dic_xml.pickle \
-                                --out FastOMA_HOGs.orthoxml \
+                                --out FastOMA_HOGs.orthoxml.gz \
                                 --marker-groups-fasta OrthologousGroups.tsv \
                                 --roothog-tsv RootHOGs.tsv \
                                 --species-tree ${species_tree} \
