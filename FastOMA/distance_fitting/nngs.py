@@ -26,7 +26,7 @@ from scipy.sparse.linalg import lsmr
 import numpy as np
 
 
-def nngs(A, d): #, edges_fixed, fit_missing_free):  # converge_type=2, initial=1):
+def nngs(A, d, delta=1e-3): #, edges_fixed, fit_missing_free):  # converge_type=2, initial=1):
     #func = _nngs1 if converge_type == 1 else _nngs2
     func = _nngs2
 
@@ -41,7 +41,7 @@ def nngs(A, d): #, edges_fixed, fit_missing_free):  # converge_type=2, initial=1
     f = -1.0*(A.T@d)
 
     #x0 = np.zeros_like(f)
-    return func(ii, jj, xx, D, f, H.shape[0])#, x0)
+    return func(ii, jj, xx, D, f, H.shape[0], delta=delta)#, x0)
 
     #mask = np.zeros_like(x0, dtype=np.bool_)
     #for (i, e_i) in enumerate(edges_fixed):
@@ -129,9 +129,9 @@ def nngs(A, d): #, edges_fixed, fit_missing_free):  # converge_type=2, initial=1
 
 
 @jit(nopython=True, fastmath=True, nogil=True, parallel=True)
-def _nngs2(ii, jj, xx, D, f, n):#, x):#, mask):
+def _nngs2(ii, jj, xx, D, f, n, delta=1e-3):#, x):#, mask):
     #DELTA = 1e-9
-    DELTA = 1e-3
+    #DELTA = 1e-3
     ITER_CHECK = min(n // 2, 500)
     MAXITERS = int(1e3)
 
@@ -166,7 +166,7 @@ def _nngs2(ii, jj, xx, D, f, n):#, x):#, mask):
                 if t < m:
                     m = t
             r = (z + np.dot(x, f) - (np.sum(x)*m))
-            if r < DELTA or r == r1:
+            if r < delta or r == r1:
                 converge = True
             r1 = r
 

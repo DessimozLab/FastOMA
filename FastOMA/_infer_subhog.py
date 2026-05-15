@@ -145,7 +145,10 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
         for (i, hog_dist_df) in dist_df.groupby("hog_idx"):
             # speed up as we sometimes have multiple |<g1,g2>| estimates, especially when subsampling less
             hog_dist_df = hog_dist_df.groupby(['geneRef1', 'geneRef2']).Distance.mean().reset_index()
-            fit_distances(hogs_rhogs_xml[i], hog_dist_df)
+            #fit_distances(hogs_rhogs_xml[i], hog_dist_df, delta=1e-3, tag_name='BranchLength')
+            fit_distances(hogs_rhogs_xml[i], hog_dist_df, delta=1e-3, tag_name='BranchLength3')
+            fit_distances(hogs_rhogs_xml[i], hog_dist_df, delta=1e-6, tag_name='BranchLength6')
+            fit_distances(hogs_rhogs_xml[i], hog_dist_df, delta=1e-9, tag_name='BranchLength9')
 
             if conf_infer_subhhogs.v > 1:
                 logger.debug("writing an orthoxml stub file with distances for hog %s", hog_i.hogid)

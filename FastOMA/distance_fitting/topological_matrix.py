@@ -123,7 +123,7 @@ class TopologicalMatrix(object):
         #        pair_mask,
         #        np.array(fixed_edge_ii))
 
-    def solve(self, pairs, d): #, fit_missing_free):  #, convergence_type=2, initial=1):
+    def solve(self, pairs, d, delta=1e-3): #, fit_missing_free):  #, convergence_type=2, initial=1):
         if self.n > 2:
             #(M, fixed_d, pair_mask, edges_fixed) = self.format(pairs)
             M = self.format(pairs)
@@ -132,7 +132,7 @@ class TopologicalMatrix(object):
             t0 = datetime.now()
             #(x, it, r) = nngs(M, d, converge_type=convergence_type, initial=initial)
             #(x, it, r) = nngs(M, d1, edges_fixed, fit_missing_free)
-            (x, it, r) = nngs(M, d)
+            (x, it, r) = nngs(M, d, delta=delta)
             t = (datetime.now() - t0).total_seconds()
         else:
             (x, it, r) = (np.array([np.mean(d),]), 0, 0)
