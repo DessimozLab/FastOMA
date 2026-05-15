@@ -5,6 +5,8 @@ channels:
   - defaults
 dependencies:
   - omamer
+  - numba
+  - scipy
   - mafft
   - fasttree
   - nextflow

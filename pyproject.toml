@@ -23,6 +23,9 @@ dependencies = [
     "numpy",
     "pyparsing",
     "networkx",
+    "orthoxml-tools",
+    "numba",
+    "scipy",
 ]
 
 [project.optional-dependencies]
