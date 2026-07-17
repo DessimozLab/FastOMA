@@ -256,6 +256,7 @@ def infer_gene_tree_fold(msa, foldwdir):
         for id1 in ids:
             try :
                 structs_folders=foldwdir+'/pdbs' #"downloaded_structures/"
+
                 logger.debug(" *1* we are copying this file struct pdb  " + structs_folders +id1+".pdb")
                 shutil.copyfile(structs_folders+id1+".pdb", structfolder+id1+".pdb")
             except:
