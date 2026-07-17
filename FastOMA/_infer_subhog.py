@@ -33,7 +33,7 @@ from .zoo.utils import unique
 
 low_so_detection = True # detection of proteins with low species overlap score in gene tree
 fragment_detection = True  # this also need to be consistent in _hog_class.py
-keep_subhog_each_pickle = False
+keep_subhog_each_pickle = True
 inferhog_resume_subhog = True
 inferhog_max_workers_num = 6 # how parallel to work in a species tree, (won't help near the root)
 inferhog_min_hog_size_xml = 2     # by setting this as 1, pyham won't work on xml output.
@@ -465,11 +465,14 @@ class LevelHOGProcessor:
 
 
     def infer_genetree_from_msa(self, msa):
-        fold = True
-        foldwdir= self.conf.foldwdir
-        if fold:
+
+        logger.debug(f'mode is {self.conf.mode}')
+        if self.conf.mode=='fold':
+            foldwdir = self.conf.foldwdir
+            logger.debug(f" in mode Fold; foldwdir: {foldwdir}")
             genetree_nwk = _wrappers.infer_gene_tree_fold(msa,foldwdir)
-        else:
+        elif self.conf.mode=='sequence':
+            logger.debug(f" in mode sequence, normal fastoma ")
             genetree_nwk = _wrappers.infer_gene_tree(msa)
         try:
             genetree = Tree(genetree_nwk + ";", format=0, quoted_node_names=True)

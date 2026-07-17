@@ -181,9 +181,15 @@ def infer_gene_tree_fold(msa, foldwdir):
     import subprocess
     import shutil
 
+    import sys
+    #sys.path.insert(0, "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/fastoma/")
+    import fold_tree
+    from fold_tree.src import AFDB_tools # import wget in AFDB_tools
+    from fold_tree.src import foldseek2tree # import statsmodels in foldseek2tree
+
     #from Bio.PDB import *
-    from FastOMA.fold_tree import AFDB_tools
-    from FastOMA.fold_tree import foldseek2tree
+    #from FastOMA.fold_tree import AFDB_tools
+    #from FastOMA.fold_tree import foldseek2tree
     #from fold_tree.src import AFDB_tools
     #from fold_tree.src import foldseek2tree
     #
@@ -249,7 +255,7 @@ def infer_gene_tree_fold(msa, foldwdir):
         not_found=[]
         for id1 in ids:
             try :
-                structs_folders="downloaded_structures/"
+                structs_folders=foldwdir+'/pdbs' #"downloaded_structures/"
                 logger.debug(" *1* we are copying this file struct pdb  " + structs_folders +id1+".pdb")
                 shutil.copyfile(structs_folders+id1+".pdb", structfolder+id1+".pdb")
             except:
@@ -257,10 +263,10 @@ def infer_gene_tree_fold(msa, foldwdir):
                 print("struct pdb file not found"+id1)
                 logger.debug(" *2*  struct pdb file not found"+id1)
 
-        #resdf = AFDB_tools.grab_entries(ids, verbose=False) # download structures
+        resdf = AFDB_tools.grab_entries(ids, verbose=False) # download structures
         # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
 
-        #missing = [AFDB_tools.grab_struct(i, structfolder, rejectedfolder) for i in ids]
+        missing = [AFDB_tools.grab_struct(i, structfolder, rejectedfolder) for i in ids]
         #found = glob.glob(structfolder + '*.pdb') + glob.glob(rejectedfolder + '*.pdb')
         #found = {i.split('/')[-1].replace('.pdb', ''): i for i in found}
         #missing_structs = set(ids) - set(found.keys())
@@ -340,12 +346,13 @@ def infer_gene_tree_fold(msa, foldwdir):
 
     from Bio.Align import MultipleSeqAlignment
     ids_dic = {}
-    ids = [i.split("|")[1] for i in members_list_lowerLevel_ready]
-
-    for prot_i in members_list_lowerLevel_ready:
-        ids_dic[prot_i.split("|")[1]] = prot_i
-
+    ids=[]
+    # ids = [i.split("|")[1] for i in members_list_lowerLevel_ready]
     #
+    # for prot_i in members_list_lowerLevel_ready:
+    #     ids_dic[prot_i.split("|")[1]] = prot_i
+
+
     # for in_msa in msa:
     #     # msa could be a list of MSAs. [for structure tree we don't do msa]
     #     if isinstance(in_msa, MultipleSeqAlignment):
@@ -357,16 +364,16 @@ def infer_gene_tree_fold(msa, foldwdir):
     #         prot_i = in_msa
     #         ids_dic[prot_i.id.split("|")[1]]=prot_i.id
     #         ids.append(prot_i.id.split("|")[1])
-    #ids = [i.id.split("|")[1] for i in msa]
+    ids = [i.id.split("|")[1] for i in msa]
 
 
 
     time_date_raw =str(datetime.datetime.now())
-    infolder ="fold_tmp/" +re.sub('[^A-Za-z0-9]+', '', time_date_raw)+"/"
+    infolder = foldwdir+"fold_tmp/" +re.sub('[^A-Za-z0-9]+', '', time_date_raw)+"/"
     try:
         os.makedirs(infolder)
     except:
-        print("folder exist "+infolder )
+        print("folder exist " + infolder )
 
     num_prot_struct = struct_f2(ids,infolder)
     if num_prot_struct >1:
