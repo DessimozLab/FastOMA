@@ -470,7 +470,7 @@ class LevelHOGProcessor:
         if self.conf.mode=='fold':
             foldwdir = self.conf.foldwdir
             logger.debug(f" in mode Fold; foldwdir: {foldwdir}")
-            genetree_nwk = _wrappers.infer_gene_tree_fold(msa,foldwdir)
+            genetree_nwk = _wrappers.infer_gene_tree_fold(self.conf,msa)
         elif self.conf.mode=='sequence':
             logger.debug(f" in mode sequence, normal fastoma ")
             genetree_nwk = _wrappers.infer_gene_tree(msa)

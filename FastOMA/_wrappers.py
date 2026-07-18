@@ -1,4 +1,4 @@
-import subprocess
+#import subprocess
 import logging
 
 from ete3 import Tree
@@ -6,6 +6,33 @@ from ete3 import Tree
 from .zoo.wrappers.aligners import mafft
 from .zoo.wrappers.treebuilders import fasttree
 from .zoo.wrappers.trimmers.trimal import TrimAl
+
+import os
+import datetime
+import re
+import numpy as np
+import pandas as pd
+import toytree
+import subprocess
+import shutil
+#import sys
+# sys.path.insert(0, "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/fastoma/")
+# import fold_tree
+# from fold_tree.src import AFDB_tools # import wget in AFDB_tools
+import requests
+import time
+from io import StringIO
+import wget
+from Bio.Align import MultipleSeqAlignment
+
+# from fold_tree.src import foldseek2tree # import statsmodels in foldseek2tree
+# from Bio.PDB import *
+# from FastOMA.fold_tree import AFDB_tools
+# from FastOMA.fold_tree import foldseek2tree
+# from fold_tree.src import AFDB_tools
+# from fold_tree.src import foldseek2tree
+#
+
 
 logger = logging.getLogger(__name__)
 
@@ -162,44 +189,20 @@ def mad_rooting(input_tree_file_path: str):  # , mad_executable_path: str = "./m
     return rooted_tree
 
 
-def infer_gene_tree_fold(msa, foldwdir):
+def infer_gene_tree_fold(conf, msa):
     """
     infer gene tree using foldseek and foldtree
 
     """
 
     logger.debug("we are here at infer_gene_tree_fold ")
-    import os
-    import glob
 
-    import datetime
-    import re
-    import numpy as np
-    import pandas as pd
-    import toytree
-    import shutil
-    import subprocess
-    import shutil
-
-    import sys
-    #sys.path.insert(0, "/work/FAC/FBM/DBC/cdessim2/default/smajidi1/pycharm_projects/fastoma/")
-    import fold_tree
-    from fold_tree.src import AFDB_tools # import wget in AFDB_tools
-    from fold_tree.src import foldseek2tree # import statsmodels in foldseek2tree
-
-    #from Bio.PDB import *
-    #from FastOMA.fold_tree import AFDB_tools
-    #from FastOMA.fold_tree import foldseek2tree
-    #from fold_tree.src import AFDB_tools
-    #from fold_tree.src import foldseek2tree
-    #
     # def filter_plddt(pdb_path, thresh=.6, minthresh=.5):
     #     '''
     #     Extracts the plddt (in the beta factor column) of the first atom of each residue in a PDB file and returns bool if the pdb is accepted or not.
     #
     #     Parameters:
     #         pdb_path (str): The path to the PDB file.'''
-    #
     #     thresh =  40
     #     minthresh =  0
     #     lddt = []
@@ -214,10 +217,165 @@ def infer_gene_tree_fold(msa, foldwdir):
     #     else:
     #         return True
     #     return 1
+    #
+    # def struct_f(ids, infolder):
+    #     structfolder = infolder + 'structs/'
+    #     rejectedfolder = infolder + 'rejected/'
+    #     try:
+    #         os.mkdir(structfolder)
+    #     except:
+    #         print("folder exist " + structfolder)
+    #     try:
+    #         os.mkdir(rejectedfolder)
+    #     except:
+    #         print("folder exist " + rejectedfolder)
+    #     resdf = AFDB_tools.grab_entries(ids, verbose=False) # download structures
+    #     # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
+    #     missing = [AFDB_tools.grab_struct(i, structfolder, rejectedfolder) for i in ids]
+    #     found = glob.glob(structfolder + '*.pdb') + glob.glob(rejectedfolder + '*.pdb')
+    #     found = {i.split('/')[-1].replace('.pdb', ''): i for i in found}
+    #     #missing_structs = set(ids) - set(found.keys())
+    #     return  len(set(found.keys()))
 
-    def struct_f(ids, infolder):
+    def grab_entries(ids, verbose=False):
+        """
+        Makes requests to the UniProt API for information about proteins with the given IDs.
+
+        Parameters:
+        ids (list): A list of UniProt IDs for the proteins for which information is being requested.
+        verbose (bool, optional): A flag indicating whether to print the returned data to the console. Defaults to False.
+
+        Returns:
+        pd.DataFrame: A DataFrame containing information about the proteins, with one row for each hit in the search.
+
+        Examples:
+        >>> grab_entries(['P00533', 'P15056'])
+                                                                 id  ...                                            sequence
+        0  sp|P00533|1A2K_HUMAN RecName: Full=Alpha-2-...  ...  MPTSVLLLALLLAPAALVHVCRSRFPKCVVLVNVTGLFGN...
+        1  sp|P15056|1A01_HUMAN RecName: Full=Alpha-1-...  ...  MAAARLLPLLPLLLALALALTETSCPPASQGQRASVGDRV...
+
+        Notes:
+        This function makes requests to the UniProt API for information about proteins with the given IDs. If a request is successful, the returned data is processed and added to a DataFrame. If a request is unsuccessful, an error message is printed to the console.
+        """
+        try:
+            name_results = pd.concat([unirequest_tab('+OR+'.join(c), verbose=verbose) for c in chunk(ids, 50)],
+                                     ignore_index=True)
+        except:
+            print('error', ids)
+            time.sleep(10)
+            name_results = pd.concat([unirequest_tab('+OR+'.join(c), verbose=verbose) for c in chunk(ids, 50)],
+                                     ignore_index=True)
+
+        if verbose == True:
+            print(name_results)
+        return name_results
+
+    def chunk(data, csize):
+        return [data[x:x + csize] for x in range(0, len(data), csize)]
+
+    def unirequest_tab(name, verbose=False):
+
+        """
+        Makes a request to the UniProt API and returns information about a protein in tab-separated format.
+
+        Parameters:
+        name (str): The name of the protein for which information is being requested.
+        verbose (bool, optional): A flag indicating whether to print the returned data to the console. Defaults to False.
+
+        Returns:
+        pd.DataFrame: A DataFrame containing information about the protein, with one row for each hit in the search.
+
+        Examples:
+        >>> unirequest_tab('P00533')
+                                                                 id  ...                                            sequence
+        0  sp|P00533|1A2K_HUMAN RecName: Full=Alpha-2-...  ...  MPTSVLLLALLLAPAALVHVCRSRFPKCVVLVNVTGLFGN...
+        """
+        # we query first by protein name and then gene name
+        url = 'http://rest.uniprot.org/uniprotkb/stream?'
+        params = [
+            'query=accession:{}'.format(name),
+            'fields=id,accession,gene_names,protein_name,reviewed,protein_name,organism_name,lineage_ids,sequence',
+            'format=tsv',
+        ]
+        params = ''.join([p + '&' for p in params])[:-1]
+        data = requests.get(url + params).text
+        # only return the first hit for each query
+        try:
+            data = pd.read_table(StringIO(data))
+            data['query'] = data['Entry']
+            data = data[data['Entry'].isin(name.split('+OR+'))]
+            if verbose is True:
+                print(data)
+            return data
+        except:
+            print('error', data)
+            time.sleep(10)
+            unirequest_tab(name, verbose=True)
+
+    def grab_struct(uniID, structfolder, rejected=None, overwrite=False):
+
+        """
+        Downloads a protein structure file from the AlphaFold website and saves it to the specified folder.
+
+        Parameters:
+        uniID (str): The UniProt ID of the protein for which the structure is being downloaded.
+        structfolder (str): The path to the folder where the structure file should be saved.
+        overwrite (bool, optional): A flag indicating whether to overwrite an existing file with the same name in the specified folder. Defaults to False.
+
+        Returns:
+        None: If the file is successfully downloaded or if overwrite is set to True and a file with the same name is found in the specified folder.
+        str: If an error occurs during the download or if a file with the same name is found in the specified folder and overwrite is set to False.
+
+        Examples:
+        >>> grab_struct('P00533', '/path/to/structures/')
+        None
+        >>> grab_struct('P00533', '/path/to/structures/', overwrite=True)
+        None
+        """
+
+        try:
+            os.mkdir(structfolder)
+        except:
+            pass
+        try:
+            prefix = 'https://alphafold.ebi.ac.uk/files/AF-'
+            # post = '-F1-model_v4.pdb'
+            post = '-F1-model_v6.pdb'
+            url = prefix + uniID.upper() + post
+            if not os.path.isfile(structfolder + uniID + '.pdb'):
+                if rejected is None or (rejected and not os.path.isfile(structfolder + uniID + '.pdb')):
+                    wget.download(url, structfolder + uniID + '.pdb')
+        except:
+            print('structure not found', uniID)
+            return uniID
+        return None
+
+    def distmat_to_txt(identifiers, distmat, outfile):
+        '''
+        write out a distance matrix in fastme format
+
+        Parameters
+        ----------
+        identifiers : list
+            list of identifiers for your proteins
+        distmat : np.array
+            distance matrix
+        outfile : str
+            path to output file
+
+        '''
+
+        # write out distmat in phylip compatible format
+        outstr = str(len(identifiers)) + '\n'
+        for i, pdb in enumerate(identifiers):
+            outstr += pdb + ' ' + ' '.join(["{:.4f}".format(d) for d in list(distmat[i, :])]) + '\n'
+        with open(outfile, 'w') as handle:
+            handle.write(outstr)
+            handle.close()
+        return outfile
 
 
+    def struct_f2(ids, infolder):
         structfolder = infolder + 'structs/'
         rejectedfolder = infolder + 'rejected/'
         try:
@@ -229,33 +387,10 @@ def infer_gene_tree_fold(msa, foldwdir):
         except:
             print("folder exist " + rejectedfolder)
 
-        resdf = AFDB_tools.grab_entries(ids, verbose=False) # download structures
-        # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
-
-        missing = [AFDB_tools.grab_struct(i, structfolder, rejectedfolder) for i in ids]
-        found = glob.glob(structfolder + '*.pdb') + glob.glob(rejectedfolder + '*.pdb')
-        found = {i.split('/')[-1].replace('.pdb', ''): i for i in found}
-        #missing_structs = set(ids) - set(found.keys())
-
-        return  len(set(found.keys()))
-
-
-    def struct_f2(ids, infolder):
-        structfolder = infolder + 'structs/'
-        #rejectedfolder = infolder + 'rejected/'
-        try:
-            os.mkdir(structfolder)
-        except:
-            print("folder exist " + structfolder)
-        #try:
-        #    os.mkdir(rejectedfolder)
-        #except:
-        #    print("folder exist " + rejectedfolder)
-
         not_found=[]
         for id1 in ids:
             try :
-                structs_folders=foldwdir+'/pdbs' #"downloaded_structures/"
+                structs_folders=conf.foldwdir+'/pdbs/' #"downloaded_structures/"
 
                 logger.debug(" *1* we are copying this file struct pdb  " + structs_folders +id1+".pdb")
                 shutil.copyfile(structs_folders+id1+".pdb", structfolder+id1+".pdb")
@@ -264,10 +399,9 @@ def infer_gene_tree_fold(msa, foldwdir):
                 print("struct pdb file not found"+id1)
                 logger.debug(" *2*  struct pdb file not found"+id1)
 
-        resdf = AFDB_tools.grab_entries(ids, verbose=False) # download structures
+        resdf = grab_entries(ids, verbose=False) # download sequences
+        missing = [grab_struct(i, structfolder, rejectedfolder) for i in ids]
         # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
-
-        missing = [AFDB_tools.grab_struct(i, structfolder, rejectedfolder) for i in ids]
         #found = glob.glob(structfolder + '*.pdb') + glob.glob(rejectedfolder + '*.pdb')
         #found = {i.split('/')[-1].replace('.pdb', ''): i for i in found}
         #missing_structs = set(ids) - set(found.keys())
@@ -317,7 +451,7 @@ def infer_gene_tree_fold(msa, foldwdir):
             matrices[k] = 1 - matrices[k]
             print(matrices[k], np.amax(matrices[k]), np.amin(matrices[k]))
             #np.save(infolder + k + '_distmat.npy', matrices[k])
-            distmat_txt = foldseek2tree.distmat_to_txt(ids, matrices[k], infolder + output[i])
+            distmat_txt = distmat_to_txt(ids, matrices[k], infolder + output[i])
 
         return 1
 
@@ -345,32 +479,28 @@ def infer_gene_tree_fold(msa, foldwdir):
 
         return tree1
 
-    from Bio.Align import MultipleSeqAlignment
+
     ids_dic = {}
     ids=[]
     # ids = [i.split("|")[1] for i in members_list_lowerLevel_ready]
-    #
-    # for prot_i in members_list_lowerLevel_ready:
-    #     ids_dic[prot_i.split("|")[1]] = prot_i
-
-
-    # for in_msa in msa:
-    #     # msa could be a list of MSAs. [for structure tree we don't do msa]
-    #     if isinstance(in_msa, MultipleSeqAlignment):
-    #         msa_i=in_msa
-    #         for prot_ii in msa_i:
-    #             ids_dic[prot_ii.id.split("|")[1]] = prot_ii.id
-    #             ids.append(prot_ii.id.split("|")[1])
-    #     else:
+    #for prot_i in members_list_lowerLevel_ready:
+    #    ids_dic[prot_i.split("|")[1]] = prot_i
+    #for in_msa in msa:
+    # msa could be ?? a list of MSAs. [for structure tree we don't do msa]
+    if isinstance(msa, MultipleSeqAlignment):
+        for prot_ii in msa:
+            ids_dic[prot_ii.id.split("|")[1]] = prot_ii.id
+            ids.append(prot_ii.id.split("|")[1])
+    else:
+        logger.error('check 8723971 msa must be MultipleSeqAlignment')
     #         prot_i = in_msa
     #         ids_dic[prot_i.id.split("|")[1]]=prot_i.id
     #         ids.append(prot_i.id.split("|")[1])
-    ids = [i.id.split("|")[1] for i in msa]
-
+    #ids = [i.id.split("|")[1] for i in msa]
 
 
     time_date_raw =str(datetime.datetime.now())
-    infolder = foldwdir+"fold_tmp/" +re.sub('[^A-Za-z0-9]+', '', time_date_raw)+"/"
+    infolder = conf.foldwdir+"fold_tmp/" +re.sub('[^A-Za-z0-9]+', '', time_date_raw)+"/"
     try:
         os.makedirs(infolder)
     except:
@@ -396,11 +526,6 @@ def infer_gene_tree_fold(msa, foldwdir):
         # instead -> hash thing
         # ??? hashlib.md5(original_name).hexdig..it()
 
-        if _config.gene_trees_write_all or _config.rooting_method == "mad":
-            file_gene_tree = open(gene_tree_file_addr, "w")
-            file_gene_tree.write(tree_nwk)
-            #file_gene_tree.write(";\n")
-            file_gene_tree.close()
     else:
         # not enough structures  downlaoded  to use
         tree_nwk="("+str(ids[0])+");"
