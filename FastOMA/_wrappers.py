@@ -12,7 +12,8 @@ import datetime
 import re
 import numpy as np
 import pandas as pd
-import toytree
+#import toytree
+
 import subprocess
 import shutil
 #import sys
@@ -388,19 +389,23 @@ def infer_gene_tree_fold(conf, msa):
             print("folder exist " + rejectedfolder)
 
         not_found=[]
-        for id1 in ids:
+        for sp_prot in ids:
             try :
-                structs_folders=conf.foldwdir+'/pdbs/' #"downloaded_structures/"
-
-                logger.debug(" *1* we are copying this file struct pdb  " + structs_folders +id1+".pdb")
-                shutil.copyfile(structs_folders+id1+".pdb", structfolder+id1+".pdb")
+                structs_folders=conf.foldwdir+'/'+sp_prot[0]+'/' #"downloaded_structures/"
+                sp_prot_str= "_".join(sp_prot)
+                logger.debug(" *1* we are copying this file struct pdb  " + structs_folders +sp_prot[1]+".pdb")
+                shutil.copyfile(structs_folders+sp_prot[1]+".pdb", structfolder+sp_prot_str+".pdb")
             except:
-                not_found.append(id1)
-                print("struct pdb file not found"+id1)
-                logger.debug(" *2*  struct pdb file not found"+id1)
-
-        resdf = grab_entries(ids, verbose=False) # download sequences
-        missing = [grab_struct(i, structfolder, rejectedfolder) for i in ids]
+                try:
+                    logger.debug(" *1* we are copying this file struct pdb  " + structs_folders +sp_prot[1]+".pdb.fcz")
+                    shutil.copyfile(structs_folders + sp_prot[1] + ".pdb.fcz", structfolder + sp_prot_str + ".pdb.fcz")
+                except:
+                    not_found.append(sp_prot_str)
+                    print("struct pdb file not found "+sp_prot_str)
+                    logger.debug(" *2*  struct pdb file not found"+sp_prot_str)
+        id_prots=[ii[0] for ii in ids]
+        #resdf = grab_entries(id_prots, verbose=False) # download sequences
+        #missing = [grab_struct(i, structfolder, rejectedfolder) for i in ids]
         # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
         #found = glob.glob(structfolder + '*.pdb') + glob.glob(rejectedfolder + '*.pdb')
         #found = {i.split('/')[-1].replace('.pdb', ''): i for i in found}
@@ -469,15 +474,20 @@ def infer_gene_tree_fold(conf, msa):
         t = str(output)[2:-1]
         treein = t.split("\\n")
         treestr = ' '.join([i.strip() for i in treein])
-        tre = toytree.tree(treestr, format=0)
+        # tre = toytree.tree(treestr, format=0)
         # print(tre)
-        for n in tre.treenode.traverse():
+        # for n in tre.treenode.traverse():
+        #     if n.dist < 0:
+        #         n.dist = delta
+        # tre.write(outree, tree_format=0)
+        # tree1 = tre.write(tree_format=0)
+        tre= Tree(treestr)
+        for n in tre.traverse():
             if n.dist < 0:
-                n.dist = delta
-        tre.write(outree, tree_format=0)
-        tree1 = tre.write(tree_format=0)
+                    n.dist = delta
+        tre.write(outree)
 
-        return tree1
+        return tre
 
 
     ids_dic = {}
@@ -489,8 +499,9 @@ def infer_gene_tree_fold(conf, msa):
     # msa could be ?? a list of MSAs. [for structure tree we don't do msa]
     if isinstance(msa, MultipleSeqAlignment):
         for prot_ii in msa:
-            ids_dic[prot_ii.id.split("|")[1]] = prot_ii.id
-            ids.append(prot_ii.id.split("|")[1])
+            sp_prot= (prot_ii.id.split("||")[1], prot_ii.id.split("||")[0]) # 'sp|P0CD71|EFTU_CHLTR||CHLTR||1001000004'
+            ids_dic['_'.join(sp_prot)] = prot_ii.id
+            ids.append(sp_prot)
     else:
         logger.error('check 8723971 msa must be MultipleSeqAlignment')
     #         prot_i = in_msa
@@ -510,8 +521,8 @@ def infer_gene_tree_fold(conf, msa):
     if num_prot_struct >1:
         foldseek_dist(infolder)
 
-        tree_nwk_raw = quicktree_f(infolder)
-        tree1= Tree(tree_nwk_raw)
+        tree1 = quicktree_f(infolder)
+        #tree1= Tree(tree_nwk_raw)
         for node in tree1.traverse():
             if node.is_leaf():
                 node_name_old = node.name  #

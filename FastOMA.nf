@@ -8,7 +8,7 @@ params.proteome_folder = params.proteome_folder ?: "${params.input}/proteome"
 params.hogmap_in       = params.hogmap_in ?: "${params.input}/hogmap_in"
 params.splice_folder   = params.splice_folder ?: "${params.input}/splice"
 params.species_tree    = params.species_tree ?: "${params.input}/species_tree.nwk"
-
+params.structure_folder   = params.structure_folder ?: "${params.input}/structure"
 // Utility process to fetch remote datasets
 process fetchRemoteData {
     // Cache in a dedicated cache directory
@@ -202,6 +202,7 @@ process hog_big{
     each rhogsbig
     path species_tree
     val nr_species
+    path structure_folder
 
   output:
     path "pickle_hogs"
@@ -222,7 +223,9 @@ process hog_big{
                                --gap-ratio-col ${params.filter_gap_ratio_col} \
                                --number-of-samples-per-hog ${params.nr_repr_per_hog} \
                                ${ params.write_msas ? "--msa-write" : ""} \
-                               ${ params.write_genetrees ? "--gene-trees-write" : ""}
+                               ${ params.write_genetrees ? "--gene-trees-write" : ""} \
+                               --foldwdir ${structure_folder} \
+                               --mode fold
     """
 }
 
@@ -238,6 +241,7 @@ process hog_rest{
   input:
     each rhogsrest
     path species_tree
+    path structure_folder
   output:
     path "pickle_hogs"
     path "*.fa" , optional: true   // msa         if write True
@@ -255,7 +259,9 @@ process hog_rest{
                               --gap-ratio-col ${params.filter_gap_ratio_col} \
                               --number-of-samples-per-hog ${params.nr_repr_per_hog} \
                               ${ params.write_msas ? "--msa-write" : ""} \
-                              ${ params.write_genetrees ? "--gene-trees-write" : ""}
+                              ${ params.write_genetrees ? "--gene-trees-write" : ""} \
+                               --foldwdir ${structure_folder} \
+                               --mode fold
     """
 }
 
@@ -453,6 +459,7 @@ workflow {
     proteome_folder = resolveFolderParam(input_root, params.proteome_folder, 'proteome')
     splice_folder   = resolveFolderParam(input_root, params.splice_folder, 'splice', false)
     hogmap_in       = resolveFolderParam(input_root, params.hogmap_in, 'hogmap_in', false)
+    structure_folder    = resolveFolderParam(input_root, params.structure_folder , 'structure', false)
     species_tree    = params.species_tree ?
                      Channel.fromPath(params.species_tree, type: 'file', checkIfExists: true).first() :
                      resolveFile(input_root, 'species_tree.nwk')
@@ -481,8 +488,8 @@ workflow {
 
     (rhogs_rest_batches, rhogs_big_batches) = batch_roothogs(omamer_rhogs)
 
-    (pickle_big_rhog, msa_out_big, genetrees_out_rest) = hog_big(rhogs_big_batches.flatten(), species_tree_checked, nr_species)
-    (pickle_rest_rhog,  msas_out_rest, genetrees_out_test) = hog_rest(rhogs_rest_batches.flatten(), species_tree_checked)
+    (pickle_big_rhog, msa_out_big, genetrees_out_rest) = hog_big(rhogs_big_batches.flatten(), species_tree_checked, nr_species, structure_folder)
+    (pickle_rest_rhog,  msas_out_rest, genetrees_out_test) = hog_rest(rhogs_rest_batches.flatten(), species_tree_checked, structure_folder)
     channel.empty().concat(pickle_big_rhog, pickle_rest_rhog).set{ all_rhog_pickle }
 
     (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(all_rhog_pickle.collect(), gene_id_dic_xml, omamer_rhogs, species_tree_checked, params.fasta_header_id_transformer)
