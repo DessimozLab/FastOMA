@@ -402,8 +402,8 @@ def infer_gene_tree_fold(conf, msa):
                 except:
                     not_found.append(sp_prot_str)
                     print("struct pdb file not found "+sp_prot_str)
-                    logger.debug(" *2*  struct pdb file not found"+sp_prot_str)
-        id_prots=[ii[0] for ii in ids]
+                    logger.debug(" *2*  struct pdb file not found "+sp_prot_str)
+        #id_prots=[ii[0] for ii in ids]
         #resdf = grab_entries(id_prots, verbose=False) # download sequences
         #missing = [grab_struct(i, structfolder, rejectedfolder) for i in ids]
         # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
@@ -429,8 +429,10 @@ def infer_gene_tree_fold(conf, msa):
         # get the folder of the input file
         # infolder = snakemake.input[0].split('/')[:-1]
         # infolder = ''.join( [i + '/' for i in infolder])+'/'
-        res[0] = res[0].map(lambda x: x.replace('.pdb', ''))
-        res[1] = res[1].map(lambda x: x.replace('.pdb', ''))
+        import os
+
+        res[0] = res[0].map(lambda x: x.split("/")[-1].replace('.pdb', ''))
+        res[1] = res[1].map(lambda x: x.split("/")[-1].replace('.pdb', '')) # if there is a pth in the prot name
         res.columns = 'query,target,fident,evalue,bits'.split(',')
         ids = list(set(list(res['query'].unique()) + list(res['target'].unique())))
         pos = {protid: i for i, protid in enumerate(ids)}
@@ -539,8 +541,8 @@ def infer_gene_tree_fold(conf, msa):
 
     else:
         # not enough structures  downlaoded  to use
-        tree_nwk="("+str(ids[0])+");"
-
+        #tree_nwk="("+ ids_dic['_'.join(sp_prot)] +");" # no output tree, let's make a tree with one leaf to keep going
+        tree_nwk = -1
     return tree_nwk
 
 
