@@ -23,6 +23,86 @@ import itertools
 from . import _utils_subhog, logger
 
 
+def _member_species(members) -> set:
+    return set(m.split("||")[1] for m in members)
+
+
+def _count_implied_losses(mrca: TreeNode, species_with_members: set) -> int:
+    """Dollo-parsimony style count of minimal loss events between `mrca` and the species
+    that actually have a member gene: a whole clade lacking any member counts as one loss,
+    regardless of how many species it spans."""
+    def recurse(node):
+        leaves_under = set(n.name for n in node.iter_leaves())
+        if leaves_under.isdisjoint(species_with_members):
+            return 1
+        if node.is_leaf():
+            return 0
+        return sum(recurse(c) for c in node.children)
+    return sum(recurse(c) for c in mrca.children)
+
+
+def _induced_congruent_score(node: TreeNode, species_with_members: set, depth: int = 0):
+    """Best achievable TCS-style score for `species_with_members` given the real species
+    tree topology below `node`, i.e. the score a perfectly congruent tree would obtain.
+
+    Returns (has_member, score) where `has_member` indicates whether any leaf under `node`
+    is in `species_with_members`."""
+    if node.is_leaf():
+        return node.name in species_with_members, 0.0
+    results = [_induced_congruent_score(c, species_with_members, depth + 1) for c in node.children]
+    total = sum(s for _, s in results)
+    n_contributing = sum(1 for has, _ in results if has)
+    if n_contributing >= 2:
+        total += depth
+    return n_contributing > 0, total
+
+
+def _combine_tcs_parts(parts):
+    lineages = [lin for lin, _ in parts if lin is not None]
+    score = sum(s for _, s in parts)
+    lineage = frozenset.intersection(*lineages) if lineages else None
+    return lineage, score + (len(lineage) if lineage is not None else 0)
+
+
+def _tcs_partial(hog: "HOG", mrca: TreeNode):
+    """Recursively computes (lineage relative to `mrca`, raw TCS score) for `hog`, mirroring
+    the same _tax_now-based grouping of _subhogs used by HOG.to_orthoxml()."""
+    if not hog._subhogs:
+        species = next(iter(_member_species(hog.get_members())))
+        lineage = set()
+        n = mrca.search_nodes(name=species)[0]
+        while n is not mrca:
+            lineage.add(n.name)
+            n = n.up
+        return frozenset(lineage), 0.0
+
+    groups = []
+    for _, subhogs_of_clade in itertools.groupby(
+            sorted(hog._subhogs, key=lambda h: h._tax_now.name), key=lambda h: h._tax_now.name):
+        subhogs_of_clade = list(subhogs_of_clade)
+        if len(subhogs_of_clade) == 1:
+            groups.append(_tcs_partial(subhogs_of_clade[0], mrca))
+        else:
+            groups.append(_combine_tcs_parts([_tcs_partial(sh, mrca) for sh in subhogs_of_clade]))
+    return _combine_tcs_parts(groups) if len(groups) > 1 else groups[0]
+
+
+def attach_scores(hog_element: ET.Element, hog: "HOG", mrca: TreeNode, species_of_members: set) -> None:
+    """Computes and attaches CompletenessScore, TCSScore (if defined) and ImpliedLosses
+    as <score> sub-elements of `hog_element`."""
+    completeness_score = round(len(species_of_members) / mrca.size, 4)
+    ET.SubElement(hog_element, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
+
+    implied_losses = _count_implied_losses(mrca, species_of_members)
+    ET.SubElement(hog_element, "score", attrib={"id": "ImpliedLosses", "value": str(implied_losses)})
+
+    _, ideal_score = _induced_congruent_score(mrca, species_of_members)
+    if ideal_score > 0:
+        _, raw_score = _tcs_partial(hog, mrca)
+        tcs_score = round(raw_score / ideal_score, 4)
+        ET.SubElement(hog_element, "score", attrib={"id": "TCSScore", "value": str(tcs_score)})
+
+
 # from .infer_subhogs import conf_infer_subhhogs #fastoma_infer_subhogs #
 
 
@@ -337,16 +417,14 @@ class HOG:
         elif len(element_list) > 1:
             #hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
             hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)}, )
-            species_of_members = set([i.split("||")[1] for i in self._members])  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
-            num_species_tax_hog = len(species_of_members)
+            species_of_members = _member_species(self._members)  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
             mrca = self.taxlevel.get_common_ancestor(
                 *[self.taxlevel.search_nodes(name=x)[0] for x in species_of_members])
             if mrca != self.taxlevel:
                 logger.info(f"mrca ({mrca.name}) != self.taxlevel ({self.taxlevel.name})")
                 logger.info(f"<{hog_elemnt.tag} {hog_elemnt.attrib}>")
 
-            completeness_score = round(num_species_tax_hog/mrca.size, 4)
-            property_element = ET.SubElement(hog_elemnt, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
+            attach_scores(hog_elemnt, self, mrca, species_of_members)
             property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(mrca.name)})
 
             for element in element_list:

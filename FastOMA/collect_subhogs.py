@@ -189,6 +189,10 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
     scores = ET.SubElement(orthoxml_file, "scores")
     ET.SubElement(scores, "scoreDef", {"id": "CompletenessScore",
                                        "desc": "Fraction of expected species with genes in the (Sub)HOG"})
+    ET.SubElement(scores, "scoreDef", {"id": "TCSScore",
+                                       "desc": "Taxonomic Congruence Score: how well the (Sub)HOG structure matches the species tree topology"})
+    ET.SubElement(scores, "scoreDef", {"id": "ImpliedLosses",
+                                       "desc": "Number of implied gene loss events (Dollo parsimony) within the (Sub)HOG's taxonomic range"})
 
     #  #### create the groups of orthoxml   ####
     groups_xml = ET.SubElement(orthoxml_file, "groups")

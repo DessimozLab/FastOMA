@@ -26,7 +26,7 @@ from typing import List
 from . import _wrappers, logger
 from . import _utils_subhog
 from . import _utils_frag_SO_detection
-from ._hog_class import HOG, Representative, split_hog
+from ._hog_class import HOG, Representative, split_hog, attach_scores, _member_species
 from ._utils_subhog import MSAFilter, MSAFilterElbow, MSAFilterTrimAL
 
 from .zoo.utils import unique
@@ -106,10 +106,8 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
             if orthoxml_v03 and 'paralogGroup' in str(hogs_a_rhog_xml_raw) :
                 # in version v0.3 of orthoxml, there shouldn't be any paralogGroup at root level. Let's put them inside an orthogroup should be in
                 hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(hog_i.hogid)})
-                num_species_tax_hog = len(set([i.split("||")[1] for i in hog_i.get_members()]))
-                completeness_score = round(num_species_tax_hog / hog_i.taxlevel.size, 4)
-                ET.SubElement(hog_elemnt, "score",
-                              attrib={"id": "CompletenessScore", "value": str(completeness_score)})
+                species_of_members = _member_species(hog_i.get_members())
+                attach_scores(hog_elemnt, hog_i, hog_i.taxlevel, species_of_members)
                 ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i.taxname)})
                 hog_elemnt.append(hogs_a_rhog_xml_raw)
                 hogs_a_rhog_xml = hog_elemnt
@@ -163,6 +161,10 @@ def build_xml_from_rhog(rhogid:str, seqs:List[SeqRecord], hogs:List[ET.Element])
     scores = ET.SubElement(root, "scores")
     ET.SubElement(scores, "scoreDef",
                   {"id": "CompletenessScore","desc": "Fraction of expected species with genes in the (Sub)HOG"})
+    ET.SubElement(scores, "scoreDef",
+                  {"id": "TCSScore", "desc": "Taxonomic Congruence Score: how well the (Sub)HOG structure matches the species tree topology"})
+    ET.SubElement(scores, "scoreDef",
+                  {"id": "ImpliedLosses", "desc": "Number of implied gene loss events (Dollo parsimony) within the (Sub)HOG's taxonomic range"})
     groups = ET.SubElement(root, 'groups')
     for hog in hogs:
         groups.append(hog)
