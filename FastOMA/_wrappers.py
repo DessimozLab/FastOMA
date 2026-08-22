@@ -190,308 +190,351 @@ def mad_rooting(input_tree_file_path: str):  # , mad_executable_path: str = "./m
     return rooted_tree
 
 
+logger.debug("we are here at infer_gene_tree_fold ")
+
+# def filter_plddt(pdb_path, thresh=.6, minthresh=.5):
+#     '''
+#     Extracts the plddt (in the beta factor column) of the first atom of each residue in a PDB file and returns bool if the pdb is accepted or not.
+#
+#     Parameters:
+#         pdb_path (str): The path to the PDB file.'''
+#     thresh =  40
+#     minthresh =  0
+#     lddt = []
+#     parser = PDBParser()
+#     struc = parser.get_structure("a", pdb_path)
+#     for res in struc.get_residues():
+#         for at in res.get_atoms():
+#             lddt.append(at.get_bfactor())
+#             break
+#     if np.mean(lddt) < thresh or np.amin(lddt) < minthresh:
+#         return False
+#     else:
+#         return True
+#     return 1
+#
+# def struct_f(ids, infolder):
+#     structfolder = infolder + 'structs/'
+#     rejectedfolder = infolder + 'rejected/'
+#     try:
+#         os.mkdir(structfolder)
+#     except:
+#         print("folder exist " + structfolder)
+#     try:
+#         os.mkdir(rejectedfolder)
+#     except:
+#         print("folder exist " + rejectedfolder)
+#     resdf = AFDB_tools.grab_entries(ids, verbose=False) # download structures
+#     # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
+#     missing = [AFDB_tools.grab_struct(i, structfolder, rejectedfolder) for i in ids]
+#     found = glob.glob(structfolder + '*.pdb') + glob.glob(rejectedfolder + '*.pdb')
+#     found = {i.split('/')[-1].replace('.pdb', ''): i for i in found}
+#     #missing_structs = set(ids) - set(found.keys())
+#     return  len(set(found.keys()))
+
+def grab_entries(ids, verbose=False):
+    """
+    Makes requests to the UniProt API for information about proteins with the given IDs.
+
+    Parameters:
+    ids (list): A list of UniProt IDs for the proteins for which information is being requested.
+    verbose (bool, optional): A flag indicating whether to print the returned data to the console. Defaults to False.
+
+    Returns:
+    pd.DataFrame: A DataFrame containing information about the proteins, with one row for each hit in the search.
+
+    Examples:
+    >>> grab_entries(['P00533', 'P15056'])
+                                                             id  ...                                            sequence
+    0  sp|P00533|1A2K_HUMAN RecName: Full=Alpha-2-...  ...  MPTSVLLLALLLAPAALVHVCRSRFPKCVVLVNVTGLFGN...
+    1  sp|P15056|1A01_HUMAN RecName: Full=Alpha-1-...  ...  MAAARLLPLLPLLLALALALTETSCPPASQGQRASVGDRV...
+
+    Notes:
+    This function makes requests to the UniProt API for information about proteins with the given IDs. If a request is successful, the returned data is processed and added to a DataFrame. If a request is unsuccessful, an error message is printed to the console.
+    """
+    try:
+        name_results = pd.concat([unirequest_tab('+OR+'.join(c), verbose=verbose) for c in chunk(ids, 50)],
+                                 ignore_index=True)
+    except:
+        print('error', ids)
+        time.sleep(10)
+        name_results = pd.concat([unirequest_tab('+OR+'.join(c), verbose=verbose) for c in chunk(ids, 50)],
+                                 ignore_index=True)
+
+    if verbose == True:
+        print(name_results)
+    return name_results
+
+def chunk(data, csize):
+    return [data[x:x + csize] for x in range(0, len(data), csize)]
+
+def unirequest_tab(name, verbose=False):
+
+    """
+    Makes a request to the UniProt API and returns information about a protein in tab-separated format.
+
+    Parameters:
+    name (str): The name of the protein for which information is being requested.
+    verbose (bool, optional): A flag indicating whether to print the returned data to the console. Defaults to False.
+
+    Returns:
+    pd.DataFrame: A DataFrame containing information about the protein, with one row for each hit in the search.
+
+    Examples:
+    >>> unirequest_tab('P00533')
+                                                             id  ...                                            sequence
+    0  sp|P00533|1A2K_HUMAN RecName: Full=Alpha-2-...  ...  MPTSVLLLALLLAPAALVHVCRSRFPKCVVLVNVTGLFGN...
+    """
+    # we query first by protein name and then gene name
+    url = 'http://rest.uniprot.org/uniprotkb/stream?'
+    params = [
+        'query=accession:{}'.format(name),
+        'fields=id,accession,gene_names,protein_name,reviewed,protein_name,organism_name,lineage_ids,sequence',
+        'format=tsv',
+    ]
+    params = ''.join([p + '&' for p in params])[:-1]
+    data = requests.get(url + params).text
+    # only return the first hit for each query
+    try:
+        data = pd.read_table(StringIO(data))
+        data['query'] = data['Entry']
+        data = data[data['Entry'].isin(name.split('+OR+'))]
+        if verbose is True:
+            print(data)
+        return data
+    except:
+        print('error', data)
+        time.sleep(10)
+        unirequest_tab(name, verbose=True)
+
+def grab_struct(uniID, structfolder, rejected=None, overwrite=False):
+
+    """
+    Downloads a protein structure file from the AlphaFold website and saves it to the specified folder.
+
+    Parameters:
+    uniID (str): The UniProt ID of the protein for which the structure is being downloaded.
+    structfolder (str): The path to the folder where the structure file should be saved.
+    overwrite (bool, optional): A flag indicating whether to overwrite an existing file with the same name in the specified folder. Defaults to False.
+
+    Returns:
+    None: If the file is successfully downloaded or if overwrite is set to True and a file with the same name is found in the specified folder.
+    str: If an error occurs during the download or if a file with the same name is found in the specified folder and overwrite is set to False.
+
+    Examples:
+    >>> grab_struct('P00533', '/path/to/structures/')
+    None
+    >>> grab_struct('P00533', '/path/to/structures/', overwrite=True)
+    None
+    """
+
+    try:
+        os.mkdir(structfolder)
+    except:
+        pass
+    try:
+        prefix = 'https://alphafold.ebi.ac.uk/files/AF-'
+        # post = '-F1-model_v4.pdb'
+        post = '-F1-model_v6.pdb'
+        url = prefix + uniID.upper() + post
+        if not os.path.isfile(structfolder + uniID + '.pdb'):
+            if rejected is None or (rejected and not os.path.isfile(structfolder + uniID + '.pdb')):
+                wget.download(url, structfolder + uniID + '.pdb')
+    except:
+        print('structure not found', uniID)
+        return uniID
+    return None
+
+def distmat_to_txt(identifiers, distmat, outfile):
+    '''
+    write out a distance matrix in fastme format
+
+    Parameters
+    ----------
+    identifiers : list
+        list of identifiers for your proteins
+    distmat : np.array
+        distance matrix
+    outfile : str
+        path to output file
+
+    '''
+
+    # write out distmat in phylip compatible format
+    outstr = str(len(identifiers)) + '\n'
+    for i, pdb in enumerate(identifiers):
+        outstr += pdb + ' ' + ' '.join(["{:.4f}".format(d) for d in list(distmat[i, :])]) + '\n'
+    with open(outfile, 'w') as handle:
+        handle.write(outstr)
+        handle.close()
+    return outfile
+
+
+def struct_f2_copy(conf,ids, infolder):
+    structfolder = infolder + 'structs/'
+    # rejectedfolder = infolder + 'rejected/'
+    try:
+        os.mkdir(structfolder)
+    except:
+        print("folder exist " + structfolder)
+    # try:
+    #     os.mkdir(rejectedfolder)
+    # except:
+    #     print("folder exist " + rejectedfolder)
+
+    not_found=[]
+    for sp_prot in ids:
+        try :
+            structs_folders=conf.pdb+'/'+sp_prot[0]+'/' #"downloaded_structures/"
+            sp_prot_str= "_".join(sp_prot) # todo no need to add species name
+            logger.debug(" *1* checking file struct pdb  " + structs_folders +sp_prot[1]+".pdb")
+            shutil.copyfile(structs_folders+sp_prot[1]+".pdb", structfolder+sp_prot_str+".pdb")
+        except:
+            try:
+                logger.debug(" *1* checking file struct pdb  " + structs_folders +sp_prot[1]+".pdb.fcz")
+                shutil.copyfile(structs_folders + sp_prot[1] + ".pdb.fcz", structfolder + sp_prot_str + ".pdb.fcz")
+            except:
+                not_found.append(sp_prot_str)
+                print("struct pdb file not found "+sp_prot_str)
+                logger.debug(" *2*  struct pdb file not found "+sp_prot_str)
+    #id_prots=[ii[0] for ii in ids]
+    #resdf = grab_entries(id_prots, verbose=False) # download sequences
+    #missing = [grab_struct(i, structfolder, rejectedfolder) for i in ids]
+    # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
+    #found = glob.glob(structfolder + '*.pdb') + glob.glob(rejectedfolder + '*.pdb')
+    #found = {i.split('/')[-1].replace('.pdb', ''): i for i in found}
+    #missing_structs = set(ids) - set(found.keys())
+
+    return  len(ids)-len(not_found)
+
+def Tajima_dist(kn_ratio, bfactor=19 / 20, iter=100):
+    taj = np.add.reduce(
+        [(kn_ratio ** (np.ones(kn_ratio.shape) * i)) / (bfactor ** (i - 1) * i) for i in range(1, iter)])
+    # set diagonal to 0
+    np.fill_diagonal(taj, 0)
+    return taj
+
+def foldseek_dist_pdb(infolder):
+    # fold_tree/foldseek/foldseek
+    #
+    logger.debug("foldseek started")
+    #command = "foldseek easy-search " + infolder + "structs/  " + infolder + "structs/ " + infolder + "allvall_1.csv " + infolder + "tmp --format-output query,target,fident,evalue,bits --exhaustive-search --alignment-type 2 -e inf"
+    command = "foldseek easy-search " + infolder + "structs/  " + infolder + "structs/ " + infolder + "allvall_1.csv " + infolder + "tmp --format-output query,target,fident,evalue,bits --exhaustive-search --alignment-type 2 -e inf"
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+
+    # output allvall_1.csv
+    logger.debug("foldseek finished")
+    res = pd.read_table(infolder + "allvall_1.csv", header=None)
+    print(res.head())
+    return res
+
+
+# def foldseek_dist_threedi(infolder): # now done in nextflow
+#     # fold_tree/foldseek/foldseek
+#     #
+#     logger.debug("foldseek 3di started")
+#        echo "rhog $rhog"
+#        foldseek base:createdb ${rhog_raw}.fa db_${rhog_raw}
+#        foldseek base:createdb ${rhog_raw}.3di.fa  db_${rhog_raw}_ss
+#        MMSEQS_FORCE_MERGE=1 foldseek search -s 0.1 --max-seqs 3 db_${rhog_raw} db_${rhog_raw}  db_${rhog_raw}_aln tmp_${rhog_raw}
+#        foldseek convertalis  --format-output query,target,fident,evalue,bits db_${rhog_raw}  db_${rhog_raw}  db_${rhog_raw}_aln  ${rhog_raw}.distance
+#        echo "done  rhog ${rhog}"
+#     """
+#     # command1 = "foldseek "
+#     # process = subprocess.Popen(command1.split(), stdout=subprocess.PIPE)
+#     # output, error = process.communicate()
+#     # logger.debug(str(output))
+#     # logger.debug(str(error))
+#
+#     # output allvall_1.csv
+#     logger.debug("foldseek finished")
+#     res = pd.read_table(infolder + "allvall_1.csv", header=None)
+#     print(res.head())
+#     return res
+
+def foldseekResult2distance(res, infolder):
+    # get the folder of the input file
+    # infolder = snakemake.input[0].split('/')[:-1]
+    # infolder = ''.join( [i + '/' for i in infolder])+'/'
+    import os
+
+    res[0] = res[0].map(lambda x: x.split("/")[-1].replace('.pdb', ''))
+    res[1] = res[1].map(lambda x: x.split("/")[-1].replace('.pdb', '')) # if there is a pth in the prot name
+    res.columns = 'query,target,fident,evalue,bits'.split(',')
+    ids = list(set(list(res['query'].unique()) + list(res['target'].unique())))
+    pos = {protid: i for i, protid in enumerate(ids)}
+    kernels = ['fident']
+
+    # set kernel columns to float
+    for k in kernels:
+        res[k] = res[k].astype(float)
+    # change nan to 0
+    res = res.fillna(0)
+    matrices = {k: np.zeros((len(pos), len(pos))) for k in kernels}
+    print(res)
+
+    # calc kernel for tm, aln score, lddt
+    for idx, row in res.iterrows():
+        for k in matrices:
+            matrices[k][pos[row['query']], pos[row['target']]] += row[k]
+            matrices[k][pos[row['target']], pos[row['query']]] += row[k]
+
+    output = "foldtree_fastmemat"
+    for i, k in enumerate(matrices): #so we only have one matrix  kernels = ['fident']
+        matrices[k] /= 2
+        matrices[k] = 1 - matrices[k]
+        print(matrices[k], np.amax(matrices[k]), np.amin(matrices[k]))
+        #np.save(infolder + k + '_distmat.npy', matrices[k])
+        distmat_txt = distmat_to_txt(ids, matrices[k], infolder +output) #"_"+str(i)
+    for i, k in enumerate(matrices):
+        if k == 'fident':
+            # bfactor=19/20
+            bfactor = .93
+        else:
+            bfactor = 1
+        tajima = Tajima_dist(matrices[k] + 10 ** -5, bfactor=bfactor)
+        np.fill_diagonal(tajima, 0)
+        distmat_txt = distmat_to_txt(ids, tajima,  infolder +output+'_tajima') #
+
+    return 1
+
+def quicktree_f(infolder):
+    delta=0
+    logger.debug("quicktree started")
+    #command = "quicktree -i m " + infolder + "foldtree_fastmemat.txt "  # > foldtree_struct_tree.nwk
+    command = "quicktree -i m " + infolder + "foldtree_fastmemat_tajima "  # > foldtree_struct_tree.nwk
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    logger.debug("quicktree finished")
+    # treefile = foldseek2tree.postprocess("foldtree_struct_tree.nwk" , )
+
+    outree = infolder + "foldtree_struct_tree.PP.nwk"
+    t = str(output)[2:-1]
+    treein = t.split("\\n")
+    treestr = ' '.join([i.strip() for i in treein])
+    # tre = toytree.tree(treestr, format=0)
+    # print(tre)
+    # for n in tre.treenode.traverse():
+    #     if n.dist < 0:
+    #         n.dist = delta
+    # tre.write(outree, tree_format=0)
+    # tree1 = tre.write(tree_format=0)
+    tre= Tree(treestr)
+    for n in tre.traverse():
+        if n.dist < 0:
+                n.dist = delta
+    tre.write(outree)
+
+    return tre
+
+
 def infer_gene_tree_fold(conf, msa):
     """
     infer gene tree using foldseek and foldtree
 
     """
-
-    logger.debug("we are here at infer_gene_tree_fold ")
-
-    # def filter_plddt(pdb_path, thresh=.6, minthresh=.5):
-    #     '''
-    #     Extracts the plddt (in the beta factor column) of the first atom of each residue in a PDB file and returns bool if the pdb is accepted or not.
-    #
-    #     Parameters:
-    #         pdb_path (str): The path to the PDB file.'''
-    #     thresh =  40
-    #     minthresh =  0
-    #     lddt = []
-    #     parser = PDBParser()
-    #     struc = parser.get_structure("a", pdb_path)
-    #     for res in struc.get_residues():
-    #         for at in res.get_atoms():
-    #             lddt.append(at.get_bfactor())
-    #             break
-    #     if np.mean(lddt) < thresh or np.amin(lddt) < minthresh:
-    #         return False
-    #     else:
-    #         return True
-    #     return 1
-    #
-    # def struct_f(ids, infolder):
-    #     structfolder = infolder + 'structs/'
-    #     rejectedfolder = infolder + 'rejected/'
-    #     try:
-    #         os.mkdir(structfolder)
-    #     except:
-    #         print("folder exist " + structfolder)
-    #     try:
-    #         os.mkdir(rejectedfolder)
-    #     except:
-    #         print("folder exist " + rejectedfolder)
-    #     resdf = AFDB_tools.grab_entries(ids, verbose=False) # download structures
-    #     # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
-    #     missing = [AFDB_tools.grab_struct(i, structfolder, rejectedfolder) for i in ids]
-    #     found = glob.glob(structfolder + '*.pdb') + glob.glob(rejectedfolder + '*.pdb')
-    #     found = {i.split('/')[-1].replace('.pdb', ''): i for i in found}
-    #     #missing_structs = set(ids) - set(found.keys())
-    #     return  len(set(found.keys()))
-
-    def grab_entries(ids, verbose=False):
-        """
-        Makes requests to the UniProt API for information about proteins with the given IDs.
-
-        Parameters:
-        ids (list): A list of UniProt IDs for the proteins for which information is being requested.
-        verbose (bool, optional): A flag indicating whether to print the returned data to the console. Defaults to False.
-
-        Returns:
-        pd.DataFrame: A DataFrame containing information about the proteins, with one row for each hit in the search.
-
-        Examples:
-        >>> grab_entries(['P00533', 'P15056'])
-                                                                 id  ...                                            sequence
-        0  sp|P00533|1A2K_HUMAN RecName: Full=Alpha-2-...  ...  MPTSVLLLALLLAPAALVHVCRSRFPKCVVLVNVTGLFGN...
-        1  sp|P15056|1A01_HUMAN RecName: Full=Alpha-1-...  ...  MAAARLLPLLPLLLALALALTETSCPPASQGQRASVGDRV...
-
-        Notes:
-        This function makes requests to the UniProt API for information about proteins with the given IDs. If a request is successful, the returned data is processed and added to a DataFrame. If a request is unsuccessful, an error message is printed to the console.
-        """
-        try:
-            name_results = pd.concat([unirequest_tab('+OR+'.join(c), verbose=verbose) for c in chunk(ids, 50)],
-                                     ignore_index=True)
-        except:
-            print('error', ids)
-            time.sleep(10)
-            name_results = pd.concat([unirequest_tab('+OR+'.join(c), verbose=verbose) for c in chunk(ids, 50)],
-                                     ignore_index=True)
-
-        if verbose == True:
-            print(name_results)
-        return name_results
-
-    def chunk(data, csize):
-        return [data[x:x + csize] for x in range(0, len(data), csize)]
-
-    def unirequest_tab(name, verbose=False):
-
-        """
-        Makes a request to the UniProt API and returns information about a protein in tab-separated format.
-
-        Parameters:
-        name (str): The name of the protein for which information is being requested.
-        verbose (bool, optional): A flag indicating whether to print the returned data to the console. Defaults to False.
-
-        Returns:
-        pd.DataFrame: A DataFrame containing information about the protein, with one row for each hit in the search.
-
-        Examples:
-        >>> unirequest_tab('P00533')
-                                                                 id  ...                                            sequence
-        0  sp|P00533|1A2K_HUMAN RecName: Full=Alpha-2-...  ...  MPTSVLLLALLLAPAALVHVCRSRFPKCVVLVNVTGLFGN...
-        """
-        # we query first by protein name and then gene name
-        url = 'http://rest.uniprot.org/uniprotkb/stream?'
-        params = [
-            'query=accession:{}'.format(name),
-            'fields=id,accession,gene_names,protein_name,reviewed,protein_name,organism_name,lineage_ids,sequence',
-            'format=tsv',
-        ]
-        params = ''.join([p + '&' for p in params])[:-1]
-        data = requests.get(url + params).text
-        # only return the first hit for each query
-        try:
-            data = pd.read_table(StringIO(data))
-            data['query'] = data['Entry']
-            data = data[data['Entry'].isin(name.split('+OR+'))]
-            if verbose is True:
-                print(data)
-            return data
-        except:
-            print('error', data)
-            time.sleep(10)
-            unirequest_tab(name, verbose=True)
-
-    def grab_struct(uniID, structfolder, rejected=None, overwrite=False):
-
-        """
-        Downloads a protein structure file from the AlphaFold website and saves it to the specified folder.
-
-        Parameters:
-        uniID (str): The UniProt ID of the protein for which the structure is being downloaded.
-        structfolder (str): The path to the folder where the structure file should be saved.
-        overwrite (bool, optional): A flag indicating whether to overwrite an existing file with the same name in the specified folder. Defaults to False.
-
-        Returns:
-        None: If the file is successfully downloaded or if overwrite is set to True and a file with the same name is found in the specified folder.
-        str: If an error occurs during the download or if a file with the same name is found in the specified folder and overwrite is set to False.
-
-        Examples:
-        >>> grab_struct('P00533', '/path/to/structures/')
-        None
-        >>> grab_struct('P00533', '/path/to/structures/', overwrite=True)
-        None
-        """
-
-        try:
-            os.mkdir(structfolder)
-        except:
-            pass
-        try:
-            prefix = 'https://alphafold.ebi.ac.uk/files/AF-'
-            # post = '-F1-model_v4.pdb'
-            post = '-F1-model_v6.pdb'
-            url = prefix + uniID.upper() + post
-            if not os.path.isfile(structfolder + uniID + '.pdb'):
-                if rejected is None or (rejected and not os.path.isfile(structfolder + uniID + '.pdb')):
-                    wget.download(url, structfolder + uniID + '.pdb')
-        except:
-            print('structure not found', uniID)
-            return uniID
-        return None
-
-    def distmat_to_txt(identifiers, distmat, outfile):
-        '''
-        write out a distance matrix in fastme format
-
-        Parameters
-        ----------
-        identifiers : list
-            list of identifiers for your proteins
-        distmat : np.array
-            distance matrix
-        outfile : str
-            path to output file
-
-        '''
-
-        # write out distmat in phylip compatible format
-        outstr = str(len(identifiers)) + '\n'
-        for i, pdb in enumerate(identifiers):
-            outstr += pdb + ' ' + ' '.join(["{:.4f}".format(d) for d in list(distmat[i, :])]) + '\n'
-        with open(outfile, 'w') as handle:
-            handle.write(outstr)
-            handle.close()
-        return outfile
-
-
-    def struct_f2(ids, infolder):
-        structfolder = infolder + 'structs/'
-        rejectedfolder = infolder + 'rejected/'
-        try:
-            os.mkdir(structfolder)
-        except:
-            print("folder exist " + structfolder)
-        try:
-            os.mkdir(rejectedfolder)
-        except:
-            print("folder exist " + rejectedfolder)
-
-        not_found=[]
-        for sp_prot in ids:
-            try :
-                structs_folders=conf.foldwdir+'/'+sp_prot[0]+'/' #"downloaded_structures/"
-                sp_prot_str= "_".join(sp_prot)
-                logger.debug(" *1* we are copying this file struct pdb  " + structs_folders +sp_prot[1]+".pdb")
-                shutil.copyfile(structs_folders+sp_prot[1]+".pdb", structfolder+sp_prot_str+".pdb")
-            except:
-                try:
-                    logger.debug(" *1* we are copying this file struct pdb  " + structs_folders +sp_prot[1]+".pdb.fcz")
-                    shutil.copyfile(structs_folders + sp_prot[1] + ".pdb.fcz", structfolder + sp_prot_str + ".pdb.fcz")
-                except:
-                    not_found.append(sp_prot_str)
-                    print("struct pdb file not found "+sp_prot_str)
-                    logger.debug(" *2*  struct pdb file not found "+sp_prot_str)
-        #id_prots=[ii[0] for ii in ids]
-        #resdf = grab_entries(id_prots, verbose=False) # download sequences
-        #missing = [grab_struct(i, structfolder, rejectedfolder) for i in ids]
-        # as part of grab_entries : if not os.path.isfile(structfolder + uniID +'.pdb'):
-        #found = glob.glob(structfolder + '*.pdb') + glob.glob(rejectedfolder + '*.pdb')
-        #found = {i.split('/')[-1].replace('.pdb', ''): i for i in found}
-        #missing_structs = set(ids) - set(found.keys())
-
-        return  len(ids)-len(not_found)
-
-    def foldseek_dist(infolder):
-        # fold_tree/foldseek/foldseek
-        #
-        logger.debug("foldseek started")
-        #command = "foldseek easy-search " + infolder + "structs/  " + infolder + "structs/ " + infolder + "allvall_1.csv " + infolder + "tmp --format-output query,target,fident,evalue,bits --exhaustive-search --alignment-type 2 -e inf"
-        command = "foldseek easy-search " + infolder + "structs/  " + infolder + "structs/ " + infolder + "allvall_1.csv " + infolder + "tmp --format-output query,target,fident,evalue,bits --exhaustive-search --alignment-type 2 -e inf"
-        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
-
-        # output allvall_1.csv
-        logger.debug("foldseek finished")
-        res = pd.read_table(infolder + "allvall_1.csv", header=None)
-        print(res.head())
-        # get the folder of the input file
-        # infolder = snakemake.input[0].split('/')[:-1]
-        # infolder = ''.join( [i + '/' for i in infolder])+'/'
-        import os
-
-        res[0] = res[0].map(lambda x: x.split("/")[-1].replace('.pdb', ''))
-        res[1] = res[1].map(lambda x: x.split("/")[-1].replace('.pdb', '')) # if there is a pth in the prot name
-        res.columns = 'query,target,fident,evalue,bits'.split(',')
-        ids = list(set(list(res['query'].unique()) + list(res['target'].unique())))
-        pos = {protid: i for i, protid in enumerate(ids)}
-        kernels = ['fident']
-
-        # set kernel columns to float
-        for k in kernels:
-            res[k] = res[k].astype(float)
-        # change nan to 0
-        res = res.fillna(0)
-        matrices = {k: np.zeros((len(pos), len(pos))) for k in kernels}
-        print(res)
-
-        # calc kernel for tm, aln score, lddt
-        for idx, row in res.iterrows():
-            for k in matrices:
-                matrices[k][pos[row['query']], pos[row['target']]] += row[k]
-                matrices[k][pos[row['target']], pos[row['query']]] += row[k]
-
-        output = ["foldtree_fastmemat.txt"]
-        for i, k in enumerate(matrices):
-            matrices[k] /= 2
-            matrices[k] = 1 - matrices[k]
-            print(matrices[k], np.amax(matrices[k]), np.amin(matrices[k]))
-            #np.save(infolder + k + '_distmat.npy', matrices[k])
-            distmat_txt = distmat_to_txt(ids, matrices[k], infolder + output[i])
-
-        return 1
-
-    def quicktree_f(infolder):
-        delta=0
-        logger.debug("quicktree started")
-        #command = "quicktree -i m " + infolder + "foldtree_fastmemat.txt "  # > foldtree_struct_tree.nwk
-        command = "quicktree -i m " + infolder + "foldtree_fastmemat.txt "  # > foldtree_struct_tree.nwk
-        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
-        logger.debug("quicktree finished")
-        # treefile = foldseek2tree.postprocess("foldtree_struct_tree.nwk" , )
-
-        outree = infolder + "foldtree_struct_tree.PP.nwk"
-        t = str(output)[2:-1]
-        treein = t.split("\\n")
-        treestr = ' '.join([i.strip() for i in treein])
-        # tre = toytree.tree(treestr, format=0)
-        # print(tre)
-        # for n in tre.treenode.traverse():
-        #     if n.dist < 0:
-        #         n.dist = delta
-        # tre.write(outree, tree_format=0)
-        # tree1 = tre.write(tree_format=0)
-        tre= Tree(treestr)
-        for n in tre.traverse():
-            if n.dist < 0:
-                    n.dist = delta
-        tre.write(outree)
-
-        return tre
-
-
+    #ids_dic_threedi={}
     ids_dic = {}
     ids=[]
     # ids = [i.split("|")[1] for i in members_list_lowerLevel_ready]
@@ -502,8 +545,14 @@ def infer_gene_tree_fold(conf, msa):
     if isinstance(msa, MultipleSeqAlignment):
         for prot_ii in msa:
             sp_prot= (prot_ii.id.split("||")[1], prot_ii.id.split("||")[0]) # 'sp|P0CD71|EFTU_CHLTR||CHLTR||1001000004'
-            ids_dic['_'.join(sp_prot)] = prot_ii.id
+            # ids_dic['_'.join(sp_prot)] = prot_ii.id
+            #ids_dic_threedi[prot_ii.id.split("||")[0] ] = prot_ii.id
             ids.append(sp_prot)
+            ids_dic[prot_ii.id.split("||")[0]] = prot_ii.id
+
+        if conf.mode=='pdb': # todo
+            logger.error('PDB mode is not ready. TODO ids_dic needs to have species name ')
+
     else:
         logger.error('check 8723971 msa must be MultipleSeqAlignment')
     #         prot_i = in_msa
@@ -512,37 +561,71 @@ def infer_gene_tree_fold(conf, msa):
     #ids = [i.id.split("|")[1] for i in msa]
 
 
-    time_date_raw =str(datetime.datetime.now())
-    infolder = conf.foldwdir+"fold_tmp/" +re.sub('[^A-Za-z0-9]+', '', time_date_raw)+"/"
-    try:
-        os.makedirs(infolder)
-    except:
-        print("folder exist " + infolder )
 
-    num_prot_struct = struct_f2(ids,infolder)
-    if num_prot_struct >1:
-        foldseek_dist(infolder)
+    if conf.mode=='threedi':
+        distance_file = conf.threedidistance
+        # foldseek_dist_threedi()
+        from os import listdir
+        # files = listdir('.')
+        # distance_file = [f for f in files if f.endswith(".distance")][0]
+        res_full = pd.read_table(distance_file, header=None)
+        print(ids[:10])
+        # ids_clean = [x[1].split("|")[1] for x in ids]
+        # res = res_full[res_full[0].isin(ids_clean)]
+        id_dict2 = {x[1].split("|")[1]: x[1] for x in ids}
+        ids_=list(id_dict2.keys())
+        res = res_full[res_full[0].isin(ids_) & res_full[1].isin(ids_)]
+        res[0] = res[0].replace(id_dict2)
+        res[1] = res[1].replace(id_dict2)
 
-        tree1 = quicktree_f(infolder)
-        #tree1= Tree(tree_nwk_raw)
-        for node in tree1.traverse():
-            if node.is_leaf():
-                node_name_old = node.name  #
-                node.name = ids_dic[node_name_old]
-        tree_nwk = tree1.write()
+        infolder='./'
 
-        print("\n \n " + tree_nwk)
-        a=2
-        # current_time = datetime.now().strftime("%H:%M:%S")
-        # for development we write the gene tree, the name of file should be limit in size in linux.
-        # danger of overwriting
-        # instead -> hash thing
-        # ??? hashlib.md5(original_name).hexdig..it()
+
+    elif conf.mode=='pdb' and conf.pdb:
+        time_date_raw = str(datetime.datetime.now())
+        infolder = "fold_tmp_" + re.sub('[^A-Za-z0-9]+', '', time_date_raw) + "/"
+        try:
+            logger.debug("creating folder " + infolder)
+            os.makedirs(infolder)
+        except:
+            print("folder exist " + infolder)
+
+        logger.debug(f" in mode Fold; pdb dir: {conf.pdb}")
+        num_prot_struct = struct_f2_copy(conf, ids,infolder)
+        if num_prot_struct >1:
+            res = foldseek_dist_pdb(infolder)
+        else:
+            # not enough structures  downlaoded  to use
+            # tree_nwk="("+ ids_dic['_'.join(sp_prot)] +");" # no output tree, let's make a tree with one leaf to keep going
+            tree_nwk = -1
+            return tree_nwk
+
+
 
     else:
-        # not enough structures  downlaoded  to use
-        #tree_nwk="("+ ids_dic['_'.join(sp_prot)] +");" # no output tree, let's make a tree with one leaf to keep going
-        tree_nwk = -1
+        logger.error(f" in mode Fold; no dir for pdb or threedi specified")
+
+
+
+    foldseekResult2distance(res, infolder) # foldtree_fastmemat_tajima
+    tree1 = quicktree_f(infolder) # where foldtree_fastmemat_tajima exist
+    #tree1= Tree(tree_nwk_raw)
+    for node in tree1.traverse():
+        if node.is_leaf():
+            node_name_old = node.name
+            node.name = ids_dic[node_name_old]
+    tree_nwk = tree1.write()
+    print("\n \n " + tree_nwk)
+    a=2
+    # current_time = datetime.now().strftime("%H:%M:%S")
+    # for development we write the gene tree, the name of file should be limit in size in linux.
+    # danger of overwriting
+    # instead -> hash thing
+    # ??? hashlib.md5(original_name).hexdig..it()
+
+
+
+
     return tree_nwk
 
 

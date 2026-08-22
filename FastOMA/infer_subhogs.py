@@ -21,8 +21,9 @@ def fastoma_infer_subhogs():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--version", action="version", version="FastOMA v"+fastoma_version)
     parser.add_argument("--input-rhog-folder", required=True, help="Path to the input rootHOG folder.")
-    parser.add_argument("--mode", required=False, default="sequence", help="sequence or fold.")
-    parser.add_argument("--foldwdir", required=False, help="fold working dir.")
+    parser.add_argument("--mode", required=False, default="sequence", help="sequence or pdb or threedi.")
+    # parser.add_argument("--pdb", required=False, help="directory of pdb files, one folder per species")
+    parser.add_argument("--threedidistance", required=False, help="a tsv file of 3di distances for the rootHOG")
     parser.add_argument("--parallel", action='store_true', help="use concurrent parallel per rootHOG")
     parser.add_argument("--species-tree", required=True,
                         help="Path to the input species tree file in newick format")

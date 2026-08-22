@@ -467,9 +467,7 @@ class LevelHOGProcessor:
     def infer_genetree_from_msa(self, msa):
 
         logger.debug(f'mode is {self.conf.mode}')
-        if self.conf.mode=='fold':
-            foldwdir = self.conf.foldwdir
-            logger.debug(f" in mode Fold; foldwdir: {foldwdir}")
+        if self.conf.mode=='pdb' or  self.conf.mode=='threedi':
             genetree_nwk = _wrappers.infer_gene_tree_fold(self.conf,msa)
             if genetree_nwk == -1:
                 logger.debug(f" mode fold failed , normal fastoma ")
