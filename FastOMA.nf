@@ -8,7 +8,8 @@ params.proteome_folder = params.proteome_folder ?: "${params.input}/proteome"
 params.hogmap_in       = params.hogmap_in ?: "${params.input}/hogmap_in"
 params.splice_folder   = params.splice_folder ?: "${params.input}/splice"
 params.species_tree    = params.species_tree ?: "${params.input}/species_tree.nwk"
-params.structure_folder   = params.structure_folder ?: "${params.input}/structure"
+params.pdb_folder   = params.pdb_folder ?: "${params.input}/pdb"
+params.threedi_folder = params.threedi_folder ?: "${params.input}/3di"
 // Utility process to fetch remote datasets
 process fetchRemoteData {
     // Cache in a dedicated cache directory
@@ -141,6 +142,7 @@ process infer_roothogs{
     path hogmaps, stageAs: "hogmaps/*"
     path proteome_folder
     path splice_folder
+    path threedi_folder
 
   output:
     path "omamer_rhogs"
@@ -154,7 +156,32 @@ process infer_roothogs{
                                --splice ${splice_folder} \
                                --out-rhog-folder "omamer_rhogs" \
                                --min-sequence-length ${params.min_sequence_length} \
+                               ${ params.threedi_folder ? "--threedi ${threedi_folder}" : ""} \
                                -vv
+    """
+}
+
+
+process infer_threedi_distance{
+  label "process_medium"
+  publishDir params.temp_output, enabled: params.debug_enabled
+
+  input:
+    path rhog
+    path rhog_threedi
+
+  output:
+    path "*.distance"
+
+  script:
+      def rhog_raw = rhog.baseName
+    """
+       echo "rhog $rhog"
+       foldseek base:createdb ${rhog_raw}.fa db_${rhog_raw}
+       foldseek base:createdb ${rhog_raw}.3di.fa  db_${rhog_raw}_ss
+       MMSEQS_FORCE_MERGE=1 foldseek search -s 0.1 --max-seqs 3 db_${rhog_raw} db_${rhog_raw}  db_${rhog_raw}_aln tmp_${rhog_raw}
+       foldseek convertalis  --format-output query,target,fident,evalue,bits db_${rhog_raw}  db_${rhog_raw}  db_${rhog_raw}_aln  ${rhog_raw}.distance
+       echo "done  rhog ${rhog}"
     """
 }
 
@@ -202,7 +229,6 @@ process hog_big{
     each rhogsbig
     path species_tree
     val nr_species
-    path structure_folder
 
   output:
     path "pickle_hogs"
@@ -223,9 +249,7 @@ process hog_big{
                                --gap-ratio-col ${params.filter_gap_ratio_col} \
                                --number-of-samples-per-hog ${params.nr_repr_per_hog} \
                                ${ params.write_msas ? "--msa-write" : ""} \
-                               ${ params.write_genetrees ? "--gene-trees-write" : ""} \
-                               --foldwdir ${structure_folder} \
-                               --mode fold
+                               ${ params.write_genetrees ? "--gene-trees-write" : ""}
     """
 }
 
@@ -241,7 +265,6 @@ process hog_rest{
   input:
     each rhogsrest
     path species_tree
-    path structure_folder
   output:
     path "pickle_hogs"
     path "*.fa" , optional: true   // msa         if write True
@@ -259,9 +282,63 @@ process hog_rest{
                               --gap-ratio-col ${params.filter_gap_ratio_col} \
                               --number-of-samples-per-hog ${params.nr_repr_per_hog} \
                               ${ params.write_msas ? "--msa-write" : ""} \
-                              ${ params.write_genetrees ? "--gene-trees-write" : ""} \
-                               --foldwdir ${structure_folder} \
-                               --mode fold
+                              ${ params.write_genetrees ? "--gene-trees-write" : ""}
+    """
+}
+
+
+
+process subhog_infer{
+  cpus { 4 }
+  memory {
+    def max_filesize = Utils.getMaxFileSize(rhogs)
+    def mem_base = Utils.mem_cat( max_filesize, nr_species as int )
+    return [6.GB, mem_base].max() * params.memory_multiplier * task.attempt
+  }
+  time {
+    def max_filesize = Utils.getMaxFileSize(rhogs)
+    def time_base = Utils.time_cat(max_filesize, nr_species as int)
+    return [2.h, time_base].max() * params.time_multiplier * task.attempt
+  }
+
+  publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
+  publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv.gz"
+
+  input:
+    path rhogs
+    path rhogs_distance
+    path species_tree
+    val nr_species
+   // path pdb_folder
+
+  output:
+    path "pickle_hogs"
+    path "*.fa" , optional: true          // msa         if write True
+    path "*.nwk" , optional: true  // gene trees  if write True
+    path "*.tsv", optional: true
+    path "*.tsv.gz", optional: true
+
+  script:  // --parallel
+    """
+        mkdir hg
+        mv ${rhogs} hg
+        fastoma-infer-subhogs  --input-rhog-folder  hg \
+                               --species-tree ${species_tree} \
+                               --output-pickles pickle_hogs \
+                               -vv \
+                               --msa-filter-method ${params.filter_method} \
+                               --gap-ratio-row ${params.filter_gap_ratio_row} \
+                               --gap-ratio-col ${params.filter_gap_ratio_col} \
+                               --number-of-samples-per-hog ${params.nr_repr_per_hog} \
+                               ${ params.write_msas ? "--msa-write" : ""} \
+                               ${ params.write_genetrees ? "--gene-trees-write" : ""}  \
+                               --mode threedi \
+                               --threedidistance ${rhogs_distance}
+
+
     """
 }
 
@@ -459,7 +536,8 @@ workflow {
     proteome_folder = resolveFolderParam(input_root, params.proteome_folder, 'proteome')
     splice_folder   = resolveFolderParam(input_root, params.splice_folder, 'splice', false)
     hogmap_in       = resolveFolderParam(input_root, params.hogmap_in, 'hogmap_in', false)
-    structure_folder    = resolveFolderParam(input_root, params.structure_folder , 'structure', false)
+    pdb_folder    = resolveFolderParam(input_root, params.pdb_folder , 'pdb', false)
+    threedi_folder    = resolveFolderParam(input_root, params.threedi_folder , '3di', false)
     species_tree    = params.species_tree ?
                      Channel.fromPath(params.species_tree, type: 'file', checkIfExists: true).first() :
                      resolveFile(input_root, 'species_tree.nwk')
@@ -484,22 +562,43 @@ workflow {
     hogmap = omamer_run(omamer_input_channel)
     nr_species = hogmap.count()
 
-    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(hogmap.collect(), proteome_folder, splice_folder)
+    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(hogmap.collect(), proteome_folder, splice_folder, threedi_folder)
 
-    (rhogs_rest_batches, rhogs_big_batches) = batch_roothogs(omamer_rhogs)
+    println "omamer_rhogs: ${omamer_rhogs.getClass()}"
+    all_rhogs = omamer_rhogs.flatMap { dir -> file(dir).listFiles() }.filter { it.isFile() }
+    fa_files = all_rhogs.filter { it.name.endsWith('.fa') && !it.name.contains('.3di') }.map { f -> tuple(f.name.replaceFirst(/\.fa$/, ''), f) }
+    threedi_files = all_rhogs.filter { it.name.endsWith('.3di.fa') }.map { f -> tuple(f.name.replaceFirst(/\.3di\.fa$/, ''), f) }
+    rhogs_joined = fa_files.join(threedi_files) // rhogs_joined : [HOG_E1027829, HOG_E1027829.fa, HOG_E1027829.3di.fa]
+    rhogs_fa = rhogs_joined.map { pair -> pair[1] }
+    rhogs_threedi = rhogs_joined.map { pair -> pair[2] }
+    rhogs_distance = infer_threedi_distance(rhogs_fa, rhogs_threedi)
+//     rhogs_distance.view { "rhogs_distance : ${it}" }
+//     rhogs_fa.view { "rhogs_fa : ${it}" }
+//     rhogs_fa_distance =  rhogs_fa.join(rhogs_distance)
 
-    (pickle_big_rhog, msa_out_big, genetrees_out_rest) = hog_big(rhogs_big_batches.flatten(), species_tree_checked, nr_species, structure_folder)
-    (pickle_rest_rhog,  msas_out_rest, genetrees_out_test) = hog_rest(rhogs_rest_batches.flatten(), species_tree_checked, structure_folder)
-    channel.empty().concat(pickle_big_rhog, pickle_rest_rhog).set{ all_rhog_pickle }
+    rhogs_fa_keyed = rhogs_fa.map { f -> tuple(f.baseName, f) }
+    rhogs_distance_keyed = rhogs_distance.map { f -> tuple(f.baseName, f) }
+    rhogs_fa_distance = rhogs_fa_keyed.join(rhogs_distance_keyed)
+//     rhogs_fa_distance.view { "rhogs_fa_distance : ${it}" }
+    rhogs_fa_ = rhogs_fa_distance.map { pair -> pair[1] }
+    rhogs_distance_ = rhogs_fa_distance.map { pair -> pair[2] }
+    (all_rhog_pickle, msa_out_big, genetrees_out_rest) = subhog_infer(rhogs_fa_, rhogs_distance_, species_tree_checked.first(), nr_species.first())
 
+
+
+//     (rhogs_rest_batches, rhogs_big_batches) = batch_roothogs(omamer_rhogs)
+//     (pickle_big_rhog, msa_out_big, genetrees_out_rest) = hog_big(rhogs_big_batches.flatten(), species_tree_checked, nr_species)
+//     (pickle_rest_rhog,  msas_out_rest, genetrees_out_test) = hog_rest(rhogs_rest_batches.flatten(), species_tree_checked)
+//     channel.empty().concat(pickle_big_rhog, pickle_rest_rhog).set{ all_rhog_pickle }
+//
     (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(all_rhog_pickle.collect(), gene_id_dic_xml, omamer_rhogs, species_tree_checked, params.fasta_header_id_transformer)
-    c = hogmap.count().branch{ n->
-        TRUE: (n<=25 || params.force_pairwise_ortholog_generation)
-        FALSE: n>25
-    }
-    extract_pairwise_ortholog_relations(orthoxml_file, c.TRUE)
-    fastoma_report(notebook, orthoxml_file, proteome_folder, species_tree_checked)
-
+//     c = hogmap.count().branch{ n->
+//         TRUE: (n<=25 || params.force_pairwise_ortholog_generation)
+//         FALSE: n>25
+//     }
+//     extract_pairwise_ortholog_relations(orthoxml_file, c.TRUE)
+//     fastoma_report(notebook, orthoxml_file, proteome_folder, species_tree_checked)
+//
 
   workflow.onComplete = {
     def String report = ( params.report ? "\nNextflow report : ${params.statsdir}" : "");
@@ -511,4 +610,3 @@ workflow {
     println ( workflow.success ? "Done!" : "Oops .. something went wrong" )
   }
 }
-
