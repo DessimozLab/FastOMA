@@ -166,8 +166,11 @@ def parse_proteomes(folder=None, min_sequence_length=0):  # list_oma_species
         species_name, ext = file.rsplit('.', 1)
         logger.debug("%s: %s | %s", file, species_name, ext)
         if ext in ("fa", "fasta"):
-            species_names.append(species_name)
             fasta_format_keep = ext  # last one is stored either fa or fasta
+        if file.endswith("3di.fa"):
+            species_name=file[:-7]
+            fasta_format_keep = "3di.fa"
+        species_names.append(species_name)
 
     species_names.sort()   # sort the species names alphabetically -> reproducible results
     # todo accept all fasta formats in the input prtoeome folder, fasta, fa, fna, ..
@@ -490,7 +493,7 @@ def filter_big_roothogs(hogmaps, rhogs_prots, conf_infer_roothogs):
     return rhogs_prots
 
 
-def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog_size=1):
+def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog_size=1, threedi=False):
     # max_rhog_size =1e12
     #address_rhogs_folder = folder + "rhog"
     logger.info("Writing Sequences of roothogs are fasta file in " + address_rhogs_folder)
@@ -509,7 +512,10 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
 
         if min_rhog_size <= len(rhog_recs):  # <= max_rhog_size:
             # todo add the release id   to file names  rhogids_list[:2] > ['HOG:C0884658', 'HOG:C0709155']
-            SeqIO.write(rhog_recs, address_rhogs_folder + "/HOG_" + rhogid + ".fa", "fasta")
+            filename=address_rhogs_folder + "/HOG_" + rhogid + ".fa"
+            if threedi:
+                filename=address_rhogs_folder + "/HOG_" + rhogid + ".3di.fa"
+            SeqIO.write(rhog_recs, filename, "fasta")
             rhogid_written_list.append(rhogid)
         else:
             logger.debug("The roothog " +str(rhogid)+" was too small with size of "+str(len(rhog_recs))+" which is smaller than threshold "+str(min_rhog_size))

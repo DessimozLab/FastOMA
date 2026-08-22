@@ -22,6 +22,7 @@ def fastoma_infer_roothogs():
     parser.add_argument("--proteomes", required=True, help="Path to the folder containing the input proteomes")
     parser.add_argument("--splice", help="Path to the folder containing the splice information files")
     parser.add_argument("--hogmap", help="Path to the folder containing the hogmap files")
+    parser.add_argument("--threedi", required=False, help="Path to the folder containing the 3Di files")
     parser.add_argument("--out-rhog-folder", required=True, help="Folder where the roothog fasta files are written") #out_rhog_folder
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
     parser.add_argument('--min-sequence-length', required=False, default=50, type=int,
@@ -50,6 +51,11 @@ def fastoma_infer_roothogs():
     hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(
         prot_recs_lists, fasta_format_keep, folder=conf.hogmap
     )
+    if conf.threedi:
+        logger.info("Parsing threedi...")
+        species_names_threedi, threedi_recs_lists, threedi_format = _utils_roothog.parse_proteomes(conf.threedi,0)
+        threedi_recs_all = _utils_roothog.add_species_name_prot_id(threedi_recs_lists)
+
 
     # Step 2: Handle splice isoforms
     isoform_data = None
@@ -79,6 +85,11 @@ def fastoma_infer_roothogs():
 
     min_rhog_size = 2
     rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, conf.out_rhog_folder, min_rhog_size)
+    if conf.threedi:
+        logger.info("write rootHOGs of  threedi...")
+        rhogid_written_list_3di = _utils_roothog.write_rhog(rhogs_prots, threedi_recs_all, conf.out_rhog_folder, min_rhog_size, threedi=True)
+
+
     linclust_available = which("mmseqs")  # True #
     # if memseqs is not installed the output will be empty / None
     if linclust_available:
@@ -97,6 +108,10 @@ def fastoma_infer_roothogs():
             logger.debug("we wrote %d new clusters with linclust", num_clusters)
     else:
         logger.info("mmseqs linclust / easy-cluster not available, skipping clustering of unmapped and singletons")
+
+# todo
+    if conf.threedi:
+        logger.warning("todo we are not writing threedi rootHOGs based on linclust  ...")
 
 
 if __name__ == "__main__":
