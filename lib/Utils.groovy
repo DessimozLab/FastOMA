@@ -4,32 +4,15 @@ import java.nio.file.Path
 
 class Utils {
     static def getMaxFileSize(Path folderPath) {
-        def maxFileSize = 0L
-        def traverseFolder = { Path currentPath ->
-            def currentFile = currentPath.toFile()
-            if (currentFile.isDirectory()) {
-                def files = currentFile.listFiles()
-                if (files) {
-                    files.each { file ->
-                        if (file.isDirectory()) {
-                            traverseFolder(file.toPath())
-                        } else {
-                            def fileSize = file.length()
-                            if (fileSize > maxFileSize) {
-                                maxFileSize = fileSize
-                            }
-                        }
-                    }
-                }
-            } else {
-                def fileSize = currentFile.length()
-                if (fileSize > maxFileSize) {
-                    maxFileSize = fileSize
-                }
-            }
+        def currentFile = folderPath.toFile()
+        if (!currentFile.isDirectory()) {
+            return currentFile.length()
         }
-        traverseFolder(folderPath)
-        return maxFileSize
+        def files = currentFile.listFiles()
+        if (!files) {
+            return 0L
+        }
+        return files.collect { file -> getMaxFileSize(file.toPath()) }.max()
     }
 
     static def mem_cat(filesize, nr_genomes) {
