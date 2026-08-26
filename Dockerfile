@@ -6,6 +6,8 @@ ENV PYTHONUNBUFFERED=1
 
 
 FROM basis AS builder
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        build-essential \
@@ -14,23 +16,21 @@ RUN apt-get update \
        mafft \
     && rm -rf /var/lib/apt/lists/*
 
+ENV UV_PROJECT_ENVIRONMENT=/app \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_LOCKED=1
+
 WORKDIR /src
-RUN pip install --upgrade pip \
-    && pip install "hatch<1.17" "virtualenv<20.26"
-COPY pyproject.toml .
 
-RUN hatch dep show requirements --all > requirements.txt \
-    && pip install wheel setuptools -r requirements.txt
+# Install dependencies only, before copying the source, so this (slow) layer
+# is cached across source-only changes.
+COPY pyproject.toml uv.lock ./
+RUN uv sync --no-install-project --all-extras
 
+# Install the project itself. --no-editable is required: /app is copied into
+# the runtime image while /src is discarded, so the venv must be self-contained.
 COPY . .
-RUN hatch build \
-    && ls -la dist/
-
-# Create a clean venv for runtime and install the wheel
-RUN python -m venv /app \
-    && /app/bin/pip install --upgrade pip wheel setuptools \
-    && /app/bin/pip install -r requirements.txt \
-    && /app/bin/pip install dist/*.whl
+RUN uv sync --no-editable --all-extras
 
 
 FROM basis AS runtime
