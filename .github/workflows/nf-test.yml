@@ -34,7 +34,7 @@ jobs:
         NXF_VER:
           - "24.10.2"
           - "latest-everything"
-        filter: ["pipeline"]
+        filter: ["pipeline", "function"]
         # filter: ["process", "workflow", "function", "pipeline"]
         profile: ["conda", "docker", "singularity"]
         shard: [1] 
