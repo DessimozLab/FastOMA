@@ -75,6 +75,27 @@ jobs:
           mkdir -p $NXF_SINGULARITY_CACHEDIR
           mkdir -p $NXF_SINGULARITY_LIBRARYDIR
 
+      # The published `dessimozlab/fastoma:dev` image (the pipeline's default container)
+      # only tracks the `dev` branch, so it never contains the code of a PR/feature branch
+      # under test. Build the image for the exact commit under test instead, and point the
+      # docker/singularity profiles at it via FASTOMA_CONTAINER_OVERRIDE (see nextflow.config).
+      - name: Build FastOMA docker image for this commit
+        if: matrix.profile == 'docker' || matrix.profile == 'singularity'
+        run: docker build --load -t fastoma-ci:${{ github.sha }} .
+
+      - name: Convert docker image to Singularity image
+        if: matrix.profile == 'singularity'
+        run: apptainer build "$GITHUB_WORKSPACE/fastoma-ci.sif" "docker-daemon://fastoma-ci:${{ github.sha }}"
+
+      - name: Point pipeline at the freshly built image
+        if: matrix.profile == 'docker' || matrix.profile == 'singularity'
+        run: |
+          if [ "${{ matrix.profile }}" = "docker" ]; then
+            echo "FASTOMA_CONTAINER_OVERRIDE=fastoma-ci:${{ github.sha }}" >> "$GITHUB_ENV"
+          else
+            echo "FASTOMA_CONTAINER_OVERRIDE=$GITHUB_WORKSPACE/fastoma-ci.sif" >> "$GITHUB_ENV"
+          fi
+
       - name: Install pdiff
         run: python -m pip install --upgrade pip pdiff cryptography
 
