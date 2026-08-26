@@ -102,7 +102,14 @@ def update_hogids(fam, hog, name2taxid):
 
     omamer_roothog_id = ":".join(hog.get('id').split("_")[0:2])
     fam_elem = ET.Element("property", {"name": "OMAmerRootHOG", "value": omamer_roothog_id})
-    hog.insert(1, fam_elem)
+    # orthoxml requires all <score> children before any <property> children, so insert
+    # the new property right after the trailing run of <score> elements, not at a fixed index.
+    insert_idx = 0
+    for child in hog:
+        if child.tag != "score":
+            break
+        insert_idx += 1
+    hog.insert(insert_idx, fam_elem)
     _annotateGroupR(hog, "HOG:{:07d}".format(fam))
     return hog
 
