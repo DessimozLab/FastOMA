@@ -223,9 +223,9 @@ process hog_big{
                                --number-of-samples-per-hog ${params.nr_repr_per_hog} \
                                ${ params.write_msas ? "--msa-write" : ""} \
                                ${ params.write_genetrees ? "--gene-trees-write" : ""} \
-                               ${ params.store_completness_score    ? "" : "--no-store-completeness-score" } \
-                               ${ params.store_implied_losses_score ? "" : "--no-store-implied-losses-score" } \
-                               ${ params.store_tcs_score            ? "" : "--no-store-tcs-score" }
+                               ${ params.disable_completeness_score.toString().toBoolean()   ? "--no-store-completeness-score" : "" } \
+                               ${ params.disable_implied_losses_score.toString().toBoolean() ? "--no-store-implied-losses-score" : "" } \
+                               ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" }
     """
 }
 
@@ -259,9 +259,9 @@ process hog_rest{
                               --number-of-samples-per-hog ${params.nr_repr_per_hog} \
                               ${ params.write_msas ? "--msa-write" : ""} \
                               ${ params.write_genetrees ? "--gene-trees-write" : ""} \
-                              ${ params.store_completness_score    ? "" : "--no-store-completeness-score" } \
-                              ${ params.store_implied_losses_score ? "" : "--no-store-implied-losses-score" } \
-                              ${ params.store_tcs_score            ? "" : "--no-store-tcs-score" }
+                              ${ params.disable_completeness_score.toString().toBoolean()   ? "--no-store-completeness-score" : "" } \
+                              ${ params.disable_implied_losses_score.toString().toBoolean() ? "--no-store-implied-losses-score" : "" } \
+                              ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" }
     """
 }
 
