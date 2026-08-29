@@ -26,7 +26,7 @@ from typing import List
 from . import _wrappers, logger
 from . import _utils_subhog
 from . import _utils_frag_SO_detection
-from ._hog_class import HOG, Representative, split_hog, attach_scores, _member_species, _species_name_index
+from ._hog_class import HOG, Representative, split_hog, attach_scores, _member_species, _species_name_index, ScoreFlags
 from ._utils_subhog import MSAFilter, MSAFilterElbow, MSAFilterTrimAL
 
 from .zoo.utils import unique
@@ -96,13 +96,19 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     if not keep_subhog_each_pickle:
         shutil.rmtree(pickles_subhog_folder)
 
+    score_flags = ScoreFlags(
+        store_completeness_score=conf_infer_subhhogs.store_completeness_score,
+        store_implied_losses_score=conf_infer_subhhogs.store_implied_losses_score,
+        store_tcs_score=conf_infer_subhhogs.store_tcs_score,
+    )
+
     tot_genes, placed_genes = 0, 0
     hogs_rhogs_xml = []
     for hog_i in hogs_a_rhog:
         tot_genes += len(hog_i)
         if len(hog_i) >= inferhog_min_hog_size_xml:
             # could be improved   # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
-            hogs_a_rhog_xml_raw = hog_i.to_orthoxml(full_species_tree)    # <generef  >      <paralg object >
+            hogs_a_rhog_xml_raw = hog_i.to_orthoxml(full_species_tree, score_flags)    # <generef  >      <paralg object >
             if orthoxml_v03 and 'paralogGroup' in str(hogs_a_rhog_xml_raw) :
                 # in version v0.3 of orthoxml, there shouldn't be any paralogGroup at root level. Let's put them inside an orthogroup should be in
                 hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(hog_i.hogid)})
@@ -110,7 +116,7 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
                 scoring_node = hog_i.taxlevel
                 if full_species_tree is not None:
                     scoring_node = _species_name_index(full_species_tree)[hog_i.taxlevel.name]
-                attach_scores(hog_elemnt, hog_i, scoring_node, species_of_members)
+                attach_scores(hog_elemnt, hog_i, scoring_node, species_of_members, score_flags=score_flags)
                 ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i.taxname)})
                 hog_elemnt.append(hogs_a_rhog_xml_raw)
                 hogs_a_rhog_xml = hog_elemnt

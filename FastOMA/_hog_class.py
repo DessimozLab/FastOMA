@@ -1,9 +1,10 @@
 
+import time
 import xml.etree.ElementTree as ET
 from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 from random import sample
-from typing import Optional, List, Union
+from typing import Optional, List, Union, NamedTuple
 from ete3 import Tree, TreeNode
 import random
 from ._utils_subhog import MSAFilter
@@ -172,27 +173,69 @@ def _tax_overlap(hog: "HOG", species_lineage_index: dict):
     return groups[0] if len(groups) == 1 else _combine_tax_overlap(groups)
 
 
-def attach_scores(hog_element: ET.Element, hog: "HOG", mrca: TreeNode, species_of_members: set) -> None:
+class ScoreFlags(NamedTuple):
+    """Which of the three orthoxml scores to compute/attach, threaded as a single immutable value
+    through to_orthoxml()/_to_orthoxml()/attach_scores() instead of one bool param per score."""
+    store_completeness_score: bool = True
+    store_implied_losses_score: bool = True
+    store_tcs_score: bool = True
+
+
+class _ScoreTimings:
+    """Dummy container threaded through one rootHOG's HOG.to_orthoxml() recursion.
+
+    attach_scores() is called once per orthologGroup node produced during that recursion (not
+    just at the root), so timing a single call doesn't tell you the cost of a score across the
+    whole rootHOG. Passing the same instance down through every recursive to_orthoxml()/
+    attach_scores() call lets each call add its own elapsed time, giving the total time spent
+    computing each score for the entire rootHOG once the top-level to_orthoxml() call returns."""
+
+    __slots__ = ("completeness_score", "implied_losses", "tcs_score")
+
+    def __init__(self):
+        self.completeness_score = 0.0
+        self.implied_losses = 0.0
+        self.tcs_score = 0.0
+
+
+def attach_scores(hog_element: ET.Element, hog: "HOG", mrca: TreeNode, species_of_members: set,
+                   timings: Optional[_ScoreTimings] = None, score_flags: ScoreFlags = ScoreFlags()) -> None:
     """Computes and attaches CompletenessScore, TCSScore and ImpliedLosses as <score>
-    sub-elements of `hog_element`.
+    sub-elements of `hog_element`, each gated by its corresponding flag in `score_flags`.
 
     TCSScore follows Moi et al. 2025 / Kim et al. 2026's taxonomy-overlap score: _tax_overlap()
     computes it using each species' absolute lineage (not one relative to `mrca`), and the HOG's
     own mrca-relative "ideal" contribution is discovered and subtracted algebraically at the end
     (tax_score - leaf_acc * len(nset)) rather than needing `mrca` supplied up front, then
-    normalized by leaf_size -- the gene count of `hog` itself."""
-    completeness_score = round(len(species_of_members) / mrca.size, 4)
-    ET.SubElement(hog_element, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
+    normalized by leaf_size -- the gene count of `hog` itself.
 
-    if getattr(hog, "_subhogs", None):
-        implied_losses = _hog_implied_losses(hog, mrca)
-    else:
-        implied_losses = _count_implied_losses(mrca, species_of_members)
-    ET.SubElement(hog_element, "score", attrib={"id": "ImpliedLosses", "value": str(implied_losses)})
+    If `timings` (a _ScoreTimings) is given, the wall time of each of the three score
+    computations is added to it -- see _ScoreTimings for why this needs to be an accumulator
+    rather than a local measurement."""
+    if score_flags.store_completeness_score:
+        t0 = time.perf_counter()
+        completeness_score = round(len(species_of_members) / mrca.size, 4)
+        ET.SubElement(hog_element, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
+        if timings is not None:
+            timings.completeness_score += time.perf_counter() - t0
 
-    nset, leaf_size, leaf_acc, tax_score = _tax_overlap(hog, _species_lineage_index(mrca))
-    tcs_score = (tax_score - leaf_acc * len(nset)) / leaf_size
-    ET.SubElement(hog_element, "score", attrib={"id": "TCSScore", "value": str(round(tcs_score, 4))})
+    if score_flags.store_implied_losses_score:
+        t0 = time.perf_counter()
+        if getattr(hog, "_subhogs", None):
+            implied_losses = _hog_implied_losses(hog, mrca)
+        else:
+            implied_losses = _count_implied_losses(mrca, species_of_members)
+        ET.SubElement(hog_element, "score", attrib={"id": "ImpliedLosses", "value": str(implied_losses)})
+        if timings is not None:
+            timings.implied_losses += time.perf_counter() - t0
+
+    if score_flags.store_tcs_score:
+        t0 = time.perf_counter()
+        nset, leaf_size, leaf_acc, tax_score = _tax_overlap(hog, _species_lineage_index(mrca))
+        tcs_score = (tax_score - leaf_acc * len(nset)) / leaf_size
+        ET.SubElement(hog_element, "score", attrib={"id": "TCSScore", "value": str(round(tcs_score, 4))})
+        if timings is not None:
+            timings.tcs_score += time.perf_counter() - t0
 
 
 # from .infer_subhogs import conf_infer_subhhogs #fastoma_infer_subhogs #
@@ -429,7 +472,27 @@ class HOG:
     #     self._msa = MultipleSeqAlignment(msa_new)
     #     return 1
 
-    def to_orthoxml(self, full_species_tree: Optional[TreeNode] = None):
+    def to_orthoxml(self, full_species_tree: Optional[TreeNode] = None, score_flags: ScoreFlags = ScoreFlags()):
+        """Public entry point: builds the orthoxml element tree for this HOG and, once the whole
+        (recursive) build is done, logs how much of the total time went into computing scores
+        (see _ScoreTimings and attach_scores). `score_flags` is forwarded to every attach_scores()
+        call made during the recursion."""
+        timings = _ScoreTimings()
+        start = time.perf_counter()
+        result = self._to_orthoxml(full_species_tree, timings, score_flags)
+        elapsed = time.perf_counter() - start
+        if elapsed > 0:
+            score_total = timings.completeness_score + timings.implied_losses + timings.tcs_score
+            logger.info(
+                "to_orthoxml for rootHOG %s took %.3fs; scoring took %.3fs (%.1f%%) of which "
+                "CompletenessScore=%.3fs ImpliedLosses=%.3fs TCSScore=%.3fs",
+                self._rhogid, elapsed, score_total, 100 * score_total / elapsed,
+                timings.completeness_score, timings.implied_losses, timings.tcs_score,
+            )
+        return result
+
+    def _to_orthoxml(self, full_species_tree: Optional[TreeNode], timings: _ScoreTimings,
+                      score_flags: ScoreFlags = ScoreFlags()):
         if len(self._subhogs) == 0:
             list_member = list(self._members)
             if len(list_member) == 1:
@@ -485,7 +548,7 @@ class HOG:
                 # the following line could be improved, instead of tax_now we can use the least common ancestor of all members
                 # property_element = ET.SubElement(paralog_element, "property",attrib={"name": "TaxRange", "value": str(sub_clade)}) # self._tax_now
                 for sh in list_of_subhogs_of_same_clade:
-                    element_p = sh.to_orthoxml(full_species_tree)
+                    element_p = sh._to_orthoxml(full_species_tree, timings, score_flags)
                     if str(element_p):
                         paralog_element.append(element_p)  # ,**gene_id_name  indent+2
                     else:
@@ -495,7 +558,7 @@ class HOG:
             elif len(list_of_subhogs_of_same_clade) == 1:
                 subhog = list_of_subhogs_of_same_clade[0]
                 if len(subhog._members):
-                    element = subhog.to_orthoxml(full_species_tree)
+                    element = subhog._to_orthoxml(full_species_tree, timings, score_flags)
                     if str(element):  # element could be  <Element 'geneRef' at 0x7f7f9bacb450>
                         element_list.append(element)  # indent+2
                     else:
@@ -515,8 +578,8 @@ class HOG:
                 logger.info(f"mrca ({mrca.name}) != self.taxlevel ({self.taxlevel.name})")
                 logger.info(f"<{hog_elemnt.tag} {hog_elemnt.attrib}>")
 
-            attach_scores(hog_elemnt, self, mrca, species_of_members)
-            property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(mrca.name)})
+            attach_scores(hog_elemnt, self, mrca, species_of_members, timings=timings, score_flags=score_flags)
+            ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(mrca.name)})
 
             for element in element_list:
                 hog_elemnt.append(element)

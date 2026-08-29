@@ -6,6 +6,7 @@ from ete3 import Tree
 
 from FastOMA._hog_class import (
     HOG,
+    ScoreFlags,
     attach_scores,
     _species_mrca,
     _species_name_index,
@@ -246,6 +247,42 @@ class BalancedSpeciesTreeTests(TestCase):
         self.assertEqual(score_value(elem, "TCSScore"), "0.0")
         self.assertIsNotNone(score_value(elem, "CompletenessScore"))
         self.assertIsNotNone(score_value(elem, "ImpliedLosses"))
+
+    def test_score_flags_disable_completeness_score(self):
+        hogM = self._make_full_hog()
+        species_of_members = _member_species(hogM.get_members())
+
+        elem = ET.Element("orthologGroup")
+        attach_scores(elem, hogM, self.M, species_of_members,
+                      score_flags=ScoreFlags(store_completeness_score=False))
+
+        self.assertIsNone(score_value(elem, "CompletenessScore"))
+        self.assertIsNotNone(score_value(elem, "ImpliedLosses"))
+        self.assertIsNotNone(score_value(elem, "TCSScore"))
+
+    def test_score_flags_disable_implied_losses_score(self):
+        hogM = self._make_full_hog()
+        species_of_members = _member_species(hogM.get_members())
+
+        elem = ET.Element("orthologGroup")
+        attach_scores(elem, hogM, self.M, species_of_members,
+                      score_flags=ScoreFlags(store_implied_losses_score=False))
+
+        self.assertIsNotNone(score_value(elem, "CompletenessScore"))
+        self.assertIsNone(score_value(elem, "ImpliedLosses"))
+        self.assertIsNotNone(score_value(elem, "TCSScore"))
+
+    def test_score_flags_disable_tcs_score(self):
+        hogM = self._make_full_hog()
+        species_of_members = _member_species(hogM.get_members())
+
+        elem = ET.Element("orthologGroup")
+        attach_scores(elem, hogM, self.M, species_of_members,
+                      score_flags=ScoreFlags(store_tcs_score=False))
+
+        self.assertIsNotNone(score_value(elem, "CompletenessScore"))
+        self.assertIsNotNone(score_value(elem, "ImpliedLosses"))
+        self.assertIsNone(score_value(elem, "TCSScore"))
 
 
 class ImpliedLossesUnitTests(TestCase):

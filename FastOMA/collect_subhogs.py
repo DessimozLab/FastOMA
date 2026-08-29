@@ -26,6 +26,24 @@ fastoma-collect-subhogs --pickle-folder pickle_folders  --roothogs-folder omamer
 
 # This code collect subhogs and writes outputs.
 
+SCORE_DEFS = {
+    "CompletenessScore": "Fraction of expected species with genes in the (Sub)HOG",
+    "TCSScore": "Taxonomic Congruence Score: how well the (Sub)HOG structure matches the species tree topology",
+    "ImpliedLosses": "Number of implied gene loss events (Dollo parsimony) within the (Sub)HOG's taxonomic range",
+}
+
+
+def peek_score_ids(pickle_folder: Path) -> set:
+    """Returns the set of score ids attached to the first HOG found in pickle_folder.
+
+    Score ids depend only on the (uniform, run-wide) --store-*-score flags passed to
+    fastoma-infer-subhogs, not on individual HOGs, so a single HOG is representative of
+    the whole run and stops the scan after the first non-empty pickle file."""
+    for hog in iter_hogs(pickle_folder):
+        return {child.get('id') for child in hog if child.tag == 'score'}
+    return set()
+
+
 def iter_hogs(pickle_folder: Path):
     cnt = 0
     nr_hogs = 0
@@ -193,13 +211,12 @@ def write_hog_orthoxml(pickle_folder, output_xml_name, gene_id_pickle_file, id_t
     logger.debug("gene_xml is created.")
     orthoxml_file.append(taxonomy)
 
-    scores = ET.SubElement(orthoxml_file, "scores")
-    ET.SubElement(scores, "scoreDef", {"id": "CompletenessScore",
-                                       "desc": "Fraction of expected species with genes in the (Sub)HOG"})
-    ET.SubElement(scores, "scoreDef", {"id": "TCSScore",
-                                       "desc": "Taxonomic Congruence Score: how well the (Sub)HOG structure matches the species tree topology"})
-    ET.SubElement(scores, "scoreDef", {"id": "ImpliedLosses",
-                                       "desc": "Number of implied gene loss events (Dollo parsimony) within the (Sub)HOG's taxonomic range"})
+    present_score_ids = peek_score_ids(Path(pickle_folder))
+    if present_score_ids:
+        scores = ET.SubElement(orthoxml_file, "scores")
+        for score_id, desc in SCORE_DEFS.items():
+            if score_id in present_score_ids:
+                ET.SubElement(scores, "scoreDef", {"id": score_id, "desc": desc})
 
     #  #### create the groups of orthoxml   ####
     groups_xml = ET.SubElement(orthoxml_file, "groups")
