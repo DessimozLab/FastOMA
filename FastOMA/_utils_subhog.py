@@ -253,7 +253,10 @@ def prepare_species_tree(rhog_i: List[SeqRecord], species_tree: Tree, rhogid: st
     orthoxml_to_newick.py function for extracting orthoxml_to_newick.py subtree from the input species tree  orthoxml_to_newick.py.k.orthoxml_to_newick.py pruning,
     based on the names of species in the rootHOG.
 
-    output: species_tree (pruned), species_names_rhog, prot_names_rhog
+    output: species_tree (pruned), species_names_rhog, prot_names_rhog, full_species_tree (unpruned,
+    with the `size` feature set) -- kept around so that scores computed later (e.g. ImpliedLosses,
+    TCSScore) can be evaluated against the real species tree topology, not just the species present
+    in this rootHOG.
     """
     assert len(rhog_i) > 0, 'input hog_i is empty, probably previous step find_rhog has issue, rhogs/HOG_B0'+rhogid+'is empty?'
     species_names_rhog = []
@@ -275,9 +278,11 @@ def prepare_species_tree(rhog_i: List[SeqRecord], species_tree: Tree, rhogid: st
     for n in species_tree.traverse():
         n.add_feature("size", len(n))
 
+    full_species_tree = species_tree.copy()
+
     mrca = species_tree.get_common_ancestor(species_names_uniqe)
     mrca.prune(species_names_uniqe, preserve_branch_length=True)
-    return mrca, species_names_rhog, prot_names_rhog
+    return mrca, species_names_rhog, prot_names_rhog, full_species_tree
 
 
 def label_sd_internal_nodes(tree_out, threshold_dubious_sd):

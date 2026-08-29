@@ -26,7 +26,7 @@ from typing import List
 from . import _wrappers, logger
 from . import _utils_subhog
 from . import _utils_frag_SO_detection
-from ._hog_class import HOG, Representative, split_hog
+from ._hog_class import HOG, Representative, split_hog, attach_scores, _member_species, _species_name_index, ScoreFlags
 from ._utils_subhog import MSAFilter, MSAFilterElbow, MSAFilterTrimAL
 
 from .zoo.utils import unique
@@ -73,7 +73,7 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     # the file "species_tree_checked.nwk" is created by the check_input.py
     (species_tree) = _utils_subhog.read_species_tree(conf_infer_subhhogs.species_tree)
 
-    (species_tree, species_names_rhog, prot_names_rhog) = _utils_subhog.prepare_species_tree(rhog_i, species_tree, rhogid)
+    (species_tree, species_names_rhog, prot_names_rhog, full_species_tree) = _utils_subhog.prepare_species_tree(rhog_i, species_tree, rhogid)
     species_names_rhog = list(set(species_names_rhog))
     logger.info("Number of unique species in rHOG " + rhogid + " is " + str(len(species_names_rhog)) + ".")
 
@@ -96,20 +96,27 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     if not keep_subhog_each_pickle:
         shutil.rmtree(pickles_subhog_folder)
 
+    score_flags = ScoreFlags(
+        store_completeness_score=conf_infer_subhhogs.store_completeness_score,
+        store_implied_losses_score=conf_infer_subhhogs.store_implied_losses_score,
+        store_tcs_score=conf_infer_subhhogs.store_tcs_score,
+    )
+
     tot_genes, placed_genes = 0, 0
     hogs_rhogs_xml = []
     for hog_i in hogs_a_rhog:
         tot_genes += len(hog_i)
         if len(hog_i) >= inferhog_min_hog_size_xml:
             # could be improved   # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
-            hogs_a_rhog_xml_raw = hog_i.to_orthoxml()    # <generef  >      <paralg object >
+            hogs_a_rhog_xml_raw = hog_i.to_orthoxml(full_species_tree, score_flags)    # <generef  >      <paralg object >
             if orthoxml_v03 and 'paralogGroup' in str(hogs_a_rhog_xml_raw) :
                 # in version v0.3 of orthoxml, there shouldn't be any paralogGroup at root level. Let's put them inside an orthogroup should be in
                 hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(hog_i.hogid)})
-                num_species_tax_hog = len(set([i.split("||")[1] for i in hog_i.get_members()]))
-                completeness_score = round(num_species_tax_hog / hog_i.taxlevel.size, 4)
-                ET.SubElement(hog_elemnt, "score",
-                              attrib={"id": "CompletenessScore", "value": str(completeness_score)})
+                species_of_members = _member_species(hog_i.get_members())
+                scoring_node = hog_i.taxlevel
+                if full_species_tree is not None:
+                    scoring_node = _species_name_index(full_species_tree)[hog_i.taxlevel.name]
+                attach_scores(hog_elemnt, hog_i, scoring_node, species_of_members, score_flags=score_flags)
                 ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i.taxname)})
                 hog_elemnt.append(hogs_a_rhog_xml_raw)
                 hogs_a_rhog_xml = hog_elemnt
@@ -163,6 +170,10 @@ def build_xml_from_rhog(rhogid:str, seqs:List[SeqRecord], hogs:List[ET.Element])
     scores = ET.SubElement(root, "scores")
     ET.SubElement(scores, "scoreDef",
                   {"id": "CompletenessScore","desc": "Fraction of expected species with genes in the (Sub)HOG"})
+    ET.SubElement(scores, "scoreDef",
+                  {"id": "TCSScore", "desc": "Taxonomic Congruence Score: how well the (Sub)HOG structure matches the species tree topology"})
+    ET.SubElement(scores, "scoreDef",
+                  {"id": "ImpliedLosses", "desc": "Number of implied gene loss events (Dollo parsimony) within the (Sub)HOG's taxonomic range"})
     groups = ET.SubElement(root, 'groups')
     for hog in hogs:
         groups.append(hog)

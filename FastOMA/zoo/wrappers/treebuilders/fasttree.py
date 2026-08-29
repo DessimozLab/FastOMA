@@ -94,7 +94,7 @@ class Fasttree(TreeBuilder):
             self.stderr = self.cli.get_stderr()
             last_error_line = self.stderr.split('\n')[-1].strip()
             logger.error('FastTree returned non-zero exit status: {}'.format(self.returncode))
-            logger.error('Output of FastTree:\n\n%s\nstdout=\n%s\n{}\n\n%s\nstderr=\n%s\n{}\n\n',
+            logger.error('Output of FastTree:\n\n%s\nstdout=\n%s\n%s\n\n%s\nstderr=\n%s\n%s\n\n',
                          "=" * 30, "=" * 30, summarize_long_message(self.stdout),
                          "=" * 30, "=" * 30, summarize_long_message(self.stderr))
             if self.returncode < 0:

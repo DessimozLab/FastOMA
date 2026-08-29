@@ -1,9 +1,10 @@
 
+import time
 import xml.etree.ElementTree as ET
 from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 from random import sample
-from typing import Optional, List, Union
+from typing import Optional, List, Union, NamedTuple
 from ete3 import Tree, TreeNode
 import random
 from ._utils_subhog import MSAFilter
@@ -21,6 +22,220 @@ hogclass_min_cols_msa_to_filter = hogclass_max_num_seq * 50
 
 import itertools
 from . import _utils_subhog, logger
+
+
+def _member_species(members) -> set:
+    return set(m.split("||")[1] for m in members)
+
+
+def _species_name_index(tree: TreeNode) -> dict:
+    """species name -> TreeNode lookup for `tree`, built once and cached on its root.
+
+    ete3's search_nodes()/get_common_ancestor(names) each do a full linear scan of the tree;
+    at scale (e.g. a rootHOG with 100k+ genes, each needing a per-species lookup) calling those
+    once per gene dominates runtime. Building this index once per species tree and doing O(1)
+    dict lookups instead is ~1000x faster in practice and is safe to cache on the tree: a fresh
+    species tree object is built per rootHOG (see prepare_species_tree), so the cache can't go
+    stale across rootHOGs, and it's built lazily on first use so callers never pass it explicitly."""
+    root = tree.get_tree_root()
+    index = getattr(root, "_species_name_index", None)
+    if index is None:
+        index = {n.name: n for n in root.traverse()}
+        root.add_feature("_species_name_index", index)
+    return index
+
+
+def _species_mrca(tree: TreeNode, species_of_members: set) -> TreeNode:
+    """Common ancestor of `species_of_members` within `tree`.
+
+    `tree` should be the real, unpruned species tree whenever one is available: the working
+    species (sub)tree used during inference is pruned to the species present in the rootHOG
+    (see `_utils_subhog.prepare_species_tree`), so a species entirely absent from the rootHOG
+    no longer exists in it, and computing losses against that tree would silently ignore it.
+    A node that genuinely branches for `species_of_members` is never affected by that pruning
+    (pruning only ever removes nodes that become unary), so this mrca has the same identity/name
+    whether computed against the pruned or the unpruned tree -- only the topology below it, which
+    ImpliedLosses/TCSScore need, differs."""
+    index = _species_name_index(tree)
+    return tree.get_common_ancestor(*[index[x] for x in species_of_members])
+
+
+def _count_implied_losses(mrca: TreeNode, species_with_members: set) -> int:
+    """Dollo-parsimony style count of minimal loss events between `mrca` and the species
+    that actually have a member gene: a whole clade lacking any member counts as one loss,
+    regardless of how many species it spans."""
+    def recurse(node):
+        leaves_under = set(n.name for n in node.iter_leaves())
+        if leaves_under.isdisjoint(species_with_members):
+            return 1
+        if node.is_leaf():
+            return 0
+        return sum(recurse(c) for c in node.children)
+    return sum(recurse(c) for c in mrca.children)
+
+
+def _count_untouched_clades(tree_node: TreeNode, reached_nodes: list) -> int:
+    """Counts, below `tree_node`, the maximal clades that contain none of `reached_nodes` --
+    i.e. clades no sub-hog lineage touches at all -- as one loss each. Does not descend into a
+    clade that a lineage already reaches: that clade's internal losses (if any) are counted
+    separately, per lineage, by _hog_implied_losses -- re-scanning them here would double-count."""
+    if tree_node in reached_nodes:
+        return 0
+    if not any(tree_node in r.get_ancestors() for r in reached_nodes):
+        return 1
+    return sum(_count_untouched_clades(c, reached_nodes) for c in tree_node.children)
+
+
+def _hog_implied_losses(hog: "HOG", tree_node: TreeNode) -> int:
+    """Recursively counts implied gene losses for `hog` within `tree_node`'s subtree.
+
+    Mirrors _tax_overlap's _tax_now-based grouping of _subhogs, but sums losses per group member
+    instead of intersecting/folding lineages: a group of sub-hogs sharing the same _tax_now
+    represents a duplication, and each such paralogous copy's losses are counted independently
+    so that one copy's presence in a species can't mask a sibling copy's loss there."""
+    subhogs = getattr(hog, "_subhogs", None)
+    if not subhogs:
+        return 0
+
+    losses = 0
+    clade_groups = {}
+    for sh in subhogs:
+        clade_groups.setdefault(sh._tax_now.name, []).append(sh)
+    for subhogs_of_clade in clade_groups.values():
+        clade_node = subhogs_of_clade[0]._tax_now
+        for sh in subhogs_of_clade:
+            losses += _hog_implied_losses(sh, clade_node)
+
+    reached_nodes = [subhogs_of_clade[0]._tax_now for subhogs_of_clade in clade_groups.values()]
+    losses += _count_untouched_clades(tree_node, reached_nodes)
+    return losses
+
+
+def _species_lineage_index(tree: TreeNode) -> dict:
+    """species name -> frozenset of ancestor node names (inclusive of the species itself and the
+    tree's root), cached on the tree's root like _species_name_index.
+
+    Unlike _species_mrca (which needs a lineage relative to some already-known mrca), the TCS
+    taxonomy-overlap score below wants each species' *absolute* lineage: it discovers the HOG's
+    own mrca as a side effect of intersecting members' lineages, rather than needing it supplied
+    up front (see attach_scores)."""
+    root = tree.get_tree_root()
+    index = getattr(root, "_species_lineage_index", None)
+    if index is None:
+        index = {}
+        for leaf in root.iter_leaves():
+            ancestors = set()
+            n = leaf
+            while True:
+                ancestors.add(n.name)
+                if n is root:
+                    break
+                n = n.up
+            index[leaf.name] = frozenset(ancestors)
+        root.add_feature("_species_lineage_index", index)
+    return index
+
+
+def _combine_tax_overlap(parts):
+    """Folds sibling (nset, leaf_size, leaf_acc, tax_score) tuples into their parent's, per
+    Moi/Kim's taxonomy-overlap algorithm: a "match" (nonempty lineage shared by every
+    contributing part) earns len(nset) points per gene (leaf_size) below this node, on top of
+    whatever each part already scored deeper down. A part with an empty nset (no informative
+    match anywhere in its own subtree) is excluded from the intersection rather than zeroing it
+    out -- one already-incongruent branch shouldn't poison a genuinely-matching sibling."""
+    leaf_size = sum(p[1] for p in parts)
+    leaf_acc = sum(p[2] for p in parts) + leaf_size
+    tax_score = sum(p[3] for p in parts)
+    nonempty = [p[0] for p in parts if p[0]]
+    nset = frozenset.intersection(*nonempty) if nonempty else frozenset()
+    tax_score += len(nset) * leaf_size
+    return nset, leaf_size, leaf_acc, tax_score
+
+
+def _tax_overlap(hog: "HOG", species_lineage_index: dict):
+    """Recursively computes (nset, leaf_size, leaf_acc, tax_score) for `hog`, mirroring the same
+    _tax_now-based grouping of _subhogs used by HOG.to_orthoxml() (a group of sub-hogs sharing a
+    _tax_now is a duplication -- its members are folded together as siblings, same as a group of
+    literal gene-tree children would be). `leaf_size` is read off len(hog).
+    See attach_scores for how the four returned values become TCSScore."""
+    if not hog._subhogs:
+        species = next(iter(_member_species(hog.get_members())))
+        return species_lineage_index[species], len(hog), 0, 0
+
+    groups = []
+    for _, subhogs_of_clade in itertools.groupby(
+            sorted(hog._subhogs, key=lambda h: h._tax_now.name), key=lambda h: h._tax_now.name):
+        subhogs_of_clade = list(subhogs_of_clade)
+        if len(subhogs_of_clade) == 1:
+            groups.append(_tax_overlap(subhogs_of_clade[0], species_lineage_index))
+        else:
+            groups.append(_combine_tax_overlap([_tax_overlap(sh, species_lineage_index) for sh in subhogs_of_clade]))
+    return groups[0] if len(groups) == 1 else _combine_tax_overlap(groups)
+
+
+class ScoreFlags(NamedTuple):
+    """Which of the three orthoxml scores to compute/attach, threaded as a single immutable value
+    through to_orthoxml()/_to_orthoxml()/attach_scores() instead of one bool param per score."""
+    store_completeness_score: bool = True
+    store_implied_losses_score: bool = True
+    store_tcs_score: bool = True
+
+
+class _ScoreTimings:
+    """Dummy container threaded through one rootHOG's HOG.to_orthoxml() recursion.
+
+    attach_scores() is called once per orthologGroup node produced during that recursion (not
+    just at the root), so timing a single call doesn't tell you the cost of a score across the
+    whole rootHOG. Passing the same instance down through every recursive to_orthoxml()/
+    attach_scores() call lets each call add its own elapsed time, giving the total time spent
+    computing each score for the entire rootHOG once the top-level to_orthoxml() call returns."""
+
+    __slots__ = ("completeness_score", "implied_losses", "tcs_score")
+
+    def __init__(self):
+        self.completeness_score = 0.0
+        self.implied_losses = 0.0
+        self.tcs_score = 0.0
+
+
+def attach_scores(hog_element: ET.Element, hog: "HOG", mrca: TreeNode, species_of_members: set,
+                   timings: Optional[_ScoreTimings] = None, score_flags: ScoreFlags = ScoreFlags()) -> None:
+    """Computes and attaches CompletenessScore, TCSScore and ImpliedLosses as <score>
+    sub-elements of `hog_element`, each gated by its corresponding flag in `score_flags`.
+
+    TCSScore follows Moi et al. 2025 / Kim et al. 2026's taxonomy-overlap score: _tax_overlap()
+    computes it using each species' absolute lineage (not one relative to `mrca`), and the HOG's
+    own mrca-relative "ideal" contribution is discovered and subtracted algebraically at the end
+    (tax_score - leaf_acc * len(nset)) rather than needing `mrca` supplied up front, then
+    normalized by leaf_size -- the gene count of `hog` itself.
+
+    If `timings` (a _ScoreTimings) is given, the wall time of each of the three score
+    computations is added to it -- see _ScoreTimings for why this needs to be an accumulator
+    rather than a local measurement."""
+    if score_flags.store_completeness_score:
+        t0 = time.perf_counter()
+        completeness_score = round(len(species_of_members) / mrca.size, 4)
+        ET.SubElement(hog_element, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
+        if timings is not None:
+            timings.completeness_score += time.perf_counter() - t0
+
+    if score_flags.store_implied_losses_score:
+        t0 = time.perf_counter()
+        if getattr(hog, "_subhogs", None):
+            implied_losses = _hog_implied_losses(hog, mrca)
+        else:
+            implied_losses = _count_implied_losses(mrca, species_of_members)
+        ET.SubElement(hog_element, "score", attrib={"id": "ImpliedLosses", "value": str(implied_losses)})
+        if timings is not None:
+            timings.implied_losses += time.perf_counter() - t0
+
+    if score_flags.store_tcs_score:
+        t0 = time.perf_counter()
+        nset, leaf_size, leaf_acc, tax_score = _tax_overlap(hog, _species_lineage_index(mrca))
+        tcs_score = (tax_score - leaf_acc * len(nset)) / leaf_size
+        ET.SubElement(hog_element, "score", attrib={"id": "TCSScore", "value": str(round(tcs_score, 4))})
+        if timings is not None:
+            timings.tcs_score += time.perf_counter() - t0
 
 
 # from .infer_subhogs import conf_infer_subhhogs #fastoma_infer_subhogs #
@@ -257,7 +472,27 @@ class HOG:
     #     self._msa = MultipleSeqAlignment(msa_new)
     #     return 1
 
-    def to_orthoxml(self):
+    def to_orthoxml(self, full_species_tree: Optional[TreeNode] = None, score_flags: ScoreFlags = ScoreFlags()):
+        """Public entry point: builds the orthoxml element tree for this HOG and, once the whole
+        (recursive) build is done, logs how much of the total time went into computing scores
+        (see _ScoreTimings and attach_scores). `score_flags` is forwarded to every attach_scores()
+        call made during the recursion."""
+        timings = _ScoreTimings()
+        start = time.perf_counter()
+        result = self._to_orthoxml(full_species_tree, timings, score_flags)
+        elapsed = time.perf_counter() - start
+        if elapsed > 0:
+            score_total = timings.completeness_score + timings.implied_losses + timings.tcs_score
+            logger.info(
+                "to_orthoxml for rootHOG %s took %.3fs; scoring took %.3fs (%.1f%%) of which "
+                "CompletenessScore=%.3fs ImpliedLosses=%.3fs TCSScore=%.3fs",
+                self._rhogid, elapsed, score_total, 100 * score_total / elapsed,
+                timings.completeness_score, timings.implied_losses, timings.tcs_score,
+            )
+        return result
+
+    def _to_orthoxml(self, full_species_tree: Optional[TreeNode], timings: _ScoreTimings,
+                      score_flags: ScoreFlags = ScoreFlags()):
         if len(self._subhogs) == 0:
             list_member = list(self._members)
             if len(list_member) == 1:
@@ -313,7 +548,7 @@ class HOG:
                 # the following line could be improved, instead of tax_now we can use the least common ancestor of all members
                 # property_element = ET.SubElement(paralog_element, "property",attrib={"name": "TaxRange", "value": str(sub_clade)}) # self._tax_now
                 for sh in list_of_subhogs_of_same_clade:
-                    element_p = sh.to_orthoxml()
+                    element_p = sh._to_orthoxml(full_species_tree, timings, score_flags)
                     if str(element_p):
                         paralog_element.append(element_p)  # ,**gene_id_name  indent+2
                     else:
@@ -323,7 +558,7 @@ class HOG:
             elif len(list_of_subhogs_of_same_clade) == 1:
                 subhog = list_of_subhogs_of_same_clade[0]
                 if len(subhog._members):
-                    element = subhog.to_orthoxml()
+                    element = subhog._to_orthoxml(full_species_tree, timings, score_flags)
                     if str(element):  # element could be  <Element 'geneRef' at 0x7f7f9bacb450>
                         element_list.append(element)  # indent+2
                     else:
@@ -337,17 +572,14 @@ class HOG:
         elif len(element_list) > 1:
             #hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
             hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)}, )
-            species_of_members = set([i.split("||")[1] for i in self._members])  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
-            num_species_tax_hog = len(species_of_members)
-            mrca = self.taxlevel.get_common_ancestor(
-                *[self.taxlevel.search_nodes(name=x)[0] for x in species_of_members])
-            if mrca != self.taxlevel:
+            species_of_members = _member_species(self._members)  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
+            mrca = _species_mrca(full_species_tree if full_species_tree is not None else self.taxlevel, species_of_members)
+            if mrca.name != self.taxlevel.name:
                 logger.info(f"mrca ({mrca.name}) != self.taxlevel ({self.taxlevel.name})")
                 logger.info(f"<{hog_elemnt.tag} {hog_elemnt.attrib}>")
 
-            completeness_score = round(num_species_tax_hog/mrca.size, 4)
-            property_element = ET.SubElement(hog_elemnt, "score", attrib={"id": "CompletenessScore", "value": str(completeness_score)})
-            property_element = ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(mrca.name)})
+            attach_scores(hog_elemnt, self, mrca, species_of_members, timings=timings, score_flags=score_flags)
+            ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(mrca.name)})
 
             for element in element_list:
                 hog_elemnt.append(element)

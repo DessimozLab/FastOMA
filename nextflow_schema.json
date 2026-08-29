@@ -171,6 +171,18 @@
           "type": "boolean",
           "description": "Force generation of pairwise orthologs even for large datasets (may be slow)",
           "help": "By default, pairwise orthologs are not generated for datasets with more than 25 species to avoid long runtimes. Enable this option to override this behavior."
+        },
+        "disable_completeness_score": {
+          "type": "boolean",
+          "description": "Disable computing/storing the CompletenessScore of each (Sub)HOG in the output orthoxml"
+        },
+        "disable_implied_losses_score": {
+          "type": "boolean",
+          "description": "Disable computing/storing the ImpliedLosses score of each (Sub)HOG in the output orthoxml"
+        },
+        "disable_tcs_score": {
+          "type": "boolean",
+          "description": "Disable computing/storing the TCSScore of each (Sub)HOG in the output orthoxml"
         }
       }
     },
