@@ -14,6 +14,7 @@ import sys
 
 from .zoo.unionfind import UnionFind
 from . import logger
+from . import _protein_trace as ptrace
 import collections
 
 filter_nonchild_rootHOG= False
@@ -175,7 +176,12 @@ def parse_proteomes(folder=None, min_sequence_length=0):  # list_oma_species
     #smallprot_recs_lists ={}
     for species_name in species_names:
         prot_address = os.path.join(folder, species_name + "." + fasta_format_keep)
-        prots_record = list(rec for rec in SeqIO.parse(prot_address, "fasta") if len(rec) >= min_sequence_length)
+        prots_record = []
+        for rec in SeqIO.parse(prot_address, "fasta"):
+            if len(rec) >= min_sequence_length:
+                prots_record.append(rec)
+            else:
+                ptrace.event(species_name, rec.id, "infer_roothogs", "too_short", "", f"length={len(rec)} min={min_sequence_length}")
         #prots_record_small = list(rec for rec in SeqIO.parse(prot_address, "fasta") if len(rec) < min_sequence_length)
         # logger.debug(prots_record)
         logger.info(f"{species_name} contains {len(prots_record)} that are at least {min_sequence_length} long.")
@@ -193,12 +199,23 @@ def create_root_hogs(hogmaps, conf):
     # Initial grouping
     rhogs_prots = group_prots_by_roothogs(hogmaps)
     logger.info(f"Initial grouping: {len(rhogs_prots)} root HOGs")
+    assignment = ptrace.rhog_assignment(rhogs_prots)
+    for (species_name, prot_id), rhogid in assignment.items():
+        n_hits = len(hogmaps[species_name][prot_id])
+        ptrace.event(species_name, prot_id, "infer_roothogs", "omamer_best_hit", rhogid, f"n_hits={n_hits}")
     
     # Handle singletons
     rhogs_prots = resolve_singletons(rhogs_prots, hogmaps, conf)
+    new_assignment = ptrace.rhog_assignment(rhogs_prots)
+    ptrace.record_rhog_changes(assignment, new_assignment, "infer_roothogs", "resolve_singletons")
+    assignment = new_assignment
 
     rhogs_prots = merge_rhogs2(hogmaps, rhogs_prots, conf)
+    new_assignment = ptrace.rhog_assignment(rhogs_prots)
+    ptrace.record_rhog_changes(assignment, new_assignment, "infer_roothogs", "merge_rhogs")
+    assignment = new_assignment
     rhogs_prots = filter_big_roothogs(hogmaps, rhogs_prots, conf)
+    ptrace.record_rhog_changes(assignment, ptrace.rhog_assignment(rhogs_prots), "infer_roothogs", "filter_big_roothogs")
     
     # # Merge similar HOGs
     # if conf.enable_merging:
@@ -286,6 +303,7 @@ def parse_hogmap_omamer(proteomes, fasta_format_keep, folder=None):
             for row in reader:
                 if row['hogid'] == "N/A":
                     unmapped[species_name].append(row['qseqid'])
+                    ptrace.event(species_name, row['qseqid'], "infer_roothogs", "no_omamer_hit")
                 elif row['qseqid'] not in proteome:
                     logger.debug(f"Ignoring {row} [{species_name}] from hogmap as not in proteome")
                 else:
@@ -511,8 +529,12 @@ def write_rhog(rhogs_prot_records, prot_recs_all, address_rhogs_folder, min_rhog
             # todo add the release id   to file names  rhogids_list[:2] > ['HOG:C0884658', 'HOG:C0709155']
             SeqIO.write(rhog_recs, address_rhogs_folder + "/HOG_" + rhogid + ".fa", "fasta")
             rhogid_written_list.append(rhogid)
+            for rec in rhog_recs:
+                ptrace.member_event(rec.id, "infer_roothogs", "roothog_written", rhogid, f"size={len(rhog_recs)}")
         else:
             logger.debug("The roothog " +str(rhogid)+" was too small with size of "+str(len(rhog_recs))+" which is smaller than threshold "+str(min_rhog_size))
+            for rec in rhog_recs:
+                ptrace.member_event(rec.id, "infer_roothogs", "roothog_too_small", rhogid, f"size={len(rhog_recs)} min={min_rhog_size}")
             #logger.debug(" issue 12314405 to check" )
             #for prot1 in rhog_recs:
                 #logger.debug("we are removing due to omamer signleton hog |*|" + str(prot1.id))
@@ -833,6 +855,8 @@ def collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all, unmapped_si
     logger.debug(f"collected sequence records of {len(singleton_recs)} singleton proteins.")
 
     singleton_unmapped_recs = unmapped_recs + singleton_recs
+    for rec in singleton_unmapped_recs:
+        ptrace.member_event(rec.id, "infer_roothogs", "sent_to_clustering")
     SeqIO.write(singleton_unmapped_recs, unmapped_singleton_fasta , "fasta")
     logger.debug(f"Wrote {len(singleton_unmapped_recs)} sequences of unmapped and singleton proteins to {unmapped_singleton_fasta}.")
     return len(singleton_unmapped_recs)
@@ -903,6 +927,7 @@ def write_clusters(fasta_clustered, address_rhogs_folder, min_rhog_size):
     for cluster in clusters:
         # cluster is like ['>sp|O67032|RF1_AQUAE', 'MLKEAYISRLDKLQEKYRKLQEELSKPEVIQD...', ...], i.e. an id and its sequence.
         # thus, check for double the min_rhog_size to have at least min_rhog_size proteins
+        member_ids = [cluster[pr_idi*2][1:].split(" ")[0] for pr_idi in range(int(len(cluster)/2))]
         if len(cluster) >= 2 * min_rhog_size:
             species_names = set([])     # it seems that genes from same species tend to cluster together, discard such clusters
             for pr_idi in range(int(len(cluster)/2)):
@@ -912,7 +937,15 @@ def write_clusters(fasta_clustered, address_rhogs_folder, min_rhog_size):
                 with open(address_rhogs_folder + "/HOG_clust" + str(cluster_iter) + ".fa", "w") as file_idx:
                     for line in cluster:
                         file_idx.write(line + "\n")
+                for member in member_ids:
+                    ptrace.member_event(member, "infer_roothogs", "roothog_written", f"clust{cluster_iter}", f"size={len(member_ids)} source=linclust")
                 cluster_iter += 1
+            else:
+                for member in member_ids:
+                    ptrace.member_event(member, "infer_roothogs", "cluster_single_species_discarded", "", f"size={len(member_ids)}")
+        else:
+            for member in member_ids:
+                ptrace.member_event(member, "infer_roothogs", "cluster_too_small", "", f"size={len(member_ids)}")
     return cluster_iter - 10000
 
 
