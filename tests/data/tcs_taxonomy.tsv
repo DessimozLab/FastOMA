@@ -1,0 +1,5 @@
+query	lineage
+SP1	1 (class), 2 (order), 3 (family), 4 (genus), 5 (species)
+SP2	1 (class), 2 (order), 3 (family), 4 (genus), 6 (species)
+SP3	1 (class), 7 (order), 8 (family), 9 (genus), 10 (species)
+SP4	1 (class), 7 (order), 11 (family), 12 (subfamily), 13 (genus), 14 (species), 15 (subspecies)

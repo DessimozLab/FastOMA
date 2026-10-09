@@ -1,0 +1,32 @@
+nextflow_process {
+
+    name "Test Process check_input"
+    script "../FastOMA.nf"
+    process "check_input"
+    tag "process"
+    tag "check_input"
+
+    test("check_input: fails when the species tree leaves don't match the proteome folder") {
+
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/testdata/in_folder/proteome")
+                input[1] = file("${projectDir}/nf-tests/helpers/empty_hogmap_in")
+                input[2] = file("${projectDir}/nf-tests/helpers/species_tree_mismatched.nwk")
+                input[3] = file("${projectDir}/testdata/test.h5")
+                input[4] = file("${projectDir}/nf-tests/helpers/empty_splice_in")
+                """
+            }
+        }
+
+        then {
+            // proteome folder has AQUAE/CHLTR/MYCGE, the fixture tree has AQUAE/CHLTR/FOOBAR --
+            // fastoma-check-input must reject the mismatch (MYCGE missing from the tree) rather
+            // than silently pruning or continuing.
+            assert !process.success
+            assert process.stdout.any { it.contains("These species are not in the species tree") }
+        }
+    }
+
+}

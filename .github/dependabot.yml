@@ -6,3 +6,17 @@ updates:
     schedule:
       interval: "daily"
     target-branch: "dev"
+
+  # Maintain Python dependencies pinned in uv.lock
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    target-branch: "dev"
+
+  # Maintain base images / apt packages referenced in the Dockerfile
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    target-branch: "dev"

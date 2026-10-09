@@ -186,7 +186,8 @@ For FastOMA, we've implemented the following profiles below. Additional ones can
 With `-profile docker` one can use docker as an execution platform. It requires docker to be installed on the system (see [here](https://docs.docker.com/engine/install/)). The pipeline 
 will automatically fetch missing containers from dockerhub (e.g. dessimozlab/fastoma) if not found locally. By default, the version
 `latest` is used by the pipeline, however we provide images for any branch and release as well; even for every recent commit.
-One can select the desired container via the `--container_version` argument
+One can select the desired container via the `--container_version` argument. We provide containers for x86_64 (amd64) as well
+as arm64 architectures.
 
 ```
 nextflow run FastOMA.nf -profile docker \
@@ -197,7 +198,7 @@ nextflow run FastOMA.nf -profile docker \
 This will use the container that is tagged with the current commit id. Similarly, one could also use 
 `--container_version "0.5.1"` to use the container with version `dessimozlab/fastoma:0.5.1` from dockerhub. Check the latest version on the [DockerHub](https://hub.docker.com/r/dessimozlab/fastoma/tags).
 
-### Singularity
+### Singularity / Apptainer
 Since Docker needs administrator privileges (root access), [Singluarity](https://apptainer.org/index.html) (a.k.a Apptainer) is a good alternative. This can be installed using [Conda](https://anaconda.org/conda-forge/singularity) with `conda install conda-forge::singularity`. However, in most of the academic HPC cluster, singluarity is already installed and can be called with `module load`.
 With `-profile singularity` singularity containers will be used to run the workflow. It requires singularity to 
 be installed on your system. The containers are automatically pulled from dockerhub and converted to singularity 
@@ -222,6 +223,13 @@ If none of those profiles fit directly your needs, you can create your own profi
 specify it with the `-c <path_to_profile_file>` argument. The nf-core profiles should give you a 
 good overview of what is possible, together with the 
 [nextflow documentation on executors](https://www.nextflow.io/docs/latest/executor.html).
+
+### Large datasets
+Another profile we provide is `-profile large` which is designed for large datasets. It sets much higher limits for the 
+maximum amount of memory a process can use (without specifying this profile, jobs will not try to request more than 32 GB 
+of RAM). 
+
+All profiles can be combined, e.g. `-profile slurm,conda,large`. 
 
 
 # How to run FastOMA on the test data
@@ -413,7 +421,9 @@ Let's save the planet together with
 
 
 ### Run on a cluster 
-For running on a SLURM cluster, you can add the slurm profile argument:  `-profile slurm`  to the command line.
+For running on a SLURM cluster, you can add the slurm profile argument:  `-profile slurm`  to the command line. 
+We also recommend to use the singularity/apptainer container, which can be enabled by adding the `singularity` or `apptainer` profile:
+`-profile slurm,singularity` or `-profile slurm,apptainer`.
 
 ```
 # cd FastOMA/testdata
@@ -467,6 +477,8 @@ Citation:  Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick 
 
 
 ## Change log
+- Update  v0.5.1+dev (not yet released):
+  
 - Update  v0.5.1:
   - Bug with input handling fixed.
   - upgraded github actions for CI/CD.

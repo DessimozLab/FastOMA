@@ -1,0 +1,237 @@
+// Exercises the static methods in Utils.groovy through nf-tests/helpers/UtilsWrapper.nf
+// -- see that file for why a wrapper is needed instead of including Utils.groovy directly.
+nextflow_function {
+
+    name "Test Utils"
+    script "nf-tests/helpers/UtilsWrapper.nf"
+
+    // function.result for MemoryUnit/Duration comes back JSON-deserialized as a plain map
+    // (nf-test's assertion context doesn't have Nextflow's `12.GB`/`4.h` number extensions
+    // loaded), so assertions compare the underlying `bytes` / `durationInMillis` fields.
+
+    test("mem_cat: below 1MB, few genomes -> 12GB") {
+        function "mem_cat"
+        when {
+            function {
+                """
+                input[0] = 500000
+                input[1] = 10
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.bytes == 12L * 1024**3
+        }
+    }
+
+    test("mem_cat: exactly 1MB rounds up to the next bracket (boundary is exclusive)") {
+        function "mem_cat"
+        when {
+            function {
+                """
+                input[0] = 1000000
+                input[1] = 10
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.bytes == 20L * 1024**3
+        }
+    }
+
+    test("mem_cat: between 2MB and 5MB -> 32GB") {
+        function "mem_cat"
+        when {
+            function {
+                """
+                input[0] = 3000000
+                input[1] = 10
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.bytes == 32L * 1024**3
+        }
+    }
+
+    test("mem_cat: 5MB or above -> 64GB") {
+        function "mem_cat"
+        when {
+            function {
+                """
+                input[0] = 6000000
+                input[1] = 10
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.bytes == 64L * 1024**3
+        }
+    }
+
+    test("mem_cat: more than 500 genomes doubles the allocation") {
+        function "mem_cat"
+        when {
+            function {
+                """
+                input[0] = 500000
+                input[1] = 600
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.bytes == 24L * 1024**3
+        }
+    }
+
+    test("mem_cat: exactly 500 genomes does not trigger the doubling factor") {
+        function "mem_cat"
+        when {
+            function {
+                """
+                input[0] = 500000
+                input[1] = 500
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.bytes == 12L * 1024**3
+        }
+    }
+
+    test("time_cat: below 1MB, few genomes -> 4h") {
+        function "time_cat"
+        when {
+            function {
+                """
+                input[0] = 500000
+                input[1] = 10
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.durationInMillis == 4 * 3600 * 1000
+        }
+    }
+
+    test("time_cat: between 1MB and 20MB -> 24h") {
+        function "time_cat"
+        when {
+            function {
+                """
+                input[0] = 5000000
+                input[1] = 10
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.durationInMillis == 24 * 3600 * 1000
+        }
+    }
+
+    test("time_cat: 20MB or above -> 72h") {
+        function "time_cat"
+        when {
+            function {
+                """
+                input[0] = 25000000
+                input[1] = 10
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.durationInMillis == 72 * 3600 * 1000L
+        }
+    }
+
+    test("time_cat: more than 500 genomes doubles the allocation") {
+        function "time_cat"
+        when {
+            function {
+                """
+                input[0] = 500000
+                input[1] = 600
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.durationInMillis == 8 * 3600 * 1000
+        }
+    }
+
+    test("getMaxFileSize: returns the largest file size in a flat folder") {
+        function "getMaxFileSize"
+        when {
+            function {
+                """
+                def dir = java.nio.file.Files.createTempDirectory("utils_test_flat")
+                def small = new RandomAccessFile(dir.resolve("small.txt").toFile(), "rw")
+                small.setLength(100)
+                small.close()
+                def large = new RandomAccessFile(dir.resolve("large.txt").toFile(), "rw")
+                large.setLength(500)
+                large.close()
+                input[0] = dir
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == 500
+        }
+    }
+
+    test("getMaxFileSize: recurses into sub-directories") {
+        function "getMaxFileSize"
+        when {
+            function {
+                """
+                def dir = java.nio.file.Files.createTempDirectory("utils_test_nested")
+                def small = new RandomAccessFile(dir.resolve("small.txt").toFile(), "rw")
+                small.setLength(100)
+                small.close()
+                def subDir = java.nio.file.Files.createDirectory(dir.resolve("sub"))
+                def large = new RandomAccessFile(subDir.resolve("large.txt").toFile(), "rw")
+                large.setLength(900)
+                large.close()
+                input[0] = dir
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == 900
+        }
+    }
+
+    test("getMaxFileSize: given a single file returns its own size") {
+        function "getMaxFileSize"
+        when {
+            function {
+                """
+                def dir = java.nio.file.Files.createTempDirectory("utils_test_single")
+                def f = dir.resolve("only.txt")
+                def raf = new RandomAccessFile(f.toFile(), "rw")
+                raf.setLength(321)
+                raf.close()
+                input[0] = f
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == 321
+        }
+    }
+
+}

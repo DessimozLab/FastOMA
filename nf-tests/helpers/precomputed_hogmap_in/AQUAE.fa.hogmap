@@ -1,0 +1,5 @@
+!omamer-version: test-fixture
+!query-md5: precomputed-fixture-marker
+!date-run: 2000-01-01T00:00:00.000000
+!db-path: fixture.h5
+!db-info-source: nf-test fixture, not real omamer output
