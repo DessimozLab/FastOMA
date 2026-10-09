@@ -49,6 +49,12 @@ def fastoma_infer_subhogs():
                         help="For trimming the MSA, the threshold of ratio of gaps for each column.")
     parser.add_argument("--min-col-trim", required=False, type=int, default=50,  # todo min rows trim
                         help="min no. columns in msa to consider for filtering")
+    parser.add_argument("--store-completeness-score", action=argparse.BooleanOptionalAction, default=True,
+                        help="Store the CompletenessScore of each (Sub)HOG in the output orthoxml.")
+    parser.add_argument("--store-implied-losses-score", action=argparse.BooleanOptionalAction, default=True,
+                        help="Store the ImpliedLosses score of each (Sub)HOG in the output orthoxml.")
+    parser.add_argument("--store-tcs-score", action=argparse.BooleanOptionalAction, default=True,
+                        help="Store the TCSScore of each (Sub)HOG in the output orthoxml.")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
     conf_infer_subhhogs = parser.parse_args()
 
