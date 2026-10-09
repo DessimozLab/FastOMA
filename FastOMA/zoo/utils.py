@@ -109,4 +109,18 @@ def unique(seq):
     return [x for x in seq if x not in seen and not seen.add(x)]
 
 
-
+def summarize_long_message(message: str, head_chars: int = 1000, tail_lines: int = 50) -> str:
+    """
+    Summarize a potentially long messge string.
+    Shows first head_chars characters and last tail_lines lines with ellipsis.
+    """
+    output = message or ""
+    # Get last tail_lines
+    lines = output.splitlines()
+    tail = "\n".join(lines[-tail_lines:]) if len(lines) > tail_lines else "\n".join(lines)
+    # Get first head_chars
+    head = output[:head_chars] + ("…" if len(output) > head_chars else "")
+    if len(lines) > tail_lines or len(output) > head_chars:
+        return f"{head}\n...\n{tail}"
+    else:
+        return output

@@ -50,7 +50,7 @@
             [
                 {
                     "name": "FastOMA_HOGs.orthoxml",
-                    "lineCount": 162
+                    "lineCount": 194
                 },
                 {
                     "name": "OrthologousGroups.tsv",
@@ -80,8 +80,8 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "24.10.5"
+            "nextflow": "26.04.6"
         },
-        "timestamp": "2025-10-23T12:09:08.301966"
+        "timestamp": "2026-08-25T18:07:32.287389"
     }
 }

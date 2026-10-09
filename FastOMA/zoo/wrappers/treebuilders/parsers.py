@@ -7,9 +7,8 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 
 
-
-FLOAT = Word(nums + '.-').setParseAction(lambda x: float(x[0]))
-INT = Word(nums).setParseAction(lambda x: int(x[0]))
+FLOAT = Word(nums + '.-').set_parse_action(lambda x: float(x[0]))
+INT = Word(nums).set_parse_action(lambda x: int(x[0]))
 WORD = Word(alphanums + '_')
 SPACEDWORD = Word(alphanums + ' _')
 MODEL_CONCAT_WORD = Word(alphanums + "+_-")
