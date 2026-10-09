@@ -563,6 +563,9 @@ def infer_gene_tree_fold(conf, msa):
 
 
     if conf.mode=='threedi':
+        logger.warning('Note: the order of seqeuneces in 3di and fasta file should be the same   ') # todo
+        logger.warning('threedi mode is working, using the distance fine created in nextflow pipeline using foldseek ')
+
         distance_file = conf.threedidistance
         # foldseek_dist_threedi()
         from os import listdir
@@ -572,13 +575,22 @@ def infer_gene_tree_fold(conf, msa):
         print(ids[:10])
         # ids_clean = [x[1].split("|")[1] for x in ids]
         # res = res_full[res_full[0].isin(ids_clean)]
-        id_dict2 = {x[1].split("|")[1]: x[1] for x in ids}
-        ids_=list(id_dict2.keys())
+        # if sp| pr
+        #id_dict2 = {x[1].split("|")[1]: x[1] for x in ids}
+        # id_dict2 = {x[1].split("||")[0]: x[1] for x in ids}
+        # ids_=list(id_dict2.keys())
+        ids_ = list(ids_dic.values())
         res = res_full[res_full[0].isin(ids_) & res_full[1].isin(ids_)]
-        res[0] = res[0].replace(id_dict2)
-        res[1] = res[1].replace(id_dict2)
+        # res[0] = res[0].replace(id_dict2)
+        # res[1] = res[1].replace(id_dict2)
 
         infolder='./'
+        if len(set(res[0])) <  len(set(ids)):
+            logger.warning("Found in the distance foldseek "+str(list(res[0])))
+            logger.warning("expected from MSA "+str(ids))
+            #for prt_ in set([i[1] for i in ids])- set( [i.split("||")[0] for i in res[0]] ):
+            logger.warning('no 3di found for some prots, or the order is not correct ')# +str(ids_dic[prt_])+str(prt_)
+            return -1
 
 
     elif conf.mode=='pdb' and conf.pdb:
@@ -610,10 +622,10 @@ def infer_gene_tree_fold(conf, msa):
     foldseekResult2distance(res, infolder) # foldtree_fastmemat_tajima
     tree1 = quicktree_f(infolder) # where foldtree_fastmemat_tajima exist
     #tree1= Tree(tree_nwk_raw)
-    for node in tree1.traverse():
-        if node.is_leaf():
-            node_name_old = node.name
-            node.name = ids_dic[node_name_old]
+    # for node in tree1.traverse():
+    #     if node.is_leaf():
+    #         node_name_old = node.name
+    #         node.name = ids_dic[node_name_old]
     tree_nwk = tree1.write()
     print("\n \n " + tree_nwk)
     a=2
