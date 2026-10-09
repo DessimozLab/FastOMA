@@ -8,7 +8,7 @@ params.proteome_folder = params.proteome_folder ?: "${params.input}/proteome"
 params.hogmap_in       = params.hogmap_in ?: "${params.input}/hogmap_in"
 params.splice_folder   = params.splice_folder ?: "${params.input}/splice"
 params.species_tree    = params.species_tree ?: "${params.input}/species_tree.nwk"
-params.pdb_folder   = params.pdb_folder ?: "${params.input}/pdb"
+//params.pdb_folder   = params.pdb_folder ?: "${params.input}/pdb"
 params.threedi_folder = params.threedi_folder ?: "${params.input}/3di"
 // Utility process to fetch remote datasets
 process fetchRemoteData {
