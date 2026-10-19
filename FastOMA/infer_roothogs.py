@@ -3,6 +3,7 @@ import subprocess
 from shutil import which
 
 from . import _utils_roothog, logger
+from . import _protein_trace
 from . import __version__ as fastoma_version
 from .logging_setup import setup_logging
 
@@ -34,9 +35,14 @@ def fastoma_infer_roothogs():
     parser.add_argument("--big-rhog-size", required=False, type=int, default=50*1000, help= "For big rootHOGs, we have different heuristics") # big_rhog_size
     parser.add_argument("--big-fscore-thresh", required=False, type=int, default=95, help="For huge rootHOGs, we have different heuristics, like filtering low family score protiens") # big_fscore_thresh
 
+    parser.add_argument("--protein-trace", action="store_true",
+                        help="write protein_events_*.events files, used by fastoma-protein-trace to trace every input protein")
+
     conf = parser.parse_args()
     setup_logging(conf.v)
     logger.debug("Arguments: %s", conf)
+    if conf.protein_trace:
+        _protein_trace.enable()
 
     # Step 1: Parse input data
     logger.info("Parsing proteomes...")

@@ -155,6 +155,7 @@ process infer_roothogs{
                                --splice ${splice_folder} \
                                --out-rhog-folder "omamer_rhogs" \
                                --min-sequence-length ${params.min_sequence_length} \
+                               ${ params.protein_trace.toString().toBoolean() ? "--protein-trace" : "" } \
                                -vv
     """
 }
@@ -227,7 +228,8 @@ process hog_big{
                                ${ params.write_genetrees ? "--gene-trees-write" : ""} \
                                ${ params.disable_completeness_score.toString().toBoolean()   ? "--no-store-completeness-score" : "" } \
                                ${ params.disable_implied_losses_score.toString().toBoolean() ? "--no-store-implied-losses-score" : "" } \
-                               ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" }
+                               ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" } \
+                               ${ params.protein_trace.toString().toBoolean() ? "--protein-trace" : "" }
     """
 }
 
@@ -264,7 +266,8 @@ process hog_rest{
                               ${ params.write_genetrees ? "--gene-trees-write" : ""} \
                               ${ params.disable_completeness_score.toString().toBoolean()   ? "--no-store-completeness-score" : "" } \
                               ${ params.disable_implied_losses_score.toString().toBoolean() ? "--no-store-implied-losses-score" : "" } \
-                              ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" }
+                              ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" } \
+                              ${ params.protein_trace.toString().toBoolean() ? "--protein-trace" : "" }
     """
 }
 
@@ -517,7 +520,7 @@ workflow {
     channel.empty().concat(pickle_big_rhog, pickle_rest_rhog).set{ all_rhog_pickle }
 
     (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(all_rhog_pickle.collect(), gene_id_dic_xml, omamer_rhogs, species_tree_checked, params.fasta_header_id_transformer)
-    if (params.protein_trace) {
+    if (params.protein_trace.toString().toBoolean()) {
         channel.empty()
             .concat(infer_roothogs.out.protein_events, hog_big.out.protein_events, hog_rest.out.protein_events)
             .flatten()

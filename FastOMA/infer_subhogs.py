@@ -3,6 +3,7 @@ import logging
 
 from . import _utils_subhog
 from . import _infer_subhog
+from . import _protein_trace
 from . import __version__ as fastoma_version
 from .logging_setup import setup_logging
 logger = logging.getLogger(__name__)
@@ -55,11 +56,15 @@ def fastoma_infer_subhogs():
                         help="Store the ImpliedLosses score of each (Sub)HOG in the output orthoxml.")
     parser.add_argument("--store-tcs-score", action=argparse.BooleanOptionalAction, default=True,
                         help="Store the TCSScore of each (Sub)HOG in the output orthoxml.")
+    parser.add_argument("--protein-trace", action="store_true",
+                        help="write protein_events_*.events files, used by fastoma-protein-trace to trace every input protein")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
     conf_infer_subhhogs = parser.parse_args()
 
     setup_logging(conf_infer_subhhogs.v, conf_infer_subhhogs.parallel)
     logger.debug("Arguments: %s", conf_infer_subhhogs)
+    if conf_infer_subhhogs.protein_trace:
+        _protein_trace.enable()
 
     address_rhogs_folder = conf_infer_subhhogs.input_rhog_folder
     # address_rhogs_folder = "./"  # _config.input_rhog_folder

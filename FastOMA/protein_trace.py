@@ -3,7 +3,7 @@
 fastoma-protein-trace --proteomes proteome --events events/ --roothog-tsv RootHOGs.tsv
 
 Outputs (in the current directory):
-  protein_fates.tsv          one row per input protein, with exactly one final fate
+  protein_fates.tsv          one row per input protein, with exactly one final fate, sorted by species and protein
   protein_events.tsv.gz      all recorded events, sorted by species and protein
   protein_trace_summary.txt  counts per fate, rootHOGs with most losses, consistency checks
 
@@ -19,14 +19,21 @@ Fates, in the order they are decided:
   no_omamer_hit_dropped             no OMAmer hit and not placed in a cluster
   removed_by_filter_big_roothogs    removed from a very big rootHOG (low family score)
   unaccounted                       no event at all (should not happen)
+
+The event files are sorted on disk (GNU sort), and the proteins are then processed
+one at a time, so memory stays at a few hundred bytes per input protein no matter
+how many events were recorded.
 """
 
 import argparse
 import collections
 import csv
 import gzip
+import itertools
 import os
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from Bio import SeqIO
@@ -38,30 +45,71 @@ LOSS_EVENTS = ("lost_in_split_hog", "lost_at_level")
 
 
 def read_proteomes(folder):
-    """(species, protein) -> length, in input order."""
+    """(species, protein) -> length."""
     proteins = {}
     for f in sorted(os.listdir(folder)):
         species, ext = f.rsplit(".", 1)
         if ext not in ("fa", "fasta"):
             continue
+        species = sys.intern(species)
         for rec in SeqIO.parse(os.path.join(folder, f), "fasta"):
             proteins[(species, rec.id)] = len(rec)
     return proteins
 
 
-def read_events(paths):
-    events = collections.defaultdict(list)
-    n = 0
-    for path in paths:
-        with open(path, "rt") as fh:
-            for line in fh:
-                fields = line.rstrip("\n").split("\t")
-                if len(fields) != len(COLUMNS):
-                    continue
-                species, protein, step, event, roothog, detail = fields
-                events[(species, protein)].append((step, event, roothog, detail))
-                n += 1
-    return events, n
+def _parse_event_lines(lines):
+    _i = sys.intern   # species, step, event and roothog repeat a lot, share one copy of each
+    for line in lines:
+        fields = line.rstrip("\n").split("\t")
+        if len(fields) != len(COLUMNS):
+            continue
+        species, protein, step, event, roothog, detail = fields
+        yield _i(species), protein, _i(step), _i(event), _i(roothog), detail
+
+
+def sorted_events(paths, tmp_dir, sort_memory):
+    """Yield ((species, protein), [(step, event, roothog, detail), ...]), ordered by (species, protein).
+
+    The event files are sorted on disk with GNU sort, so only the events of one protein
+    are held in memory at a time. The sort is stable and the files are given in name order
+    (infer_roothogs before infer_subhogs), so the events of a protein keep the order in
+    which they were written. LC_ALL=C makes sort compare bytes, which for UTF-8 is the
+    same order as comparing Python str tuples.
+    """
+    if not paths:
+        return
+    with tempfile.NamedTemporaryFile("wb", dir=tmp_dir, suffix=".files0") as file_list:
+        file_list.write(b"".join(os.fsencode(p) + b"\0" for p in paths))
+        file_list.flush()
+        cmd = ["sort", "-s", "-t", "\t", "-k1,1", "-k2,2", "-S", sort_memory, "-T", str(tmp_dir),
+               "--files0-from=" + file_list.name]
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, env=dict(os.environ, LC_ALL="C"),
+                              encoding="utf-8") as proc:
+            for key, group in itertools.groupby(_parse_event_lines(proc.stdout), key=lambda f: (f[0], f[1])):
+                yield key, [f[2:] for f in group]
+        if proc.returncode:
+            raise RuntimeError(f"sorting the event files failed: {' '.join(cmd)} exited with {proc.returncode}")
+
+
+def join_proteins_events(protein_keys, event_groups):
+    """Merge the sorted input proteins with the sorted event groups.
+
+    Yields (key, events, is_input_protein); input proteins without any event get [].
+    """
+    keys = iter(protein_keys)
+    key = next(keys, None)
+    for ev_key, evs in event_groups:
+        while key is not None and key < ev_key:
+            yield key, [], True
+            key = next(keys, None)
+        if key == ev_key:
+            yield key, evs, True
+            key = next(keys, None)
+        else:
+            yield ev_key, evs, False
+    while key is not None:
+        yield key, [], True
+        key = next(keys, None)
 
 
 def event_files(inputs):
@@ -74,12 +122,12 @@ def event_files(inputs):
 
 
 def read_roothog_tsv(path):
-    """protein -> list of final RootHOG ids (a protein id could in principle occur in two species)."""
-    final = collections.defaultdict(list)
+    """protein -> tuple of final RootHOG ids (a protein id could in principle occur in two species)."""
+    final = {}
     if path and os.path.exists(path):
         with open(path, newline="") as fh:
             for row in csv.DictReader(fh, delimiter="\t"):
-                final[row["Protein"]].append(row["RootHOG"])
+                final[row["Protein"]] = final.get(row["Protein"], ()) + (sys.intern(row["RootHOG"]),)
     return final
 
 
@@ -133,14 +181,19 @@ def fastoma_protein_trace():
     parser.add_argument("--roothog-tsv", help="RootHOGs.tsv from fastoma-collect-subhogs (final RootHOG ids)")
     parser.add_argument("--out-dir", default=".", help="where to write the three output files")
     parser.add_argument("--strict", action="store_true", help="exit with an error if any protein is unaccounted")
+    parser.add_argument("--tmp-dir", help="folder for the temporary files of the on-disk sort (default: --out-dir)")
+    parser.add_argument("--sort-memory", default="1G", help="main memory buffer of the on-disk sort (sort -S)")
     conf = parser.parse_args()
 
     proteins = read_proteomes(conf.proteomes)
     files = list(event_files(conf.events))
-    events, n_events = read_events(files)
     final_roothog = read_roothog_tsv(conf.roothog_tsv)
     out = Path(conf.out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    tmp_dir = Path(conf.tmp_dir) if conf.tmp_dir else out
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    n_events = 0
+    n_unknown = 0
 
     fates = collections.Counter()
     fates_by_size = collections.Counter()
@@ -148,12 +201,21 @@ def fastoma_protein_trace():
     rhog_size = {}
     issues = collections.Counter()
 
-    with open(out / "protein_fates.tsv", "w", newline="") as fh:
+    with open(out / "protein_fates.tsv", "w", newline="") as fh, \
+            gzip.open(out / "protein_events.tsv.gz", "wt") as events_fh:
         w = csv.writer(fh, delimiter="\t", lineterminator="\n")
         w.writerow(["species", "protein", "length", "omamer_roothog", "omamer_n_hits", "roothog_changes",
                     "roothog", "roothog_size", "fate", "fate_step", "fate_detail", "final_roothog"])
-        for key, length in proteins.items():
-            evs = events.get(key, [])
+        events_fh.write("\t".join(COLUMNS) + "\n")
+        event_groups = sorted_events(files, tmp_dir, conf.sort_memory)
+        for key, evs, is_input in join_proteins_events(sorted(proteins), event_groups):
+            for ev in evs:
+                events_fh.write("\t".join(key + ev) + "\n")
+            n_events += len(evs)
+            if not is_input:
+                n_unknown += 1
+                continue
+            length = proteins[key]
             fate, step, rhog, detail = decide(evs)
             if fate == "in_final_hog":
                 fate = "in_orthoxml"
@@ -163,7 +225,7 @@ def fastoma_protein_trace():
             if len(written) > 1:
                 issues["in_more_than_one_roothog_file"] += 1
             roothog, size = (written[0][0], int(written[0][1].split("size=")[1].split()[0])) if written else (rhog, None)
-            finals = final_roothog.get(key[1], []) if fate == "in_orthoxml" else []
+            finals = final_roothog.get(key[1], ()) if fate == "in_orthoxml" else ()
             if fate == "in_orthoxml" and not finals:
                 issues["in_final_hog_but_not_in_RootHOGs.tsv"] += 1
             if len(finals) > 1:
@@ -177,15 +239,8 @@ def fastoma_protein_trace():
                 if fate in LOSS_EVENTS or fate in ("missing_at_end", "roothog_not_processed"):
                     losses_by_rhog[roothog] += 1
 
-    unknown = set(events) - set(proteins)
-    if unknown:
-        issues["events_for_proteins_not_in_proteomes"] = len(unknown)
-
-    with gzip.open(out / "protein_events.tsv.gz", "wt") as fh:
-        fh.write("\t".join(COLUMNS) + "\n")
-        for key in sorted(events):
-            for ev in events[key]:
-                fh.write("\t".join((key[0], key[1]) + ev) + "\n")
+    if n_unknown:
+        issues["events_for_proteins_not_in_proteomes"] = n_unknown
 
     total = len(proteins)
     buckets = ["2-9", "10-99", "100-999", ">=1000", "-"]

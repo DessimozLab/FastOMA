@@ -108,10 +108,11 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     members_final = set()
     for hog_i in hogs_a_rhog:
         tot_genes += len(hog_i)
-        members_final |= {part for m in hog_i.get_members() for part in m.split("_|_")}  # merged fragments count per protein
-        final_event = "in_final_hog" if len(hog_i) >= inferhog_min_hog_size_xml else "final_singleton_not_written"
-        for member in hog_i.get_members():
-            ptrace.member_event(member, "infer_subhogs", final_event, rhogid, f"hog={hog_i.hogid} size={len(hog_i)}")
+        if ptrace.is_enabled():
+            members_final |= {part for m in hog_i.get_members() for part in m.split("_|_")}  # merged fragments count per protein
+            final_event = "in_final_hog" if len(hog_i) >= inferhog_min_hog_size_xml else "final_singleton_not_written"
+            for member in hog_i.get_members():
+                ptrace.member_event(member, "infer_subhogs", final_event, rhogid, f"hog={hog_i.hogid} size={len(hog_i)}")
         if len(hog_i) >= inferhog_min_hog_size_xml:
             # could be improved   # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
             hogs_a_rhog_xml_raw = hog_i.to_orthoxml(full_species_tree, score_flags)    # <generef  >      <paralg object >
@@ -142,9 +143,10 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
                 logger.warning("issue 166312309 this is not a singleton "+str(hog_i._members))
 
     # any protein of the input rootHOG that is in no final HOG and was not reported as lost above
-    for rec in rhog_i:
-        if rec.id not in members_final:
-            ptrace.member_event(rec.id, "infer_subhogs", "missing_at_end", rhogid)
+    if ptrace.is_enabled():
+        for rec in rhog_i:
+            if rec.id not in members_final:
+                ptrace.member_event(rec.id, "infer_subhogs", "missing_at_end", rhogid)
 
     pickles_rhog_file = pickles_rhog_folder + '/file_' + rhogid + '.pickle'
     with open(pickles_rhog_file, 'wb') as handle:
@@ -657,12 +659,13 @@ class LevelHOGProcessor:
                     split_parts = [list(n.name for n in sub.iter_leaves() if n.hogid == hogid) for sub in subtrees]
                     split_hogs = split_hog(self.subhogs[hogid], self.node_species_tree.name, *split_parts)
                     if split_hogs and len(split_hogs) > 1:
-                        kept = set().union(*(h.get_members() for h in split_hogs))
-                        for member in self.subhogs[hogid].get_members() - kept:
-                            self._lost_members.add(member)
-                            ptrace.member_event(member, "infer_subhogs", "lost_in_split_hog", self.rhogid,
-                                                f"level={self.node_species_tree.name} hog={hogid} "
-                                                f"hog_size={len(self.subhogs[hogid])} parts={len(split_hogs)}")
+                        if ptrace.is_enabled():
+                            kept = set().union(*(h.get_members() for h in split_hogs))
+                            for member in self.subhogs[hogid].get_members() - kept:
+                                self._lost_members.add(member)
+                                ptrace.member_event(member, "infer_subhogs", "lost_in_split_hog", self.rhogid,
+                                                    f"level={self.node_species_tree.name} hog={hogid} "
+                                                    f"hog_size={len(self.subhogs[hogid])} parts={len(split_hogs)}")
                         # we could split the current hog.
                         self.subhogs.pop(hogid)
                         self.subhogs.update({h.hogid: h for h in split_hogs})
@@ -691,6 +694,8 @@ class LevelHOGProcessor:
         return new_hogs
 
     def process(self) -> List[HOG]:
+        if not ptrace.is_enabled():
+            return self._process()
         members_before = set().union(set(), *(h.get_members() for h in list(self.subhogs.values()) + list(self._frozen_hogs_before)))
         new_hogs = self._process()
         members_after = set().union(set(), *(h.get_members() for h in new_hogs))

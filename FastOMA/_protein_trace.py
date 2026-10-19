@@ -9,8 +9,9 @@ Nextflow tasks never collide). The columns are, tab separated and without header
 `fastoma-protein-trace` (FastOMA/protein_trace.py) merges all event files at the
 end of the run into one row per input protein.
 
-Only changes are recorded (e.g. a protein being moved to another rootHOG, or
-getting lost), plus the final state of every protein, so the files stay small.
+Nothing is recorded unless enable() was called (the --protein-trace option of
+fastoma-infer-roothogs and fastoma-infer-subhogs). Expect a few events per protein,
+i.e. roughly 250-400 bytes per input protein in total.
 """
 
 import atexit
@@ -22,6 +23,16 @@ COLUMNS = ["species", "protein", "step", "event", "roothog", "detail"]
 
 _lock = threading.Lock()
 _handles = {}
+_enabled = False
+
+
+def enable():
+    global _enabled
+    _enabled = True
+
+
+def is_enabled():
+    return _enabled
 
 
 def _handle(step):
@@ -33,6 +44,8 @@ def _handle(step):
 
 
 def event(species, protein, step, event_name, roothog="", detail=""):
+    if not _enabled:
+        return
     line = "\t".join(str(x).replace("\t", " ") for x in (species, protein, step, event_name, roothog, detail))
     with _lock:
         _handle(step).write(line + "\n")
@@ -50,17 +63,23 @@ def split_member(member):
 
 
 def member_event(member, step, event_name, roothog="", detail=""):
+    if not _enabled:
+        return
     for species, protein in split_member(member):
         event(species, protein, step, event_name, roothog, detail)
 
 
 def rhog_assignment(rhogs_prots):
-    """(species, protId) -> rootHOG id, for diffing the rootHOG grouping steps."""
+    """(species, protId) -> rootHOG id, for diffing the rootHOG grouping steps (empty if tracing is off)."""
+    if not _enabled:
+        return {}
     return {sp_prot: rhogid for rhogid, sp_prots in rhogs_prots.items() for sp_prot in sp_prots}
 
 
 def record_rhog_changes(before, after, step, event_prefix):
     """Record proteins that changed rootHOG, or disappeared, between two assignments."""
+    if not _enabled:
+        return
     for sp_prot, old in before.items():
         new = after.get(sp_prot)
         if new is None:
