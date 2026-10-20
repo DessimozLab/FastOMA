@@ -52,3 +52,11 @@ Homepage = "https://github.com/DessimozLab/FastOMA"
 include = [
     "/FastOMA",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "tools(*names): needs external binaries (mafft, FastTree, mmseqs, omamer); skipped if missing",
+    "slow: takes more than a few seconds; deselect with -m 'not slow'",
+]
+xfail_strict = true
