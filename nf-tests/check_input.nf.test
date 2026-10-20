@@ -25,7 +25,8 @@ nextflow_process {
             // fastoma-check-input must reject the mismatch (MYCGE missing from the tree) rather
             // than silently pruning or continuing.
             assert !process.success
-            assert process.stdout.any { it.contains("These species are not in the species tree") }
+            // Nextflow >= 26.10 writes the error report to stderr, older versions to stdout
+            assert (process.stdout + process.stderr).any { it.contains("These species are not in the species tree") }
         }
     }
 
