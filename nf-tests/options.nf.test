@@ -1,0 +1,107 @@
+nextflow_pipeline {
+
+    name "Test pipeline FastOMA with non-default options"
+    script "../FastOMA.nf"
+    tag "pipeline"
+    tag "pipeline_options"
+
+    test("id transformer, MSA/gene tree output and disabled scores") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                output_folder = "$outputDir"
+                msa_folder = "$outputDir/msa"
+                genetrees_folder = "$outputDir/genetrees"
+                fasta_header_id_transformer = "UniProt"
+                write_msas = true
+                write_genetrees = true
+                // the report needs the CompletenessScore, so only the other two are disabled here
+                disable_implied_losses_score = true
+                disable_tcs_score = true
+            }
+        }
+
+        then {
+            def out = file(params.output_folder).toPath()
+            def orthoxml = out.resolve('FastOMA_HOGs.orthoxml')
+            def orthoxml_text = orthoxml.text
+            def roothogs = FastomaOutput.groupPartition(out.resolve('RootHOGs.tsv'))
+
+            assertAll(
+                { assert workflow.success },
+                // UniProt transformer: "sp|P13927|EFTU_MYCGE" -> "P13927" in all outputs
+                { assert roothogs.flatten().every { it ==~ /[A-Z0-9]{6,10}/ } },
+                { assert FastomaOutput.canonicalHogs(orthoxml).every { !it.contains('|') } },
+                { assert orthoxml_text.contains('CompletenessScore') },
+                { assert !orthoxml_text.contains('ImpliedLosses') },
+                { assert !orthoxml_text.contains('TCSScore') },
+                { assert file("${params.msa_folder}").list().size() > 0 },
+                { assert file("${params.genetrees_folder}").list().size() > 0 },
+                { assert snapshot(
+                    roothogs,
+                    FastomaOutput.groupPartition(out.resolve('OrthologousGroups.tsv')),
+                    FastomaOutput.pairs(out.resolve('orthologs.tsv.gz')),
+                ).match() }
+            )
+        }
+    }
+
+    test("archive input with precomputed hogmaps") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                output_folder = "$outputDir"
+                hogmap_folder = "$outputDir/hogmap"
+                input = "${projectDir}/nf-tests/helpers/input_archive.tar.gz"
+            }
+        }
+
+        then {
+            def out = file(params.output_folder).toPath()
+            def hogmaps = file("${params.hogmap_folder}").listFiles().findAll { it.name.endsWith('.hogmap') }
+
+            assertAll(
+                { assert workflow.success },
+                { assert hogmaps.size() == 3 },
+                // the precomputed hogmaps from the archive are used, omamer is not re-run
+                { assert hogmaps.every { it.text.contains('precomputed-fixture-marker') } },
+                { assert snapshot(
+                    FastomaOutput.groupPartition(out.resolve('RootHOGs.tsv')),
+                    FastomaOutput.canonicalHogs(out.resolve('FastOMA_HOGs.orthoxml')),
+                ).match() }
+            )
+        }
+    }
+
+    test("splice files select one isoform per gene") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                output_folder = "$outputDir"
+                // AQUAE.splice declares EFTU_AQUAE and LEPA_AQUAE as isoforms of one gene
+                splice_folder = "${projectDir}/nf-tests/helpers/splice_in"
+            }
+        }
+
+        then {
+            def out = file(params.output_folder).toPath()
+            def orthoxml = out.resolve('FastOMA_HOGs.orthoxml')
+            def referenced = FastomaOutput.geneRefCounts(orthoxml).keySet()
+            def isoforms = ['sp|O66429|EFTU_AQUAE', 'sp|O67618|LEPA_AQUAE']
+
+            assertAll(
+                { assert workflow.success },
+                // exactly one isoform of the gene ends up in the HOGs
+                { assert referenced.intersect(isoforms).size() == 1 },
+                { assert orthoxml.text.contains('main_isoform=') },
+                { assert snapshot(
+                    FastomaOutput.groupPartition(out.resolve('RootHOGs.tsv')),
+                    FastomaOutput.canonicalHogs(orthoxml),
+                ).match() }
+            )
+        }
+    }
+}
