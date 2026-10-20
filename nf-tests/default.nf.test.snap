@@ -49,18 +49,6 @@
             ],
             [
                 {
-                    "name": "FastOMA_HOGs.orthoxml",
-                    "lineCount": 194
-                },
-                {
-                    "name": "OrthologousGroups.tsv",
-                    "lineCount": 28
-                },
-                {
-                    "name": "RootHOGs.tsv",
-                    "lineCount": 28
-                },
-                {
                     "name": "AQUAE.fa.hogmap",
                     "lineCount": 20
                 },
@@ -71,17 +59,161 @@
                 {
                     "name": "MYCGE.fa.hogmap",
                     "lineCount": 14
-                },
-                {
-                    "name": "orthologs.tsv.gz",
-                    "lineCount": 18
                 }
-            ]
+            ],
+            {
+                "orthoxml_elements": {
+                    "orthologGroup": 15,
+                    "paralogGroup": 0,
+                    "gene": 28,
+                    "geneRef": 27
+                },
+                "hogs": [
+                    "OG[inter1](sp|O66686|TPIS_AQUAE, sp|O84332|TPIS_CHLTR)",
+                    "OG[inter1](sp|O66778|ENO_AQUAE, sp|O84591|ENO_CHLTR)",
+                    "OG[inter1](sp|O67547|SUCD_AQUAE, tr|O84829|O84829_CHLTR)",
+                    "OG[inter1](sp|O67618|LEPA_AQUAE, sp|O84067|LEPA_CHLTR)",
+                    "OG[inter1](sp|O67736|FOLD_AQUAE, sp|O84081|FOLD_CHLTR)",
+                    "OG[inter1](sp|O67943|CH60_AQUAE, sp|P0C0Z7|CH60_CHLTR)",
+                    "OG[inter2](OG[inter1](sp|O66429|EFTU_AQUAE, sp|P0CD71|EFTU_CHLTR), sp|P13927|EFTU_MYCGE)",
+                    "OG[inter2](OG[inter1](sp|O67032|RF1_AQUAE, sp|O84026|RF1_CHLTR), sp|P47500|RF1_MYCGE)",
+                    "OG[inter2](OG[inter1](sp|O67161|G3P_AQUAE, sp|P0CE13|G3P_CHLTR), sp|P47543|G3P_MYCGE)",
+                    "OG[inter2](sp|O66907|ATPA_AQUAE, sp|P47641|ATPA_MYCGE)",
+                    "OG[inter2](sp|O67828|ATPB_AQUAE, sp|P47639|ATPB_MYCGE)",
+                    "OG[inter2](sp|P17821|DNAK_CHLTR, sp|P47547|DNAK_MYCGE)"
+                ],
+                "roothogs": [
+                    [
+                        "sp|O66429|EFTU_AQUAE",
+                        "sp|P0CD71|EFTU_CHLTR",
+                        "sp|P13927|EFTU_MYCGE"
+                    ],
+                    [
+                        "sp|O66686|TPIS_AQUAE",
+                        "sp|O84332|TPIS_CHLTR"
+                    ],
+                    [
+                        "sp|O66778|ENO_AQUAE",
+                        "sp|O84591|ENO_CHLTR"
+                    ],
+                    [
+                        "sp|O66907|ATPA_AQUAE",
+                        "sp|P47641|ATPA_MYCGE"
+                    ],
+                    [
+                        "sp|O67032|RF1_AQUAE",
+                        "sp|O84026|RF1_CHLTR",
+                        "sp|P47500|RF1_MYCGE"
+                    ],
+                    [
+                        "sp|O67161|G3P_AQUAE",
+                        "sp|P0CE13|G3P_CHLTR",
+                        "sp|P47543|G3P_MYCGE"
+                    ],
+                    [
+                        "sp|O67547|SUCD_AQUAE",
+                        "tr|O84829|O84829_CHLTR"
+                    ],
+                    [
+                        "sp|O67618|LEPA_AQUAE",
+                        "sp|O84067|LEPA_CHLTR"
+                    ],
+                    [
+                        "sp|O67736|FOLD_AQUAE",
+                        "sp|O84081|FOLD_CHLTR"
+                    ],
+                    [
+                        "sp|O67828|ATPB_AQUAE",
+                        "sp|P47639|ATPB_MYCGE"
+                    ],
+                    [
+                        "sp|O67943|CH60_AQUAE",
+                        "sp|P0C0Z7|CH60_CHLTR"
+                    ],
+                    [
+                        "sp|P17821|DNAK_CHLTR",
+                        "sp|P47547|DNAK_MYCGE"
+                    ]
+                ],
+                "orthologous_groups": [
+                    [
+                        "sp|O66429|EFTU_AQUAE",
+                        "sp|P0CD71|EFTU_CHLTR",
+                        "sp|P13927|EFTU_MYCGE"
+                    ],
+                    [
+                        "sp|O66686|TPIS_AQUAE",
+                        "sp|O84332|TPIS_CHLTR"
+                    ],
+                    [
+                        "sp|O66778|ENO_AQUAE",
+                        "sp|O84591|ENO_CHLTR"
+                    ],
+                    [
+                        "sp|O66907|ATPA_AQUAE",
+                        "sp|P47641|ATPA_MYCGE"
+                    ],
+                    [
+                        "sp|O67032|RF1_AQUAE",
+                        "sp|O84026|RF1_CHLTR",
+                        "sp|P47500|RF1_MYCGE"
+                    ],
+                    [
+                        "sp|O67161|G3P_AQUAE",
+                        "sp|P0CE13|G3P_CHLTR",
+                        "sp|P47543|G3P_MYCGE"
+                    ],
+                    [
+                        "sp|O67547|SUCD_AQUAE",
+                        "tr|O84829|O84829_CHLTR"
+                    ],
+                    [
+                        "sp|O67618|LEPA_AQUAE",
+                        "sp|O84067|LEPA_CHLTR"
+                    ],
+                    [
+                        "sp|O67736|FOLD_AQUAE",
+                        "sp|O84081|FOLD_CHLTR"
+                    ],
+                    [
+                        "sp|O67828|ATPB_AQUAE",
+                        "sp|P47639|ATPB_MYCGE"
+                    ],
+                    [
+                        "sp|O67943|CH60_AQUAE",
+                        "sp|P0C0Z7|CH60_CHLTR"
+                    ],
+                    [
+                        "sp|P17821|DNAK_CHLTR",
+                        "sp|P47547|DNAK_MYCGE"
+                    ]
+                ],
+                "ortholog_pairs": [
+                    "sp|O66429|EFTU_AQUAE <-> sp|P0CD71|EFTU_CHLTR",
+                    "sp|O66429|EFTU_AQUAE <-> sp|P13927|EFTU_MYCGE",
+                    "sp|O66686|TPIS_AQUAE <-> sp|O84332|TPIS_CHLTR",
+                    "sp|O66778|ENO_AQUAE <-> sp|O84591|ENO_CHLTR",
+                    "sp|O66907|ATPA_AQUAE <-> sp|P47641|ATPA_MYCGE",
+                    "sp|O67032|RF1_AQUAE <-> sp|O84026|RF1_CHLTR",
+                    "sp|O67032|RF1_AQUAE <-> sp|P47500|RF1_MYCGE",
+                    "sp|O67161|G3P_AQUAE <-> sp|P0CE13|G3P_CHLTR",
+                    "sp|O67161|G3P_AQUAE <-> sp|P47543|G3P_MYCGE",
+                    "sp|O67547|SUCD_AQUAE <-> tr|O84829|O84829_CHLTR",
+                    "sp|O67618|LEPA_AQUAE <-> sp|O84067|LEPA_CHLTR",
+                    "sp|O67736|FOLD_AQUAE <-> sp|O84081|FOLD_CHLTR",
+                    "sp|O67828|ATPB_AQUAE <-> sp|P47639|ATPB_MYCGE",
+                    "sp|O67943|CH60_AQUAE <-> sp|P0C0Z7|CH60_CHLTR",
+                    "sp|O84026|RF1_CHLTR <-> sp|P47500|RF1_MYCGE",
+                    "sp|P0CD71|EFTU_CHLTR <-> sp|P13927|EFTU_MYCGE",
+                    "sp|P0CE13|G3P_CHLTR <-> sp|P47543|G3P_MYCGE",
+                    "sp|P17821|DNAK_CHLTR <-> sp|P47547|DNAK_MYCGE"
+                ]
+            }
         ],
+        "timestamp": "2026-10-20T14:21:18.662761",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "26.04.6"
-        },
-        "timestamp": "2026-08-25T18:07:32.287389"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.2"
+        }
     }
 }
