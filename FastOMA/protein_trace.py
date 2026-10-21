@@ -15,6 +15,7 @@ Fates, in the order they are decided:
   final_singleton_not_written       ended alone in its HOG; orthoXML only keeps HOGs of size >= 2
   missing_at_end                    in a rootHOG file, but in no final HOG and no loss recorded
   roothog_not_processed             in a rootHOG file, but no subHOG result (e.g. failed task)
+  isoform_not_selected              minor splicing variant, another isoform of the gene was selected
   singleton_roothog_dropped         alone in its rootHOG and not placed in a cluster
   no_omamer_hit_dropped             no OMAmer hit and not placed in a cluster
   removed_by_filter_big_roothogs    removed from a very big rootHOG (low family score)
@@ -155,6 +156,8 @@ def decide(evs):
     if "roothog_written" in by_event:
         _, step, roothog, detail = first("roothog_written")
         return "roothog_not_processed", step, roothog, detail
+    if "isoform_not_selected" in by_event:
+        return first("isoform_not_selected")
     if "filter_big_roothogs_removed" in by_event:
         _, step, roothog, detail = first("filter_big_roothogs_removed")
         return "removed_by_filter_big_roothogs", step, roothog, detail

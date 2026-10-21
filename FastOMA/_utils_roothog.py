@@ -1010,6 +1010,9 @@ def select_best_isoforms(species_names, isoform_by_gene_all, hogmaps):
 
             isoform_selected[species_name].append(protname_best)
             isoform_not_selected[species_name].extend([i for i in isoform_list if i != protname_best])  # flatten for all
+            for i in isoform_list:
+                if i != protname_best:
+                    ptrace.event(species_name, i, "infer_roothogs", "isoform_not_selected", "", f"selected={protname_best}")
 
     return isoform_selected, isoform_not_selected
 
