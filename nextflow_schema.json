@@ -135,6 +135,11 @@
         "min_sequence_length": {
           "type": "integer",
           "default": 20
+        },
+        "protein_trace": {
+          "type": "boolean",
+          "default": false,
+          "description": "Write protein_fates.tsv, protein_events.tsv.gz and protein_trace_summary.txt: what happened to every input protein."
         }
       }
     },

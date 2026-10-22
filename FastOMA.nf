@@ -146,6 +146,7 @@ process infer_roothogs{
     path "omamer_rhogs"
     path "gene_id_dic_xml.pickle"
     path "selected_isoforms" , optional: true
+    path "protein_events_*.events", optional: true, emit: protein_events
 
   script:
     """
@@ -154,6 +155,7 @@ process infer_roothogs{
                                --splice ${splice_folder} \
                                --out-rhog-folder "omamer_rhogs" \
                                --min-sequence-length ${params.min_sequence_length} \
+                               ${ params.protein_trace.toString().toBoolean() ? "--protein-trace" : "" } \
                                -vv
     """
 }
@@ -209,6 +211,7 @@ process hog_big{
     path "*.nwk" , optional: true  // gene trees  if write True
     path "*.tsv", optional: true
     path "*.tsv.gz", optional: true
+    path "protein_events_*.events", optional: true, emit: protein_events
 
   script:
     """
@@ -225,7 +228,8 @@ process hog_big{
                                ${ params.write_genetrees ? "--gene-trees-write" : ""} \
                                ${ params.disable_completeness_score.toString().toBoolean()   ? "--no-store-completeness-score" : "" } \
                                ${ params.disable_implied_losses_score.toString().toBoolean() ? "--no-store-implied-losses-score" : "" } \
-                               ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" }
+                               ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" } \
+                               ${ params.protein_trace.toString().toBoolean() ? "--protein-trace" : "" }
     """
 }
 
@@ -247,6 +251,7 @@ process hog_rest{
     path "*.nwk" , optional: true  // gene trees  if write True
     path "*.tsv", optional: true
     path "*.tsv.gz", optional: true
+    path "protein_events_*.events", optional: true, emit: protein_events
   script:
     """
         fastoma-infer-subhogs --input-rhog-folder ${rhogsrest}  \
@@ -261,7 +266,8 @@ process hog_rest{
                               ${ params.write_genetrees ? "--gene-trees-write" : ""} \
                               ${ params.disable_completeness_score.toString().toBoolean()   ? "--no-store-completeness-score" : "" } \
                               ${ params.disable_implied_losses_score.toString().toBoolean() ? "--no-store-implied-losses-score" : "" } \
-                              ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" }
+                              ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" } \
+                              ${ params.protein_trace.toString().toBoolean() ? "--protein-trace" : "" }
     """
 }
 
@@ -296,6 +302,30 @@ process collect_subhogs{
                                 --species-tree ${species_tree} \
                                 --id-transform $id_transform \
                                 -vv
+    """
+}
+
+process protein_trace {
+  label "process_single"
+  publishDir params.output_folder, mode: 'copy'
+
+  input:
+    path proteome_folder
+    path events, stageAs: "events/*"
+    path roothogs_tsv
+    val  id_transform
+
+  output:
+    path "protein_fates.tsv"
+    path "protein_events.tsv.gz"
+    path "protein_trace_summary.txt"
+
+  script:
+    """
+        python -m FastOMA.protein_trace --proteomes ${proteome_folder} \
+                                        --events events/ \
+                                        --roothog-tsv ${roothogs_tsv} \
+                                        --id-transform ${id_transform}
     """
 }
 
@@ -492,6 +522,14 @@ workflow {
     channel.empty().concat(pickle_big_rhog, pickle_rest_rhog).set{ all_rhog_pickle }
 
     (orthoxml_file, OrthologousGroupsFasta, OrthologousGroups_tsv, rootHOGs_tsv)  = collect_subhogs(all_rhog_pickle.collect(), gene_id_dic_xml, omamer_rhogs, species_tree_checked, params.fasta_header_id_transformer)
+    if (params.protein_trace.toString().toBoolean()) {
+        channel.empty()
+            .concat(infer_roothogs.out.protein_events, hog_big.out.protein_events, hog_rest.out.protein_events)
+            .flatten()
+            .collect()
+            .set { all_protein_events }
+        protein_trace(proteome_folder, all_protein_events, rootHOGs_tsv, params.fasta_header_id_transformer)
+    }
     c = hogmap.count().branch{ n->
         TRUE: (n<=25 || params.force_pairwise_ortholog_generation)
         FALSE: n>25
