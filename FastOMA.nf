@@ -201,7 +201,7 @@ process hog_big{
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv.gz"
 
   input:
-    each rhogsbig
+    each path(rhogsbig)
     path species_tree
     val nr_species
 
@@ -243,7 +243,7 @@ process hog_rest{
   publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv.gz"
 
   input:
-    each rhogsrest
+    each path(rhogsrest)
     path species_tree
   output:
     path "pickle_hogs"
