@@ -41,6 +41,7 @@ from Bio import SeqIO
 
 from . import __version__ as fastoma_version
 from ._protein_trace import COLUMNS, EVENT_FILE_SUFFIX
+from .transformer import header_transformer
 
 LOSS_EVENTS = ("lost_in_split_hog", "lost_at_level")
 
@@ -182,6 +183,8 @@ def fastoma_protein_trace():
     parser.add_argument("--proteomes", required=True, help="input proteome folder")
     parser.add_argument("--events", required=True, nargs="+", help="event files or folders containing *.events")
     parser.add_argument("--roothog-tsv", help="RootHOGs.tsv from fastoma-collect-subhogs (final RootHOG ids)")
+    parser.add_argument("--id-transform", choices=("UniProt", "noop"), default="noop",
+                        help="ID transformer that fastoma-collect-subhogs used for the protein IDs in RootHOGs.tsv")
     parser.add_argument("--out-dir", default=".", help="where to write the three output files")
     parser.add_argument("--strict", action="store_true", help="exit with an error if any protein is unaccounted")
     parser.add_argument("--tmp-dir", help="folder for the temporary files of the on-disk sort (default: --out-dir)")
@@ -191,6 +194,7 @@ def fastoma_protein_trace():
     proteins = read_proteomes(conf.proteomes)
     files = list(event_files(conf.events))
     final_roothog = read_roothog_tsv(conf.roothog_tsv)
+    id_transformer = header_transformer(conf.id_transform)
     out = Path(conf.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     tmp_dir = Path(conf.tmp_dir) if conf.tmp_dir else out
@@ -228,7 +232,8 @@ def fastoma_protein_trace():
             if len(written) > 1:
                 issues["in_more_than_one_roothog_file"] += 1
             roothog, size = (written[0][0], int(written[0][1].split("size=")[1].split()[0])) if written else (rhog, None)
-            finals = final_roothog.get(key[1], ()) if fate == "in_orthoxml" else ()
+            # RootHOGs.tsv has the protein IDs as written to the orthoXML, i.e. after the id transform
+            finals = final_roothog.get(id_transformer.transform(key[1]), ()) if fate == "in_orthoxml" else ()
             if fate == "in_orthoxml" and not finals:
                 issues["in_final_hog_but_not_in_RootHOGs.tsv"] += 1
             if len(finals) > 1:

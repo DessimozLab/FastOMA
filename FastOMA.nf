@@ -313,6 +313,7 @@ process protein_trace {
     path proteome_folder
     path events, stageAs: "events/*"
     path roothogs_tsv
+    val  id_transform
 
   output:
     path "protein_fates.tsv"
@@ -323,7 +324,8 @@ process protein_trace {
     """
         python -m FastOMA.protein_trace --proteomes ${proteome_folder} \
                                         --events events/ \
-                                        --roothog-tsv ${roothogs_tsv}
+                                        --roothog-tsv ${roothogs_tsv} \
+                                        --id-transform ${id_transform}
     """
 }
 
@@ -526,7 +528,7 @@ workflow {
             .flatten()
             .collect()
             .set { all_protein_events }
-        protein_trace(proteome_folder, all_protein_events, rootHOGs_tsv)
+        protein_trace(proteome_folder, all_protein_events, rootHOGs_tsv, params.fasta_header_id_transformer)
     }
     c = hogmap.count().branch{ n->
         TRUE: (n<=25 || params.force_pairwise_ortholog_generation)
