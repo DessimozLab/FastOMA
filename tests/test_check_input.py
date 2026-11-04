@@ -103,11 +103,16 @@ class TestAddInternalNodePrune:
     def test_rename_and_prune(self, tmp_path, nwk, species, expected):
         assert self.prune(tmp_path, nwk, list(species)) == expected
 
-    def test_generated_names_do_not_clash_with_existing(self, tmp_path):
-        # internal_0 is already used further up the tree, so the unnamed node gets internal_1
+    def test_generated_names_do_not_take_existing_labels(self, tmp_path):
+        # internal_0 is the supplied name of the (A,B,C) clade, visited after (A,B): the unnamed (A,B)
+        # clade must get another name, and (A,B,C) must keep its label
         res = self.prune(tmp_path, "(((A,B),C)internal_0,D)root;", list("ABCD"))
-        names = [n.name for n in Tree(res, format=1).traverse() if not n.is_leaf()]
-        assert sorted(names) == ["internal_0", "internal_1", "root"]
+        assert res == "(((A:1,B:1)internal_1:1,C:1)internal_0:1,D:1)root:0;"
+
+    def test_cleaned_names_do_not_take_existing_labels(self, tmp_path):
+        # 'a.bc' cleans to abc, which is the supplied name of a clade visited later
+        res = self.prune(tmp_path, "((A,B)'a.bc',(C,D)abc)root;", list("ABCD"))
+        assert res == "((A:1,B:1)abc_0:1,(C:1,D:1)abc:1)root:0;"
 
     def test_name_too_short_after_removing_special_chars(self, tmp_path):
         res = self.prune(tmp_path, "((A,B)'a.b',(C,D)cde)root;", list("ABCD"))

@@ -163,16 +163,21 @@ def check_omamer_db(omamerdb_adress=None):
 def add_internal_node_prune(species_tree, species_names, out_fname):
     # add name for the internal, if no name is provided, removintg special chars
     counter_internal = 0
-    # leaf names count as taken: an internal node named like a species would make the names
-    # ambiguous (pruning by name fails, and per-level pickle files are named after the nodes)
+    # names already given in the final tree; leaf names count as taken: an internal node named like a
+    # species would make the names ambiguous (pruning by name fails, and per-level pickle files are named
+    # after the nodes)
     node_names = set(species_tree.get_leaf_names())
+    # generated names must also avoid the original names of nodes visited later, otherwise a supplied
+    # label would end up on a different clade
+    reserved = node_names | {n.name for n in species_tree.traverse() if n.name}
 
     def numbered(prefix):
         nonlocal counter_internal
         while True:
             candidate = prefix + str(counter_internal)
             counter_internal += 1
-            if candidate not in node_names:
+            if candidate not in node_names and candidate not in reserved:
+                reserved.add(candidate)
                 return candidate
 
     for node in species_tree.traverse(strategy="postorder"):
@@ -185,7 +190,10 @@ def add_internal_node_prune(species_tree, species_names, out_fname):
                 logger.debug("The internal node name '%s' was too short, repeated or made of special chars, "
                              "it is changed to '%s'", node_name, node.name)
             elif cleaned != node_name:
-                node.name = numbered(cleaned + "_") if cleaned in node_names else cleaned
+                # the cleaned name must not take another node's original name either (this node's own
+                # original name has special chars, so it can't be the one found in `reserved`)
+                node.name = numbered(cleaned + "_") if cleaned in node_names or cleaned in reserved else cleaned
+                reserved.add(node.name)
                 logger.debug("The internal node name has special chars or repeated '%s' which is changed to '%s'",
                              node_name, node.name)
             node_names.add(node.name)
