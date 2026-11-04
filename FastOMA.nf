@@ -495,8 +495,9 @@ workflow {
     proteomes = proteome_folder.flatMap { dir ->
         // Use file() to list files, don't create new channels
         def proteomeDir = file(dir.toString())
+        // skip hidden files, e.g. the ._<name> AppleDouble files of archives made on macOS
         return proteomeDir.listFiles().findAll { 
-            it.name.endsWith('.fa') || it.name.endsWith('.fasta')
+            !it.name.startsWith('.') && (it.name.endsWith('.fa') || it.name.endsWith('.fasta'))
         } 
     }
 

@@ -110,6 +110,13 @@ class FastomaOutput {
         return counts
     }
 
+    // Sorted names of the species listed in the orthoXML header.
+    static List<String> speciesNames(Path orthoxml) {
+        def root = parseOrthoxml(orthoxml)
+        def species = root.getElementsByTagNameNS('*', 'species')
+        return (0..<species.length).collect { ((Element) species.item(it)).getAttribute('name') }.sort()
+    }
+
     static Map<String, Integer> elementCounts(Path orthoxml) {
         def root = parseOrthoxml(orthoxml)
         return ['orthologGroup', 'paralogGroup', 'gene', 'geneRef'].collectEntries { name ->

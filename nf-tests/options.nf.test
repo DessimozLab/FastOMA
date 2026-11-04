@@ -77,6 +77,33 @@ nextflow_pipeline {
         }
     }
 
+    test("archive made with macOS tar (AppleDouble ._ files)") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                output_folder = "$outputDir"
+                hogmap_folder = "$outputDir/hogmap"
+                // same content as input_archive.tar.gz, plus a ._<name> metadata file for every entry
+                input = "${projectDir}/nf-tests/helpers/input_archive_macos.tar.gz"
+            }
+        }
+
+        then {
+            def out = file(params.output_folder).toPath()
+            def hogmap_files = file("${params.hogmap_folder}").listFiles()
+            def species = FastomaOutput.speciesNames(out.resolve('FastOMA_HOGs.orthoxml'))
+
+            assertAll(
+                { assert workflow.success },
+                // the hidden files are neither taken as proteomes nor passed to omamer
+                { assert hogmap_files.findAll { it.name.startsWith('.') }.isEmpty() },
+                { assert hogmap_files.findAll { it.name.endsWith('.hogmap') }.size() == 3 },
+                { assert species == ['AQUAE', 'CHLTR', 'MYCGE'] },
+            )
+        }
+    }
+
     test("splice files select one isoform per gene") {
 
         when {
