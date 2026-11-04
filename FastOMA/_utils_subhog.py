@@ -280,8 +280,12 @@ def prepare_species_tree(rhog_i: List[SeqRecord], species_tree: Tree, rhogid: st
 
     full_species_tree = species_tree.copy()
 
-    mrca = species_tree.get_common_ancestor(species_names_uniqe)
-    mrca.prune(species_names_uniqe, preserve_branch_length=True)
+    if len(species_names_uniqe) == 1:
+        # get_common_ancestor of a single name returns the tree root, not the species itself
+        mrca = species_tree.search_nodes(name=next(iter(species_names_uniqe)))[0]
+    else:
+        mrca = species_tree.get_common_ancestor(species_names_uniqe)
+        mrca.prune(species_names_uniqe, preserve_branch_length=True)
     return mrca, species_names_rhog, prot_names_rhog, full_species_tree
 
 

@@ -46,8 +46,6 @@ def test_prepare_species_tree_empty_roothog():
         prepare_species_tree([], Tree(TREE, format=1), "r")
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: for a single-species rootHOG get_common_ancestor({'A'}) returns the root, "
-                                       "giving a unary root instead of the species leaf (_utils_subhog.py:283)")
 def test_prepare_species_tree_single_species():
     pruned, _, _, _ = prepare_species_tree(recs("A", "A"), Tree(TREE, format=1), "r")
     assert pruned.is_leaf() and pruned.name == "A"

@@ -49,7 +49,7 @@ class BaseRelationExtractor(with_metaclass(ABCMeta, object)):
                 for child1, child2 in itertools.combinations(nodes_of_children, 2):
                     for gId1, gId2 in itertools.product(child1, child2):
                         self.relations.append((gId1, gId2))
-            nodes = set.union(*nodes_of_children)
+            nodes = set().union(*nodes_of_children)  # a group can be empty
             return nodes
         else:
             return set([])

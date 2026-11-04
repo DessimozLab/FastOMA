@@ -773,18 +773,9 @@ def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, 
 
 
 def copy_tree(t:TreeNode):
-    """This function creates a deep copy of an ete3 tree while
-    preserving the names
-
-    standard code in ete3:
-       new_node = self.__class__(self.write(features=[]))
-    """
-    features = set([])
-    for n in t.traverse():
-        features.union(n.features)
-    features -= {"name"}
-    new_node = t.__class__(t.write(features=features, quoted_node_names=True, format_root_node=True),
-                           quoted_node_names=True)
-    return new_node
+    """Copy of an ete3 tree via newick: topology, (quoted) leaf names, branch lengths and support
+    values. Internal node names and other node features are not copied (newick format 0 writes the
+    support value in place of an internal node's name)."""
+    return t.__class__(t.write(quoted_node_names=True, format_root_node=True), quoted_node_names=True)
 
 

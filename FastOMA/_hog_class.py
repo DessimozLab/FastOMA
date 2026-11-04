@@ -246,8 +246,9 @@ class Representative:
         self.enabled = True
         if isinstance(the_one, Representative):
             self._seq = the_one.get_record()
-            self._subelements = the_one.get_subelements()
-            self._species = the_one.get_species()
+            # copies: extending them below must not change the_one
+            self._subelements = set(the_one.get_subelements())
+            self._species = set(the_one.get_species())
         elif isinstance(the_one, SeqRecord):
             self._seq = the_one
             self._subelements = set([the_one.id])
@@ -277,7 +278,7 @@ class HOG:
     _hogid_iter = 10000
 
     def __init__(self, input_instantiate, taxnomic_range:TreeNode, rhogid:str, msa:Optional[MultipleSeqAlignment] = None,
-                 representatives=Optional[List[Representative]], conf_infer_subhhogs=None):
+                 representatives: Optional[List[Representative]] = None, conf_infer_subhhogs=None):
         """HOG class constructor.
 
         A HOG can be initialized with either a single SeqRecord or from a list of HOGs
@@ -316,6 +317,8 @@ class HOG:
                 hog_members |= sub_hog.get_members()
             self._members = hog_members  # set.union(*tup)    # this also include dubious_members
             self._subhogs = list(input_instantiate)  # full members of subhog, children
+            if representatives is None:
+                raise ValueError("a HOG merged from sub-hogs needs its representatives")
             self._representatives = [r for r in representatives]
             representatives_id = set(r.get_id() for r in representatives)
             assert len(representatives_id) == len(self._representatives), "Non-unique ids among representatives"
@@ -380,7 +383,7 @@ class HOG:
             if r.get_id() == seq_id:
                 return r
         for r in self._representatives:
-            if seq_id in r.get_members():
+            if seq_id in r.get_subelements():
                 return r
         raise KeyError("No representative found for " + seq_id)
 
