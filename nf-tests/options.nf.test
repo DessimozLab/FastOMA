@@ -16,7 +16,8 @@ nextflow_pipeline {
                 fasta_header_id_transformer = "UniProt"
                 write_msas = true
                 write_genetrees = true
-                // the report needs the CompletenessScore, so only the other two are disabled here
+                // all scores disabled; the report (on in the test profile) must still be produced
+                disable_completeness_score = true
                 disable_implied_losses_score = true
                 disable_tcs_score = true
             }
@@ -33,7 +34,8 @@ nextflow_pipeline {
                 // UniProt transformer: "sp|P13927|EFTU_MYCGE" -> "P13927" in all outputs
                 { assert roothogs.flatten().every { it ==~ /[A-Z0-9]{6,10}/ } },
                 { assert FastomaOutput.canonicalHogs(orthoxml).every { !it.contains('|') } },
-                { assert orthoxml_text.contains('CompletenessScore') },
+                { assert !orthoxml_text.contains('CompletenessScore') },
+                { assert out.resolve('report.html').toFile().exists() },
                 { assert !orthoxml_text.contains('ImpliedLosses') },
                 { assert !orthoxml_text.contains('TCSScore') },
                 { assert file("${params.msa_folder}").list().size() > 0 },
