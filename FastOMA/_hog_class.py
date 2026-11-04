@@ -92,21 +92,26 @@ def _hog_implied_losses(hog: "HOG", tree_node: TreeNode) -> int:
     Mirrors _tax_overlap's _tax_now-based grouping of _subhogs, but sums losses per group member
     instead of intersecting/folding lineages: a group of sub-hogs sharing the same _tax_now
     represents a duplication, and each such paralogous copy's losses are counted independently
-    so that one copy's presence in a species can't mask a sibling copy's loss there."""
+    so that one copy's presence in a species can't mask a sibling copy's loss there.
+
+    The sub-hogs' taxonomic levels are looked up by name in `tree_node`'s tree: their `_tax_now`
+    nodes belong to other tree objects (the pruned working tree, and a separate copy per pickled
+    level), and ete3 nodes only compare by identity."""
     subhogs = getattr(hog, "_subhogs", None)
     if not subhogs:
         return 0
 
+    index = _species_name_index(tree_node)
     losses = 0
     clade_groups = {}
     for sh in subhogs:
         clade_groups.setdefault(sh._tax_now.name, []).append(sh)
-    for subhogs_of_clade in clade_groups.values():
-        clade_node = subhogs_of_clade[0]._tax_now
+    for clade_name, subhogs_of_clade in clade_groups.items():
+        clade_node = index[clade_name]
         for sh in subhogs_of_clade:
             losses += _hog_implied_losses(sh, clade_node)
 
-    reached_nodes = [subhogs_of_clade[0]._tax_now for subhogs_of_clade in clade_groups.values()]
+    reached_nodes = [index[clade_name] for clade_name in clade_groups]
     losses += _count_untouched_clades(tree_node, reached_nodes)
     return losses
 

@@ -1,15 +1,15 @@
 # 26 input proteins, 1 groups, 26 proteins in groups
 
-orthologGroup Dikarya  CompletenessScore=0.4615 ImpliedLosses=25 TCSScore=20.6538
-  orthologGroup Basidiomycota  CompletenessScore=0.25 ImpliedLosses=1 TCSScore=0.6667
+orthologGroup Dikarya  CompletenessScore=0.4615 ImpliedLosses=33 TCSScore=20.6538
+  orthologGroup Basidiomycota  CompletenessScore=0.25 ImpliedLosses=4 TCSScore=0.6667
     paralogGroup
       tr|M7WKC3|M7WKC3_RHOT1
       tr|M7XDE6|M7XDE6_RHOT1
     tr|A0A067TG69|A0A067TG69_GALM3
   paralogGroup
-    orthologGroup leotiomyceta  CompletenessScore=0.4375 ImpliedLosses=7 TCSScore=4.1111
+    orthologGroup leotiomyceta  CompletenessScore=0.4375 ImpliedLosses=9 TCSScore=4.1111
       orthologGroup Sordariomycetes  CompletenessScore=0.4444 ImpliedLosses=4 TCSScore=4.0
-        orthologGroup Hypocreales  CompletenessScore=0.75 ImpliedLosses=2 TCSScore=1.0
+        orthologGroup Hypocreales  CompletenessScore=0.75 ImpliedLosses=1 TCSScore=1.0
           orthologGroup Fusarium  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
             tr|A0A8H5NQD1|A0A8H5NQD1_GIBSU
             tr|A0A9P9KTM1|A0A9P9KTM1_FUSSL
@@ -23,16 +23,16 @@ orthologGroup Dikarya  CompletenessScore=0.4615 ImpliedLosses=25 TCSScore=20.653
       paralogGroup
         tr|A0A7C8IAK2|A0A7C8IAK2_9PLEO
         tr|A0A7C8MMZ9|A0A7C8MMZ9_9PLEO
-    orthologGroup leotiomyceta  CompletenessScore=0.5625 ImpliedLosses=16 TCSScore=9.5
+    orthologGroup leotiomyceta  CompletenessScore=0.5625 ImpliedLosses=18 TCSScore=9.5
       paralogGroup
-        orthologGroup Sordariomycetes  CompletenessScore=0.6667 ImpliedLosses=7 TCSScore=7.3333
+        orthologGroup Sordariomycetes  CompletenessScore=0.6667 ImpliedLosses=6 TCSScore=7.3333
           paralogGroup
-            orthologGroup Hypocreales  CompletenessScore=1.0 ImpliedLosses=3 TCSScore=2.2857
+            orthologGroup Hypocreales  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=2.2857
               paralogGroup
                 orthologGroup Fusarium  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
                   tr|A0A395SGZ3|A0A395SGZ3_FUSSP
                   tr|A0A9P9KT16|A0A9P9KT16_FUSSL
-                orthologGroup Fusarium  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.5
+                orthologGroup Fusarium  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.5
                   paralogGroup
                     tr|A0A9P9HBT0|A0A9P9HBT0_FUSSL
                     tr|A0A9P9KT27|A0A9P9KT27_FUSSL

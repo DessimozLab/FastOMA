@@ -1,10 +1,10 @@
 # 6 input proteins, 1 groups, 6 proteins in groups
 
-orthologGroup Dikarya  CompletenessScore=0.1923 ImpliedLosses=5 TCSScore=8.1667
+orthologGroup Dikarya  CompletenessScore=0.1923 ImpliedLosses=23 TCSScore=8.1667
   paralogGroup
-    orthologGroup leotiomyceta  CompletenessScore=0.25 ImpliedLosses=3 TCSScore=1.75
+    orthologGroup leotiomyceta  CompletenessScore=0.25 ImpliedLosses=9 TCSScore=1.75
       orthologGroup Eurotiomycetes  CompletenessScore=0.6 ImpliedLosses=2 TCSScore=0.6667
-        orthologGroup Eurotiomycetidae  CompletenessScore=0.5 ImpliedLosses=1 TCSScore=0.0
+        orthologGroup Eurotiomycetidae  CompletenessScore=0.5 ImpliedLosses=2 TCSScore=0.0
           tr|A0A1B7NPW6|A0A1B7NPW6_9EURO
           tr|A0A1L9VKP1|A0A1L9VKP1_ASPGL
         tr|A0A0D2ESI3|A0A0D2ESI3_CLAB1

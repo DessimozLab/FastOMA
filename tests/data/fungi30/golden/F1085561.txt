@@ -1,47 +1,28 @@
 # 28 input proteins, 2 groups, 28 proteins in groups
 
-orthologGroup leotiomyceta  CompletenessScore=0.625 ImpliedLosses=12 TCSScore=5.0
+orthologGroup leotiomyceta  CompletenessScore=0.625 ImpliedLosses=15 TCSScore=8.1111
   paralogGroup
-    orthologGroup Sordariomycetes  CompletenessScore=0.2222 ImpliedLosses=4 TCSScore=0.0
-      tr|A0A2P5I218|A0A2P5I218_DIAHE
-      tr|G9N994|G9N994_HYPVG
-    orthologGroup Sordariomycetes  CompletenessScore=0.7778 ImpliedLosses=6 TCSScore=2.8571
-      orthologGroup Hypocreomycetidae  CompletenessScore=0.8333 ImpliedLosses=4 TCSScore=1.6
-        orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
-          tr|A0AAX4IGD7|A0AAX4IGD7_9PEZI
-          tr|L2FZ33|L2FZ33_COLFN
-        orthologGroup Fusarium  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
-          tr|A0A395SGQ3|A0A395SGQ3_FUSSP
-          tr|A0A8H5V7B3|A0A8H5V7B3_GIBSU
-          tr|A0A9P9L341|A0A9P9L341_FUSSL
-      orthologGroup Sordariomycetidae  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
-        tr|A0ABQ8N552|A0ABQ8N552_PYRGI
-        tr|Q7S4T5|Q7S4T5_NEUCR
-  tr|A0A0D2G4K5|A0A0D2G4K5_CLAB1
-
-orthologGroup leotiomyceta  CompletenessScore=0.625 ImpliedLosses=18 TCSScore=8.1111
-  paralogGroup
-    orthologGroup Sordariomycetes  CompletenessScore=0.5556 ImpliedLosses=6 TCSScore=1.8
-      orthologGroup Hypocreomycetidae  CompletenessScore=0.5 ImpliedLosses=4 TCSScore=0.6667
-        orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+    orthologGroup Sordariomycetes  CompletenessScore=0.5556 ImpliedLosses=4 TCSScore=1.8
+      orthologGroup Hypocreomycetidae  CompletenessScore=0.5 ImpliedLosses=3 TCSScore=0.6667
+        orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.0
           tr|A0AAX4J405|A0AAX4J405_9PEZI
           tr|L2FYR0|L2FYR0_COLFN
         tr|A0A9P9HDS3|A0A9P9HDS3_FUSSL
       orthologGroup Sordariomycetidae  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
         tr|A0A2P5HMI4|A0A2P5HMI4_DIAHE
         tr|A7UWI4|A7UWI4_NEUCR
-    orthologGroup Sordariomycetes  CompletenessScore=0.7778 ImpliedLosses=8 TCSScore=5.8182
-      orthologGroup Hypocreomycetidae  CompletenessScore=1.0 ImpliedLosses=6 TCSScore=3.1
-        orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+    orthologGroup Sordariomycetes  CompletenessScore=0.7778 ImpliedLosses=3 TCSScore=5.8182
+      orthologGroup Hypocreomycetidae  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=3.1
+        orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.0
           tr|A0AAX4J1E3|A0AAX4J1E3_9PEZI
           tr|L2FT04|L2FT04_COLFN
         paralogGroup
-          orthologGroup Fusarium  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+          orthologGroup Fusarium  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.0
             tr|A0A395RWT8|A0A395RWT8_FUSSP
             tr|A0A8H5KT52|A0A8H5KT52_GIBSU
             tr|A0A9P9KTM8|A0A9P9KTM8_FUSSL
-          orthologGroup Hypocreales  CompletenessScore=1.0 ImpliedLosses=2 TCSScore=1.0
-            orthologGroup Fusarium  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+          orthologGroup Hypocreales  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=1.0
+            orthologGroup Fusarium  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.0
               tr|A0A395SBD1|A0A395SBD1_FUSSP
               tr|A0A8H5QE56|A0A8H5QE56_GIBSU
               tr|A0A9P9K4X7|A0A9P9K4X7_FUSSL
@@ -51,3 +32,22 @@ orthologGroup leotiomyceta  CompletenessScore=0.625 ImpliedLosses=18 TCSScore=8.
       tr|A0A2P5HYD3|A0A2P5HYD3_DIAHE
     tr|A0ABQ8NQ87|A0ABQ8NQ87_PYRGI
   tr|A0A1B7P2U9|A0A1B7P2U9_9EURO
+
+orthologGroup leotiomyceta  CompletenessScore=0.625 ImpliedLosses=9 TCSScore=5.0
+  paralogGroup
+    orthologGroup Sordariomycetes  CompletenessScore=0.2222 ImpliedLosses=4 TCSScore=0.0
+      tr|A0A2P5I218|A0A2P5I218_DIAHE
+      tr|G9N994|G9N994_HYPVG
+    orthologGroup Sordariomycetes  CompletenessScore=0.7778 ImpliedLosses=2 TCSScore=2.8571
+      orthologGroup Hypocreomycetidae  CompletenessScore=0.8333 ImpliedLosses=1 TCSScore=1.6
+        orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.0
+          tr|A0AAX4IGD7|A0AAX4IGD7_9PEZI
+          tr|L2FZ33|L2FZ33_COLFN
+        orthologGroup Fusarium  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.0
+          tr|A0A395SGQ3|A0A395SGQ3_FUSSP
+          tr|A0A8H5V7B3|A0A8H5V7B3_GIBSU
+          tr|A0A9P9L341|A0A9P9L341_FUSSL
+      orthologGroup Sordariomycetidae  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
+        tr|A0ABQ8N552|A0ABQ8N552_PYRGI
+        tr|Q7S4T5|Q7S4T5_NEUCR
+  tr|A0A0D2G4K5|A0A0D2G4K5_CLAB1

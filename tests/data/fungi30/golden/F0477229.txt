@@ -1,22 +1,22 @@
 # 27 input proteins, 1 groups, 21 proteins in groups
 
-orthologGroup Dikarya  CompletenessScore=0.4615 ImpliedLosses=15 TCSScore=16.0476
+orthologGroup Dikarya  CompletenessScore=0.4615 ImpliedLosses=17 TCSScore=16.0476
   orthologGroup Agaricales  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.6667
     paralogGroup
       tr|A0A067S4V6|A0A067S4V6_GALM3
       tr|A0A067T8Z9|A0A067T8Z9_GALM3
     tr|A0A0C3CZU8|A0A0C3CZU8_HEBCY
-  orthologGroup leotiomyceta  CompletenessScore=0.625 ImpliedLosses=13 TCSScore=6.1111
-    orthologGroup Onygenales  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.75
+  orthologGroup leotiomyceta  CompletenessScore=0.625 ImpliedLosses=11 TCSScore=6.1111
+    orthologGroup Onygenales  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.75
       paralogGroup
         tr|F2PXP9|F2PXP9_TRIEC
         tr|F2PYJ4|F2PYJ4_TRIEC
         tr|F2Q4D0|F2Q4D0_TRIEC
       tr|A0A1B7P4W4|A0A1B7P4W4_9EURO
     paralogGroup
-      orthologGroup Sordariomycetes  CompletenessScore=0.6667 ImpliedLosses=5 TCSScore=4.1
-        orthologGroup Hypocreomycetidae  CompletenessScore=0.6667 ImpliedLosses=3 TCSScore=2.25
-          orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.8333
+      orthologGroup Sordariomycetes  CompletenessScore=0.6667 ImpliedLosses=3 TCSScore=4.1
+        orthologGroup Hypocreomycetidae  CompletenessScore=0.6667 ImpliedLosses=2 TCSScore=2.25
+          orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.8333
             paralogGroup
               tr|A0A7J6ICM4|A0A7J6ICM4_COLFN
               tr|A0A7J6IHN8|A0A7J6IHN8_COLFN
@@ -24,7 +24,7 @@ orthologGroup Dikarya  CompletenessScore=0.4615 ImpliedLosses=15 TCSScore=16.047
               tr|A0A7J6JBZ8|A0A7J6JBZ8_COLFN
               tr|L2GDX0|L2GDX0_COLFN
             tr|A0AAX4I0N0|A0AAX4I0N0_9PEZI
-          orthologGroup Hypocreales  CompletenessScore=0.5 ImpliedLosses=1 TCSScore=0.0
+          orthologGroup Hypocreales  CompletenessScore=0.5 ImpliedLosses=2 TCSScore=0.0
             tr|A0A9P9JYY1|A0A9P9JYY1_FUSSL
             tr|G9MTS0|G9MTS0_HYPVG
         orthologGroup Sordariomycetidae  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0

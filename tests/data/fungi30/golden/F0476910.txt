@@ -1,10 +1,10 @@
 # 34 input proteins, 1 groups, 33 proteins in groups
 
-orthologGroup Fungi  CompletenessScore=0.3667 ImpliedLosses=19 TCSScore=12.1515
+orthologGroup Fungi  CompletenessScore=0.3667 ImpliedLosses=38 TCSScore=12.1515
   paralogGroup
-    orthologGroup Dikarya  CompletenessScore=0.3077 ImpliedLosses=7 TCSScore=9.0
-      orthologGroup leotiomyceta  CompletenessScore=0.375 ImpliedLosses=4 TCSScore=1.8571
-        orthologGroup Sordariomycetes  CompletenessScore=0.3333 ImpliedLosses=2 TCSScore=2.0
+    orthologGroup Dikarya  CompletenessScore=0.3077 ImpliedLosses=14 TCSScore=9.0
+      orthologGroup leotiomyceta  CompletenessScore=0.375 ImpliedLosses=6 TCSScore=1.8571
+        orthologGroup Sordariomycetes  CompletenessScore=0.3333 ImpliedLosses=5 TCSScore=2.0
           orthologGroup Fusarium  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
             tr|A0A395SBE1|A0A395SBE1_FUSSP
             tr|A0A9P9R990|A0A9P9R990_FUSSL
@@ -33,12 +33,12 @@ orthologGroup Fungi  CompletenessScore=0.3667 ImpliedLosses=19 TCSScore=12.1515
             tr|A0A0C3CHJ8|A0A0C3CHJ8_HEBCY
             tr|A0A0C3CIW7|A0A0C3CIW7_HEBCY
         tr|A0A067STW1|A0A067STW1_GALM3
-    orthologGroup leotiomyceta  CompletenessScore=0.125 ImpliedLosses=3 TCSScore=0.0
+    orthologGroup leotiomyceta  CompletenessScore=0.125 ImpliedLosses=5 TCSScore=0.0
       tr|A0A164Z8X8|A0A164Z8X8_XYLHT
       tr|A0A1V6NNK1|A0A1V6NNK1_PENDC
     orthologGroup leotiomyceta  CompletenessScore=0.25 ImpliedLosses=3 TCSScore=4.2
-      orthologGroup Eurotiomycetes  CompletenessScore=0.6 ImpliedLosses=2 TCSScore=3.0
-        orthologGroup Aspergillaceae  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.6667
+      orthologGroup Eurotiomycetes  CompletenessScore=0.6 ImpliedLosses=1 TCSScore=3.0
+        orthologGroup Aspergillaceae  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.6667
           paralogGroup
             tr|A0A1L9V458|A0A1L9V458_ASPGL
             tr|A0A1L9VLC0|A0A1L9VLC0_ASPGL
