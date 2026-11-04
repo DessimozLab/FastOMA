@@ -29,6 +29,13 @@ class TestCheckProteomeFiles:
     def test_mixed_extensions_rejected(self, tmp_path):
         assert C.check_proteome_files(make_files(tmp_path / "p", ["A.fa", "B.fa", "C.fasta"])) is False
 
+    @pytest.mark.xfail(strict=True, reason="BUG: hidden files are taken as proteomes, e.g. the ._A.fa AppleDouble "
+                                           "files of archives made with macOS tar (check_input.py:39); check-input "
+                                           "then reports '._A' as missing from the species tree")
+    def test_hidden_files_ignored(self, tmp_path):
+        folder = make_files(tmp_path / "p", ["A.fa", "B.fa", "C.fa", "._A.fa", ".DS_Store"])
+        assert sorted(C.check_proteome_files(folder)) == ["A", "B", "C"]
+
 
 class TestCheckProteome:
     @staticmethod
@@ -57,6 +64,11 @@ class TestCheckHogmapFiles:
     def test_species_names(self, tmp_path):
         folder = make_files(tmp_path / "h", ["A.fa.hogmap", "B.fasta.hogmap", "notes.txt"])
         assert sorted(C.check_hogmap_files(folder)) == ["A", "B"]
+
+    @pytest.mark.xfail(strict=True, reason="BUG: hidden ._A.fa.hogmap files (macOS tar) count as hogmaps "
+                                           "(check_input.py:91), so the hogmap set never equals the proteomes")
+    def test_hidden_files_ignored(self, tmp_path):
+        assert C.check_hogmap_files(make_files(tmp_path / "h", ["A.fa.hogmap", "._A.fa.hogmap"])) == ["A"]
 
     @pytest.mark.xfail(strict=True, reason="BUG: dots are dropped from species names (check_input.py:91), "
                                            "so they never match the proteome names")

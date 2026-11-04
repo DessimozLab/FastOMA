@@ -46,6 +46,13 @@ class TestParseProteomes:
         (tmp_path / "README").write_text("x")
         assert U.parse_proteomes(str(tmp_path))[0] == ["A"]
 
+    @pytest.mark.xfail(strict=True, reason="BUG: hidden files such as the ._A.fa AppleDouble files of macOS tar "
+                                           "archives are parsed as proteomes (_utils_roothog.py:165-170)")
+    def test_hidden_files_ignored(self, tmp_path):
+        write_fasta(tmp_path / "A.fa", [("a1", SEQ)])
+        (tmp_path / "._A.fa").write_bytes(b"\x00\x05\x16\x07\x00\x02\x00\x00Mac OS X        ")
+        assert U.parse_proteomes(str(tmp_path))[0] == ["A"]
+
     def test_mixed_extensions_fail(self, tmp_path):
         # characterises current behaviour: only the last seen extension is used; check_input rejects this
         write_fasta(tmp_path / "A.fa", [("a1", SEQ)])
