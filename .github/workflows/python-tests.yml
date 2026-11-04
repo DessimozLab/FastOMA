@@ -16,7 +16,8 @@ concurrency:
 
 jobs:
   pytest:
-    runs-on: ubuntu-latest
+    # pinned: the golden snapshots of tests/test_fungi30.py need the mafft/FastTree versions of this image
+    runs-on: ubuntu-24.04
     name: "pytest | python ${{ matrix.python-version }}"
     strategy:
       fail-fast: false
@@ -45,6 +46,9 @@ jobs:
           python -m pip install -e . pytest
 
       - name: Run tests
+        env:
+          # fail rather than skip the golden snapshots if the tool versions changed
+          FASTOMA_REQUIRE_GOLDEN: "1"
         run: |
           if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             python -m pytest -ra

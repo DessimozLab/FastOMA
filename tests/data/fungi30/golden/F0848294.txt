@@ -1,0 +1,54 @@
+# 30 input proteins, 1 groups, 30 proteins in groups
+
+orthologGroup Fungi  CompletenessScore=1.0 ImpliedLosses=22 TCSScore=16.1333
+  orthologGroup Dikarya  CompletenessScore=1.0 ImpliedLosses=19 TCSScore=13.0385
+    orthologGroup Ascomycota  CompletenessScore=1.0 ImpliedLosses=13 TCSScore=11.7222
+      orthologGroup saccharomyceta  CompletenessScore=1.0 ImpliedLosses=12 TCSScore=8.1176
+        orthologGroup leotiomyceta  CompletenessScore=1.0 ImpliedLosses=11 TCSScore=5.125
+          orthologGroup Eurotiomycetes  CompletenessScore=1.0 ImpliedLosses=4 TCSScore=2.4
+            orthologGroup Eurotiomycetidae  CompletenessScore=1.0 ImpliedLosses=3 TCSScore=1.0
+              orthologGroup Aspergillaceae  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+                tr|A0A1L9VWY3|A0A1L9VWY3_ASPGL
+                tr|A0A1V6PIE3|A0A1V6PIE3_PENDC
+              orthologGroup Onygenales  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+                tr|A0A1B7P792|A0A1B7P792_9EURO
+                tr|F2PQY5|F2PQY5_TRIEC
+            tr|A0A0D2HIH0|A0A0D2HIH0_CLAB1
+          orthologGroup Sordariomycetes  CompletenessScore=1.0 ImpliedLosses=6 TCSScore=3.3333
+            orthologGroup Hypocreomycetidae  CompletenessScore=1.0 ImpliedLosses=4 TCSScore=2.0
+              orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+                tr|A0AAX4HY75|A0AAX4HY75_9PEZI
+                tr|L2G5M7|L2G5M7_COLFN
+              orthologGroup Hypocreales  CompletenessScore=1.0 ImpliedLosses=2 TCSScore=0.75
+                orthologGroup Fusarium  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+                  tr|A0A395RH59|A0A395RH59_FUSSP
+                  tr|A0A8H5NX32|A0A8H5NX32_GIBSU
+                  tr|A0A9P9RC40|A0A9P9RC40_FUSSL
+                tr|G9N112|G9N112_HYPVG
+            orthologGroup Sordariomycetidae  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+              tr|A0A2P5HL36|A0A2P5HL36_DIAHE
+              tr|A0A6P8AUH6|A0A6P8AUH6_PYRGI
+              tr|Q7RYM3|Q7RYM3_NEUCR
+          tr|A0A165FZQ7|A0A165FZQ7_XYLHT
+          tr|A0A7C8MU77|A0A7C8MU77_9PLEO
+        tr|A0AA35IZ99|A0AA35IZ99_SACMI
+      sp|Q1MTQ9|NIP7_SCHPO
+    orthologGroup Basidiomycota  CompletenessScore=1.0 ImpliedLosses=5 TCSScore=2.125
+      orthologGroup Agaricomycetes  CompletenessScore=1.0 ImpliedLosses=2 TCSScore=0.75
+        orthologGroup Agaricales  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+          tr|A0A067TQ63|A0A067TQ63_GALM3
+          tr|A0A0C3CUS6|A0A0C3CUS6_HEBCY
+          tr|B0CR22|B0CR22_LACBS
+        tr|A0AAW0GQL6|A0AAW0GQL6_9APHY
+      orthologGroup Ustilaginomycotina  CompletenessScore=1.0 ImpliedLosses=2 TCSScore=0.6667
+        orthologGroup Exobasidiomycetes  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+          tr|A0A0P1BJE5|A0A0P1BJE5_9BASI
+          tr|A0A316UL47|A0A316UL47_9BASI
+        tr|A0A0F7RSB9|A0A0F7RSB9_9BASI
+      tr|M7XIG2|M7XIG2_RHOT1
+  orthologGroup Fungiincertaesedis  CompletenessScore=1.0 ImpliedLosses=2 TCSScore=0.5
+    orthologGroup Mucoromycota  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+      tr|A0AAD7VCH9|A0AAD7VCH9_9FUNG
+      tr|A0ABN7VXY4|A0ABN7VXY4_GIGMA
+    tr|A0A1Y2AHI4|A0A1Y2AHI4_9FUNG
+    tr|A0ABQ8PD51|A0ABQ8PD51_9FUNG

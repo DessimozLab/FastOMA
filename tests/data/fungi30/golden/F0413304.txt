@@ -1,0 +1,10 @@
+# 4 input proteins, 2 groups, 4 proteins in groups
+
+orthologGroup Fungi  CompletenessScore=0.0667 ImpliedLosses=2 TCSScore=0.0
+  tr|A0A1Y2ETJ6|A0A1Y2ETJ6_9FUNG
+  tr|A0AA35IW45|A0AA35IW45_SACMI
+
+orthologGroup Fungi  CompletenessScore=0.0667 ImpliedLosses=3 TCSScore=0.0
+  paralogGroup
+    tr|A0A1Y2AI63|A0A1Y2AI63_9FUNG
+    tr|A0ABQ8PQ38|A0ABQ8PQ38_9FUNG

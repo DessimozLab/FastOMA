@@ -1,0 +1,5 @@
+{
+  "mafft": "v7.505 (2022/Apr/10)",
+  "FastTree": "2.1.11 Double precision (No SSE3)",
+  "image": "dessimozlab/fastoma:dev"
+}
