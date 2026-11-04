@@ -174,9 +174,17 @@ def golden_path(rhogid):
 # ---------------------------------------------------------------- regeneration
 
 def _docker_run(image, mount, workdir, args):
-    cmd = ["docker", "run", "--rm", "--platform", "linux/amd64", "-v", f"{mount}:{mount}", "-w", str(workdir),
-           "-e", "PYTHONHASHSEED=0", "-e", f"PYTHONPATH={REPO_DIR}", "--entrypoint", "sh", image, "-c", args]
+    # run as the calling user, otherwise a Linux docker daemon leaves root-owned files in the mounted
+    # repository that the caller cannot remove; HOME must then point to a writable folder
+    user = ["--user", f"{os.getuid()}:{os.getgid()}", "-e", "HOME=/tmp"] if hasattr(os, "getuid") else []
+    cmd = ["docker", "run", "--rm", "--platform", "linux/amd64", *user, "-v", f"{mount}:{mount}", "-w", str(workdir),
+           "-e", "PYTHONHASHSEED=0", "-e", f"PYTHONPATH={REPO_DIR}", "-e", "PYTHONDONTWRITEBYTECODE=1",
+           "--entrypoint", "sh", image, "-c", args]
     return subprocess.run(cmd, capture_output=True, text=True)
+
+
+def _tools(env):
+    return {k: v for k, v in env.items() if k != "image"}
 
 
 def regenerate(tier, image):
@@ -187,6 +195,11 @@ def regenerate(tier, image):
     env = parse_tool_versions(lines[0], lines[-1])
     env["image"] = image
     print("environment:", env)
+    # ENVIRONMENT.json is shared by all snapshots: a partial regeneration with other tool versions would
+    # leave the other tier's snapshots from the old tools while claiming the new ones
+    if tier != "all" and ENVIRONMENT_FILE.exists() and _tools(golden_environment()) != _tools(env):
+        sys.exit(f"the tool versions of {image} ({_tools(env)}) differ from those of the existing snapshots "
+                 f"({_tools(golden_environment())}); regenerate all tiers with --tier all")
     # docker can only see the repository (mounted at the same path), so work in a folder inside it
     with tempfile.TemporaryDirectory(dir=TESTS_DIR, prefix=".fungi30-") as tmp:
         for (grp_tier, mode), rhogids in groups().items():

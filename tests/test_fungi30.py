@@ -86,6 +86,16 @@ def test_every_family_has_input_and_golden_snapshot():
         assert F.golden_path(fam["rhog"]).exists() == (fam["kind"] == "golden"), fam["rhog"]
 
 
+def test_partial_regeneration_rejects_other_tool_versions(monkeypatch):
+    class Result:
+        stdout = "v7.526 (2024/Apr/26)\nDetailed usage for FastTree 2.1.11 Double precision (No SSE3):\n"
+    monkeypatch.setattr(F, "_docker_run", lambda *args, **kwargs: Result())
+    before = F.ENVIRONMENT_FILE.read_text()
+    with pytest.raises(SystemExit, match="--tier all"):
+        F.regenerate("fast", "image-with-other-tools")
+    assert F.ENVIRONMENT_FILE.read_text() == before
+
+
 def test_parse_tool_versions():
     v = F.parse_tool_versions("v7.505 (2022/Apr/10)",
                               "Detailed usage for FastTree 2.1.11 Double precision (No SSE3), OpenMP (10 threads):")
