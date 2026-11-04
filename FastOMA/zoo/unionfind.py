@@ -87,9 +87,23 @@ class UnionFind(object):
         """
         if obj not in self.parents:
             return
-        comp = self.find(obj)
-        self.weights[comp] -= 1
-        self.parents.pop(obj)
+        root = self.find(obj)
+        # other elements may still point to obj (it can be the root or an
+        # internal node of an uncompressed path); they must be reparented,
+        # otherwise later find() calls hit a dangling parent (KeyError).
+        children = [x for x, p in self.parents.items() if p == obj and x != obj]
+        if root == obj:
+            weight = self.weights.pop(obj)
+            if children:
+                new_root = children[0]
+                for child in children:
+                    self.parents[child] = new_root
+                self.weights[new_root] = weight - 1
+        else:
+            self.weights[root] -= 1
+            for child in children:
+                self.parents[child] = root
+        del self.parents[obj]
 
     def __iter__(self):
         """Iterate through all items ever found or unioned by this structure."""
@@ -107,7 +121,9 @@ class UnionFind(object):
             datastructre at instantiation time, they are added at this point
             in time.
         """
-        roots = [self[x] for x in objects]
+        # deduplicate: several objects may already share a root, whose
+        # weight must then only be added once
+        roots = {self[x] for x in objects}
         heaviest = max([(self.weights[r], r) for r in roots], key=lambda x: x[0])[1]
         for r in roots:
             if r != heaviest:

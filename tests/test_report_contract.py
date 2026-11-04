@@ -88,9 +88,6 @@ class TestNotebook:
         assert '"species_tree_checked.nwk"' in source
         assert '"phylostratigraphy.html"' in source
 
-    @pytest.mark.xfail(strict=True, reason="BUG: the report plots CompletenessScore unconditionally, so "
-                                           "--disable_completeness_score with --report fails "
-                                           "(fastoma_notebook_stat.ipynb, roothog_df/level_df plots)")
     def test_completeness_plots_are_guarded(self):
         for cell in _code_cells():
             source = "".join(cell["source"])

@@ -50,9 +50,9 @@ def test_rerun_into_existing_output_fails(tmp_path):
         run(tmp_path)
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: files with the same name in different subfolders overwrite "
-                                       "each other in a batch (shutil.copy at batch_roothogs.py:45)")
-def test_same_basename_in_subfolders_kept(tmp_path):
+def test_same_basename_in_subfolders_rejected(tmp_path):
+    # the file name is the rootHOG id downstream and batches are flat, so two files with the same
+    # name would silently overwrite each other
     make_files(tmp_path / "in", {"a/HOG_1.fa": 10, "b/HOG_1.fa": 20})
-    _, rest = run(tmp_path)
-    assert sum(len(v) for v in rest.values()) == 2
+    with pytest.raises(ValueError, match="HOG_1.fa"):
+        run(tmp_path)

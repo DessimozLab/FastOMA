@@ -46,8 +46,6 @@ def test_prepare_species_tree_empty_roothog():
         prepare_species_tree([], Tree(TREE, format=1), "r")
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: for a single-species rootHOG get_common_ancestor({'A'}) returns the root, "
-                                       "giving a unary root instead of the species leaf (_utils_subhog.py:283)")
 def test_prepare_species_tree_single_species():
     pruned, _, _, _ = prepare_species_tree(recs("A", "A"), Tree(TREE, format=1), "r")
     assert pruned.is_leaf() and pruned.name == "A"
@@ -61,15 +59,18 @@ def test_read_species_tree_newick_with_internal_names(tmp_path):
 
 
 def test_read_species_tree_missing_file(tmp_path):
-    with pytest.raises(SystemExit):
+    # a non-zero exit status, otherwise Nextflow takes the failed task for a success
+    with pytest.raises(SystemExit) as e:
         read_species_tree(str(tmp_path / "missing.nwk"))
+    assert e.value.code == 1
 
 
 def test_read_species_tree_unknown_extension(tmp_path):
     p = tmp_path / "sp.tree"
     p.write_text(TREE + "\n")
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as e:
         read_species_tree(str(p))
+    assert e.value.code == 1
 
 
 def test_list_rhog_fastas(tmp_path):

@@ -104,8 +104,6 @@ class TestOrthoxmlRelations:
                    genes='<gene id="1" protId="a1"/><gene id="4"/>')
         assert _pairs(doc, "ortholog", id_attribute="protId") == [("a1", None)]
 
-    @pytest.mark.xfail(strict=True, reason="BUG: an orthologGroup without children raises TypeError in "
-                                           "set.union() (zoo/hog/transform.py:52)")
     def test_empty_group_has_no_pairs(self):
         doc = _xml('<orthologGroup><geneRef id="1"/><geneRef id="3"/></orthologGroup><orthologGroup/>')
         assert _pairs(doc, "ortholog", id_attribute="protId") == [("a1", "b1")]

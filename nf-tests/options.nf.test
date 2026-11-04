@@ -16,7 +16,8 @@ nextflow_pipeline {
                 fasta_header_id_transformer = "UniProt"
                 write_msas = true
                 write_genetrees = true
-                // the report needs the CompletenessScore, so only the other two are disabled here
+                // all scores disabled; the report (on in the test profile) must still be produced
+                disable_completeness_score = true
                 disable_implied_losses_score = true
                 disable_tcs_score = true
             }
@@ -33,7 +34,8 @@ nextflow_pipeline {
                 // UniProt transformer: "sp|P13927|EFTU_MYCGE" -> "P13927" in all outputs
                 { assert roothogs.flatten().every { it ==~ /[A-Z0-9]{6,10}/ } },
                 { assert FastomaOutput.canonicalHogs(orthoxml).every { !it.contains('|') } },
-                { assert orthoxml_text.contains('CompletenessScore') },
+                { assert !orthoxml_text.contains('CompletenessScore') },
+                { assert out.resolve('report.html').toFile().exists() },
                 { assert !orthoxml_text.contains('ImpliedLosses') },
                 { assert !orthoxml_text.contains('TCSScore') },
                 { assert file("${params.msa_folder}").list().size() > 0 },
@@ -71,6 +73,33 @@ nextflow_pipeline {
                     FastomaOutput.groupPartition(out.resolve('RootHOGs.tsv')),
                     FastomaOutput.canonicalHogs(out.resolve('FastOMA_HOGs.orthoxml')),
                 ).match() }
+            )
+        }
+    }
+
+    test("archive made with macOS tar (AppleDouble ._ files)") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                output_folder = "$outputDir"
+                hogmap_folder = "$outputDir/hogmap"
+                // same content as input_archive.tar.gz, plus a ._<name> metadata file for every entry
+                input = "${projectDir}/nf-tests/helpers/input_archive_macos.tar.gz"
+            }
+        }
+
+        then {
+            def out = file(params.output_folder).toPath()
+            def hogmap_files = file("${params.hogmap_folder}").listFiles()
+            def species = FastomaOutput.speciesNames(out.resolve('FastOMA_HOGs.orthoxml'))
+
+            assertAll(
+                { assert workflow.success },
+                // the hidden files are neither taken as proteomes nor passed to omamer
+                { assert hogmap_files.findAll { it.name.startsWith('.') }.isEmpty() },
+                { assert hogmap_files.findAll { it.name.endsWith('.hogmap') }.size() == 3 },
+                { assert species == ['AQUAE', 'CHLTR', 'MYCGE'] },
             )
         }
     }

@@ -1,4 +1,5 @@
 
+import collections
 import shutil
 from pathlib import Path
 from . import __version__ as fastoma_version, logger
@@ -52,6 +53,12 @@ class BatchBuilder:
 def folder_1h_rhog(roothog_path: Path, output_folder_big: Path, output_folder_rest: Path):
     # create a list of hogs in descending filesize order
     hog_size_tuples = sorted([(f, f.stat().st_size) for f in roothog_path.rglob("*.fa")], key=lambda x: -x[1])
+    # the file name is the rootHOG id downstream, and batches are flat folders
+    names = collections.Counter(f.name for f, _ in hog_size_tuples)
+    duplicates = sorted(name for name, cnt in names.items() if cnt > 1)
+    if duplicates:
+        raise ValueError(f"rootHOG files with the same name in different subfolders of {roothog_path}: "
+                         f"{', '.join(duplicates)}")
     with BatchBuilder(output_folder_big, 1) as big_hogs, \
             BatchBuilder(output_folder_rest, sum_list_rhogs_filesize_thresh) as rest_hogs:
         for hog, fsize in hog_size_tuples:

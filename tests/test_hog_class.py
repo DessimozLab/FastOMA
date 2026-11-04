@@ -69,13 +69,6 @@ def test_merged_hog_with_empty_msa_is_rejected(sp):
         HOG([leaf_hog(A1, sp)], sp, "r", msa=msa(), representatives=[Representative(rec(A1))])
 
 
-def test_merged_hog_without_representatives_argument_fails(sp):
-    # characterises current behaviour: the default of `representatives` is a typing object
-    # (_hog_class.py:280), so callers always have to pass it
-    with pytest.raises(TypeError):
-        HOG([leaf_hog(A1, sp)], sp, "r", msa=msa(rec(A1)))
-
-
 @pytest.mark.xfail(strict=True, reason="BUG: HOG.__init__ column filter can drop all representative rows "
                                        "(_hog_class.py:333 -> _utils_subhog.py:485); the HOG is then lost at the next level")
 def test_merged_hog_column_filter_keeps_representatives(sp, subhog_conf):
@@ -125,8 +118,6 @@ def test_representative_with_elements_collects_subelements_and_species():
     assert r.get_species() == {"A", "B"}
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: Representative(rep, elements) mutates rep's subelement/species sets in place "
-                                       "(_hog_class.py:249-259 alias the sets)")
 def test_representative_with_elements_does_not_mutate_source():
     a, b = Representative(rec(A1)), Representative(rec(B1))
     Representative(a, [a, b])
@@ -141,8 +132,11 @@ def test_find_representative_by_id(sp):
     assert h.find_representative(B1).get_id() == B1
 
 
-@pytest.mark.xfail(strict=True, raises=AttributeError,
-                   reason="BUG: find_representative calls the non-existent Representative.get_members (_hog_class.py:383)")
+def test_merged_hog_needs_representatives(sp):
+    with pytest.raises(ValueError, match="representatives"):
+        HOG([leaf_hog(A1, sp), leaf_hog(B1, sp)], sp, "r", msa=msa(rec(A1), rec(B1)))
+
+
 def test_find_representative_of_non_representative_member(sp):
     a1, b1 = leaf_hog(A1, sp), leaf_hog(B1, sp)
     rep = Representative(rec(A1), [Representative(rec(B1))])
