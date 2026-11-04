@@ -223,10 +223,6 @@ def test_to_orthoxml_with_scores(sp):
     assert _tags(e)[:4] == ["score", "score", "score", "property"]
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: ImpliedLosses compares species tree nodes by identity "
-                                       "(_count_untouched_clades, _hog_class.py:82-86), but the scoring tree "
-                                       "(full_species_tree) and the trees of the separately pickled levels are "
-                                       "different copies, so every nested level counts one extra loss")
 @pytest.mark.parametrize("pickled", [False, True], ids=["in-memory", "pickled-per-level"])
 @pytest.mark.parametrize("present,expected_losses", [(["A", "B", "C", "D"], 0), (["A", "C"], 2)],
                          ids=["complete", "two-clades-lost"])
@@ -248,6 +244,29 @@ def test_implied_losses_against_full_species_tree(present, expected_losses, pick
         top = merged_hog(leaves, work)
     e = level(top).to_orthoxml(full)
     assert e.find("score[@id='ImpliedLosses']").get("value") == str(expected_losses)
+
+
+def test_implied_losses_with_duplication_independent_of_tree_copies():
+    # ((A,B)AB,(C,D)CD)root with a duplication at AB: copy 1 has A and B, copy 2 only A; C present, D lost.
+    # The value must not depend on whether the levels share one tree object.
+    import pickle
+
+    def build(tree, level):
+        a1, a2 = (level(leaf_hog(pid(n, "A", i), tree)) for n, i in (("a1", 1), ("a2", 2)))
+        b1, c1 = level(leaf_hog(pid("b1", "B", 3), tree)), level(leaf_hog(pid("c1", "C", 4), tree))
+        copy1 = level(merged_hog([a1, b1], tree & "AB"))
+        copy2 = level(merged_hog([a2], tree & "AB"))
+        return level(merged_hog([copy1, copy2, c1], tree))
+
+    def losses(top, scoring_tree):
+        return top.to_orthoxml(scoring_tree).find("score[@id='ImpliedLosses']").get("value")
+
+    single = species_tree("((A,B)AB,(C,D)CD)root;")
+    expected = losses(build(single, lambda h: h), single)
+    full = species_tree("((A,B)AB,(C,D)CD)root;")
+    work = full.copy()
+    pickled = build(work, lambda h: pickle.loads(pickle.dumps([h]))[0])
+    assert losses(pickled, full) == expected == "2"   # D lost, and B lost in copy 2
 
 
 def test_to_orthoxml_inparalogs_give_paralog_group(sp):

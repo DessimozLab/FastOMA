@@ -1,7 +1,7 @@
 # 4 input proteins, 1 groups, 3 proteins in groups
 
-orthologGroup leotiomyceta  CompletenessScore=0.1875 ImpliedLosses=2 TCSScore=1.3333
-  orthologGroup Hypocreomycetidae  CompletenessScore=0.3333 ImpliedLosses=1 TCSScore=0.0
+orthologGroup leotiomyceta  CompletenessScore=0.1875 ImpliedLosses=7 TCSScore=1.3333
+  orthologGroup Hypocreomycetidae  CompletenessScore=0.3333 ImpliedLosses=4 TCSScore=0.0
     tr|A0A8H5V9V0|A0A8H5V9V0_GIBSU
     tr|A0AAX4IL06|A0AAX4IL06_9PEZI
   tr|A0A7C8ICJ0|A0A7C8ICJ0_9PLEO
