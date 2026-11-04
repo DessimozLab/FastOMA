@@ -229,6 +229,33 @@ def test_to_orthoxml_with_scores(sp):
     assert _tags(e)[:4] == ["score", "score", "score", "property"]
 
 
+@pytest.mark.xfail(strict=True, reason="BUG: ImpliedLosses compares species tree nodes by identity "
+                                       "(_count_untouched_clades, _hog_class.py:82-86), but the scoring tree "
+                                       "(full_species_tree) and the trees of the separately pickled levels are "
+                                       "different copies, so every nested level counts one extra loss")
+@pytest.mark.parametrize("pickled", [False, True], ids=["in-memory", "pickled-per-level"])
+@pytest.mark.parametrize("present,expected_losses", [(["A", "B", "C", "D"], 0), (["A", "C"], 2)],
+                         ids=["complete", "two-clades-lost"])
+def test_implied_losses_against_full_species_tree(present, expected_losses, pickled):
+    # as in read_infer_xml_rhog: HOGs live on the pruned working tree, scores use an unpruned copy, and
+    # infer_hogs_this_level writes each level to its own pickle file
+    import pickle
+    full = species_tree("((A,B)AB,(C,D)CD)root;")
+    work = full.copy()
+    work.prune(present)
+
+    def level(h):
+        return pickle.loads(pickle.dumps([h]))[0] if pickled else h
+
+    leaves = [level(leaf_hog(pid(s.lower(), s, i), work)) for i, s in enumerate(present, 1)]
+    if len(present) == 4:
+        top = merged_hog([level(merged_hog(leaves[:2], work & "AB")), level(merged_hog(leaves[2:], work & "CD"))], work)
+    else:
+        top = merged_hog(leaves, work)
+    e = level(top).to_orthoxml(full)
+    assert e.find("score[@id='ImpliedLosses']").get("value") == str(expected_losses)
+
+
 def test_to_orthoxml_inparalogs_give_paralog_group(sp):
     h = merged_hog([leaf_hog(A1, sp), leaf_hog(A2, sp)], sp & "A")
     e = h.to_orthoxml(sp, NO_SCORES)
