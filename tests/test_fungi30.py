@@ -96,6 +96,17 @@ def test_partial_regeneration_rejects_other_tool_versions(monkeypatch):
     assert F.ENVIRONMENT_FILE.read_text() == before
 
 
+def test_container_command_survives_paths_with_spaces(tmp_path):
+    import subprocess
+    input_dir = tmp_path / "FastOMA checkout" / "in"
+    cmd = F.container_command(input_dir, parallel=True)
+    # let sh parse the command exactly as `sh -c` in the container does, and print the resulting argv
+    res = subprocess.run(["sh", "-c", 'set -- ' + cmd + '; printf "%s\\n" "$@"'], capture_output=True, text=True,
+                         check=True)
+    assert res.stdout.splitlines() == ["/app/bin/python", "-c", F.RUNNER] + \
+        F.infer_subhogs_args(input_dir, F.SPECIES_TREE, True)
+
+
 def test_parse_tool_versions():
     v = F.parse_tool_versions("v7.505 (2022/Apr/10)",
                               "Detailed usage for FastTree 2.1.11 Double precision (No SSE3), OpenMP (10 threads):")

@@ -26,6 +26,7 @@ import json
 import os
 import pickle
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -183,6 +184,12 @@ def _docker_run(image, mount, workdir, args):
     return subprocess.run(cmd, capture_output=True, text=True)
 
 
+def container_command(input_dir, parallel):
+    """shell command (for `sh -c` in the container) running the working-tree infer-subhogs; quoted, so
+    paths with spaces survive."""
+    return shlex.join(["/app/bin/python", "-c", RUNNER] + infer_subhogs_args(input_dir, SPECIES_TREE, parallel))
+
+
 def _tools(env):
     return {k: v for k, v in env.items() if k != "image"}
 
@@ -211,8 +218,7 @@ def regenerate(tier, image):
             workdir = Path(tmp) / f"{grp_tier}_{mode}"
             workdir.mkdir()
             prepare_input(golden_ids, workdir / "in")
-            args = " ".join(["/app/bin/python", "-c", repr(RUNNER)] +
-                            infer_subhogs_args(workdir / "in", SPECIES_TREE, mode == "par"))
+            args = container_command(workdir / "in", mode == "par")
             print(f"running {grp_tier}/{mode}: {', '.join(golden_ids)}", flush=True)
             res = _docker_run(image, REPO_DIR, workdir, args)
             if res.returncode != 0:
