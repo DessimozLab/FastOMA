@@ -1,0 +1,55 @@
+# 32 input proteins, 1 groups, 32 proteins in groups
+
+orthologGroup Fungi  CompletenessScore=0.4667 ImpliedLosses=27 TCSScore=13.1875
+  orthologGroup Dikarya  CompletenessScore=0.5 ImpliedLosses=26 TCSScore=9.0645
+    orthologGroup leotiomyceta  CompletenessScore=0.5 ImpliedLosses=8 TCSScore=3.2
+      orthologGroup Eurotiomycetes  CompletenessScore=0.4 ImpliedLosses=1 TCSScore=0.0
+        tr|A0A0D2EY06|A0A0D2EY06_CLAB1
+        tr|A0A1L9V481|A0A1L9V481_ASPGL
+      orthologGroup Sordariomycetes  CompletenessScore=0.5556 ImpliedLosses=6 TCSScore=2.0
+        orthologGroup Sordariomycetidae  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
+          tr|A0A2P5HSU6|A0A2P5HSU6_DIAHE
+          tr|A0ABQ8NCJ7|A0ABQ8NCJ7_PYRGI
+        paralogGroup
+          orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.0
+            tr|A0A7J6J7J9|A0A7J6J7J9_COLFN
+            tr|A0AAX4I094|A0AAX4I094_9PEZI
+          orthologGroup Hypocreomycetidae  CompletenessScore=0.3333 ImpliedLosses=2 TCSScore=0.0
+            tr|A0A7J6IMQ8|A0A7J6IMQ8_COLFN
+            tr|A0A8H5QA53|A0A8H5QA53_GIBSU
+      paralogGroup
+        tr|A0A7C8IE91|A0A7C8IE91_9PLEO
+        tr|A0A7C8MPZ1|A0A7C8MPZ1_9PLEO
+    paralogGroup
+      orthologGroup Basidiomycota  CompletenessScore=0.5 ImpliedLosses=7 TCSScore=1.8333
+        paralogGroup
+          orthologGroup Agaricales  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
+            tr|A0A067T9C5|A0A067T9C5_GALM3
+            tr|A0A0C3CLX1|A0A0C3CLX1_HEBCY
+          orthologGroup Agaricomycetes  CompletenessScore=0.5 ImpliedLosses=2 TCSScore=0.0
+            tr|A0A067TSK1|A0A067TSK1_GALM3
+            tr|A0AAW0FQ88|A0AAW0FQ88_9APHY
+          tr|A0A067TFH6|A0A067TFH6_GALM3
+        tr|A0A0F7RU98|A0A0F7RU98_9BASI
+      paralogGroup
+        orthologGroup Agaricomycetes  CompletenessScore=1.0 ImpliedLosses=2 TCSScore=2.0
+          orthologGroup Agaricales  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.8571
+            paralogGroup
+              tr|A0A0C2XVI8|A0A0C2XVI8_HEBCY
+              tr|A0A0C3BYI6|A0A0C3BYI6_HEBCY
+              tr|A0A0C3C663|A0A0C3C663_HEBCY
+            paralogGroup
+              tr|B0D5Z8|B0D5Z8_LACBS
+              tr|B0DKP1|B0DKP1_LACBS
+              tr|B0DYK6|B0DYK6_LACBS
+            tr|A0A067SZQ2|A0A067SZQ2_GALM3
+          paralogGroup
+            tr|A0AAW0F875|A0AAW0F875_9APHY
+            tr|A0AAW0FB02|A0AAW0FB02_9APHY
+            tr|A0AAW0FH18|A0AAW0FH18_9APHY
+            tr|A0AAW0FKT5|A0AAW0FKT5_9APHY
+            tr|A0AAW0GUV6|A0AAW0GUV6_9APHY
+        tr|A0A067SZ40|A0A067SZ40_GALM3
+        tr|A0A067TAY0|A0A067TAY0_GALM3
+      tr|A0A067TB36|A0A067TB36_GALM3
+  tr|A0ABQ8PTL8|A0ABQ8PTL8_9FUNG

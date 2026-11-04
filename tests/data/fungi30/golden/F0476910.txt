@@ -1,0 +1,52 @@
+# 34 input proteins, 1 groups, 33 proteins in groups
+
+orthologGroup Fungi  CompletenessScore=0.3667 ImpliedLosses=19 TCSScore=12.1515
+  paralogGroup
+    orthologGroup Dikarya  CompletenessScore=0.3077 ImpliedLosses=7 TCSScore=9.0
+      orthologGroup leotiomyceta  CompletenessScore=0.375 ImpliedLosses=4 TCSScore=1.8571
+        orthologGroup Sordariomycetes  CompletenessScore=0.3333 ImpliedLosses=2 TCSScore=2.0
+          orthologGroup Fusarium  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
+            tr|A0A395SBE1|A0A395SBE1_FUSSP
+            tr|A0A9P9R990|A0A9P9R990_FUSSL
+          tr|Q7SD43|Q7SD43_NEUCR
+        paralogGroup
+          tr|A0A7C8M6G8|A0A7C8M6G8_9PLEO
+          tr|A0A7C8ME07|A0A7C8ME07_9PLEO
+        tr|A0A0D2HEG1|A0A0D2HEG1_CLAB1
+        tr|A0A165G1Y1|A0A165G1Y1_XYLHT
+      paralogGroup
+        orthologGroup Agaricales  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=1.0
+          paralogGroup
+            tr|A0A067S5K1|A0A067S5K1_GALM3
+            tr|A0A067S7G5|A0A067S7G5_GALM3
+            tr|A0A067S7J5|A0A067S7J5_GALM3
+            tr|A0A067S7N9|A0A067S7N9_GALM3
+            tr|A0A067S839|A0A067S839_GALM3
+            tr|A0A067S9Z7|A0A067S9Z7_GALM3
+            tr|A0A067SDK3|A0A067SDK3_GALM3
+            tr|A0A067SEH4|A0A067SEH4_GALM3
+            tr|A0A067SGA6|A0A067SGA6_GALM3
+            tr|A0A067TCL5|A0A067TCL5_GALM3
+            tr|A0A067TCR6|A0A067TCR6_GALM3
+          paralogGroup
+            tr|A0A0C2YMZ1|A0A0C2YMZ1_HEBCY
+            tr|A0A0C3CHJ8|A0A0C3CHJ8_HEBCY
+            tr|A0A0C3CIW7|A0A0C3CIW7_HEBCY
+        tr|A0A067STW1|A0A067STW1_GALM3
+    orthologGroup leotiomyceta  CompletenessScore=0.125 ImpliedLosses=3 TCSScore=0.0
+      tr|A0A164Z8X8|A0A164Z8X8_XYLHT
+      tr|A0A1V6NNK1|A0A1V6NNK1_PENDC
+    orthologGroup leotiomyceta  CompletenessScore=0.25 ImpliedLosses=3 TCSScore=4.2
+      orthologGroup Eurotiomycetes  CompletenessScore=0.6 ImpliedLosses=2 TCSScore=3.0
+        orthologGroup Aspergillaceae  CompletenessScore=1.0 ImpliedLosses=1 TCSScore=0.6667
+          paralogGroup
+            tr|A0A1L9V458|A0A1L9V458_ASPGL
+            tr|A0A1L9VLC0|A0A1L9VLC0_ASPGL
+          tr|A0A1V6NR88|A0A1V6NR88_PENDC
+        tr|A0A0D2HK19|A0A0D2HK19_CLAB1
+      tr|A0A7C8MDA3|A0A7C8MDA3_9PLEO
+    tr|A0A0D2HJK2|A0A0D2HJK2_CLAB1
+  paralogGroup
+    tr|A0ABM8W3Y2|A0ABM8W3Y2_GIGMA
+    tr|A0ABN7V5G4|A0ABN7V5G4_GIGMA
+    tr|A0ABN7WS42|A0ABN7WS42_GIGMA

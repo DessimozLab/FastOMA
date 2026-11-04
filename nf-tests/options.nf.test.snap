@@ -1,0 +1,288 @@
+{
+    "id transformer, MSA/gene tree output and disabled scores": {
+        "content": [
+            [
+                [
+                    "O66429",
+                    "P0CD71",
+                    "P13927"
+                ],
+                [
+                    "O66686",
+                    "O84332"
+                ],
+                [
+                    "O66778",
+                    "O84591"
+                ],
+                [
+                    "O66907",
+                    "P47641"
+                ],
+                [
+                    "O67032",
+                    "O84026",
+                    "P47500"
+                ],
+                [
+                    "O67161",
+                    "P0CE13",
+                    "P47543"
+                ],
+                [
+                    "O67547",
+                    "O84829"
+                ],
+                [
+                    "O67618",
+                    "O84067"
+                ],
+                [
+                    "O67736",
+                    "O84081"
+                ],
+                [
+                    "O67828",
+                    "P47639"
+                ],
+                [
+                    "O67943",
+                    "P0C0Z7"
+                ],
+                [
+                    "P17821",
+                    "P47547"
+                ]
+            ],
+            [
+                [
+                    "O66429",
+                    "P0CD71",
+                    "P13927"
+                ],
+                [
+                    "O66686",
+                    "O84332"
+                ],
+                [
+                    "O66778",
+                    "O84591"
+                ],
+                [
+                    "O66907",
+                    "P47641"
+                ],
+                [
+                    "O67032",
+                    "O84026",
+                    "P47500"
+                ],
+                [
+                    "O67161",
+                    "P0CE13",
+                    "P47543"
+                ],
+                [
+                    "O67547",
+                    "O84829"
+                ],
+                [
+                    "O67618",
+                    "O84067"
+                ],
+                [
+                    "O67736",
+                    "O84081"
+                ],
+                [
+                    "O67828",
+                    "P47639"
+                ],
+                [
+                    "O67943",
+                    "P0C0Z7"
+                ],
+                [
+                    "P17821",
+                    "P47547"
+                ]
+            ],
+            [
+                "O66429 <-> P0CD71",
+                "O66429 <-> P13927",
+                "O66686 <-> O84332",
+                "O66778 <-> O84591",
+                "O66907 <-> P47641",
+                "O67032 <-> O84026",
+                "O67032 <-> P47500",
+                "O67161 <-> P0CE13",
+                "O67161 <-> P47543",
+                "O67547 <-> O84829",
+                "O67618 <-> O84067",
+                "O67736 <-> O84081",
+                "O67828 <-> P47639",
+                "O67943 <-> P0C0Z7",
+                "O84026 <-> P47500",
+                "P0CD71 <-> P13927",
+                "P0CE13 <-> P47543",
+                "P17821 <-> P47547"
+            ]
+        ],
+        "timestamp": "2026-10-20T14:23:51.250062",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.2"
+        }
+    },
+    "archive input with precomputed hogmaps": {
+        "content": [
+            [
+                [
+                    "sp|O66429|EFTU_AQUAE",
+                    "sp|P0CD71|EFTU_CHLTR",
+                    "sp|P13927|EFTU_MYCGE"
+                ],
+                [
+                    "sp|O66686|TPIS_AQUAE",
+                    "sp|O84332|TPIS_CHLTR"
+                ],
+                [
+                    "sp|O66778|ENO_AQUAE",
+                    "sp|O84591|ENO_CHLTR"
+                ],
+                [
+                    "sp|O66907|ATPA_AQUAE",
+                    "sp|P47641|ATPA_MYCGE"
+                ],
+                [
+                    "sp|O67032|RF1_AQUAE",
+                    "sp|O84026|RF1_CHLTR",
+                    "sp|P47500|RF1_MYCGE"
+                ],
+                [
+                    "sp|O67161|G3P_AQUAE",
+                    "sp|P0CE13|G3P_CHLTR",
+                    "sp|P47543|G3P_MYCGE"
+                ],
+                [
+                    "sp|O67547|SUCD_AQUAE",
+                    "tr|O84829|O84829_CHLTR"
+                ],
+                [
+                    "sp|O67618|LEPA_AQUAE",
+                    "sp|O84067|LEPA_CHLTR"
+                ],
+                [
+                    "sp|O67736|FOLD_AQUAE",
+                    "sp|O84081|FOLD_CHLTR"
+                ],
+                [
+                    "sp|O67828|ATPB_AQUAE",
+                    "sp|P47639|ATPB_MYCGE"
+                ],
+                [
+                    "sp|O67943|CH60_AQUAE",
+                    "sp|P0C0Z7|CH60_CHLTR"
+                ],
+                [
+                    "sp|P17821|DNAK_CHLTR",
+                    "sp|P47547|DNAK_MYCGE"
+                ]
+            ],
+            [
+                "OG[inter1](sp|O66686|TPIS_AQUAE, sp|O84332|TPIS_CHLTR)",
+                "OG[inter1](sp|O66778|ENO_AQUAE, sp|O84591|ENO_CHLTR)",
+                "OG[inter1](sp|O67547|SUCD_AQUAE, tr|O84829|O84829_CHLTR)",
+                "OG[inter1](sp|O67618|LEPA_AQUAE, sp|O84067|LEPA_CHLTR)",
+                "OG[inter1](sp|O67736|FOLD_AQUAE, sp|O84081|FOLD_CHLTR)",
+                "OG[inter1](sp|O67943|CH60_AQUAE, sp|P0C0Z7|CH60_CHLTR)",
+                "OG[inter2](OG[inter1](sp|O66429|EFTU_AQUAE, sp|P0CD71|EFTU_CHLTR), sp|P13927|EFTU_MYCGE)",
+                "OG[inter2](OG[inter1](sp|O67032|RF1_AQUAE, sp|O84026|RF1_CHLTR), sp|P47500|RF1_MYCGE)",
+                "OG[inter2](OG[inter1](sp|O67161|G3P_AQUAE, sp|P0CE13|G3P_CHLTR), sp|P47543|G3P_MYCGE)",
+                "OG[inter2](sp|O66907|ATPA_AQUAE, sp|P47641|ATPA_MYCGE)",
+                "OG[inter2](sp|O67828|ATPB_AQUAE, sp|P47639|ATPB_MYCGE)",
+                "OG[inter2](sp|P17821|DNAK_CHLTR, sp|P47547|DNAK_MYCGE)"
+            ]
+        ],
+        "timestamp": "2026-10-20T14:24:13.332548",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.2"
+        }
+    },
+    "splice files select one isoform per gene": {
+        "content": [
+            [
+                [
+                    "sp|O66686|TPIS_AQUAE",
+                    "sp|O84332|TPIS_CHLTR"
+                ],
+                [
+                    "sp|O66778|ENO_AQUAE",
+                    "sp|O84591|ENO_CHLTR"
+                ],
+                [
+                    "sp|O66907|ATPA_AQUAE",
+                    "sp|P47641|ATPA_MYCGE"
+                ],
+                [
+                    "sp|O67032|RF1_AQUAE",
+                    "sp|O84026|RF1_CHLTR",
+                    "sp|P47500|RF1_MYCGE"
+                ],
+                [
+                    "sp|O67161|G3P_AQUAE",
+                    "sp|P0CE13|G3P_CHLTR",
+                    "sp|P47543|G3P_MYCGE"
+                ],
+                [
+                    "sp|O67547|SUCD_AQUAE",
+                    "tr|O84829|O84829_CHLTR"
+                ],
+                [
+                    "sp|O67618|LEPA_AQUAE",
+                    "sp|O84067|LEPA_CHLTR"
+                ],
+                [
+                    "sp|O67736|FOLD_AQUAE",
+                    "sp|O84081|FOLD_CHLTR"
+                ],
+                [
+                    "sp|O67828|ATPB_AQUAE",
+                    "sp|P47639|ATPB_MYCGE"
+                ],
+                [
+                    "sp|O67943|CH60_AQUAE",
+                    "sp|P0C0Z7|CH60_CHLTR"
+                ],
+                [
+                    "sp|P0CD71|EFTU_CHLTR",
+                    "sp|P13927|EFTU_MYCGE"
+                ],
+                [
+                    "sp|P17821|DNAK_CHLTR",
+                    "sp|P47547|DNAK_MYCGE"
+                ]
+            ],
+            [
+                "OG[inter1](sp|O66686|TPIS_AQUAE, sp|O84332|TPIS_CHLTR)",
+                "OG[inter1](sp|O66778|ENO_AQUAE, sp|O84591|ENO_CHLTR)",
+                "OG[inter1](sp|O67547|SUCD_AQUAE, tr|O84829|O84829_CHLTR)",
+                "OG[inter1](sp|O67618|LEPA_AQUAE, sp|O84067|LEPA_CHLTR)",
+                "OG[inter1](sp|O67736|FOLD_AQUAE, sp|O84081|FOLD_CHLTR)",
+                "OG[inter1](sp|O67943|CH60_AQUAE, sp|P0C0Z7|CH60_CHLTR)",
+                "OG[inter2](OG[inter1](sp|O67032|RF1_AQUAE, sp|O84026|RF1_CHLTR), sp|P47500|RF1_MYCGE)",
+                "OG[inter2](OG[inter1](sp|O67161|G3P_AQUAE, sp|P0CE13|G3P_CHLTR), sp|P47543|G3P_MYCGE)",
+                "OG[inter2](sp|O66907|ATPA_AQUAE, sp|P47641|ATPA_MYCGE)",
+                "OG[inter2](sp|O67828|ATPB_AQUAE, sp|P47639|ATPB_MYCGE)",
+                "OG[inter2](sp|P0CD71|EFTU_CHLTR, sp|P13927|EFTU_MYCGE)",
+                "OG[inter2](sp|P17821|DNAK_CHLTR, sp|P47547|DNAK_MYCGE)"
+            ]
+        ],
+        "timestamp": "2026-10-20T14:24:53.930715",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.2"
+        }
+    }
+}

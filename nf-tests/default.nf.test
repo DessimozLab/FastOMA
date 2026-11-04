@@ -15,48 +15,26 @@ nextflow_pipeline {
         }
 
         then {
-            
-            // Custom function to filter timestamp lines
-            def filterTimestamps = { file ->
-                return file.readLines()
-                    .findAll { !it.contains('!date-run') && !it.contains('originVersion') }
-            }
+            def out = file(params.output_folder).toPath()
 
             // stable_name: All files + folders in ${params.output_folder}/ with a stable name
             def stable_name = getAllFilesFromDir(params.output_folder, relative: true, includeDir: true, ignore: ['stats/*.{html,json,txt}'])
             // stable_path: All files in ${params.output_folder}/ with stable content
             def stable_path = getAllFilesFromDir(params.output_folder, ignoreFile: 'nf-tests/.nftignore')
-            def timestamp_files = getAllFilesFromDir(params.output_folder, include:['hogmap/*.hogmap', "FastOMA_HOGs.orthoxml"]).collect { file -> 
-                [name: file.name, md5: listToMD5(filterTimestamps(file))]
-            }
-            def csv_files = getAllFilesFromDir(params.output_folder, include:['RootHOGs.tsv', 'OrthologousGroups.tsv', 'orthologs.tsv.gz']).collect { file ->
-                def csv_data = path(file.path).csv(sep: '\t', header: file.name != 'orthologs.tsv.gz', decompress: file.name.endsWith('.gz'))
-                def header = csv_data.getColumnNames()
-                def sorted_rows = csv_data.sort().rows
-    
-                // Convert back to list of strings
-                def lines = []
-                lines.add(header.join('\t'))  // Add header line
-                sorted_rows.each { row ->
-                    lines.add(header.collect { col -> row[col] ?: '' }.join('\t'))
-                }
-                return [name: file.name, md5: listToMD5(lines), lineCount: lines.size()]
-            }
-            def fixed_line_number_files = getAllFilesFromDir(params.output_folder, include:['RootHOGs.tsv', 'OrthologousGroups.tsv', 'orthologs.tsv.gz', "FastOMA_HOGs.orthoxml", 'hogmap/*.hogmap']).collect { file ->
-                def line_count
-                if (file.name.endsWith('.gz')) {
-                    // Use try-with-resources for proper cleanup
-                    new java.util.zip.GZIPInputStream(file.newInputStream()).withCloseable { gzipStream ->
-                        line_count = gzipStream.readLines().size()
-                    }
-                } else {
-                    line_count = file.readLines().size()
-                }
-                return [name: file.name, lineCount: line_count]
+            // hogmap scores have precision issues across platforms, so only their size is pinned
+            def hogmap_line_counts = getAllFilesFromDir(params.output_folder, include: ['hogmap/*.hogmap']).collect { f ->
+                [name: f.name, lineCount: f.readLines().size()]
             }
 
+            // HOG/OG numbers and row order are not stable, so the inferred orthology is
+            // compared through order- and id-independent views (nf-tests/lib/FastomaOutput.groovy)
+            def orthoxml = out.resolve('FastOMA_HOGs.orthoxml')
+            def geneRefCounts = FastomaOutput.geneRefCounts(orthoxml)
+
             assertAll(
-                { assert workflow.success},
+                { assert workflow.success },
+                // every protein is in at most one HOG
+                { assert geneRefCounts.findAll { it.value > 1 } == [:] },
                 { assert snapshot(
                     // Number of successful tasks
                     workflow.trace.succeeded().size(),
@@ -64,13 +42,14 @@ nextflow_pipeline {
                     stable_name,
                     // All files with stable contents
                     stable_path,
-                    // List of all files with timestamps filtered out
-                    // does not yet work, as hogmap files have percision issues
-                    // and FastOMA_HOGs is not completely deterministic
-                    // timestamp_files 
-
-                    // files with fixed number of lines
-                    fixed_line_number_files
+                    hogmap_line_counts,
+                    [
+                        orthoxml_elements : FastomaOutput.elementCounts(orthoxml),
+                        hogs              : FastomaOutput.canonicalHogs(orthoxml),
+                        roothogs          : FastomaOutput.groupPartition(out.resolve('RootHOGs.tsv')),
+                        orthologous_groups: FastomaOutput.groupPartition(out.resolve('OrthologousGroups.tsv')),
+                        ortholog_pairs    : FastomaOutput.pairs(out.resolve('orthologs.tsv.gz')),
+                    ]
                 ).match() }
             )
         }

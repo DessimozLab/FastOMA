@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Vendored for the FastOMA tests from https://github.com/qfo/orthoxml (orthoxml-0.5.xsd, commit e7e5a0c). Do not edit. -->
+<xs:schema xmlns:ortho="http://orthoXML.org/2011/" version="0.5rc1" targetNamespace="http://orthoXML.org/2011/" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+	<xs:annotation>
+		<xs:appinfo>OrthoXML Schema</xs:appinfo>
+		<xs:documentation>
+			This Schema defines the OrthoXML version 0.5rc1.
+			Author(s): Sanjit Roopra, Dave Messina, Fabian Schreiber, Thomas Schmitt, and Erik Sonnhammer.
+			SBC - Stockholm Bioinformatics Centre. 2011. More info at http://orthoxml.org
+		</xs:documentation>
+	</xs:annotation>
+	<!-- OrthoXML root element ................................................................................ -->
+	<xs:element name="orthoXML">
+		<xs:annotation>
+			<xs:documentation>
+				The OrthoXML root element.
+		</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" name="notes" type="ortho:notes" />
+				<xs:element minOccurs="1" maxOccurs="unbounded" name="species"
+					type="ortho:species" />
+				<xs:element minOccurs="0" name="taxonomy" type="ortho:taxonomy" />
+				<xs:element name="scores" type="ortho:scores" minOccurs="0"/>
+				<xs:element name="groups" type="ortho:groups" />
+			</xs:sequence>
+			<xs:attribute name="origin" use="required" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>
+						The source program/database of the file for
+						instance OMA or InParanoid.
+					</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="version" use="required" type="xs:decimal">
+				<xs:annotation>
+					<xs:documentation>
+						The version number of the file.
+					</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="originVersion" use="required" type="xs:token">
+				<xs:annotation>
+					<xs:documentation>
+						The version or release number of the source
+						program/database at time the file was generated.
+					</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+		<xs:key name="geneidKey">
+			<xs:selector xpath="ortho:species/ortho:database/ortho:genes/ortho:gene" />
+			<xs:field xpath="@id" />
+		</xs:key>
+		<xs:key name="scoreidKey">
+			<xs:selector xpath="ortho:scores/ortho:scoreDef" />
+			<xs:field xpath="@id" />
+		</xs:key>
+		<xs:key name="taxonidKey">
+			<xs:selector xpath=".//ortho:taxon" />
+			<xs:field xpath="@id" />
+		</xs:key>
+		<xs:keyref name="geneidRef" refer="ortho:geneidKey">
+			<xs:selector xpath=".//ortho:geneRef" />
+			<xs:field xpath="@id" />
+		</xs:keyref>
+		<xs:keyref name="scoreidRef" refer="ortho:scoreidKey">
+			<xs:selector xpath=".//ortho:score" />
+			<xs:field xpath="@id" />
+		</xs:keyref>
+		<xs:keyref name="taxonidRef" refer="ortho:taxonidKey">
+			<xs:selector xpath=".//ortho:taxon" />
+			<xs:field xpath="@id" />
+		</xs:keyref>
+		<xs:unique name="uniqueGroupId">
+			<xs:selector xpath=".//ortho:paralogGroup | .//ortho:orthologGroup" />
+			<xs:field xpath="@id" />
+		</xs:unique>
+	</xs:element>
+	<!-- Species ............................................................................................... -->
+	<xs:complexType name="species">
+		<xs:annotation>
+			<xs:documentation>
+				The species element contains all sequences of one
+				species.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element minOccurs="1" maxOccurs="unbounded" type="ortho:database"
+				name="database" />
+			<xs:element minOccurs="0" type="ortho:notes" name="notes" />
+		</xs:sequence>
+		<xs:attribute name="NCBITaxId" type="xs:integer">
+			<xs:annotation>
+				<xs:documentation>
+					The NCBI Taxonomy identifier of the species to
+					identify it
+					unambiguously.
+			</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="taxonId" type="xs:integer">
+			<xs:annotation>
+				<xs:documentation>
+					The internal taxonomy identifier of the species to
+					identify it unambiguously. Must match the id attributes of 
+					the leaf taxon nodes in the taxonomy element.
+			</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+
+		<xs:attribute name="name" use="required">
+			<xs:annotation>
+				<xs:documentation>
+					The name of the species.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Database .............................................................................................. -->
+	<xs:complexType name="database">
+		<xs:annotation>
+			<xs:documentation>
+				A database element contains all genes from a single
+				database/source.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="genes" type="ortho:genes" />
+		</xs:sequence>
+		<xs:attribute name="geneLink" type="xs:anyURI">
+			<xs:annotation>
+				<xs:documentation>
+					A Uniform Resource Identifier (URI) pointing to
+					the gene. In the simplest case one could imagine a URL which in
+					concatenation with the gene identifier links to the website of the
+					gene in the source database. However, how this is used depends on
+					the source of the orthoXML file.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="name" use="required" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>
+					Name of the database.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="protLink" type="xs:anyURI">
+			<xs:annotation>
+				<xs:documentation>
+					A Uniform Resource Identifier (URI) pointing to
+					the protein.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="transcriptLink" type="xs:anyURI">
+			<xs:annotation>
+				<xs:documentation>
+					A Uniform Resource Identifier (URI) pointing to
+					the transcript.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="version" use="required">
+			<xs:annotation>
+				<xs:documentation>
+					Version number of the database.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Genes ................................................................................................. -->
+	<xs:complexType name="genes">
+		<xs:annotation>
+			<xs:documentation>
+				A gene element represents a list of genes.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element minOccurs="1" maxOccurs="unbounded" name="gene"
+				type="ortho:gene" />
+		</xs:sequence>
+	</xs:complexType>
+	<!-- Gene .................................................................................................. -->
+	<xs:complexType name="gene">
+		<xs:annotation>
+			<xs:documentation>
+				The gene element represents a single gene, protein
+				or transcript. It is in fact a set of identifiers: one internal
+				identifier that is used to link from geneRef elements in ortholog
+				clusters and gene identifiers, transcript identifiers and protein
+				identifiers to identify the molecule. The proper term for this
+				element would therefore rather be molecule. However, as the general
+				purpose of orthoXML is to represent orthology data for genes the
+				term gene is used instead. Gene, protein and transcipt identifiers 
+				are optional but at least one of the three should be given. The 
+				source database of the gene is defined through the database element 
+				in which the gene element lies and the identifiers should stem from 
+				this source. 
+			</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="geneId" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>
+					Identifier of the gene in the source database.
+					Multiple splice forms are possible by having the same geneId more
+					than once.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="id" use="required" type="xs:integer">
+			<xs:annotation>
+				<xs:documentation>
+					Internal identifier to link to the gene via the geneRef elements.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="protId" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>
+					Identifier of the protein in the source database.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="transcriptId" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>
+					Identifier of the transcript in the source database.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Taxonomy ............................................................................................... -->
+	<xs:complexType name="taxonomy">
+		<xs:annotation>
+			<xs:documentation>
+				The taxonomy of the species analysed in this orthoxml file. Either you specify
+				the taxonomy as a nested grouping of taxon elements, or link to the ncbi taxonomy
+				by defining an ncbitaxonomy element within the taxonomy element.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:choice maxOccurs="1">
+			<xs:element name="taxon" type="ortho:taxonDef" />
+			<xs:element name="ncbitaxonomy" type="ortho:ncbiDef" />
+		</xs:choice>
+	</xs:complexType>
+	<!-- Taxon Def............................................................................................... -->
+	<xs:complexType name="taxonDef">
+		<xs:annotation>
+			<xs:documentation>
+				A node in the taxonomy, identifying a clade of species
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="taxon" type="ortho:taxonDef" />
+		</xs:sequence>
+		<xs:attribute name="id" type="xs:integer" use="required">
+			<xs:annotation>
+				<xs:documentation>
+					(Internal) identifier of the clade / taxon.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="name" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>
+					Name of the clade / taxon.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- NCBI Def............................................................................................... -->
+	<xs:complexType name="ncbiDef">
+		<xs:annotation>
+			<xs:documentation>
+				crosslink to the ncbi taxonomy
+			</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="link" type="xs:anyURI">
+			<xs:annotation>
+				<xs:documentation>
+					A link to the used ncbi taxonomy.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="version" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>
+					The version of the ncbi taxonomy that is used.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Scores ................................................................................................. -->
+	<xs:complexType name="scores">
+		<xs:annotation>
+			<xs:documentation>
+				A list of score definitions.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element maxOccurs="unbounded" name="scoreDef" type="ortho:scoreDef" />
+		</xs:sequence>
+	</xs:complexType>
+	<!-- Groups ................................................................................................. -->
+	<xs:complexType name="groups">
+		<xs:annotation>
+			<xs:documentation>
+				Represents the list of ortholog groups. Normally 
+				the top level is an ortholog group, but in order to express
+				a duplication at the root, a paralog group may also be the top level.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:choice minOccurs="1" maxOccurs="unbounded">
+				<xs:element name="orthologGroup" type="ortho:group" maxOccurs="unbounded" />
+				<xs:element name="paralogGroup" type="ortho:group" maxOccurs="unbounded" />
+			</xs:choice>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- Group .................................................................................................. -->
+	<xs:complexType name="group">
+		<xs:annotation>
+			<xs:documentation>
+				A group of genes or nested groups. In case of a
+				orothologGroup element, all genes in the group or in the nested groups are
+				orthologs to each other i.e. stem from the same gene in the last common
+				ancester of the species. In case of a paralogGroup the genes are
+				paralogs to each other. Subgroups within the group allow the
+				represention of phylogenetic trees. For more details and examples
+				see http://orthoxml.org/orthoxml_doc.html.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element minOccurs="0" maxOccurs="unbounded" name="score" type="ortho:score" />
+			<xs:element minOccurs="0" maxOccurs="unbounded" name="property" type="ortho:property"/>
+			<xs:choice minOccurs="2" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>
+						A group can may contain two or more of the three alternatives
+						geneRef, paralogGroup, and orthologGroup. By combining these, 
+						complex phylogenies are possible.
+				</xs:documentation>
+				</xs:annotation>
+				<xs:element name="geneRef" type="ortho:geneRef" />
+				<xs:element name="paralogGroup" type="ortho:group" />
+				<xs:element name="orthologGroup" type="ortho:group" />
+			</xs:choice>
+			<xs:element minOccurs="0" name="notes" type="ortho:notes" />
+		</xs:sequence>
+		<xs:attribute name="id" type="xs:string">
+		<xs:annotation>
+			<xs:documentation>
+				Identifier for the group in context of the resource. This attribute is 
+				not required but if your resource provides identifiers for the ortholog 
+				groups we strongly recommend to use it at least for the top level groups.
+			</xs:documentation>
+		</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="taxonId" type="xs:integer">
+		<xs:annotation>
+			<xs:documentation>
+				Taxonomy identifier that defines the speciation event of reference for this 
+				group. The taxonId references either a node in the defined taxonomy structure
+				(where the nummeric IDs can be defined as needed) or it should be the taxonomy
+				identifier in the NCBI taxonomy. 
+			</xs:documentation>
+		</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- GeneRef ................................................................................................. -->
+	<xs:complexType name="geneRef">
+		<xs:annotation>
+			<xs:documentation>
+				The geneRef element is a link to the gene
+				definition under the species element. It defines the members of an
+				ortholog or paralog group. The same gene can be referenced muliple
+				times. The geneRef element can have multiple score elements and a
+				notes elements as children. The notes element can for instance be
+				used for special, ortholog-database-specific information (with InParanoid,
+				for example, we could use it to mark the seed orthologs).
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element minOccurs="0" maxOccurs="unbounded" type="ortho:score" name="score" />
+			<xs:element minOccurs="0" type="ortho:notes" name="notes" />
+		</xs:sequence>
+		<xs:attribute name="id" use="required" type="xs:integer">
+			<xs:annotation>
+				<xs:documentation>
+					Internal identifier for a gene element defined under the species element.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- ScoreDef ................................................................................................. -->
+	<xs:complexType name="scoreDef">
+		<xs:annotation>
+			<xs:documentation>
+				The scoreDef element defines a score. One of the
+				concepts of orthoXML is to be as flexible as possible but still
+				uniformly parsable. Part of this is to allow every
+				ortholog resource to give their own types of scores for groups or
+				group members, which is done using score elements. Score elements
+				can be defined to apply to either groups or geneRefs. It is possible to define multiple scores. 
+			</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="id" use="required" type="xs:NCName">
+			<xs:annotation>
+				<xs:documentation>
+					An internal identifier to link to the
+					scoreDef from a score element.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="desc" use="required">
+			<xs:annotation>
+				<xs:documentation>
+					Description of the score.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Score .................................................................................................... -->
+	<xs:complexType name="score">
+		<xs:annotation>
+			<xs:documentation>
+				The score element gives the value of a score and
+				links it to the scoreDef element, which defines the score. It can be
+				child of a group or a geneRef element to allow scoring on
+				different levels.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="id" use="required" type="xs:NCName">
+			<xs:annotation>
+				<xs:documentation>
+					An identifier linking to the scoreDef element,
+					which defines the score.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="value" use="required" type="xs:decimal">
+			<xs:annotation>
+				<xs:documentation>
+					The actual value of the score. For instance a
+					confidence score of a group member.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Property ...............................................................................................-->
+	<xs:complexType name="property">
+		<xs:annotation>
+			<xs:documentation>
+				Key-value pair for group annotations, for instance
+				statistics about the group members.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="name" use="required" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>
+					The key of the key-value annotation pair.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="value">
+			<xs:annotation>
+				<xs:documentation>
+					The value of the key-value annotation pair. Optional
+					to allow flag like annotations.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Notes .................................................................................................... -->
+	<xs:complexType mixed="true" name="notes">
+		<xs:annotation>
+			<xs:documentation>
+				The notes element is a special element, which
+				allows adding information that is not general enough to be part
+				of the standard. I.e. something specific to a particular ortholog
+				database or algorithm. Notes elements will not be validated,
+				so any child elements are legal. Notes elements can be children of the
+				root element orthoXML, the species element, the orthologGroup
+				element, the paralogGroup element, or the geneRef element.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:any processContents="skip" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>
