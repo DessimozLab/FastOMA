@@ -29,9 +29,6 @@ class TestCheckProteomeFiles:
     def test_mixed_extensions_rejected(self, tmp_path):
         assert C.check_proteome_files(make_files(tmp_path / "p", ["A.fa", "B.fa", "C.fasta"])) is False
 
-    @pytest.mark.xfail(strict=True, reason="BUG: hidden files are taken as proteomes, e.g. the ._A.fa AppleDouble "
-                                           "files of archives made with macOS tar (check_input.py:39); check-input "
-                                           "then reports '._A' as missing from the species tree")
     def test_hidden_files_ignored(self, tmp_path):
         folder = make_files(tmp_path / "p", ["A.fa", "B.fa", "C.fa", "._A.fa", ".DS_Store"])
         assert sorted(C.check_proteome_files(folder)) == ["A", "B", "C"]
@@ -54,8 +51,6 @@ class TestCheckProteome:
     def test_rejected(self, recs):
         assert self.check(recs) is False
 
-    @pytest.mark.xfail(strict=True, reason="BUG: empty proteome raises ZeroDivisionError (check_input.py:65) "
-                                           "instead of being reported as invalid")
     def test_empty_proteome_rejected(self):
         assert self.check([]) is False
 
@@ -65,13 +60,9 @@ class TestCheckHogmapFiles:
         folder = make_files(tmp_path / "h", ["A.fa.hogmap", "B.fasta.hogmap", "notes.txt"])
         assert sorted(C.check_hogmap_files(folder)) == ["A", "B"]
 
-    @pytest.mark.xfail(strict=True, reason="BUG: hidden ._A.fa.hogmap files (macOS tar) count as hogmaps "
-                                           "(check_input.py:91), so the hogmap set never equals the proteomes")
     def test_hidden_files_ignored(self, tmp_path):
         assert C.check_hogmap_files(make_files(tmp_path / "h", ["A.fa.hogmap", "._A.fa.hogmap"])) == ["A"]
 
-    @pytest.mark.xfail(strict=True, reason="BUG: dots are dropped from species names (check_input.py:91), "
-                                           "so they never match the proteome names")
     def test_dotted_species_name(self, tmp_path):
         assert C.check_hogmap_files(make_files(tmp_path / "h", ["Homo.sapiens.fa.hogmap"])) == ["Homo.sapiens"]
 
@@ -86,15 +77,11 @@ class TestSpeciesTreeChecks:
     def test_leaves_duplicated(self):
         assert C.check_speciestree_leaves(Tree("((A,B),A);"), ["A", "B"]) is False
 
-    @pytest.mark.xfail(strict=True, reason="BUG: name list is reset inside the loop (check_input.py:100), "
-                                           "duplicate internal names are never reported")
     def test_internalnode_duplicates_reported(self, caplog):
         with caplog.at_level(logging.WARNING, logger="FastOMA"):
             C.check_speciestree_internalnode(Tree("((A,B)x,(C,D)x)r;", format=1))
         assert any("unique" in r.message for r in caplog.records)
 
-    @pytest.mark.xfail(strict=True, reason="BUG: UnboundLocalError for trees without internal nodes "
-                                           "(check_input.py:106)")
     def test_internalnode_single_leaf(self):
         C.check_speciestree_internalnode(Tree("A;"))
 
@@ -116,14 +103,20 @@ class TestAddInternalNodePrune:
     def test_rename_and_prune(self, tmp_path, nwk, species, expected):
         assert self.prune(tmp_path, nwk, list(species)) == expected
 
-    @pytest.mark.xfail(strict=True, reason="BUG: a name made only of special chars becomes empty "
-                                           "(check_input.py:168)")
+    def test_generated_names_do_not_clash_with_existing(self, tmp_path):
+        # internal_0 is already used further up the tree, so the unnamed node gets internal_1
+        res = self.prune(tmp_path, "(((A,B),C)internal_0,D)root;", list("ABCD"))
+        names = [n.name for n in Tree(res, format=1).traverse() if not n.is_leaf()]
+        assert sorted(names) == ["internal_0", "internal_1", "root"]
+
+    def test_name_too_short_after_removing_special_chars(self, tmp_path):
+        res = self.prune(tmp_path, "((A,B)'a.b',(C,D)cde)root;", list("ABCD"))
+        assert res == "((A:1,B:1)internal_0:1,(C:1,D:1)cde:1)root:0;"
+
     def test_special_char_only_name(self, tmp_path):
         tree = Tree(self.prune(tmp_path, "((A,B)'!!!',(C,D)cde)root;", list("ABCD")), format=1)
         assert all(n.name for n in tree.traverse())
 
-    @pytest.mark.xfail(strict=True, reason="BUG: internal node named like a leaf makes ete3 prune raise "
-                                           "'Ambiguous node name' (check_input.py:180)")
     def test_internal_node_named_like_leaf(self, tmp_path):
         res = self.prune(tmp_path, "((AQUAE,CHLTR)MYCGE,MYCGE)root;", ["AQUAE", "CHLTR", "MYCGE"])
         assert {n.name for n in Tree(res, format=1).get_leaves()} == {"AQUAE", "CHLTR", "MYCGE"}
@@ -146,7 +139,5 @@ class TestCheckSplice:
         with pytest.raises(SystemExit):
             C.check_splice({"A": [["a1"], ["b1"]]})
 
-    @pytest.mark.xfail(strict=True, reason="BUG: species with a single splice line are ignored "
-                                           "(len(isoforms)>1 at check_input.py:195)")
     def test_single_gene_with_isoforms(self):
         assert C.check_splice({"A": [["a1", "a2"]]}) is None

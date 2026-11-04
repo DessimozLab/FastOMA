@@ -39,15 +39,11 @@ class TestParseProteomes:
         write_fasta(tmp_path / "A.fasta", [("a1", SEQ)])
         assert U.parse_proteomes(str(tmp_path))[2] == "fasta"
 
-    @pytest.mark.xfail(strict=True, reason="BUG: files without an extension crash parse_proteomes "
-                                           "(file.rsplit at _utils_roothog.py:166); check_input only warns")
     def test_non_fasta_files_ignored(self, tmp_path):
         write_fasta(tmp_path / "A.fa", [("a1", SEQ)])
         (tmp_path / "README").write_text("x")
         assert U.parse_proteomes(str(tmp_path))[0] == ["A"]
 
-    @pytest.mark.xfail(strict=True, reason="BUG: hidden files such as the ._A.fa AppleDouble files of macOS tar "
-                                           "archives are parsed as proteomes (_utils_roothog.py:165-170)")
     def test_hidden_files_ignored(self, tmp_path):
         write_fasta(tmp_path / "A.fa", [("a1", SEQ)])
         (tmp_path / "._A.fa").write_bytes(b"\x00\x05\x16\x07\x00\x02\x00\x00Mac OS X        ")

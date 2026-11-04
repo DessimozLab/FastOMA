@@ -21,12 +21,16 @@ fastoma-check-input --proteomes proteome --species-tree species_tree.nwk --out-t
 def check_proteome_files(proteome_folder):
     proteome_files = os.listdir(proteome_folder)
     logger.info("There are %d files in the proteome folder.", len(proteome_files))
+    proteomes = _utils_roothog.list_proteome_files(proteome_folder)
 
-    not_fa = [i for i in proteome_files if not (i.endswith(".fa") or i.endswith(".fasta"))]
+    hidden = [i for i in proteome_files if _utils_roothog.is_hidden_file(i)]
+    if hidden:
+        logger.info("Ignoring hidden files in the proteome folder: %s", hidden)
+    not_fa = [i for i in proteome_files if not _utils_roothog.is_hidden_file(i) and not (i.endswith(".fa") or i.endswith(".fasta"))]
     if not_fa:
         logger.warning("We expect that only fa/fasta files are in the proteome folder. Better to remove these %s", not_fa)
 
-    fa_fasta = [i.split(".")[-1] for i in proteome_files if i.endswith(".fa") or i.endswith(".fasta")]
+    fa_fasta = [ext for _, ext in proteomes]
     if len(fa_fasta) <= 2:
         logger.error("There are not enough proteomes in the folder ")
         logger.error("Check input failed. FastOMA halted!")
@@ -36,7 +40,7 @@ def check_proteome_files(proteome_folder):
         logger.warning("We expect that all fasta files are with the same format either fa or fasta, we won't include some of them %s.", proteome_files)
         return False
 
-    species_names = [os.path.splitext(i)[0] for i in proteome_files if i.endswith(".fa") or i.endswith(".fasta")]
+    species_names = [species_name for species_name, _ in proteomes]
     return species_names
 
 
@@ -60,6 +64,10 @@ def check_proteome(species_names, prot_recs_lists, proteome_folder):
         # checking only first record in each species  # for ii in range(len(prot_recs_list)):
         # check that at least 20% of all residue are not DNA/RNA characters (as a check for protein sequences)
         residue_cnts = collections.Counter(itertools.chain.from_iterable(rec.seq.upper() for rec in prot_recs_list))
+        if sum(residue_cnts.values()) == 0:
+            logger.error("The proteome %s/%s.fa contains no sequences.", proteome_folder, species_name)
+            logger.error("Check input failed. FastOMA halted!")
+            return False
         aa_chars = set(extended_protein_letters) - set(unambiguous_dna_letters) - set(unambiguous_rna_letters) - set('N')
         total_aa = sum([residue_cnts[aa] for aa in aa_chars])
         if total_aa / sum(residue_cnts.values()) < 0.2:
@@ -83,21 +91,23 @@ def check_proteome(species_names, prot_recs_lists, proteome_folder):
 def check_hogmap_files(hogmap_folder):
     hogmap_files = os.listdir(hogmap_folder)
     logger.info("There are %d files in the hogmap folder.", len(hogmap_files))
+    hogmap_files = [i for i in hogmap_files if not _utils_roothog.is_hidden_file(i)]
     not_hogmap = [i for i in hogmap_files if not i.endswith(".hogmap")]
     if not_hogmap:
         logger.warning("We expect that only hogmap files are in the %s folder. Better to remove these %s",
                        hogmap_folder, not_hogmap)
 
-    species_hogmaps = ["".join(i.split(".")[:-2]) for i in hogmap_files if i.endswith(".hogmap")]
+    # <species>.<fasta extension>.hogmap; the species name itself may contain dots
+    species_hogmaps = [i[:-len(".hogmap")].rpartition(".")[0] for i in hogmap_files if i.endswith(".hogmap")]
     logger.info("There are "+str(len(species_hogmaps))+" hogmaps.")
     return species_hogmaps
 
 
 def check_speciestree_internalnode(species_tree):
     # All the internal node of the input species tree should have a name
+    internal_node_name = []
     for node in species_tree.traverse(strategy="postorder"):
         if not node.is_leaf():
-            internal_node_name = []
             if (not node.name) or len(node.name) < 1:
                 logger.warning("one of the internal node in species tree doesn't have a name. we'll update the species tree.")
             else:
@@ -153,28 +163,32 @@ def check_omamer_db(omamerdb_adress=None):
 def add_internal_node_prune(species_tree, species_names, out_fname):
     # add name for the internal, if no name is provided, removintg special chars
     counter_internal = 0
-    node_names = set()
+    # leaf names count as taken: an internal node named like a species would make the names
+    # ambiguous (pruning by name fails, and per-level pickle files are named after the nodes)
+    node_names = set(species_tree.get_leaf_names())
+
+    def numbered(prefix):
+        nonlocal counter_internal
+        while True:
+            candidate = prefix + str(counter_internal)
+            counter_internal += 1
+            if candidate not in node_names:
+                return candidate
+
     for node in species_tree.traverse(strategy="postorder"):
         if not node.is_leaf():
             node_name = node.name
+            cleaned = ''.join(e for e in node_name if e.isalnum() or e in ("_", "-"))  # removing special chars
 
-            if len(node_name) < 3 or node_name in node_names:
-                if not node.is_leaf():
-                    node.name = "internal_" + str(counter_internal)
-                    counter_internal += 1
-                    node_names.add(node.name)
-                    logger.debug("The internal node name was too small or repeated "+node_name+" which is changed to "+node.name)
-            elif not all(e.isalnum() or e in ("_", "-") for e in node_name):  #any(not c.isalnum() for c in node_name):
-                node_name_new = ''.join(e for e in node_name if e.isalnum() or e in ("_", "-"))  # removing special chars
-                if node_name_new in node_names:
-                    node_name_new += "_" + str(counter_internal)
-                    counter_internal += 1
+            if len(node_name) < 3 or node_name in node_names or len(cleaned) < 3:
+                node.name = numbered("internal_")
+                logger.debug("The internal node name '%s' was too short, repeated or made of special chars, "
+                             "it is changed to '%s'", node_name, node.name)
+            elif cleaned != node_name:
+                node.name = numbered(cleaned + "_") if cleaned in node_names else cleaned
                 logger.debug("The internal node name has special chars or repeated '%s' which is changed to '%s'",
-                             node.name, node_name_new)
-                node.name = node_name_new
-                node_names.add(node.name)
-            else:
-                node_names.add(node_name)
+                             node_name, node.name)
+            node_names.add(node.name)
 
     logger.info("The species tree has %d leaves", len(species_tree))
     species_tree.prune(species_names)  # , preserve_branch_length=True)
@@ -192,7 +206,7 @@ def check_splice(isoform_by_gene_all):
     total_isoforms = 0
     spliced_species_num = 0
     for sp, isoforms in isoform_by_gene_all.items():
-        if len(isoforms)>1:
+        if isoforms:
             spliced_species_num+=1
 
             for isoform in isoforms:
@@ -231,11 +245,11 @@ def fastoma_check_input():
 
     try:
         species_tree = Tree(conf.species_tree, format=1)
-    except:
+    except Exception:
         try:
             species_tree = Tree(conf.species_tree)
             # todo add check fro Phyloxml
-        except:
+        except Exception:
             logger.error("We have problem with parsing species tree %s using ete3 Tree. Maybe there are some special chars. FastOMA check input failed! Exiting...", conf.species_tree)
             sys.exit(1)
 

@@ -70,15 +70,15 @@ def read_species_tree(species_tree_address):
     elif format_tree == "nwk":
         try:
             species_tree = Tree(species_tree_address, format=1)
-        except:
+        except Exception:
             try:
                 species_tree = Tree(species_tree_address)
-            except:
+            except Exception:
                 logger.error("Format of species tree is not known or the file doesn't exist "+species_tree_address )
-                sys.exit()
+                sys.exit(1)
     else:
         logger.error("For now we accept phyloxml or nwk format for input species tree.or the file doesn't exist "+species_tree_address)
-        sys.exit()
+        sys.exit(1)
 
     return species_tree
 

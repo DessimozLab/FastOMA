@@ -24,6 +24,26 @@ HOGMapData = collections.namedtuple("HOGMapData", ("hogid", "score", "seqlen", "
 Gene = collections.namedtuple("Gene", ("numeric_id", "prot_id", "main_isoform"), defaults=(None,) )
     
 
+FASTA_EXTENSIONS = ("fa", "fasta")
+
+
+def is_hidden_file(name):
+    """hidden files, e.g. the ._<name> AppleDouble files that macOS tar/zip add to archives, or .DS_Store"""
+    return name.startswith(".")
+
+
+def list_proteome_files(folder):
+    """(species name, extension) of the proteome FASTA files in folder.
+
+    Hidden files and files with other (or without) extensions are ignored."""
+    proteomes = []
+    for name in sorted(listdir(folder)):
+        species_name, dot, ext = name.rpartition(".")
+        if not is_hidden_file(name) and dot and species_name and ext in FASTA_EXTENSIONS:
+            proteomes.append((species_name, ext))
+    return proteomes
+
+
 def parse_proteomes(folder=None, min_sequence_length=0):  # list_oma_species
     """
     parsing fasta files of proteins located in /proteome/
@@ -36,15 +56,12 @@ def parse_proteomes(folder=None, min_sequence_length=0):  # list_oma_species
         folder = "./proteome"
 
     fasta_format_keep = ""
-    project_files = listdir(folder)
-    logger.debug("using '%s' as proteome folder, found %d files", folder, len(project_files))
+    proteome_files = list_proteome_files(folder)
+    logger.debug("using '%s' as proteome folder, found %d proteomes", folder, len(proteome_files))
     species_names = []  # query/input species name based on the file name
-    for file in project_files:
-        species_name, ext = file.rsplit('.', 1)
-        logger.debug("%s: %s | %s", file, species_name, ext)
-        if ext in ("fa", "fasta"):
-            species_names.append(species_name)
-            fasta_format_keep = ext  # last one is stored either fa or fasta
+    for species_name, ext in proteome_files:
+        species_names.append(species_name)
+        fasta_format_keep = ext  # last one is stored either fa or fasta (check_input rejects mixed extensions)
 
     species_names.sort()   # sort the species names alphabetically -> reproducible results
     # todo accept all fasta formats in the input prtoeome folder, fasta, fa, fna, ..
