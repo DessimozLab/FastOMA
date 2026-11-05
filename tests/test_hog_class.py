@@ -21,12 +21,20 @@ def test_leaf_hog(sp):
     h = leaf_hog(A1, sp)
     assert h.get_members() == {A1}
     assert len(h) == 1
-    assert h.taxname == "A" and h.taxlevel is sp & "A"
+    assert h.taxname == "A"
     assert h.hogid == "HOG_r_sub10001"
     assert [r.get_id() for r in h.get_representatives()] == [A1]
     assert [r.id for r in h.get_msa()] == [A1]
     assert h._subhogs == [] and h.get_dubious_members() == set()
     assert h.active
+
+
+def test_hog_stores_only_the_name_of_its_level(sp):
+    # HOGs are pickled after every taxonomic level; they must not drag a copy of the species tree along
+    import pickle
+    top = merged_hog([leaf_hog(A1, sp), leaf_hog(B1, sp)], sp & "AB")
+    assert top.taxname == "AB" and [h.taxname for h in top._subhogs] == ["A", "B"]
+    assert b"ete3" not in pickle.dumps(top)
 
 
 def test_hogids_are_sequential_per_process(sp):
@@ -160,7 +168,7 @@ def test_split_hog_on_disjoint_first_level_subhogs(sp):
     assert len(parts) == 2
     assert [h.get_members() for h in parts] == [{A1, B1}, {C1}]
     assert [h._subhogs for h in parts] == [[ab], [c1]]
-    assert all(h.taxlevel is top.taxlevel for h in parts)
+    assert all(h.taxname == top.taxname for h in parts)
     assert [[r.get_id() for r in h.get_representatives()] for h in parts] == [[A1], [C1]]
 
 
