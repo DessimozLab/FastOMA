@@ -120,9 +120,7 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
                 # in version v0.3 of orthoxml, there shouldn't be any paralogGroup at root level. Let's put them inside an orthogroup should be in
                 hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(hog_i.hogid)})
                 species_of_members = _member_species(hog_i.get_members())
-                scoring_node = hog_i.taxlevel
-                if full_species_tree is not None:
-                    scoring_node = _species_name_index(full_species_tree)[hog_i.taxlevel.name]
+                scoring_node = _species_name_index(full_species_tree)[hog_i.taxname]
                 attach_scores(hog_elemnt, hog_i, scoring_node, species_of_members, score_flags=score_flags)
                 ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i.taxname)})
                 hog_elemnt.append(hogs_a_rhog_xml_raw)
@@ -292,7 +290,7 @@ def singletone_hog_(node_species_tree, rhogid, pickles_subhog_folder_all, rhogs_
         species_seq_generator = (rec for rec in SeqIO.parse(fasta, format="fasta")
                                  if rec.id.split('||')[1] == node_species_name)
         for prot in species_seq_generator:
-            hog_leaf = HOG(prot, node_species_tree, rhogid)  # node_species_tree.name
+            hog_leaf = HOG(prot, node_species_tree.name, rhogid)
             hogs_this_level_list.append(hog_leaf)
     pickle_subhog_file = pickles_subhog_folder + str(this_level_node_name)+".pickle"
     with open(pickle_subhog_file, 'wb') as handle:
@@ -685,7 +683,7 @@ class LevelHOGProcessor:
                 processed_nodes.add(subtree)
                 new_repr = self.find_most_divergent_representatives_from_genetree(subtree)
                 hog = HOG([self.subhogs[h] for h in subtree.hogids],
-                          self.node_species_tree,
+                          self.node_species_tree.name,
                           rhogid=self.rhogid,
                           msa=msa,
                           representatives=new_repr,
