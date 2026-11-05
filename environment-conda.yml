@@ -2,7 +2,7 @@ name: fastoma-env
 channels:
   - conda-forge
   - bioconda
-  - defaults
+  - nodefaults
 dependencies:
   - omamer
   - mafft

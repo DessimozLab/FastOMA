@@ -99,14 +99,17 @@ jobs:
       - name: Install pdiff
         run: python -m pip install --upgrade pip pdiff cryptography
 
-      - name: Set up miniconda
+      # Miniforge ships with conda-forge only (no Anaconda `defaults` channel in the base
+      # .condarc), and strict channel priority is what bioconda recommends -- both cut the
+      # solve time of environment-conda.yml compared to Miniconda + flexible priority.
+      - name: Set up miniforge
         if: matrix.profile == 'conda'
         uses: conda-incubator/setup-miniconda@v4
         with:
-          miniconda-version: "latest"
-          auto-update-conda: true
-          conda-solver: libmamba
+          miniforge-version: "latest"
+          conda-remove-defaults: true
           channels: conda-forge,bioconda
+          channel-priority: strict
 
       - name: Set up Conda
         if: matrix.profile == 'conda'
