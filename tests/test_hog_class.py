@@ -1,3 +1,5 @@
+import io
+import pickle
 import xml.etree.ElementTree as ET
 
 import pytest
@@ -31,10 +33,22 @@ def test_leaf_hog(sp):
 
 def test_hog_stores_only_the_name_of_its_level(sp):
     # HOGs are pickled after every taxonomic level; they must not drag a copy of the species tree along
-    import pickle
     top = merged_hog([leaf_hog(A1, sp), leaf_hog(B1, sp)], sp & "AB")
     assert top.taxname == "AB" and [h.taxname for h in top._subhogs] == ["A", "B"]
-    assert b"ete3" not in pickle.dumps(top)
+
+    class NoTreePickler(pickle.Pickler):
+        # fails on any ete object anywhere in the pickled object graph, whatever the ete version
+        def reducer_override(self, obj):
+            if type(obj).__module__.split(".")[0] in ("ete3", "ete4"):
+                raise AssertionError(f"tree object leaked into pickle: {type(obj)}")
+            return NotImplemented
+
+    NoTreePickler(io.BytesIO()).dump(top)
+
+
+def test_hog_requires_level_name_not_tree_node(sp):
+    with pytest.raises(TypeError):
+        HOG(rec(A1), sp & "A", "r")
 
 
 def test_hogids_are_sequential_per_process(sp):
@@ -62,19 +76,19 @@ def test_get_members_returns_a_copy(sp):
 def test_merged_hog_rejects_duplicate_representatives(sp):
     subs = [leaf_hog(A1, sp), leaf_hog(B1, sp)]
     with pytest.raises(AssertionError, match="Non-unique"):
-        HOG(subs, sp, "r", msa=msa(rec(A1), rec(B1)), representatives=[Representative(rec(A1)), Representative(rec(A1))])
+        HOG(subs, sp.name, "r", msa=msa(rec(A1), rec(B1)), representatives=[Representative(rec(A1)), Representative(rec(A1))])
 
 
 def test_merged_hog_rejects_representative_not_member(sp):
     subs = [leaf_hog(A1, sp), leaf_hog(B1, sp)]
     with pytest.raises(AssertionError, match="subset"):
-        HOG(subs, sp, "r", msa=msa(rec(A1), rec(B1), rec(C1)), representatives=[Representative(rec(C1))])
+        HOG(subs, sp.name, "r", msa=msa(rec(A1), rec(B1), rec(C1)), representatives=[Representative(rec(C1))])
 
 
 def test_merged_hog_with_empty_msa_is_rejected(sp):
     # characterises current behaviour: an empty MSA is falsy, so the constructor hits its generic error branch
     with pytest.raises(AssertionError):
-        HOG([leaf_hog(A1, sp)], sp, "r", msa=msa(), representatives=[Representative(rec(A1))])
+        HOG([leaf_hog(A1, sp)], sp.name, "r", msa=msa(), representatives=[Representative(rec(A1))])
 
 
 @pytest.mark.xfail(strict=True, reason="BUG: HOG.__init__ column filter can drop all representative rows "
@@ -142,13 +156,13 @@ def test_find_representative_by_id(sp):
 
 def test_merged_hog_needs_representatives(sp):
     with pytest.raises(ValueError, match="representatives"):
-        HOG([leaf_hog(A1, sp), leaf_hog(B1, sp)], sp, "r", msa=msa(rec(A1), rec(B1)))
+        HOG([leaf_hog(A1, sp), leaf_hog(B1, sp)], sp.name, "r", msa=msa(rec(A1), rec(B1)))
 
 
 def test_find_representative_of_non_representative_member(sp):
     a1, b1 = leaf_hog(A1, sp), leaf_hog(B1, sp)
     rep = Representative(rec(A1), [Representative(rec(B1))])
-    h = HOG([a1, b1], sp, "r", msa=msa(rec(A1), rec(B1)), representatives=[rep])
+    h = HOG([a1, b1], sp.name, "r", msa=msa(rec(A1), rec(B1)), representatives=[rep])
     assert h.find_representative(B1) is rep
 
 

@@ -122,7 +122,7 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
                 species_of_members = _member_species(hog_i.get_members())
                 scoring_node = _species_name_index(full_species_tree)[hog_i.taxname]
                 attach_scores(hog_elemnt, hog_i, scoring_node, species_of_members, score_flags=score_flags)
-                ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": str(hog_i.taxname)})
+                ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": hog_i.taxname})
                 hog_elemnt.append(hogs_a_rhog_xml_raw)
                 hogs_a_rhog_xml = hog_elemnt
             else:

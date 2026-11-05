@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 from random import sample
-from typing import Optional, List, Union, NamedTuple
+from typing import Optional, List, NamedTuple
 from ete3 import Tree, TreeNode
 import random
 from ._utils_subhog import MSAFilter
@@ -280,14 +280,14 @@ class Representative:
 class HOG:
     _hogid_iter = 10000
 
-    def __init__(self, input_instantiate, taxonomic_level: Union[str, TreeNode], rhogid:str, msa:Optional[MultipleSeqAlignment] = None,
+    def __init__(self, input_instantiate, taxonomic_level: str, rhogid:str, msa:Optional[MultipleSeqAlignment] = None,
                  representatives: Optional[List[Representative]] = None, conf_infer_subhhogs=None):
         """HOG class constructor.
 
         A HOG can be initialized with either a single SeqRecord or from a list of HOGs
         (which will become its sub-hog elements). Furthermore, the taxonomic level
-        (the name of a species tree node, or the node itself) needs to be provided; only its
-        name is stored, so HOGs don't reference (and pickle) the species tree.
+        (the name of a species tree node) needs to be provided. HOGs only store that name, so
+        they don't reference (and pickle) the species tree.
         Parameters:
         :param input_instantiate"""
         # fragment_list list of  sets , each set contains protein ID of fragments
@@ -301,7 +301,9 @@ class HOG:
 
         self._hogid = "HOG_" + self._rhogid+ "_sub" + str(self.__class__._hogid_iter)
         # name of the taxonomic level that we are considering now, checking for duplication
-        self._taxname = taxonomic_level.name if isinstance(taxonomic_level, TreeNode) else taxonomic_level
+        if not isinstance(taxonomic_level, str):
+            raise TypeError(f"taxonomic_level must be the name of a species tree node, not {type(taxonomic_level)}")
+        self._taxname = taxonomic_level
         self.active = True
 
         if isinstance(input_instantiate, SeqRecord):  # if len(sub_hogs)==1:
@@ -618,6 +620,11 @@ def split_hog(hog:HOG, level_name:str, *partitions):
     The partitions need to be a lists of Representatives (or simply members)
     of the given HOG.
 
+    The HOG to split is an input (child-level) subhog of the level currently being processed;
+    its parts replace it as inputs of that level, so they keep the HOG's own taxname. The
+    current level is only passed for logging.
+
+    :param level_name:  name of the level currently being processed (only used in log messages)
     :param partitions:  a list or a tuple of Representatives of the current HOG
     :type partitions:   List[Representatives]
     :returns List[HOG]: a list of HOG objects splitting the original HOG in the

@@ -39,7 +39,7 @@ def species_of(seq_id):
 
 def leaf_hog(seq_id, sptree, rhogid="r", seq="ACDEFGHIKL"):
     """Singleton HOG of one protein at its species' leaf node of ``sptree``."""
-    return HOG(rec(seq_id, seq), sptree & species_of(seq_id), rhogid)
+    return HOG(rec(seq_id, seq), (sptree & species_of(seq_id)).name, rhogid)
 
 
 def merged_hog(subhogs, taxnode, rep_ids=None, rhogid="r", conf=None, aln=None):
@@ -53,7 +53,7 @@ def merged_hog(subhogs, taxnode, rep_ids=None, rhogid="r", conf=None, aln=None):
     if rep_ids is None:
         rep_ids = [r.get_id() for h in subhogs for r in h.get_representatives()]
     reps = [Representative(by_id[i]) for i in rep_ids]
-    return HOG(list(subhogs), taxnode, rhogid, msa=aln, representatives=reps, conf_infer_subhhogs=conf)
+    return HOG(list(subhogs), taxnode.name, rhogid, msa=aln, representatives=reps, conf_infer_subhhogs=conf)
 
 
 def leaf_members(hog):
