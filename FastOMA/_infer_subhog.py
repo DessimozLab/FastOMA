@@ -40,6 +40,9 @@ inferhog_max_workers_num = 6 # how parallel to work in a species tree, (won't he
 inferhog_min_hog_size_xml = 2     # by setting this as 1, pyham won't work on xml output.
 orthoxml_v03 = True
 
+logger.warning("The recursion limit is "+str(sys.getrecursionlimit()))
+sys.setrecursionlimit(10000)
+logger.warning("we are increasing the recursion limit to 10k")
 
 def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs):
     """
@@ -541,7 +544,7 @@ class LevelHOGProcessor:
         :param sos_threshold: the minimum fraction of species that must overlap among the
                               subtrees in order to be considered a duplication.
         """
-        logger.info("\n" + genetree.get_ascii(show_internal=True, attributes=['name', 'hogid']))
+        # logger.info("\n" + genetree.get_ascii(show_internal=True, attributes=['name', 'hogid'])) # when trees are big it reaches the python maximum recursion
         cnt_D, cnt_S = 0, 0
         for n in genetree.traverse('postorder'):
             if n.is_leaf():
@@ -643,8 +646,7 @@ class LevelHOGProcessor:
                 for hogid in n.hogids:
                     hogids_in_subtrees[hogid].append(n)
             if any(len(z) > 1 for z in hogids_in_subtrees.values()):
-                logger.info("At least one subhog is split. here is the full labeled genetree:\n"
-                            + reconciled_genetree.get_ascii(show_internal=True, attributes=['evoltype', 'sos', 'hogids', 'hogid']))
+                logger.info("At least one subhog is split.")#  here is the full labeled genetree:\n"+ reconciled_genetree.get_ascii(show_internal=True, attributes=['evoltype', 'sos', 'hogids', 'hogid']))
             else:
                 break
             redo_reconcilation = False
