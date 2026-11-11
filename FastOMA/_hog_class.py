@@ -99,16 +99,31 @@ def _hog_implied_losses(hog: "HOG", tree_node: TreeNode) -> int:
     represents a duplication, and each such paralogous copy's losses are counted independently
     so that one copy's presence in a species can't mask a sibling copy's loss there.
 
-    HOGs only store the name of their taxonomic level, which is looked up in `tree_node`'s tree."""
+    HOGs only store the name of their taxonomic level, which is looked up in `tree_node`'s tree.
+
+    A sub-hog whose level is not inside `tree_node`'s subtree is not counted as a lineage of its
+    own: its sub-hogs are used instead. This happens when a HOG is scored at a level below the one
+    it was built at (see root_orthoxml): during inference, a HOG that nothing joins at a level is
+    still wrapped in a new HOG at that level, so the wrappers above `tree_node` carry no events."""
     subhogs = getattr(hog, "_subhogs", None)
     if not subhogs:
         return 0
 
     index = _species_name_index(tree_node)
+
+    def inside(sh):
+        node = index[sh.taxname]
+        return node is tree_node or tree_node in node.get_ancestors()
+
     losses = 0
     clade_groups = {}
-    for sh in subhogs:
-        clade_groups.setdefault(sh.taxname, []).append(sh)
+    pending = list(subhogs)
+    while pending:
+        sh = pending.pop()
+        if sh._subhogs and not inside(sh):
+            pending.extend(sh._subhogs)
+        else:
+            clade_groups.setdefault(sh.taxname, []).append(sh)
     for clade_name, subhogs_of_clade in clade_groups.items():
         clade_node = index[clade_name]
         for sh in subhogs_of_clade:
@@ -617,6 +632,31 @@ class HOG:
            </paralogGroup>
         </orthologGroup>
 """
+
+
+def root_orthoxml(hog: HOG, full_species_tree: TreeNode, score_flags: ScoreFlags = ScoreFlags()) -> ET.Element:
+    """orthoxml element of a top-level HOG of a rootHOG, as written under <groups>.
+
+    OrthoXML does not allow a paralogGroup directly under <groups>. When the HOG starts with a
+    duplication (all its copies come from one clade), its paralogGroup is put into an
+    orthologGroup at the direct parent, in `full_species_tree`, of the common ancestor of all
+    the species in the paralogGroup: the gene existed before the duplication, but nothing
+    supports it being older than that.
+
+    The level the HOG was built at (`hog.taxname`) is not used for this: a HOG that nothing joins
+    at a level is still wrapped in a new HOG at that level, so it is usually the top level of the
+    whole rootHOG, which can be far above the duplication (issue #128)."""
+    element = hog.to_orthoxml(full_species_tree, score_flags)
+    if element.tag != "paralogGroup":
+        return element
+    species_of_members = _member_species(hog.get_members())
+    lca = _species_mrca(full_species_tree, species_of_members)
+    level = lca.up if lca.up is not None else lca
+    wrapper = ET.Element("orthologGroup", attrib={"id": str(hog.hogid)})
+    attach_scores(wrapper, hog, level, species_of_members, score_flags=score_flags)
+    ET.SubElement(wrapper, "property", attrib={"name": "TaxRange", "value": level.name})
+    wrapper.append(element)
+    return wrapper
 
 
 def split_hog(hog:HOG, level_name:str, *partitions):

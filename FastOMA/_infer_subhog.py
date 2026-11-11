@@ -27,7 +27,7 @@ from . import _wrappers, logger
 from . import _utils_subhog
 from . import _utils_frag_SO_detection
 from . import _protein_trace as ptrace
-from ._hog_class import HOG, Representative, split_hog, attach_scores, _member_species, _species_name_index, ScoreFlags
+from ._hog_class import HOG, Representative, split_hog, root_orthoxml, ScoreFlags
 from ._utils_subhog import MSAFilter, MSAFilterElbow, MSAFilterTrimAL
 
 from .zoo.utils import unique
@@ -39,7 +39,6 @@ keep_subhog_each_pickle = False
 inferhog_resume_subhog = True
 inferhog_max_workers_num = 6 # how parallel to work in a species tree, (won't help near the root)
 inferhog_min_hog_size_xml = 2     # by setting this as 1, pyham won't work on xml output.
-orthoxml_v03 = True
 
 
 def read_infer_xml_rhogs_batch(rhogid_batch_list, inferhog_concurrent_on, pickles_rhog_folder, pickles_subhog_folder_all, rhogs_fa_folder, conf_infer_subhhogs):
@@ -115,18 +114,7 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
                 ptrace.member_event(member, "infer_subhogs", final_event, rhogid, f"hog={hog_i.hogid} size={len(hog_i)}")
         if len(hog_i) >= inferhog_min_hog_size_xml:
             # could be improved   # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
-            hogs_a_rhog_xml_raw = hog_i.to_orthoxml(full_species_tree, score_flags)    # <generef  >      <paralg object >
-            if orthoxml_v03 and 'paralogGroup' in str(hogs_a_rhog_xml_raw) :
-                # in version v0.3 of orthoxml, there shouldn't be any paralogGroup at root level. Let's put them inside an orthogroup should be in
-                hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(hog_i.hogid)})
-                species_of_members = _member_species(hog_i.get_members())
-                scoring_node = _species_name_index(full_species_tree)[hog_i.taxname]
-                attach_scores(hog_elemnt, hog_i, scoring_node, species_of_members, score_flags=score_flags)
-                ET.SubElement(hog_elemnt, "property", attrib={"name": "TaxRange", "value": hog_i.taxname})
-                hog_elemnt.append(hogs_a_rhog_xml_raw)
-                hogs_a_rhog_xml = hog_elemnt
-            else:
-                hogs_a_rhog_xml = hogs_a_rhog_xml_raw
+            hogs_a_rhog_xml = root_orthoxml(hog_i, full_species_tree, score_flags)
             hogs_rhogs_xml.append(hogs_a_rhog_xml)
             placed_genes += len(hog_i)
             if conf_infer_subhhogs.v > 1:
