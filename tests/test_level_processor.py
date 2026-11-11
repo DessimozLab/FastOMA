@@ -96,7 +96,7 @@ def test_merge_subhogs_two_orthogroups(make_lp, sp):
     t = _reconciled(lp, "((%s:1,%s:1):1,(%s:1,%s:1):1);" % q(A1, B1, A2, B2))
     new = lp.merge_subhogs(t, msa(rec(A1), rec(A2), rec(B1), rec(B2)))
     assert sorted(sorted(h.get_members()) for h in new) == [[A1, B1], [A2, B2]]
-    assert all(h.taxlevel is sp & "AB" for h in new)
+    assert all(h.taxname == "AB" for h in new)
     for h in new:
         assert {r.get_id() for r in h.get_representatives()} <= h.get_members()
 

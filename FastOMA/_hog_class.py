@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 from random import sample
-from typing import Optional, List, Union, NamedTuple
+from typing import Optional, List, NamedTuple
 from ete3 import Tree, TreeNode
 import random
 from ._utils_subhog import MSAFilter
@@ -89,14 +89,12 @@ def _count_untouched_clades(tree_node: TreeNode, reached_nodes: list) -> int:
 def _hog_implied_losses(hog: "HOG", tree_node: TreeNode) -> int:
     """Recursively counts implied gene losses for `hog` within `tree_node`'s subtree.
 
-    Mirrors _tax_overlap's _tax_now-based grouping of _subhogs, but sums losses per group member
-    instead of intersecting/folding lineages: a group of sub-hogs sharing the same _tax_now
+    Mirrors _tax_overlap's taxname-based grouping of _subhogs, but sums losses per group member
+    instead of intersecting/folding lineages: a group of sub-hogs sharing the same taxname
     represents a duplication, and each such paralogous copy's losses are counted independently
     so that one copy's presence in a species can't mask a sibling copy's loss there.
 
-    The sub-hogs' taxonomic levels are looked up by name in `tree_node`'s tree: their `_tax_now`
-    nodes belong to other tree objects (the pruned working tree, and a separate copy per pickled
-    level), and ete3 nodes only compare by identity."""
+    HOGs only store the name of their taxonomic level, which is looked up in `tree_node`'s tree."""
     subhogs = getattr(hog, "_subhogs", None)
     if not subhogs:
         return 0
@@ -105,7 +103,7 @@ def _hog_implied_losses(hog: "HOG", tree_node: TreeNode) -> int:
     losses = 0
     clade_groups = {}
     for sh in subhogs:
-        clade_groups.setdefault(sh._tax_now.name, []).append(sh)
+        clade_groups.setdefault(sh.taxname, []).append(sh)
     for clade_name, subhogs_of_clade in clade_groups.items():
         clade_node = index[clade_name]
         for sh in subhogs_of_clade:
@@ -159,8 +157,8 @@ def _combine_tax_overlap(parts):
 
 def _tax_overlap(hog: "HOG", species_lineage_index: dict):
     """Recursively computes (nset, leaf_size, leaf_acc, tax_score) for `hog`, mirroring the same
-    _tax_now-based grouping of _subhogs used by HOG.to_orthoxml() (a group of sub-hogs sharing a
-    _tax_now is a duplication -- its members are folded together as siblings, same as a group of
+    taxname-based grouping of _subhogs used by HOG.to_orthoxml() (a group of sub-hogs sharing a
+    taxname is a duplication -- its members are folded together as siblings, same as a group of
     literal gene-tree children would be). `leaf_size` is read off len(hog).
     See attach_scores for how the four returned values become TCSScore."""
     if not hog._subhogs:
@@ -169,7 +167,7 @@ def _tax_overlap(hog: "HOG", species_lineage_index: dict):
 
     groups = []
     for _, subhogs_of_clade in itertools.groupby(
-            sorted(hog._subhogs, key=lambda h: h._tax_now.name), key=lambda h: h._tax_now.name):
+            sorted(hog._subhogs, key=lambda h: h.taxname), key=lambda h: h.taxname):
         subhogs_of_clade = list(subhogs_of_clade)
         if len(subhogs_of_clade) == 1:
             groups.append(_tax_overlap(subhogs_of_clade[0], species_lineage_index))
@@ -282,13 +280,14 @@ class Representative:
 class HOG:
     _hogid_iter = 10000
 
-    def __init__(self, input_instantiate, taxnomic_range:TreeNode, rhogid:str, msa:Optional[MultipleSeqAlignment] = None,
+    def __init__(self, input_instantiate, taxonomic_level: str, rhogid:str, msa:Optional[MultipleSeqAlignment] = None,
                  representatives: Optional[List[Representative]] = None, conf_infer_subhhogs=None):
         """HOG class constructor.
 
         A HOG can be initialized with either a single SeqRecord or from a list of HOGs
-        (which will become its sub-hog elements). Furthermore, the taxonomic range
-        (a node from the species tree) needs to be provided.
+        (which will become its sub-hog elements). Furthermore, the taxonomic level
+        (the name of a species tree node) needs to be provided. HOGs only store that name, so
+        they don't reference (and pickle) the species tree.
         Parameters:
         :param input_instantiate"""
         # fragment_list list of  sets , each set contains protein ID of fragments
@@ -301,7 +300,10 @@ class HOG:
         # 0070124
 
         self._hogid = "HOG_" + self._rhogid+ "_sub" + str(self.__class__._hogid_iter)
-        self._tax_now = taxnomic_range    # the taxnomic level that we are considering now, checking for duplication
+        # name of the taxonomic level that we are considering now, checking for duplication
+        if not isinstance(taxonomic_level, str):
+            raise TypeError(f"taxonomic_level must be the name of a species tree node, not {type(taxonomic_level)}")
+        self._taxname = taxonomic_level
         self.active = True
 
         if isinstance(input_instantiate, SeqRecord):  # if len(sub_hogs)==1:
@@ -349,7 +351,7 @@ class HOG:
             assert False
 
     def __repr__(self):
-        return f"<HOG:{self.hogid},size={len(self._members)},tax={self._tax_now.name}>"
+        return f"<HOG:{self.hogid},size={len(self._members)},tax={self._taxname}>"
 
     @property
     def hogid(self):
@@ -357,11 +359,7 @@ class HOG:
 
     @property
     def taxname(self):
-        return self._tax_now.name
-
-    @property
-    def taxlevel(self):
-        return self._tax_now
+        return self._taxname
 
     @property
     def rhogid(self):
@@ -480,11 +478,14 @@ class HOG:
     #     self._msa = MultipleSeqAlignment(msa_new)
     #     return 1
 
-    def to_orthoxml(self, full_species_tree: Optional[TreeNode] = None, score_flags: ScoreFlags = ScoreFlags()):
+    def to_orthoxml(self, full_species_tree: TreeNode, score_flags: ScoreFlags = ScoreFlags()):
         """Public entry point: builds the orthoxml element tree for this HOG and, once the whole
         (recursive) build is done, logs how much of the total time went into computing scores
         (see _ScoreTimings and attach_scores). `score_flags` is forwarded to every attach_scores()
-        call made during the recursion."""
+        call made during the recursion.
+
+        `full_species_tree` is the species tree in which the TaxRange (MRCA of the members) and the
+        scores are computed, normally the unpruned tree from prepare_species_tree."""
         timings = _ScoreTimings()
         start = time.perf_counter()
         result = self._to_orthoxml(full_species_tree, timings, score_flags)
@@ -499,7 +500,7 @@ class HOG:
             )
         return result
 
-    def _to_orthoxml(self, full_species_tree: Optional[TreeNode], timings: _ScoreTimings,
+    def _to_orthoxml(self, full_species_tree: TreeNode, timings: _ScoreTimings,
                       score_flags: ScoreFlags = ScoreFlags()):
         if len(self._subhogs) == 0:
             list_member = list(self._members)
@@ -538,7 +539,7 @@ class HOG:
         # We continue this function as an Implicit else :  len(self._subhogs) >=1
 
         def _sorter_key(sh):
-            return sh._tax_now.name
+            return sh.taxname
         self._subhogs.sort(key=_sorter_key)
 
         element_list = []
@@ -581,9 +582,9 @@ class HOG:
             #hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)})
             hog_elemnt = ET.Element('orthologGroup', attrib={"id": str(self._hogid)}, )
             species_of_members = _member_species(self._members)  #  'tr|H2MU14|H2MU14_ORYLA||ORYLA||1056022282'
-            mrca = _species_mrca(full_species_tree if full_species_tree is not None else self.taxlevel, species_of_members)
-            if mrca.name != self.taxlevel.name:
-                logger.info(f"mrca ({mrca.name}) != self.taxlevel ({self.taxlevel.name})")
+            mrca = _species_mrca(full_species_tree, species_of_members)
+            if mrca.name != self.taxname:
+                logger.info(f"mrca ({mrca.name}) != self.taxname ({self.taxname})")
                 logger.info(f"<{hog_elemnt.tag} {hog_elemnt.attrib}>")
 
             attach_scores(hog_elemnt, self, mrca, species_of_members, timings=timings, score_flags=score_flags)
@@ -619,6 +620,11 @@ def split_hog(hog:HOG, level_name:str, *partitions):
     The partitions need to be a lists of Representatives (or simply members)
     of the given HOG.
 
+    The HOG to split is an input (child-level) subhog of the level currently being processed;
+    its parts replace it as inputs of that level, so they keep the HOG's own taxname. The
+    current level is only passed for logging.
+
+    :param level_name:  name of the level currently being processed (only used in log messages)
     :param partitions:  a list or a tuple of Representatives of the current HOG
     :type partitions:   List[Representatives]
     :returns List[HOG]: a list of HOG objects splitting the original HOG in the
@@ -646,7 +652,7 @@ def split_hog(hog:HOG, level_name:str, *partitions):
         logger.info(f"Splitting {hog} into {len(first_level_subhogs)} subhogs: {first_level_subhogs}")
         hogs = []
         for p, subhogs in enumerate(first_level_subhogs):
-            h = HOG(subhogs, taxnomic_range=hog.taxlevel, rhogid=hog.rhogid, msa=hog.get_msa(), representatives=partitions[p])
+            h = HOG(subhogs, taxonomic_level=hog.taxname, rhogid=hog.rhogid, msa=hog.get_msa(), representatives=partitions[p])
             hogs.append(h)
         return hogs
     else:

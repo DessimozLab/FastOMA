@@ -23,7 +23,7 @@ def leaf_hog(prot_id, species_node):
     hog = HOG.__new__(HOG)
     hog._rhogid = "test"
     hog._hogid = "HOG_test_" + prot_id
-    hog._tax_now = species_node
+    hog._taxname = species_node.name
     hog._members = {prot_id}
     hog._subhogs = []
     hog._dubious_members = set()
@@ -34,7 +34,7 @@ def merged_hog(subhogs, tax_node):
     hog = HOG.__new__(HOG)
     hog._rhogid = "test"
     hog._hogid = "HOG_test_" + tax_node.name
-    hog._tax_now = tax_node
+    hog._taxname = tax_node.name
     hog._subhogs = list(subhogs)
     hog._members = set().union(*(sh._members for sh in subhogs))
     hog._dubious_members = set()
@@ -452,10 +452,10 @@ class DuplicationAsymmetricRetentionTCSTests(TestCase):
                                                        |
                                                       SP4
 
-    HOG topology built in the test method below -- copy1 and copy2 both get _tax_now=7 (node
+    HOG topology built in the test method below -- copy1 and copy2 both get taxname "7" (node
     "7"), matching how the real pipeline's merge_subhogs() always bumps every surviving hog's
-    _tax_now to the level it was last processed at, whether or not it found a merge partner
-    there. That shared _tax_now is what marks them as a recognized duplication (paralogGroup):
+    taxonomic level to the one it was last processed at, whether or not it found a merge partner
+    there. That shared taxname is what marks them as a recognized duplication (paralogGroup):
 
                               1  (top HOG)
                              /            \
