@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from FastOMA._hog_class import HOG, Representative, split_hog, ScoreFlags
+from FastOMA._hog_class import HOG, Representative, split_hog, ScoreFlags, _species_mrca
 from subhog_helpers import pid, rec, msa, species_tree, leaf_hog, merged_hog, leaf_members
 
 NO_SCORES = ScoreFlags(False, False, False)
@@ -342,3 +342,12 @@ def test_to_orthoxml_every_member_once(sp):
     xml = ET.tostring(top.to_orthoxml(sp))
     ids = [g.get("id") for g in ET.fromstring(xml).iter("geneRef")]
     assert sorted(ids) == sorted(m.split("||")[2] for m in top.get_members())
+
+
+PRIMATES = "(((HUMAN,CHIMP)Hominini,MACAQUE)Primates,MOUSE)Mammals;"
+
+
+def test_species_mrca_of_a_single_species_is_its_leaf():
+    t = species_tree(PRIMATES)
+    assert _species_mrca(t, {"HUMAN"}) is t & "HUMAN"
+    assert _species_mrca(t, {"HUMAN", "CHIMP"}) is t & "Hominini"

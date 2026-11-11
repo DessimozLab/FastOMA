@@ -55,8 +55,13 @@ def _species_mrca(tree: TreeNode, species_of_members: set) -> TreeNode:
     A node that genuinely branches for `species_of_members` is never affected by that pruning
     (pruning only ever removes nodes that become unary), so this mrca has the same identity/name
     whether computed against the pruned or the unpruned tree -- only the topology below it, which
-    ImpliedLosses/TCSScore need, differs."""
+    ImpliedLosses/TCSScore need, differs.
+
+    For a single species this is the species' own leaf (ete3's get_common_ancestor would return
+    the root of the tree)."""
     index = _species_name_index(tree)
+    if len(species_of_members) == 1:
+        return index[next(iter(species_of_members))]
     return tree.get_common_ancestor(*[index[x] for x in species_of_members])
 
 
