@@ -13,6 +13,7 @@ Fates, in the order they are decided:
   lost_in_split_hog                 dropped when split_hog did not cover all child subHOGs
   lost_at_level                     dropped at a taxonomic level for another reason
   final_singleton_not_written       ended alone in its HOG; orthoXML only keeps HOGs of size >= 2
+                                    (also a single-gene copy of a duplication older than the tree root)
   missing_at_end                    in a rootHOG file, but in no final HOG and no loss recorded
   roothog_not_processed             in a rootHOG file, but no subHOG result (e.g. failed task)
   isoform_not_selected              minor splicing variant, another isoform of the gene was selected

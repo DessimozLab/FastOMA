@@ -198,8 +198,9 @@ def test_representatives_do_not_modify_input_tree(make_lp):
 
 # read_infer_xml_rhog: wrapping of root-level paralogGroups
 
-@pytest.fixture
-def rhog_run(in_tmp_dir, subhog_conf, monkeypatch):
+def _run_rhog(in_tmp_dir, subhog_conf, monkeypatch, make_hogs):
+    """read_infer_xml_rhog on rootHOG "r" of A1..C1, with the subHOG inference replaced by
+    ``make_hogs(sptree, a1, a2, a3, b1, c1)`` giving the HOGs at the root level."""
     ids = [A1, A2, A3, B1, C1]
     with open("HOG_r.fa", "w") as fh:
         for i in ids:
@@ -208,9 +209,7 @@ def rhog_run(in_tmp_dir, subhog_conf, monkeypatch):
         fh.write("((A,B)AB,C)root;\n")
 
     def fake_inference(sptree, rhogid, pickles_subhog_folder_all, rhogs_fa_folder, conf):
-        a1, a2, a3, b1, c1 = (leaf_hog(i, sptree) for i in ids)
-        # the in-paralogs a1, a2 end up at the root level (as when nothing merges with them)
-        hogs = [merged_hog([a1, a2], sptree), merged_hog([b1, c1], sptree), a3]
+        hogs = make_hogs(sptree, *(leaf_hog(i, sptree) for i in ids))
         with open(f"{pickles_subhog_folder_all}/rhog_{rhogid}/{sptree.name}.pickle", "wb") as fh:
             pickle.dump(hogs, fh)
 
@@ -220,6 +219,27 @@ def rhog_run(in_tmp_dir, subhog_conf, monkeypatch):
                                           subhog_conf(species_tree="species_tree.nwk", v=0))
     with open("out/file_r.pickle", "rb") as fh:
         return n, pickle.load(fh)
+
+
+@pytest.fixture
+def rhog_run(in_tmp_dir, subhog_conf, monkeypatch):
+    # the in-paralogs a1, a2 end up at the root level (as when nothing merges with them)
+    return _run_rhog(in_tmp_dir, subhog_conf, monkeypatch,
+                     lambda t, a1, a2, a3, b1, c1: [merged_hog([a1, a2], t), merged_hog([b1, c1], t), a3])
+
+
+def test_read_infer_xml_rhog_splits_a_duplication_older_than_the_root(in_tmp_dir, subhog_conf, monkeypatch):
+    # the copies span the whole tree (A, B and C): there is no level above the duplication, so each
+    # copy is a top-level group of its own; the single-gene copies a2 and a3 are not written
+    def make_hogs(t, a1, a2, a3, b1, c1):
+        copies = [merged_hog([merged_hog([a1, b1], t & "AB"), c1], t),
+                  merged_hog([a2], t), merged_hog([a3], t)]
+        return [merged_hog(copies, t)]
+
+    n, groups = _run_rhog(in_tmp_dir, subhog_conf, monkeypatch, make_hogs)
+    assert n == len(groups) == 1
+    assert groups[0].tag == "orthologGroup"
+    assert sorted(r.get("id") for r in groups[0].iter("geneRef")) == ["1", "11", "21"]
 
 
 def test_read_infer_xml_rhog_skips_singletons(rhog_run, in_tmp_dir):
@@ -238,11 +258,11 @@ def test_read_infer_xml_rhog_wraps_root_paralog_group(rhog_run):
     assert [c.tag for c in wrapped if c.tag not in ("score", "property")] == ["paralogGroup"]
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: the root-level wrapper uses the HOG's taxonomic level as TaxRange instead of "
-                                       "the MRCA of its members like HOG.to_orthoxml (_infer_subhog.py:120)")
-def test_read_infer_xml_rhog_wrapper_taxrange_is_mrca(rhog_run):
+def test_read_infer_xml_rhog_wrapper_taxrange_is_parent_of_mrca(rhog_run):
+    # the in-paralogs of A were duplicated in A's lineage: the gene is older than A, but nothing
+    # says it is older than AB (issue #128)
     _, groups = rhog_run
-    assert [p.get("value") for p in groups[0].findall("property") if p.get("name") == "TaxRange"] == ["A"]
+    assert [p.get("value") for p in groups[0].findall("property") if p.get("name") == "TaxRange"] == ["AB"]
 
 
 @pytest.mark.xfail(strict=True, reason="BUG: a root-level paralogGroup is wrapped in an orthologGroup with a single "

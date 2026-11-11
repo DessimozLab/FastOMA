@@ -107,26 +107,31 @@ def read_infer_xml_rhog(rhogid, inferhog_concurrent_on, pickles_rhog_folder,  pi
     members_final = set()
     for hog_i in hogs_a_rhog:
         tot_genes += len(hog_i)
+        groups = root_orthoxml(hog_i, full_species_tree, score_flags) if len(hog_i) >= inferhog_min_hog_size_xml else []
+        written = {g.get("id") for group in groups for g in group.iter("geneRef")}
+        # a member is written unless it ends up alone: a singleton HOG, or a single-gene copy of a
+        # duplication older than the species tree root (see root_orthoxml)
+        in_xml = {member: all(part.split("||")[2].strip() in written for part in member.split("_|_"))
+                  for member in hog_i.get_members()}
+        placed_genes += sum(in_xml.values())
         if ptrace.is_enabled():
             members_final |= {part for m in hog_i.get_members() for part in m.split("_|_")}  # merged fragments count per protein
-            final_event = "in_final_hog" if len(hog_i) >= inferhog_min_hog_size_xml else "final_singleton_not_written"
-            for member in hog_i.get_members():
+            for member, is_written in in_xml.items():
+                final_event = "in_final_hog" if is_written else "final_singleton_not_written"
                 ptrace.member_event(member, "infer_subhogs", final_event, rhogid, f"hog={hog_i.hogid} size={len(hog_i)}")
-        if len(hog_i) >= inferhog_min_hog_size_xml:
-            # could be improved   # hogs_a_rhog_xml = hog_i.to_orthoxml(**gene_id_name)
-            hogs_a_rhog_xml = root_orthoxml(hog_i, full_species_tree, score_flags)
-            hogs_rhogs_xml.append(hogs_a_rhog_xml)
-            placed_genes += len(hog_i)
+        if groups:
+            hogs_rhogs_xml.extend(groups)
             if conf_infer_subhhogs.v > 1:
                 logger.debug("writing an orthoxml stub file for hog %s", hog_i.hogid)
-                with open(f'orthostub_{rhogid}_xml_{hog_i.hogid}.xml', 'wb') as handle:
-                    ET.indent(hogs_a_rhog_xml, space='  ', level=0)
-                    oxml_et = ET.ElementTree(hogs_a_rhog_xml)
-                    oxml_et.write(handle, encoding="utf-8")
+                for group in groups:
+                    with open(f'orthostub_{rhogid}_xml_{group.get("id")}.xml', 'wb') as handle:
+                        ET.indent(group, space='  ', level=0)
+                        oxml_et = ET.ElementTree(group)
+                        oxml_et.write(handle, encoding="utf-8")
+        elif len(hog_i) >= inferhog_min_hog_size_xml:
+            logger.debug("not reporting %s: a duplication older than the species tree root into single genes", hog_i)
         else:
             logger.debug("we are not reporting due to fastoma singleton hog |*|  " + str(list(hog_i._members)[0]))
-            if len(hog_i) > 1:
-                logger.warning("issue 166312309 this is not a singleton "+str(hog_i._members))
 
     # any protein of the input rootHOG that is in no final HOG and was not reported as lost above
     if ptrace.is_enabled():
