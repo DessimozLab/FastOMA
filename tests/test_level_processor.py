@@ -142,8 +142,6 @@ def test_process_when_filter_empties_msa_returns_unmerged_subhogs(make_lp, monke
     assert lp.process() == active
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: process() returns early without the frozen HOGs when filtering empties "
-                                       "the MSA (_infer_subhog.py:690); their proteins are lost")
 def test_process_when_filter_empties_msa_keeps_frozen_hogs(make_lp, monkeypatch):
     lp = make_lp([A1, A2, B1, B2], frozen=[A3], min_col_trim=0)
     _patch_pipeline(lp, monkeypatch, _all_gappy_msa())

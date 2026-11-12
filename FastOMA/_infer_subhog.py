@@ -465,6 +465,10 @@ class LevelHOGProcessor:
         if self._msa_filter is None:
             self._msa_filter = MSAFilter(self, self.conf)
         filtered_msa, removed_ids = self._msa_filter.filter_msa(msa)
+        if len(filtered_msa) == 0:
+            # nothing left to build a gene tree from: the level is skipped (see _process), so the
+            # subhogs stay active and can still be merged at the next level
+            return filtered_msa
         if len(removed_ids) > 0:
             self._remove_representatives(ids=removed_ids)
         return filtered_msa
@@ -709,7 +713,7 @@ class LevelHOGProcessor:
         msa = self.align_subhogs()
         filtered_msa = self.filter_msa(msa)
         if len(filtered_msa) == 0:
-            return list(self.subhogs.values())
+            return list(self.subhogs.values()) + list(self._frozen_hogs_before)
         gene_tree = self.infer_genetree_from_msa(filtered_msa)
         if len(gene_tree) > 1:
             rooted_gene_tree = self.infer_rooted_genetree(gene_tree)
