@@ -150,9 +150,10 @@ def test_taxrange_nesting_follows_species_tree(infer_run, dataset, rhogid):
             assert child_node is parent_node or parent_node in child_node.get_ancestors()
 
 
-@pytest.mark.parametrize("dataset,rhogid", roothogs(xfail={
-    "D0625237": "BUG: root-level wrapper uses the HOG's level as TaxRange instead of the MRCA (_infer_subhog.py:120)"}))
+@pytest.mark.parametrize("dataset,rhogid", ROOTHOGS)
 def test_taxrange_is_mrca_of_member_species(infer_run, dataset, rhogid):
+    # a top-level orthologGroup around a paralogGroup sits at the parent of the MRCA instead:
+    # the gene existed before the duplication (issue #128)
     run = infer_run(dataset)
     sptree = Tree(str(run.species_tree_path), format=1)
     tree = run.orthoxml(rhogid)
@@ -160,7 +161,10 @@ def test_taxrange_is_mrca_of_member_species(infer_run, dataset, rhogid):
     for group in ortholog_groups(tree):
         member_species = {species[g.get("id")] for g in group.iterfind(".//o:geneRef", NS)}
         mrca = sptree.get_common_ancestor(*member_species) if len(member_species) > 1 else sptree & member_species.pop()
-        assert taxrange(group) == mrca.name, group.get("id")
+        child_groups = [c for c in group if etree.QName(c).localname in ("orthologGroup", "paralogGroup", "geneRef")]
+        is_wrapper = (etree.QName(group.getparent()).localname == "groups" and len(child_groups) == 1
+                      and etree.QName(child_groups[0]).localname == "paralogGroup")
+        assert taxrange(group) == (mrca.up.name if is_wrapper else mrca.name), group.get("id")
 
 
 @pytest.mark.parametrize("dataset,rhogid", roothogs(xfail={

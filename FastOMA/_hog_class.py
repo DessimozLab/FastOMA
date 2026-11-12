@@ -55,8 +55,13 @@ def _species_mrca(tree: TreeNode, species_of_members: set) -> TreeNode:
     A node that genuinely branches for `species_of_members` is never affected by that pruning
     (pruning only ever removes nodes that become unary), so this mrca has the same identity/name
     whether computed against the pruned or the unpruned tree -- only the topology below it, which
-    ImpliedLosses/TCSScore need, differs."""
+    ImpliedLosses/TCSScore need, differs.
+
+    For a single species this is the species' own leaf (ete3's get_common_ancestor would return
+    the root of the tree)."""
     index = _species_name_index(tree)
+    if len(species_of_members) == 1:
+        return index[next(iter(species_of_members))]
     return tree.get_common_ancestor(*[index[x] for x in species_of_members])
 
 
@@ -94,16 +99,31 @@ def _hog_implied_losses(hog: "HOG", tree_node: TreeNode) -> int:
     represents a duplication, and each such paralogous copy's losses are counted independently
     so that one copy's presence in a species can't mask a sibling copy's loss there.
 
-    HOGs only store the name of their taxonomic level, which is looked up in `tree_node`'s tree."""
+    HOGs only store the name of their taxonomic level, which is looked up in `tree_node`'s tree.
+
+    A sub-hog whose level is not inside `tree_node`'s subtree is not counted as a lineage of its
+    own: its sub-hogs are used instead. This happens when a HOG is scored at a level below the one
+    it was built at (see root_orthoxml): during inference, a HOG that nothing joins at a level is
+    still wrapped in a new HOG at that level, so the wrappers above `tree_node` carry no events."""
     subhogs = getattr(hog, "_subhogs", None)
     if not subhogs:
         return 0
 
     index = _species_name_index(tree_node)
+
+    def inside(sh):
+        node = index[sh.taxname]
+        return node is tree_node or tree_node in node.get_ancestors()
+
     losses = 0
     clade_groups = {}
-    for sh in subhogs:
-        clade_groups.setdefault(sh.taxname, []).append(sh)
+    pending = list(subhogs)
+    while pending:
+        sh = pending.pop()
+        if sh._subhogs and not inside(sh):
+            pending.extend(sh._subhogs)
+        else:
+            clade_groups.setdefault(sh.taxname, []).append(sh)
     for clade_name, subhogs_of_clade in clade_groups.items():
         clade_node = index[clade_name]
         for sh in subhogs_of_clade:
@@ -612,6 +632,56 @@ class HOG:
            </paralogGroup>
         </orthologGroup>
 """
+
+
+def root_orthoxml(hog: HOG, full_species_tree: TreeNode, score_flags: ScoreFlags = ScoreFlags()) -> List[ET.Element]:
+    """orthoxml groups of a top-level HOG of a rootHOG, as written under <groups>.
+
+    Usually this is just the HOG's own element. OrthoXML 0.5 would allow a paralogGroup directly
+    under <groups>, but pyham cannot read it, so a HOG that starts with a duplication (all its
+    copies come from one clade) is handled like this:
+
+    - its paralogGroup is put into an orthologGroup at the direct parent, in `full_species_tree`,
+      of the common ancestor of all the species in the paralogGroup: the gene existed before the
+      duplication, but nothing supports it being older than that.
+    - if that common ancestor is the root of the species tree, there is no such parent: the
+      duplication is older than every level we know, so there never was a single ancestral gene
+      at any level. The copies are then separate HOGs: each copy is written as top-level group(s)
+      of its own, by these same rules (so a copy that starts with a duplication itself is wrapped
+      or split again). A copy that is a single gene cannot form a group and is left out, like any
+      singleton HOG; the copies keep their own HOG ids, so they still share the OMAmerRootHOG.
+
+    The level the HOG was built at (`hog.taxname`) is not used for this: a HOG that nothing joins
+    at a level is still wrapped in a new HOG at that level, so it is usually the top level of the
+    whole rootHOG, which can be far above the duplication (issue #128)."""
+    element = hog.to_orthoxml(full_species_tree, score_flags)
+    if element.tag != "paralogGroup":
+        return [element]
+    species_of_members = _member_species(hog.get_members())
+    lca = _species_mrca(full_species_tree, species_of_members)
+    copies = _duplicated_subhogs(hog)
+    if lca.up is None and copies:
+        return [group for copy in copies for group in root_orthoxml(copy, full_species_tree, score_flags)
+                if group.tag != "geneRef"]
+    level = lca.up if lca.up is not None else lca
+    wrapper = ET.Element("orthologGroup", attrib={"id": str(hog.hogid)})
+    attach_scores(wrapper, hog, level, species_of_members, score_flags=score_flags)
+    ET.SubElement(wrapper, "property", attrib={"name": "TaxRange", "value": level.name})
+    wrapper.append(element)
+    return [wrapper]
+
+
+def _duplicated_subhogs(hog: HOG) -> List[HOG]:
+    """the subHOGs that `hog.to_orthoxml` writes as the children of its top paralogGroup.
+
+    Follows the chain of HOGs with a single (non-empty) subHOG, which `to_orthoxml` collapses,
+    down to the HOG whose subHOGs are the copies. Returns [] if the paralogGroup does not come
+    from subHOGs (fragments of a single HOG)."""
+    while True:
+        subhogs = [sh for sh in hog._subhogs if len(sh._members)]
+        if len(subhogs) != 1:
+            return subhogs if len(subhogs) > 1 and len({sh.taxname for sh in subhogs}) == 1 else []
+        hog = subhogs[0]
 
 
 def split_hog(hog:HOG, level_name:str, *partitions):

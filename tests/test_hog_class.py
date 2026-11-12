@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from FastOMA._hog_class import HOG, Representative, split_hog, ScoreFlags
+from FastOMA._hog_class import HOG, Representative, split_hog, root_orthoxml, ScoreFlags, _species_mrca
 from subhog_helpers import pid, rec, msa, species_tree, leaf_hog, merged_hog, leaf_members
 
 NO_SCORES = ScoreFlags(False, False, False)
@@ -342,3 +342,102 @@ def test_to_orthoxml_every_member_once(sp):
     xml = ET.tostring(top.to_orthoxml(sp))
     ids = [g.get("id") for g in ET.fromstring(xml).iter("geneRef")]
     assert sorted(ids) == sorted(m.split("||")[2] for m in top.get_members())
+
+
+# ---------------------------------------------------------------- top-level groups (root_orthoxml)
+# A HOG that nothing joins at a level is still wrapped in a new HOG at that level, so a HOG starting
+# with a duplication usually reaches the top of the rootHOG inside several such wrappers (issue #128).
+
+PRIMATES = "(((HUMAN,CHIMP)Hominini,MACAQUE)Primates,MOUSE)Mammals;"
+H1, H2 = pid("h1", "HUMAN", 1), pid("h2", "HUMAN", 2)
+CH1, CH2 = pid("c1", "CHIMP", 3), pid("c2", "CHIMP", 4)
+
+
+def _top_scores(element):
+    return {s.get("id"): s.get("value") for s in element.findall("score")}
+
+
+def _top_taxrange(element):
+    return next(p.get("value") for p in element.findall("property") if p.get("name") == "TaxRange")
+
+
+def test_species_mrca_of_a_single_species_is_its_leaf():
+    t = species_tree(PRIMATES)
+    assert _species_mrca(t, {"HUMAN"}) is t & "HUMAN"
+    assert _species_mrca(t, {"HUMAN", "CHIMP"}) is t & "Hominini"
+
+
+def test_root_group_of_a_duplication_sits_directly_above_the_duplicated_clade():
+    # duplication in the Hominini lineage; macaque and mouse have no copy
+    t = species_tree(PRIMATES)
+    copy1 = merged_hog([leaf_hog(H1, t), leaf_hog(CH1, t)], t & "Hominini")
+    copy2 = merged_hog([leaf_hog(H2, t), leaf_hog(CH2, t)], t & "Hominini")
+    at_primates = merged_hog([copy1, copy2], t & "Primates")
+    at_mammals = merged_hog([at_primates], t)   # nothing joins it at Mammals
+
+    for hog in (at_primates, at_mammals):
+        e, = root_orthoxml(hog, t)
+        assert e.tag == "orthologGroup" and e.get("id") == hog.hogid
+        assert _top_taxrange(e) == "Primates"
+        # one loss (macaque); mouse is not a loss, the gene need not be older than Primates
+        assert _top_scores(e)["CompletenessScore"] == "0.6667"
+        assert _top_scores(e)["ImpliedLosses"] == "1"
+        assert [c.tag for c in e if c.tag != "score" and c.tag != "property"] == ["paralogGroup"]
+    assert _top_scores(root_orthoxml(at_primates, t)[0]) == _top_scores(root_orthoxml(at_mammals, t)[0])
+
+
+def test_root_group_of_inparalogs_of_one_species_sits_at_its_parent():
+    t = species_tree(PRIMATES)
+    dup = merged_hog([leaf_hog(H1, t), leaf_hog(H2, t)], t & "Hominini")
+    e, = root_orthoxml(merged_hog([merged_hog([dup], t & "Primates")], t), t)
+    assert _top_taxrange(e) == "Hominini"
+    assert _top_scores(e)["CompletenessScore"] == "0.5"
+    assert _top_scores(e)["ImpliedLosses"] == "1"   # chimp
+
+
+M1, M2 = pid("m1", "MOUSE", 5), pid("m2", "MOUSE", 6)
+
+
+def _ortholog_trio(h, c, m, t):
+    return merged_hog([merged_hog([leaf_hog(h, t), leaf_hog(c, t)], t & "Hominini"), leaf_hog(m, t)], t)
+
+
+def test_duplication_older_than_the_tree_root_splits_into_separate_groups():
+    # every species has both copies: the duplication is older than the root, there is no level to put
+    # a single ancestral gene at, so the copies are separate HOGs
+    t = species_tree(PRIMATES)
+    copies = [_ortholog_trio(H1, CH1, M1, t), _ortholog_trio(H2, CH2, M2, t)]
+    groups = root_orthoxml(merged_hog(copies, t), t)
+    assert [g.tag for g in groups] == ["orthologGroup", "orthologGroup"]
+    assert sorted(g.get("id") for g in groups) == sorted(c.hogid for c in copies)
+    assert [_top_taxrange(g) for g in groups] == ["Mammals", "Mammals"]
+    assert sorted(sorted(r.get("id") for r in g.iter("geneRef")) for g in groups) == [["1", "3", "5"], ["2", "4", "6"]]
+
+
+def test_single_gene_copies_of_a_duplication_older_than_the_root_are_not_written():
+    t = species_tree(PRIMATES)
+    lone_copy = merged_hog([leaf_hog(M2, t)], t)   # boxed up to Mammals, nothing joined it
+    trio = _ortholog_trio(H1, CH1, M1, t)
+    groups = root_orthoxml(merged_hog([trio, lone_copy], t), t)
+    assert [g.get("id") for g in groups] == [trio.hogid]
+
+
+def test_copy_of_a_split_duplication_that_starts_with_a_duplication_is_wrapped_again():
+    t = species_tree(PRIMATES)
+    H3, CH3 = pid("h3", "HUMAN", 7), pid("c3", "CHIMP", 8)
+    hominini_dup = merged_hog([merged_hog([leaf_hog(H2, t), leaf_hog(CH2, t)], t & "Hominini"),
+                               merged_hog([leaf_hog(H3, t), leaf_hog(CH3, t)], t & "Hominini")], t & "Primates")
+    copy2 = merged_hog([hominini_dup], t)
+    groups = root_orthoxml(merged_hog([_ortholog_trio(H1, CH1, M1, t), copy2], t), t)
+    assert sorted(_top_taxrange(g) for g in groups) == ["Mammals", "Primates"]
+    wrapper, = [g for g in groups if _top_taxrange(g) == "Primates"]
+    assert [c.tag for c in wrapper if c.tag not in ("score", "property")] == ["paralogGroup"]
+    assert _top_scores(wrapper)["CompletenessScore"] == "0.6667"
+
+
+def test_root_group_without_duplication_is_not_wrapped():
+    t = species_tree(PRIMATES)
+    hog = merged_hog([merged_hog([leaf_hog(H1, t), leaf_hog(CH1, t)], t & "Hominini")], t & "Primates")
+    e, = root_orthoxml(hog, t)
+    assert ET.tostring(e) == ET.tostring(hog.to_orthoxml(t))
+    assert e.tag == "orthologGroup" and _top_taxrange(e) == "Hominini"
