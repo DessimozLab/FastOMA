@@ -1,7 +1,7 @@
 """Property tests of fastoma-infer-subhogs on real rootHOGs (tests/data/subhog).
 
 small/    D0455823 (45 proteins, 19 species), D0111149 (2 proteins)
-conflict/ D0625237 (35 proteins; split_hog loses proteins), D0662268 (14 proteins; conflict resolution)
+conflict/ D0625237 (35 proteins; split_hog leaves subHOGs without a representative), D0662268 (14 proteins; conflict resolution)
 The species trees are the original trees pruned to the species of the rootHOGs (branch lengths set to 1).
 """
 import os
@@ -106,8 +106,7 @@ def test_no_protein_twice(infer_run, dataset, rhogid):
     assert counts and max(counts.values()) == 1
 
 
-@pytest.mark.parametrize("dataset,rhogid", roothogs(xfail={
-    "D0625237": "BUG: split_hog drops subhogs not reached by any partition (_hog_class.py:636-643)"}))
+@pytest.mark.parametrize("dataset,rhogid", ROOTHOGS)
 def test_all_input_proteins_in_final_hogs(infer_run, dataset, rhogid):
     run = infer_run(dataset)
     members = [p for h in run.final_hogs(rhogid) for m in h.get_members() for p in m.split("_|_")]

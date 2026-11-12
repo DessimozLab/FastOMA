@@ -650,16 +650,15 @@ class LevelHOGProcessor:
                     split_parts = [list(n.name for n in sub.iter_leaves() if n.hogid == hogid) for sub in subtrees]
                     split_hogs = split_hog(self.subhogs[hogid], self.node_species_tree.name, *split_parts)
                     if split_hogs and len(split_hogs) > 1:
-                        if ptrace.is_enabled():
-                            kept = set().union(*(h.get_members() for h in split_hogs))
-                            for member in self.subhogs[hogid].get_members() - kept:
-                                self._lost_members.add(member)
-                                ptrace.member_event(member, "infer_subhogs", "lost_in_split_hog", self.rhogid,
-                                                    f"level={self.node_species_tree.name} hog={hogid} "
-                                                    f"hog_size={len(self.subhogs[hogid])} parts={len(split_hogs)}")
-                        # we could split the current hog.
-                        self.subhogs.pop(hogid)
-                        self.subhogs.update({h.hogid: h for h in split_hogs})
+                        # we could split the current hog. Its parts take its place at this level; its subhogs
+                        # that no part leads to have no representative in the gene tree, so they are frozen
+                        original = self.subhogs.pop(hogid)
+                        for h in split_hogs:
+                            if h in original._subhogs:
+                                h.active = False
+                                self._frozen_hogs_before.add(h)
+                            else:
+                                self.subhogs[h.hogid] = h
                     else:
                         redo_reconcilation |= self._resolve_conflicts(reconciled_genetree, subtrees, split_parts)
             self._rep_lookup = self._prepare_lookups()

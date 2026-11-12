@@ -701,7 +701,8 @@ def split_hog(hog:HOG, level_name:str, *partitions):
     :param partitions:  a list or a tuple of Representatives of the current HOG
     :type partitions:   List[Representatives]
     :returns List[HOG]: a list of HOG objects splitting the original HOG in the
-                        desired partitions.
+                        desired partitions, followed by the subhogs of the original HOG that
+                        no partition leads to (unchanged, so their members are not lost).
     """
     max_depth = 4
     if len(partitions) < 2:
@@ -727,7 +728,13 @@ def split_hog(hog:HOG, level_name:str, *partitions):
         for p, subhogs in enumerate(first_level_subhogs):
             h = HOG(subhogs, taxonomic_level=hog.taxname, rhogid=hog.rhogid, msa=hog.get_msa(), representatives=partitions[p])
             hogs.append(h)
-        return hogs
+        # subhogs that no representative of any partition leads to are kept as they are, so that
+        # their proteins are not lost (issue #113)
+        reached = set().union(*first_level_subhogs)
+        unreached = [sh for sh in hog._subhogs if sh not in reached]
+        if unreached:
+            logger.info(f"Keeping {len(unreached)} subhogs of {hog} without a representative: {unreached}")
+        return hogs + unreached
     else:
         rep_to_subhog_list = {rep: hog.get_subhog_path(rep.get_id(), max_depth=-1) for part in partitions for rep in part}
         for depth in range(max(len(sh) for sh in rep_to_subhog_list.values())):
