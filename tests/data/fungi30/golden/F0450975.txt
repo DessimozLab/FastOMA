@@ -1,0 +1,9 @@
+# 7 input proteins, 2 groups, 4 proteins in groups
+
+orthologGroup Fusarium  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
+  tr|A0A395SDR5|A0A395SDR5_FUSSP
+  tr|A0A8H5PI77|A0A8H5PI77_GIBSU
+
+orthologGroup Sordariomycetes  CompletenessScore=0.2222 ImpliedLosses=6 TCSScore=0.0
+  tr|A0A2P5HKG6|A0A2P5HKG6_DIAHE
+  tr|A0A9P9KSX6|A0A9P9KSX6_FUSSL

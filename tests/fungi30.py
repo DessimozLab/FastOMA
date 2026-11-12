@@ -6,9 +6,10 @@ nesting, ...). They come in two kinds:
 
 golden  the per-rootHOG output (structure and scores) is compared with a stored snapshot in golden/.
         The snapshot captures current behaviour, it is not a statement of correctness.
-drops   fastoma-infer-subhogs drops proteins of these rootHOGs (a known bug). How many it drops depends
+drops   for rootHOGs that fastoma-infer-subhogs is known to drop proteins of. How many it drops depends
         on small differences in the MSA, so they are only checked for the invariant "every input protein
-        is in a final HOG" (strict xfail until the bug is fixed) and are not snapshotted.
+        is in a final HOG" (strict xfail until the bug is fixed) and are not snapshotted. There are none
+        at the moment: the ten former ones (issue #113) are golden now.
 
 The output depends on the mafft/FastTree versions, so the snapshots are only compared in the
 environment they were generated in (golden/ENVIRONMENT.json, i.e. the dessimozlab/fastoma image and the

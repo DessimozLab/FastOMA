@@ -10,15 +10,15 @@ F0848294	fast	seq	golden	1:1 family over all 30 species, nesting depth 9
 F0480898	fast	seq	golden	eight nested duplications
 clust12762	fast	seq	golden	linclust rootHOG with eight duplications; sensitive to the mafft version
 F0485529	fast	seq	golden	single-species rootHOG of two in-paralogs; nothing is reported
-F0455853	fast	seq	drops	conflict resolution drops 1 of 12 proteins
-F0453717	fast	seq	drops	three conflicts, drops 2 of 19 proteins
-F0457125	fast	seq	drops	MSA row trimming, drops 2 of 9 proteins
-F0477170	fast	seq	drops	MSA row trimming, drops 4 of 17 proteins
-F0450975	fast	seq	drops	drops 1 of 7 proteins without conflict or row trimming
-F0455646	fast	seq	drops	drops 1 of 9 proteins without conflict or row trimming
+F0455853	fast	seq	golden	conflict resolution dropped 1 of 12 proteins before #113
+F0453717	fast	seq	golden	three conflicts, dropped 2 of 19 proteins before #113
+F0457125	fast	seq	golden	MSA row trimming, dropped 2 of 9 proteins before #113
+F0477170	fast	seq	golden	MSA row trimming, dropped 4 of 17 proteins before #113
+F0450975	fast	seq	golden	dropped 1 of 7 proteins without conflict or row trimming before #113
+F0455646	fast	seq	golden	dropped 1 of 9 proteins without conflict or row trimming before #113
 F0848191	slow	seq	golden	large family over all 30 species (175 proteins)
 F0453151	slow	par	golden	performance canary: 101 proteins took 157s in the fungi-30 run
-F0489395	slow	seq	drops	two conflicts, drops 143 of 193 proteins in the fungi-30 run
-F0442015	slow	seq	drops	MSA row trimming, drops 90 of 186 proteins in the fungi-30 run
-F0412257	slow	par	drops	a single conflict drops 367 of 496 proteins in the fungi-30 run
-F0470062	slow	par	drops	hog_big rootHOG run with --parallel, drops 53 of 221 proteins in the fungi-30 run
+F0489395	slow	seq	golden	two conflicts, dropped 143 of 193 proteins before #113
+F0442015	slow	seq	golden	MSA row trimming, dropped 90 of 186 proteins before #113
+F0412257	slow	par	golden	a single conflict dropped 367 of 496 proteins before #113
+F0470062	slow	par	golden	hog_big rootHOG run with --parallel, dropped 53 of 221 proteins before #113
