@@ -269,3 +269,32 @@ def test_read_infer_xml_rhog_groups_have_two_children(rhog_run):
     _, groups = rhog_run
     for e in groups:
         assert len([c for c in e if c.tag not in ("score", "property")]) >= 2
+
+
+# proteins must not get lost at a level (issue #113)
+
+def test_process_freezes_subhogs_that_a_split_does_not_reach(sp, subhog_conf, monkeypatch):
+    # ab was merged at AB from a1, a2 and b1 but only a1 and a2 represent it. At the root, a1 and a2 end
+    # up in different speciation subtrees, so ab is split; b1 is reached by neither part and is frozen
+    c2 = pid("c2", "C", 22)
+    ab = merged_hog([leaf_hog(A1, sp), leaf_hog(A2, sp), leaf_hog(B1, sp)], sp & "AB", rep_ids=[A1, A2])
+    b1 = next(h for h in ab._subhogs if B1 in h.get_members())
+    lp = LevelHOGProcessor(sp, [ab, leaf_hog(C1, sp), leaf_hog(c2, sp)], "r", subhog_conf())
+    aln = msa(rec(A1), rec(A2), rec(C1), rec(c2))
+    _patch_pipeline(lp, monkeypatch, aln, "((%s:1,%s:1):1,(%s:1,%s:1):1);" % q(A1, C1, A2, c2))
+    new = lp.process()
+    assert sorted(sorted(h.get_members()) for h in new) == sorted([[A1, C1], [A2, c2], [B1]])
+    assert b1 in new and not b1.active
+
+
+def test_process_keeps_proteins_it_would_lose_as_frozen_singletons(make_lp, monkeypatch, caplog):
+    lp = make_lp([A1, A2, B1, B2])
+    aln = msa(rec(A1), rec(A2), rec(B1), rec(B2))
+    _patch_pipeline(lp, monkeypatch, aln, "((%s:1,%s:1):1,(%s:1,%s:1):1);" % q(A1, B1, A2, B2))
+    merge = lp.merge_subhogs
+    monkeypatch.setattr(lp, "merge_subhogs", lambda tree, msa: merge(tree, msa)[:1])   # simulate a lost HOG
+    new = lp.process()
+    assert members_of(new) == {A1, A2, B1, B2}
+    singletons = [h for h in new if len(h) == 1]
+    assert len(singletons) == 2 and not any(h.active for h in singletons)
+    assert "would have been lost" in caplog.text

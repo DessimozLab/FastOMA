@@ -334,7 +334,6 @@ class LevelHOGProcessor:
         self._base_msa_tree_filename = "HOG_"+rhogid+"_"+str(node_species_tree.name)
         self._outname_step = 0
         self._removed_rep = set([])
-        self._lost_members = set([])   # members dropped by split_hog at this level (for the protein trace)
         self._rep_lookup = self._prepare_lookups()
         self._msa_filter = self._instantiate_msa_filter()
 
@@ -688,14 +687,23 @@ class LevelHOGProcessor:
         return new_hogs
 
     def process(self) -> List[HOG]:
-        if not ptrace.is_enabled():
-            return self._process()
-        members_before = set().union(set(), *(h.get_members() for h in list(self.subhogs.values()) + list(self._frozen_hogs_before)))
+        """the HOGs of this level; every protein of the input HOGs is in exactly one of them."""
+        hogs_before = list(self.subhogs.values()) + list(self._frozen_hogs_before)
+        members_before = set().union(set(), *(h.get_members() for h in hogs_before))
         new_hogs = self._process()
         members_after = set().union(set(), *(h.get_members() for h in new_hogs))
-        for member in members_before - members_after - self._lost_members:
-            ptrace.member_event(member, "infer_subhogs", "lost_at_level", self.rhogid,
-                                f"level={self.node_species_tree.name}")
+        lost = members_before - members_after
+        if lost:
+            # should not happen; keep the proteins as frozen singletons rather than dropping them (issue #113)
+            logger.warning(f"{len(lost)} proteins of {self.rhogid} would have been lost at level "
+                           f"{self.node_species_tree.name}, kept as singletons: {sorted(lost)}")
+            for member in sorted(lost):
+                if ptrace.is_enabled():
+                    ptrace.member_event(member, "infer_subhogs", "lost_at_level", self.rhogid,
+                                        f"level={self.node_species_tree.name} kept_as_singleton")
+                leaf = next(_leaf_hog_of(h, member) for h in hogs_before if member in h.get_members())
+                leaf.active = False
+                new_hogs.append(leaf)
         return new_hogs
 
     def _process(self) -> List[HOG]:
@@ -724,6 +732,12 @@ class LevelHOGProcessor:
         new_hogs = self.merge_subhogs(rooted_gene_tree, msa=filtered_msa)
         new_hogs.extend(self._frozen_hogs_before)
         return new_hogs
+
+
+def _leaf_hog_of(hog: HOG, member: str) -> HOG:
+    """the single-protein HOG of `member` at the bottom of `hog`."""
+    path = hog.get_subhog_path(member)
+    return path[-1] if path else hog
 
 
 def infer_hogs_this_level(node_species_tree, rhogid, pickles_subhog_folder_all, conf_infer_subhhogs):

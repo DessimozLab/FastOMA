@@ -10,8 +10,9 @@ Outputs (in the current directory):
 Fates, in the order they are decided:
   too_short                         shorter than --min-sequence-length, never used
   in_orthoxml                       member of a HOG of size >= 2 in the orthoXML
-  lost_in_split_hog                 dropped when split_hog did not cover all child subHOGs
-  lost_at_level                     dropped at a taxonomic level for another reason
+  lost_in_split_hog                 dropped when split_hog did not cover all child subHOGs (older versions)
+  lost_at_level                     would have been dropped at a taxonomic level; it is now kept as a
+                                    singleton instead, so this marks an unexpected loss (issue #113)
   final_singleton_not_written       ended alone in its HOG; orthoXML only keeps HOGs of size >= 2
                                     (also a single-gene copy of a duplication older than the tree root)
   missing_at_end                    in a rootHOG file, but in no final HOG and no loss recorded
