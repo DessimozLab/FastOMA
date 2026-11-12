@@ -456,16 +456,13 @@ class MSAFilter:
                 msa_filt_row_col_raw = self.msa_filter_row(msa_filt_col)
                 msa_filt_row_col = self.remove_empty_columns(msa_filt_row_col_raw)
 
-        # compare msa_filt_row_col and msa_filt_col,
-        if len(msa_filt_row_col) != len(msa_filt_col):  # some sequences are removed
-            set_prot_before = set([i.id for i in msa_filt_col])
-            set_prot_after = set([i.id for i in msa_filt_row_col])
-            proteins_to_be_removed = set_prot_before - set_prot_after
-            for prot_to_remove in proteins_to_be_removed:
-                logger.debug("** we are removing the sequence " + str(prot_to_remove) + " due to trimming")
-                # we may want to tag it in the hog object
-        else:
+        if len(msa_filt_row_col) == len(msa_filt_col):  # the row filter removed nothing
             msa_filt_row_col = msa_filt_col
+        # rows can be dropped by the row filter and by the column filter (rows that are left with
+        # fewer than 2 columns); both must be reported (issue #113)
+        proteins_to_be_removed = {rec.id for rec in msa} - {rec.id for rec in msa_filt_row_col}
+        for prot_to_remove in proteins_to_be_removed:
+            logger.debug("** we are removing the sequence " + str(prot_to_remove) + " due to trimming")
         return msa_filt_row_col, proteins_to_be_removed
 
     def msa_filter_col(self, msa):
