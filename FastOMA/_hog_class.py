@@ -362,8 +362,11 @@ class HOG:
 
             if len(records[0]) > hogclass_min_cols_msa_to_filter and conf_infer_subhhogs is not None:
                 filter = MSAFilter(levelprocessor=None, conf=conf_infer_subhhogs)
-                records = filter.msa_filter_col(records)
-                # the challange is that one of the sequences might be complete gap
+                filtered = filter.msa_filter_col(records)
+                # the column filter drops rows that are (almost) only gaps afterwards; the representatives
+                # must keep their rows, otherwise the HOG cannot be aligned at the next level (issue #113)
+                if len(filtered) == len(records):
+                    records = list(filtered)
             self._msa = MultipleSeqAlignment(records)
             # without replacement sampling ,  # self._children = sub_hogs # as legacy  ?
         else:
