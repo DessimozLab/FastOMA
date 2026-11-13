@@ -687,20 +687,28 @@ class LevelHOGProcessor:
         return new_hogs
 
     def process(self) -> List[HOG]:
-        """the HOGs of this level; every protein of the input HOGs is in exactly one of them."""
+        """the HOGs of this level; every protein of the input HOGs is in exactly one of them.
+
+        Both is checked: a protein missing from the output HOGs is kept as a frozen singleton (with a
+        warning), a protein in several output HOGs is logged as an error. Neither should happen; with
+        the environment variable FASTOMA_STRICT_INVARIANTS set (as the tests do), both raise instead."""
         hogs_before = list(self.subhogs.values()) + list(self._frozen_hogs_before)
         members_before = set().union(set(), *(h.get_members() for h in hogs_before))
         new_hogs = self._process()
         members_after = set().union(set(), *(h.get_members() for h in new_hogs))
         lost = members_before - members_after
+        if sum(len(h) for h in new_hogs) != len(members_after):
+            counts = collections.Counter(m for h in new_hogs for m in h.get_members())
+            _invariant_violated(logger.error, f"proteins of {self.rhogid} are in several HOGs at level "
+                                f"{self.node_species_tree.name}: {sorted(m for m, n in counts.items() if n > 1)}")
         if lost:
-            # should not happen; keep the proteins as frozen singletons rather than dropping them (issue #113)
-            logger.warning(f"{len(lost)} proteins of {self.rhogid} would have been lost at level "
-                           f"{self.node_species_tree.name}, kept as singletons: {sorted(lost)}")
+            # keep the proteins as frozen singletons rather than dropping them (issue #113)
+            _invariant_violated(logger.warning, f"{len(lost)} proteins of {self.rhogid} would have been lost at "
+                                f"level {self.node_species_tree.name}, kept as singletons: {sorted(lost)}")
             for member in sorted(lost):
                 if ptrace.is_enabled():
-                    ptrace.member_event(member, "infer_subhogs", "lost_at_level", self.rhogid,
-                                        f"level={self.node_species_tree.name} kept_as_singleton")
+                    ptrace.member_event(member, "infer_subhogs", "kept_as_singleton_at_level", self.rhogid,
+                                        f"level={self.node_species_tree.name}")
                 leaf = next(_leaf_hog_of(h, member) for h in hogs_before if member in h.get_members())
                 leaf.active = False
                 new_hogs.append(leaf)
@@ -732,6 +740,12 @@ class LevelHOGProcessor:
         new_hogs = self.merge_subhogs(rooted_gene_tree, msa=filtered_msa)
         new_hogs.extend(self._frozen_hogs_before)
         return new_hogs
+
+
+def _invariant_violated(log, msg):
+    if os.environ.get("FASTOMA_STRICT_INVARIANTS"):
+        raise AssertionError(msg)
+    log(msg)
 
 
 def _leaf_hog_of(hog: HOG, member: str) -> HOG:

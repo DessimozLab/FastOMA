@@ -181,6 +181,7 @@ def _docker_run(image, mount, workdir, args):
     user = ["--user", f"{os.getuid()}:{os.getgid()}", "-e", "HOME=/tmp"] if hasattr(os, "getuid") else []
     cmd = ["docker", "run", "--rm", "--platform", "linux/amd64", *user, "-v", f"{mount}:{mount}", "-w", str(workdir),
            "-e", "PYTHONHASHSEED=0", "-e", f"PYTHONPATH={REPO_DIR}", "-e", "PYTHONDONTWRITEBYTECODE=1",
+           "-e", "FASTOMA_STRICT_INVARIANTS=1",
            "--entrypoint", "sh", image, "-c", args]
     return subprocess.run(cmd, capture_output=True, text=True)
 

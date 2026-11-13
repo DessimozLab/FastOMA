@@ -11,10 +11,12 @@ Fates, in the order they are decided:
   too_short                         shorter than --min-sequence-length, never used
   in_orthoxml                       member of a HOG of size >= 2 in the orthoXML
   lost_in_split_hog                 dropped when split_hog did not cover all child subHOGs (older versions)
-  lost_at_level                     would have been dropped at a taxonomic level; it is now kept as a
-                                    singleton instead, so this marks an unexpected loss (issue #113)
+  lost_at_level                     dropped at a taxonomic level (older versions)
   final_singleton_not_written       ended alone in its HOG; orthoXML only keeps HOGs of size >= 2
                                     (also a single-gene copy of a duplication older than the tree root)
+
+Not a fate, but counted under the consistency checks: kept_as_singleton_at_level, a protein that a
+level would have lost (a bug, issue #113) and that was kept as a singleton instead.
   missing_at_end                    in a rootHOG file, but in no final HOG and no loss recorded
   roothog_not_processed             in a rootHOG file, but no subHOG result (e.g. failed task)
   isoform_not_selected              minor splicing variant, another isoform of the gene was selected
@@ -225,6 +227,8 @@ def fastoma_protein_trace():
                 n_unknown += 1
                 continue
             length = proteins[key]
+            if any(e == "kept_as_singleton_at_level" for s, e, r, d in evs):
+                issues["kept_as_singleton_after_unexpected_loss_at_a_level"] += 1
             fate, step, rhog, detail = decide(evs)
             if fate == "in_final_hog":
                 fate = "in_orthoxml"
