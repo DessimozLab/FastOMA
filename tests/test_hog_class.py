@@ -91,8 +91,6 @@ def test_merged_hog_with_empty_msa_is_rejected(sp):
         HOG([leaf_hog(A1, sp)], sp.name, "r", msa=msa(), representatives=[Representative(rec(A1))])
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: HOG.__init__ column filter can drop all representative rows "
-                                       "(_hog_class.py:333 -> _utils_subhog.py:485); the HOG is then lost at the next level")
 def test_merged_hog_column_filter_keeps_representatives(sp, subhog_conf):
     s1 = "A" * 300 + "-" * 300
     s2 = "-" * 300 + "A" * 300
@@ -207,8 +205,6 @@ def test_split_hog_conflicting_partitions_returns_none(sp):
     assert split_hog(top, "root", [A1], [B1, B2]) is None
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: split_hog drops subhogs not reached by any partition's representative "
-                                       "(_hog_class.py:636-643); their proteins disappear")
 def test_split_hog_keeps_all_members(sp):
     a1, a2, b1 = leaf_hog(A1, sp), leaf_hog(A2, sp), leaf_hog(B1, sp)
     ab = merged_hog([a1, a2, b1], sp & "AB", rep_ids=[A1, A2])

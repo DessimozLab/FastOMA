@@ -1,0 +1,27 @@
+# 17 input proteins, 3 groups, 13 proteins in groups
+
+orthologGroup Agaricomycetes  CompletenessScore=0.5 ImpliedLosses=2 TCSScore=0.0
+  tr|A0A067SF43|A0A067SF43_GALM3
+  tr|A0AAW0G4Z8|A0AAW0G4Z8_9APHY
+
+orthologGroup Fungi  CompletenessScore=0.0667 ImpliedLosses=9 TCSScore=0.0
+  tr|A0A067TQH4|A0A067TQH4_GALM3
+  tr|A0ABN7X9V2|A0ABN7X9V2_GIGMA
+
+orthologGroup Fungi  CompletenessScore=0.2 ImpliedLosses=21 TCSScore=4.0
+  paralogGroup
+    orthologGroup Dikarya  CompletenessScore=0.2308 ImpliedLosses=9 TCSScore=3.5
+      orthologGroup Agaricomycetes  CompletenessScore=0.75 ImpliedLosses=1 TCSScore=0.6667
+        orthologGroup Agaricales  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
+          tr|A0A0C2XL60|A0A0C2XL60_HEBCY
+          tr|B0DQR2|B0DQR2_LACBS
+        tr|A0AAW0GYZ7|A0AAW0GYZ7_9APHY
+      orthologGroup leotiomyceta  CompletenessScore=0.1875 ImpliedLosses=4 TCSScore=0.0
+        tr|A0A161TBI5|A0A161TBI5_XYLHT
+        tr|A0A7C8IHS3|A0A7C8IHS3_9PLEO
+        tr|F2PYG3|F2PYG3_TRIEC
+    paralogGroup
+      orthologGroup leotiomyceta  CompletenessScore=0.125 ImpliedLosses=5 TCSScore=0.0
+        tr|A0A7C8HZH4|A0A7C8HZH4_9PLEO
+        tr|F2Q4P3|F2Q4P3_TRIEC
+      tr|A0A165J5N1|A0A165J5N1_XYLHT
