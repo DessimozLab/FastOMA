@@ -1,0 +1,11 @@
+# 9 input proteins, 2 groups, 5 proteins in groups
+
+orthologGroup Hypocreomycetidae  CompletenessScore=0.5 ImpliedLosses=3 TCSScore=1.3333
+  orthologGroup Fusarium  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
+    tr|A0A395S9D8|A0A395S9D8_FUSSP
+    tr|A0A9P9HEM4|A0A9P9HEM4_FUSSL
+  tr|A0A7J6IEQ9|A0A7J6IEQ9_COLFN
+
+orthologGroup Sordariomycetes  CompletenessScore=0.2222 ImpliedLosses=4 TCSScore=0.0
+  tr|A0A2P5I6C2|A0A2P5I6C2_DIAHE
+  tr|A0A7J6JS62|A0A7J6JS62_COLFN

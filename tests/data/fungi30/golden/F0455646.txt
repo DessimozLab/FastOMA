@@ -1,0 +1,15 @@
+# 9 input proteins, 1 groups, 7 proteins in groups
+
+orthologGroup Sordariomycetes  CompletenessScore=0.4444 ImpliedLosses=5 TCSScore=4.2857
+  orthologGroup Hypocreomycetidae  CompletenessScore=0.5 ImpliedLosses=3 TCSScore=2.3333
+    paralogGroup
+      orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.0
+        tr|A0A7J6JG59|A0A7J6JG59_COLFN
+        tr|A0AAX4I8F0|A0AAX4I8F0_9PEZI
+      orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.0
+        tr|A0A7J6JQG2|A0A7J6JQG2_COLFN
+        tr|A0AAX4IN99|A0AAX4IN99_9PEZI
+    paralogGroup
+      tr|A0A8H5L8N3|A0A8H5L8N3_GIBSU
+      tr|A0A8H5QB03|A0A8H5QB03_GIBSU
+  tr|A0ABQ8NDD1|A0ABQ8NDD1_PYRGI

@@ -1,0 +1,30 @@
+# 19 input proteins, 2 groups, 15 proteins in groups
+
+orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.0
+  tr|A0A7J6IX15|A0A7J6IX15_COLFN
+  tr|A0AAX4HY96|A0AAX4HY96_9PEZI
+
+orthologGroup Dikarya  CompletenessScore=0.3077 ImpliedLosses=27 TCSScore=15.0
+  paralogGroup
+    orthologGroup Hypocreales  CompletenessScore=0.75 ImpliedLosses=1 TCSScore=0.6667
+      orthologGroup Fusarium  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
+        tr|A0A8H5QG56|A0A8H5QG56_GIBSU
+        tr|A0A9P9JUF1|A0A9P9JUF1_FUSSL
+      tr|G9N2E7|G9N2E7_HYPVG
+    orthologGroup leotiomyceta  CompletenessScore=0.375 ImpliedLosses=11 TCSScore=5.0
+      orthologGroup Sordariomycetes  CompletenessScore=0.5556 ImpliedLosses=9 TCSScore=2.7143
+        orthologGroup Hypocreomycetidae  CompletenessScore=0.5 ImpliedLosses=6 TCSScore=1.25
+          paralogGroup
+            orthologGroup Hypocreales  CompletenessScore=0.5 ImpliedLosses=2 TCSScore=0.0
+              tr|A0A9P9GAG2|A0A9P9GAG2_FUSSL
+              tr|G9MJ92|G9MJ92_HYPVG
+            tr|A0A9P9RAG8|A0A9P9RAG8_FUSSL
+          tr|L2FPY7|L2FPY7_COLFN
+        paralogGroup
+          orthologGroup Sordariomycetidae  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
+            tr|A0ABQ8NL58|A0ABQ8NL58_PYRGI
+            tr|Q7S0B1|Q7S0B1_NEUCR
+          tr|Q7S5K3|Q7S5K3_NEUCR
+      tr|A0A7C8IAC5|A0A7C8IAC5_9PLEO
+    tr|A0A7C8M3T0|A0A7C8M3T0_9PLEO
+  tr|A0A067T5U4|A0A067T5U4_GALM3

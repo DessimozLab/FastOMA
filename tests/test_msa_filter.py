@@ -80,8 +80,6 @@ def test_column_filter_with_single_column_left_drops_rows(flt):
     assert len(flt.msa_filter_col(msa((A1, "AA-"), (B1, "-AA")))) == 0
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: rows dropped by the column filter are not reported as removed "
-                                       "(_utils_subhog.py:485 and :456)")
 def test_filter_msa_all_columns_gappy_reports_rows(flt):
     aln = msa((A1, "AA--"), (B1, "--AA"))
     filtered, removed = flt.filter_msa(aln)

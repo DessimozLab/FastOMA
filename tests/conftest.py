@@ -19,6 +19,10 @@ TESTDATA_DIR = REPO_DIR / "testdata"
 # make tests/fastoma_testutils.py importable from every test module
 sys.path.insert(0, str(TESTS_DIR))
 
+# LevelHOGProcessor.process() raises instead of repairing a lost or duplicated protein, so the tests
+# see bugs the safety net would hide (inherited by the infer-subhogs subprocesses of the stage tests)
+os.environ.setdefault("FASTOMA_STRICT_INVARIANTS", "1")
+
 REQUIRED_TOOLS = {"mafft": "mafft", "FastTree": "FastTree", "mmseqs": "mmseqs", "omamer": "omamer"}
 
 

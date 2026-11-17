@@ -1,0 +1,23 @@
+# 12 input proteins, 3 groups, 11 proteins in groups
+
+orthologGroup Dikarya  CompletenessScore=0.1154 ImpliedLosses=13 TCSScore=6.25
+  paralogGroup
+    orthologGroup Sordariomycetidae  CompletenessScore=0.6667 ImpliedLosses=1 TCSScore=0.0
+      tr|A0A2P5HX71|A0A2P5HX71_DIAHE
+      tr|A0ABQ8NQQ7|A0ABQ8NQQ7_PYRGI
+    tr|A0ABQ8NIG4|A0ABQ8NIG4_PYRGI
+  tr|A0AAW0FNZ5|A0AAW0FNZ5_9APHY
+
+orthologGroup Dikarya  CompletenessScore=0.1538 ImpliedLosses=13 TCSScore=4.25
+  orthologGroup leotiomyceta  CompletenessScore=0.1875 ImpliedLosses=8 TCSScore=0.6667
+    paralogGroup
+      tr|A0A7J6J3T7|A0A7J6J3T7_COLFN
+      tr|A0ABQ8NDQ4|A0ABQ8NDQ4_PYRGI
+    tr|A0A7C8MSE1|A0A7C8MSE1_9PLEO
+  tr|A0AAW0GR98|A0AAW0GR98_9APHY
+
+orthologGroup Sordariomycetes  CompletenessScore=0.3333 ImpliedLosses=3 TCSScore=1.3333
+  orthologGroup Colletotrichum  CompletenessScore=1.0 ImpliedLosses=0 TCSScore=0.0
+    tr|A0A7J6IMX9|A0A7J6IMX9_COLFN
+    tr|A0AAX4IE08|A0AAX4IE08_9PEZI
+  tr|A0ABQ8NCX7|A0ABQ8NCX7_PYRGI
