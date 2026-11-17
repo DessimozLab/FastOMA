@@ -54,9 +54,8 @@ EXPECTED_PARTITION = frozenset(frozenset(g) for g in [
     {"S1_m", "S2_m", "S3_m", "S4_m"},      # rootHOGs M1 and M2 merged
     set(BIG[0::2]),                        # big rootHOG B1, low-score half filtered out
 ])
-SENT_TO_LINCLUST = {"S3_u", "S4_n", "S2_n1", "S2_n2"}
-EXPECTED_TO_VANISH = {"S1_short", "S1_a2"} | set(BIG[1::2])   # too short / minor isoform / big-rhog filter
-KNOWN_BUG_VANISH = {"S2_missing"}                               # absent from the hogmap
+SENT_TO_LINCLUST = {"S3_u", "S4_n", "S2_n1", "S2_missing"}  # S2_missing is absent from the hogmap
+EXPECTED_TO_VANISH = {"S1_short", "S1_a2", "S2_n2"} | set(BIG[1::2])  # too short / minor isoform / big-rhog filter
 
 
 def build_synthetic(root):
@@ -138,24 +137,12 @@ def test_synthetic_every_protein_accounted_for(synthetic_run):
     root, out, all_proteins = synthetic_run
     in_rhogs = {p for g in read_rhog_partition(out) for p in g}
     in_singletons = set(fasta_ids(root / "singleton_unmapped.fa"))
-    unaccounted = all_proteins - in_rhogs - in_singletons - EXPECTED_TO_VANISH
-    assert unaccounted == KNOWN_BUG_VANISH
+    assert all_proteins - in_rhogs - in_singletons == EXPECTED_TO_VANISH
+    assert not (in_rhogs | in_singletons) & EXPECTED_TO_VANISH
 
 
 @pytest.mark.slow
 @pytest.mark.tools("mmseqs")
-@pytest.mark.xfail(strict=True, reason="BUG: proteins without any hogmap row are dropped silently "
-                                       "(parse_hogmap_omamer, _utils_roothog.py:264)")
-def test_synthetic_protein_missing_from_hogmap_not_lost(synthetic_run):
-    root, out, _ = synthetic_run
-    kept = {p for g in read_rhog_partition(out) for p in g} | set(fasta_ids(root / "singleton_unmapped.fa"))
-    assert KNOWN_BUG_VANISH <= kept
-
-
-@pytest.mark.slow
-@pytest.mark.tools("mmseqs")
-@pytest.mark.xfail(strict=True, reason="BUG: unmapped proteins are not filtered by isoform selection, minor "
-                                       "isoforms reach linclust (infer_roothogs.py:50-60, :93)")
 def test_synthetic_minor_isoforms_not_clustered(synthetic_run):
     root, _, _ = synthetic_run
     assert len({"S2_n1", "S2_n2"} & set(fasta_ids(root / "singleton_unmapped.fa"))) == 1
