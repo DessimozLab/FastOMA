@@ -16,7 +16,8 @@ Fates, in the order they are decided:
                                     (also a single-gene copy of a duplication older than the tree root)
 
 Not a fate, but counted under the consistency checks: kept_as_singleton_at_level, a protein that a
-level would have lost (a bug, issue #113) and that was kept as a singleton instead.
+level would have lost (a bug, issue #113) and that was kept as a singleton instead, and
+kept_as_singleton_roothog, the same for a rootHOG grouping step (issue #114).
   missing_at_end                    in a rootHOG file, but in no final HOG and no loss recorded
   roothog_not_processed             in a rootHOG file, but no subHOG result (e.g. failed task)
   isoform_not_selected              minor splicing variant, another isoform of the gene was selected
@@ -229,6 +230,8 @@ def fastoma_protein_trace():
             length = proteins[key]
             if any(e == "kept_as_singleton_at_level" for s, e, r, d in evs):
                 issues["kept_as_singleton_after_unexpected_loss_at_a_level"] += 1
+            if any(e == "kept_as_singleton_roothog" for s, e, r, d in evs):
+                issues["kept_as_singleton_after_unexpected_loss_in_roothog_grouping"] += 1
             fate, step, rhog, detail = decide(evs)
             if fate == "in_final_hog":
                 fate = "in_orthoxml"

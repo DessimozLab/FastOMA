@@ -165,8 +165,19 @@ class TestMergeRhogs2:
         res = U.merge_rhogs2(hm, U.group_prots_by_roothogs(hm), roothog_conf())
         assert list(res) == ["A1"] and len(res["A1"]) == 14
 
-    @pytest.mark.xfail(strict=True, reason="BUG: `newhost` is not reset per cluster and the overflow host "
-                                           "loses its own proteins (_utils_roothog.py:667-713)")
+    def test_overflowing_cluster_is_split_in_order(self, in_tmp_dir, monkeypatch, roothog_conf):
+        self.patch_clusters(monkeypatch, [["C", "A", "B"]])
+        rp = {k: [("s", k + str(i)) for i in range(2)] for k in "ABC"}
+        res = U.merge_rhogs2({}, rp, roothog_conf(big_rhog_size=3))
+        # A+B reach the size limit, C starts the next rootHOG
+        assert res == {"A": [("s", "A0"), ("s", "A1"), ("s", "B0"), ("s", "B1")], "C": [("s", "C0"), ("s", "C1")]}
+
+    def test_cluster_whose_rhogs_are_all_gone_is_skipped(self, in_tmp_dir, monkeypatch, roothog_conf):
+        # issue #114: such a cluster reused the host of the previous cluster
+        self.patch_clusters(monkeypatch, [["A", "B"], ["X", "Y"]])
+        rp = {"A": [("s", "a")], "B": [("s", "b")]}
+        assert U.merge_rhogs2({}, rp, roothog_conf()) == {"A": [("s", "a"), ("s", "b")]}
+
     @pytest.mark.parametrize("clusters", [[["A", "B", "C"]], [["A", "B", "C", "D"], ["W", "X", "Y", "Z"]]])
     def test_overflowing_clusters_keep_all_proteins(self, in_tmp_dir, monkeypatch, roothog_conf, clusters):
         self.patch_clusters(monkeypatch, clusters)
@@ -222,3 +233,59 @@ def test_create_root_hogs(in_tmp_dir, roothog_conf):
         frozenset({("S3", "u")}),                             # remains a singleton
     }
     assert set(res) >= {"A1", "U1"}
+
+
+class TestRootHOGAccounting:
+    """the safety net of issue #114: no grouping step may lose or duplicate a protein."""
+    HOGMAPS = {"S1": {"a": [hit("HOG:A1", 500)], "b": [hit("HOG:A1", 500)], "c": [hit("HOG:C1", 500)]}}
+
+    @staticmethod
+    def lose_protein(monkeypatch):
+        def merge(hogmaps, rhogs_prots, conf):
+            rhogs_prots["A1"] = rhogs_prots["A1"][:1]
+            return rhogs_prots
+        monkeypatch.setattr(U, "merge_rhogs2", merge)
+
+    def test_lost_protein_raises_in_strict_mode(self, monkeypatch, roothog_conf):
+        self.lose_protein(monkeypatch)
+        with pytest.raises(AssertionError, match="merge_rhogs: 1 proteins would have been lost"):
+            U.create_root_hogs(self.HOGMAPS, roothog_conf())
+
+    def test_lost_protein_is_kept_as_singleton(self, monkeypatch, roothog_conf, caplog):
+        monkeypatch.delenv("FASTOMA_STRICT_INVARIANTS")
+        self.lose_protein(monkeypatch)
+        res = U.create_root_hogs(self.HOGMAPS, roothog_conf())
+        assert partition(res) == {frozenset({("S1", "a")}), frozenset({("S1", "b")}), frozenset({("S1", "c")})}
+        assert "would have been lost" in caplog.text
+
+    def test_duplicated_protein_raises_in_strict_mode(self, monkeypatch, roothog_conf):
+        def merge(hogmaps, rhogs_prots, conf):
+            rhogs_prots["C1"].append(("S1", "a"))
+            return rhogs_prots
+        monkeypatch.setattr(U, "merge_rhogs2", merge)
+        with pytest.raises(AssertionError, match="in several rootHOGs"):
+            U.create_root_hogs(self.HOGMAPS, roothog_conf())
+
+    def test_big_rootHOG_filter_may_remove_proteins(self, roothog_conf):
+        hm = {"S1": {p: [hit("HOG:A1", 10)] for p in "abc"}}
+        assert U.create_root_hogs(hm, roothog_conf(big_rhog_size=2)) == {}
+
+    def test_all_proteins_accounted(self):
+        prot_recs_all = {"S1": {"a": None, "b": None, "c": None, "d": None}}
+        unmapped = {"S1": ["b"]}
+        assert U.check_all_proteins_accounted(prot_recs_all, self.HOGMAPS, unmapped, {"S1": ["d"]}) == []
+
+    def test_unaccounted_protein_becomes_unmapped(self, monkeypatch):
+        monkeypatch.delenv("FASTOMA_STRICT_INVARIANTS")
+        unmapped = {"S1": []}
+        lost = U.check_all_proteins_accounted({"S1": {"a": None, "z": None}}, self.HOGMAPS, unmapped)
+        assert lost == [("S1", "z")] and unmapped == {"S1": ["z"]}
+
+    def test_unaccounted_protein_raises_in_strict_mode(self):
+        with pytest.raises(AssertionError, match="1 proteins would have been lost"):
+            U.check_all_proteins_accounted({"S1": {"z": None}}, self.HOGMAPS, {"S1": []})
+
+
+def test_filter_unmapped_by_isoforms():
+    res = U.filter_unmapped_by_isoforms({"S1": ["a", "a2", "u"], "S2": ["x"]}, {"S1": ["a2"]})
+    assert dict(res) == {"S1": ["a", "u"], "S2": ["x"]}
