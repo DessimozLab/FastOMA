@@ -168,9 +168,21 @@ class TestMergeRhogs2:
     def test_overflowing_cluster_is_split_in_order(self, in_tmp_dir, monkeypatch, roothog_conf):
         self.patch_clusters(monkeypatch, [["C", "A", "B"]])
         rp = {k: [("s", k + str(i)) for i in range(2)] for k in "ABC"}
-        res = U.merge_rhogs2({}, rp, roothog_conf(big_rhog_size=3))
-        # A+B reach the size limit, C starts the next rootHOG
+        res = U.merge_rhogs2({}, rp, roothog_conf(big_rhog_size=4))
+        # A+B reach the size limit, C would exceed it and starts the next rootHOG
         assert res == {"A": [("s", "A0"), ("s", "A1"), ("s", "B0"), ("s", "B1")], "C": [("s", "C0"), ("s", "C1")]}
+
+    def test_merged_rootHOGs_are_not_big(self, in_tmp_dir, monkeypatch, roothog_conf):
+        # review of #131: a merged rootHOG above big_rhog_size lost its low-score proteins to
+        # filter_big_roothogs, although none of the rootHOGs it was merged from was big
+        self.patch_clusters(monkeypatch, [["A", "B", "C"]])
+        rp = {k: [("s", k + str(i)) for i in range(2)] for k in "ABC"}
+        hm = {"s": {p: [hit(f"HOG:{p[0]}1", 50)] for prots in rp.values() for _, p in prots}}
+        before = sorted(p for prots in rp.values() for p in prots)  # merge_rhogs2 changes rp in place
+        conf = roothog_conf(big_rhog_size=3)
+        res = U.filter_big_roothogs(hm, U.merge_rhogs2({}, rp, conf), conf)
+        assert all(len(prots) <= 3 for prots in res.values())
+        assert sorted(p for prots in res.values() for p in prots) == before
 
     def test_cluster_whose_rhogs_are_all_gone_is_skipped(self, in_tmp_dir, monkeypatch, roothog_conf):
         # issue #114: such a cluster reused the host of the previous cluster
@@ -270,10 +282,32 @@ class TestRootHOGAccounting:
         hm = {"S1": {p: [hit("HOG:A1", 10)] for p in "abc"}}
         assert U.create_root_hogs(hm, roothog_conf(big_rhog_size=2)) == {}
 
+    @staticmethod
+    def isoforms(*genes):
+        """isoform data of S1 for genes given as (selected isoform, other isoforms...)."""
+        return {"selected_isoforms": {"S1": [g[0] for g in genes]}, "isoform_by_gene": {"S1": [list(g) for g in genes]}}
+
     def test_all_proteins_accounted(self):
-        prot_recs_all = {"S1": {"a": None, "b": None, "c": None, "d": None}}
-        unmapped = {"S1": ["b"]}
-        assert U.check_all_proteins_accounted(prot_recs_all, self.HOGMAPS, unmapped, {"S1": ["d"]}) == []
+        prot_recs_all = {"S1": {"a": None, "b": None, "c": None, "d": None, "u": None}}
+        unmapped = {"S1": ["u"]}
+        assert U.check_all_proteins_accounted(prot_recs_all, self.HOGMAPS, unmapped, self.isoforms(("a", "d"))) == []
+
+    def test_isoforms_of_a_lost_gene_raise_in_strict_mode(self):
+        # review of #131: the selected isoform "g1" is not kept (e.g. too short), so "g2" is not a minor
+        # isoform but the only one left of its gene
+        with pytest.raises(AssertionError, match="1 proteins would have been lost"):
+            U.check_all_proteins_accounted({"S1": {"g2": None}}, self.HOGMAPS, {"S1": []}, self.isoforms(("g1", "g2")))
+
+    @pytest.mark.parametrize("unmapped", [["u", "u"], ["u", "a"]], ids=["repeated", "also_mapped"])
+    def test_unmapped_repeated_or_mapped_raises_in_strict_mode(self, unmapped):
+        with pytest.raises(AssertionError, match="unmapped proteins are repeated or have hits"):
+            U.check_all_proteins_accounted({"S1": {"a": None, "u": None}}, self.HOGMAPS, {"S1": unmapped})
+
+    def test_unmapped_repeated_or_mapped_is_kept_once(self, monkeypatch):
+        monkeypatch.delenv("FASTOMA_STRICT_INVARIANTS")
+        unmapped = {"S1": ["u", "a", "u"]}
+        assert U.check_all_proteins_accounted({"S1": {"a": None, "u": None}}, self.HOGMAPS, unmapped) == []
+        assert unmapped == {"S1": ["u"]}
 
     def test_unaccounted_protein_becomes_unmapped(self, monkeypatch):
         monkeypatch.delenv("FASTOMA_STRICT_INVARIANTS")

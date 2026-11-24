@@ -84,6 +84,12 @@ class TestParseHogmapOmamer:
         hogmaps, unmapped = self.parse(tmp_path, ["p1", "p2"], [("p1", "HOG:A1", 100)])
         assert "p2" not in hogmaps["A"] and unmapped["A"] == ["p2"]
 
+    def test_repeated_na_rows_and_na_rows_next_to_hits(self, tmp_path):
+        # review of #131: such proteins were sent to the clustering twice, or both grouped and clustered
+        hogmaps, unmapped = self.parse(tmp_path, ["p1", "p2"], [
+            ("p1", "N/A", None), ("p1", "HOG:A1", 100), ("p2", "N/A", None), ("p2", "N/A", None)])
+        assert list(hogmaps["A"]) == ["p1"] and unmapped["A"] == ["p2"]
+
     def test_unmapped_protein_not_in_proteome_is_ignored(self, tmp_path):
         # e.g. a protein shorter than --min-sequence-length; it would otherwise count as unmapped
         _, unmapped = self.parse(tmp_path, ["p1"], [("p1", "HOG:A1", 100), ("short", "N/A", None)])
@@ -175,6 +181,11 @@ class TestIsoforms:
 
     def test_select_best_isoform_none_mapped_takes_first(self):
         assert U.select_best_isoforms(["A"], {"A": [["i1", "i2"]]}, {"A": {}}) == ({"A": ["i1"]}, {"A": ["i2"]})
+
+    def test_select_best_isoform_none_mapped_takes_first_in_proteome(self):
+        # review of #131: if i1 is too short or missing, selecting it loses the whole gene
+        res = U.select_best_isoforms(["A"], {"A": [["i1", "i2", "i3"]]}, {"A": {}}, {"A": {"i2", "i3"}})
+        assert res == ({"A": ["i2"]}, {"A": ["i1", "i3"]})
 
     def test_filter_hogmaps_by_isoforms(self):
         hm = {"A": {"i1": 1, "i2": 2, "x": 3}, "B": {"b": 4}}

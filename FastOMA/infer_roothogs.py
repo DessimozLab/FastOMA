@@ -61,12 +61,12 @@ def fastoma_infer_roothogs():
     isoform_data = None
     if conf.splice is not None and os.path.exists(conf.splice): 
         logger.info("Processing splice variants...")
-        isoform_data = _utils_roothog.handle_splice_variants(species_names, hogmaps, conf.splice)
+        isoform_data = _utils_roothog.handle_splice_variants(species_names, hogmaps, conf.splice,
+                                                             {sp: set(prots) for sp, prots in prot_recs_all.items()})
         _utils_roothog.write_selected_isoforms(isoform_data, prot_recs_lists)
         hogmaps = isoform_data['filtered_hogmaps']
         unmapped = _utils_roothog.filter_unmapped_by_isoforms(unmapped, isoform_data['non_selected'])
-    _utils_roothog.check_all_proteins_accounted(prot_recs_all, hogmaps, unmapped,
-                                                isoform_data['non_selected'] if isoform_data else None)
+    _utils_roothog.check_all_proteins_accounted(prot_recs_all, hogmaps, unmapped, isoform_data)
 
     # Step 3: Group proteins into root HOGs
     logger.info("Grouping proteins into root HOGs...")
@@ -112,8 +112,8 @@ def fastoma_infer_roothogs():
     n_input = sum(len(prots) for prots in prot_recs_all.values())
     n_in_rhogs = sum(len(rhogs_prots[rhogid]) for rhogid in rhogid_written_list)
     n_singletons = sum(len(prots) for prots in unmapped.values()) + sum(len(p) == 1 for p in rhogs_prots.values())
-    n_isoforms = sum(len(set(isoform_data['non_selected'].get(species, ())).intersection(prots))
-                     for species, prots in prot_recs_all.items()) if isoform_data else 0
+    n_isoforms = sum(len(v) for v in _utils_roothog.dropped_isoforms(prot_recs_all, hogmaps, unmapped,
+                                                                     isoform_data).values())
     logger.info("%d proteins (after the length filter): %d in %d rootHOGs, %d unmapped or singletons %s, "
                 "%d isoforms not selected, %d removed from big rootHOGs", n_input, n_in_rhogs,
                 len(rhogid_written_list), n_singletons,

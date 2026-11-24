@@ -153,15 +153,17 @@ def _check_rhog_step(members_before, rhogs_prots, step, may_remove=False):
     return members
 
 
-def handle_splice_variants(species_names, hogmaps, splice_folder):
-    """Handle splice variants and return filtered data"""
+def handle_splice_variants(species_names, hogmaps, splice_folder, proteome_ids=None):
+    """Handle splice variants and return filtered data
+
+    proteome_ids: species -> ids of the proteins that passed the length filter (see select_best_isoforms)"""
     
     # Parse isoform files
     isoform_by_gene = parse_isoform_files(species_names, splice_folder)
     
     # Select best isoforms
     selected_isoforms, non_selected = select_best_isoforms(
-        species_names, isoform_by_gene, hogmaps
+        species_names, isoform_by_gene, hogmaps, proteome_ids
     )
     
     # Filter hogmaps to keep only selected isoforms
@@ -233,6 +235,14 @@ def parse_hogmap_omamer(proteomes, fasta_format_keep, folder=None):
                 else:
                     cur_species_hogmap[row['qseqid']].append(
                         HOGMapData(row['hogid'], row['family_p'], row['qseqlen'], row['subfamily_medianseqlen']))
+        # a protein with N/A rows next to hits (e.g. concatenated hogmaps) is mapped, and a repeated N/A
+        # row must not send the protein to the clustering twice (issue #114)
+        n_na_rows = len(unmapped[species_name])
+        unmapped[species_name] = [prot_id for prot_id in dict.fromkeys(unmapped[species_name])
+                                  if prot_id not in cur_species_hogmap]
+        if len(unmapped[species_name]) < n_na_rows:
+            logger.warning("hogmap %s: %d N/A rows are repeated or belong to proteins that have hits, ignored",
+                           species_name, n_na_rows - len(unmapped[species_name]))
         # proteins without any row (e.g. a hogmap computed for an older version of the proteome) are
         # treated as unmapped, so they still reach the clustering of unmapped proteins (issue #114)
         in_hogmap = set(cur_species_hogmap).union(unmapped[species_name])
@@ -626,10 +636,11 @@ def merge_rhogs2(hogmaps, rhogs_prots, conf_infer_roothogs):
             continue
         host_size = len(rhogs_prots[present[0]])
         # the rootHOGs of a cluster are merged in order into one rootHOG named after the first (smallest)
-        # one; once it reaches big_rhog_size, the next rootHOG starts a new one (issue #114)
+        # one; a rootHOG that would make it bigger than big_rhog_size starts a new one, otherwise the
+        # merge would make filter_big_roothogs remove proteins from small families (issue #114)
         chunks = []
         for hog in present:
-            if not chunks or len(chunks[-1][1]) >= conf_infer_roothogs.big_rhog_size:
+            if not chunks or len(chunks[-1][1]) + len(rhogs_prots[hog]) > conf_infer_roothogs.big_rhog_size:
                 chunks.append((hog, []))
             chunks[-1][1].extend(rhogs_prots.pop(hog))
         if len(chunks) > 1:
@@ -876,7 +887,12 @@ def parse_isoform_files(species_names, folder=None):
     return isoform_by_gene_all
 
 
-def select_best_isoforms(species_names, isoform_by_gene_all, hogmaps):
+def select_best_isoforms(species_names, isoform_by_gene_all, hogmaps, proteome_ids=None):
+    """the isoform with the best OMAmer family score of each gene, and the other isoforms.
+
+    If no isoform of a gene has a hit, the first one that is in proteome_ids (species -> ids of the
+    proteins that passed the length filter) is selected: an isoform that is too short or missing from
+    the proteome would take the whole gene with it (issue #114). Without proteome_ids, the first one."""
     isoform_selected = {}
     isoform_not_selected = {}
 
@@ -885,9 +901,12 @@ def select_best_isoforms(species_names, isoform_by_gene_all, hogmaps):
         isoform_selected[species_name] = []
         isoform_list_sp = isoform_by_gene_all[species_name]
         hogmaps_sp = hogmaps[species_name]
+        in_proteome = proteome_ids[species_name] if proteome_ids is not None else None
         for isoform_list in isoform_list_sp:
             score_isof_best = 0
-            protname_best = isoform_list[0]  # to keep the order if all of the isoforms' omamer score are 'na'
+            # to keep the order if all of the isoforms' omamer score are 'na'
+            protname_best = isoform_list[0] if in_proteome is None else \
+                next((i for i in isoform_list if i in in_proteome), isoform_list[0])
             for isoform_name in isoform_list:
                 if isoform_name in hogmaps_sp:
 
@@ -976,14 +995,41 @@ def filter_unmapped_by_isoforms(unmapped, non_selected_isoforms):
     return filtered
 
 
-def check_all_proteins_accounted(prot_recs_all, hogmaps, unmapped, non_selected_isoforms=None):
+def dropped_isoforms(prot_recs_all, hogmaps, unmapped, isoform_data):
+    """species -> the proteins that are left out because another isoform of their gene was selected.
+
+    Only isoforms whose selected isoform is kept (has hits or is unmapped) count, otherwise the gene
+    would be lost."""
+    dropped = {}
+    if not isoform_data:
+        return dropped
+    for species, prots in prot_recs_all.items():
+        kept = set(hogmaps.get(species, ())).union(unmapped.get(species, ()))
+        dropped[species] = {iso for main, gene in zip(isoform_data['selected_isoforms'].get(species, ()),
+                                                      isoform_data['isoform_by_gene'].get(species, ()))
+                            if main in kept for iso in gene if iso != main and iso in prots}
+    return dropped
+
+
+def check_all_proteins_accounted(prot_recs_all, hogmaps, unmapped, isoform_data=None):
     """check that every protein that passed the length filter has OMAmer hits, is unmapped, or is an
-    isoform that was not selected (issue #114). Proteins that are none of these are added to unmapped,
-    so they still reach the clustering of unmapped proteins."""
-    non_selected_isoforms = non_selected_isoforms or {}
+    isoform of a gene for which another isoform was selected, and that it is only one of these, once
+    (issue #114).
+
+    A protein that is unmapped although it has hits, or unmapped twice, is logged as an error and kept
+    only once, mapped. Proteins that are none of these are added to unmapped, so they still reach the
+    clustering of unmapped proteins. Returns the latter."""
+    for species, prots in list(unmapped.items()):
+        mapped = hogmaps.get(species, {})
+        clean = [prot for prot in dict.fromkeys(prots) if prot not in mapped]
+        if len(clean) != len(prots):
+            invariant_violated(logger.error, f"{species}: {len(prots) - len(clean)} unmapped proteins are repeated "
+                                             f"or have hits, e.g. {sorted(set(prots) - set(clean))[:5]}")
+            unmapped[species] = clean
+    isoforms = dropped_isoforms(prot_recs_all, hogmaps, unmapped, isoform_data)
     lost = []
     for species, prots in prot_recs_all.items():
-        known = set(hogmaps.get(species, ())).union(unmapped.get(species, ()), non_selected_isoforms.get(species, ()))
+        known = set(hogmaps.get(species, ())).union(unmapped.get(species, ()), isoforms.get(species, ()))
         lost.extend((species, prot) for prot in prots if prot not in known)
     if lost:
         invariant_violated(logger.warning, f"{len(lost)} proteins would have been lost before grouping them "
