@@ -533,10 +533,10 @@ class MSAFilterElbow(MSAFilter):
         ratios = self._get_gap_ratios(msa)
         # compute points (gap_ratio, frac_of_cols) where frac_of_cols is the fraction of columns that has a lower gap ratio
         gap_ratio_and_col_frac = np.array([(r, sum(ratios < r) / len(ratios)) for r in ratios])
-        # off diagonal distance can be computed by np.cross(p1 - [0,0], pnt - [0,0]) / dist([1,1] - [0,0])
-        # divider is constant for all points (can be left away)
-        p1 = np.array([1, 1])
-        dist_from_diag = np.cross(gap_ratio_and_col_frac, p1, axisa=1)
+        # off diagonal distance is the 2D cross product of the point with [1,1] (x - y), divided by
+        # dist([1,1] - [0,0]); the divider is constant for all points (can be left away). Not np.cross:
+        # numpy 2 no longer supports 2D vectors there.
+        dist_from_diag = gap_ratio_and_col_frac[:, 0] - gap_ratio_and_col_frac[:, 1]
         idx = abs(dist_from_diag).argsort()
         k = idx[-1]
         threshold = gap_ratio_and_col_frac[k][0]
