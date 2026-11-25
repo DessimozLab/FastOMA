@@ -24,6 +24,7 @@ And there shouldn't be any repeated names in leaves names and internal node name
 The FastOMA workflow will automatically download the omamer database for LUCA (7.7 GB) if the argument `--omamer_db` is not
 provided on the command line. The argument can be a local file (e.g. a previously downloaded omamer database file) or 
 a URL to an alternative omamer database, e.g. a subset of the LUCA database which is smaller, like Primates with this [link](https://omabrowser.org/All/Primates.h5) which is ~100MB. However, to have a broader reference gene families, we recommend to use the LUCA database if possible. 
+Not needed with `--denovo` (see [De-novo gene families without OMAmer](#de-novo-gene-families-without-omamer)).
 
 
 You can see an example in the [testdata](https://github.com/DessimozLab/FastOMA/tree/main/testdata/in_folder) folder.
@@ -421,6 +422,23 @@ $ tree ../testdata/
 In this case, FastOMA uses two hogmap files and only run omamer for the `AQUAE.fa`. Then continue the rest of pipeline. 
 Let's save the planet together with 
 [green computational Biology](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009324). 
+
+### De-novo gene families without OMAmer
+OMAmer places the proteins into the gene families of the OMA database. For proteomes that are not related to
+real proteins, e.g. simulated data, this makes little sense. With `--denovo`, OMAmer is not run (and the OMAmer
+database is neither needed nor downloaded); instead all proteins are clustered with
+[MMseqs2](https://github.com/soedinglab/MMseqs2) `easy-cluster`, and each cluster that contains proteins of at least
+two species becomes a rootHOG:
+```
+nextflow run dessimozlab/FastOMA -profile docker --input in_folder --output_folder out_folder --denovo
+```
+FastOMA does not merge rootHOGs later on, so a gene family that the clustering splits stays split. The rootHOGs are
+named `HOG:clust<number>` in the `OMAmerRootHOG` property of the orthoXML.
+
+The clustering uses the mmseqs defaults unless set with `--mmseqs_coverage` (`-c`, default 0.8),
+`--mmseqs_cov_mode` (`--cov-mode`, default 0), `--mmseqs_sensitivity` (`-s`, default 4; up to 7.5 finds more distant
+homologs) and `--mmseqs_min_seq_id` (`--min-seq-id`, default 0). These options also apply without `--denovo`,
+to the clustering of the proteins that OMAmer could not place.
 
 
 ### Run on a cluster 

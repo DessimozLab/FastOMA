@@ -59,6 +59,38 @@
           "help": "If not provided, the default OMAmer database (LUCA) will be used.",
           "default": "https://omabrowser.org/All/LUCA.h5"
         },
+        "denovo": {
+          "type": "boolean",
+          "default": false,
+          "description": "Infer the rootHOGs by de-novo clustering of all proteins with mmseqs instead of OMAmer",
+          "fa_icon": "fas fa-object-group",
+          "help": "OMAmer places proteins into the families of the OMA database, which makes little sense for e.g. simulated proteomes. With --denovo, OMAmer is not run and --omamer_db and hogmap_in are ignored."
+        },
+        "mmseqs_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum alignment coverage for the mmseqs clustering (mmseqs -c, default 0.8)",
+          "help": "The proteins without OMAmer placement and the singletons (with --denovo: all proteins) are clustered with mmseqs easy-cluster. If not set, the mmseqs default is used."
+        },
+        "mmseqs_cov_mode": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "description": "How the coverage of the mmseqs clustering is defined (mmseqs --cov-mode, default 0: of query and target)"
+        },
+        "mmseqs_sensitivity": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 7.5,
+          "description": "Sensitivity of the mmseqs clustering (mmseqs -s, default 4); higher finds more distant homologs, but is slower"
+        },
+        "mmseqs_min_seq_id": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum sequence identity for the mmseqs clustering (mmseqs --min-seq-id, default 0)"
+        },
         "test_data_cache": {
           "type": "string",
           "format": "directory-path",

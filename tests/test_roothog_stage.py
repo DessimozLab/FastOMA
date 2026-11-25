@@ -151,3 +151,66 @@ def test_synthetic_every_protein_accounted_for(synthetic_run):
 def test_synthetic_minor_isoforms_not_clustered(synthetic_run):
     root, _, _ = synthetic_run
     assert len({"S2_n1", "S2_n2"} & set(fasta_ids(root / "singleton_unmapped.fa"))) == 1
+
+
+@pytest.mark.slow
+@pytest.mark.tools("mmseqs")
+def test_denovo_clusters_all_proteins(tmp_path):
+    # no hogmap at all: every protein goes to the mmseqs clustering
+    cmd = [sys.executable, "-m", "FastOMA.infer_roothogs", "--proteomes", str(TESTDATA_DIR / "in_folder" / "proteome"),
+           "--denovo", "--out-rhog-folder", "omamer_rhogs"]
+    subprocess.run(cmd, cwd=tmp_path, check=True, capture_output=True, env=dict(os.environ, PYTHONHASHSEED="0"))
+    out = tmp_path / "omamer_rhogs"
+    assert len(fasta_ids(tmp_path / "singleton_unmapped.fa")) == 28
+    assert all(f.name.startswith("HOG_clust") for f in out.glob("*.fa"))
+    partition = read_rhog_partition(out)
+    assert frozenset({"sp|O67118|DNAK_AQUAE", "sp|P17821|DNAK_CHLTR", "sp|P47547|DNAK_MYCGE"}) in partition
+    assert sum(len(g) for g in partition) == 28   # the test proteomes have no orphans
+
+
+@pytest.mark.slow
+@pytest.mark.tools("mmseqs")
+def test_denovo_with_splice_keeps_the_longest_isoform(tmp_path):
+    # without OMAmer hits, the first isoform listed was selected: here a 60 aa fragment of LEPA_AQUAE,
+    # which then did not cluster with LEPA_CHLTR, and the family was lost
+    src = TESTDATA_DIR / "in_folder" / "proteome"
+    proteomes = tmp_path / "proteome"
+    proteomes.mkdir()
+    for fa in src.glob("*.fa"):
+        (proteomes / fa.name).write_text(fa.read_text())
+    full = "sp|O67618|LEPA_AQUAE"
+    seqs, cur = {}, None
+    for line in (src / "AQUAE.fa").read_text().splitlines():
+        if line.startswith(">"):
+            cur = line[1:].split()[0]
+            seqs[cur] = ""
+        else:
+            seqs[cur] += line.strip()
+    with open(proteomes / "AQUAE.fa", "a") as fh:
+        fh.write(f">LEPA_frag\n{seqs[full][:60]}\n")
+    splice = tmp_path / "splice"
+    splice.mkdir()
+    (splice / "AQUAE.splice").write_text(f"LEPA_frag;{full}\n")
+
+    cmd = [sys.executable, "-m", "FastOMA.infer_roothogs", "--proteomes", str(proteomes), "--splice", str(splice),
+           "--denovo", "--out-rhog-folder", "omamer_rhogs"]
+    subprocess.run(cmd, cwd=tmp_path, check=True, capture_output=True, env=dict(os.environ, PYTHONHASHSEED="0"))
+    partition = read_rhog_partition(tmp_path / "omamer_rhogs")
+    lepa = [g for g in partition if full in g]
+    assert len(lepa) == 1 and "sp|O84067|LEPA_CHLTR" in lepa[0]
+    assert not any("LEPA_frag" in g for g in partition)
+
+
+def test_killed_mmseqs_exit_code_is_passed_on(tmp_path):
+    # mmseqs killed (e.g. out of memory): infer-roothogs exits with 128+9, so Nextflow retries the task
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake = bin_dir / "mmseqs"
+    fake.write_text('#!/bin/sh\n[ "$1" = version ] && exit 0\nkill -9 $$\n')
+    fake.chmod(0o755)
+    cmd = [sys.executable, "-m", "FastOMA.infer_roothogs", "--proteomes", str(TESTDATA_DIR / "in_folder" / "proteome"),
+           "--denovo", "--out-rhog-folder", "omamer_rhogs"]
+    env = dict(os.environ, PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    res = subprocess.run(cmd, cwd=tmp_path, capture_output=True, text=True, env=env)
+    assert res.returncode == 137, res.stderr[-2000:]
+    assert "terminated by signal 9" in res.stderr

@@ -8,6 +8,7 @@ from ete3 import Tree
 from Bio.Data.IUPACData import extended_protein_letters, unambiguous_dna_letters, unambiguous_rna_letters
 
 from . import _utils_roothog, logger
+from .zoo.wrappers.clusterers import find_mmseqs
 from . import __version__ as fastoma_version
 from .logging_setup import setup_logging
 
@@ -240,6 +241,9 @@ def fastoma_check_input():
     parser.add_argument("--splice", help="Path to the folder containing the splice information files")
     parser.add_argument("--hogmap", help="Path to the folder containing the hogmap files")
     parser.add_argument("--omamer_db", help="Path to the omamer database")
+    parser.add_argument("--denovo", action="store_true",
+                        help="the rootHOGs are inferred by de-novo clustering (mmseqs) instead of OMAmer, "
+                             "so neither an OMAmer db nor hogmaps are needed")
     parser.add_argument('-v', action="count", default=0, help="Increase verbosity to info/debug")
     conf = parser.parse_args()  # conf_check_input
 
@@ -272,23 +276,30 @@ def fastoma_check_input():
         logger.error("Halting FastOMA because of invalid proteome input data. FastOMA check input failed! Exiting...")
         sys.exit(1)
 
-    hogmap_files = conf.hogmap is not None and os.path.exists(conf.hogmap)
-    species_hogmaps = []
-    if hogmap_files:
-        species_hogmaps = check_hogmap_files(conf.hogmap)
-
-    hogmap_complete = False
-    if set(species_hogmaps) == set(species_names):
-        hogmap_complete = True
-
-    omamerdb = check_omamer_db(conf.omamer_db)
-
-    if not(omamerdb or hogmap_complete):
-        logger.error("OMAmer db does not exist and no hogmap provided.")
-        logger.error("Check input failed. FastOMA halted!")
-        sys.exit(1)
+    if conf.denovo:
+        if find_mmseqs() is None:
+            logger.error("De-novo clustering (--denovo) needs mmseqs, which is not on the PATH.")
+            logger.error("Check input failed. FastOMA halted!")
+            sys.exit(1)
+        logger.info("De-novo clustering with mmseqs, OMAmer db and hogmaps are not used.")
     else:
-        logger.info("OMAmer db or hogmap exist. It looks ok.")
+        hogmap_files = conf.hogmap is not None and os.path.exists(conf.hogmap)
+        species_hogmaps = []
+        if hogmap_files:
+            species_hogmaps = check_hogmap_files(conf.hogmap)
+
+        hogmap_complete = False
+        if set(species_hogmaps) == set(species_names):
+            hogmap_complete = True
+
+        omamerdb = check_omamer_db(conf.omamer_db)
+
+        if not(omamerdb or hogmap_complete):
+            logger.error("OMAmer db does not exist and no hogmap provided.")
+            logger.error("Check input failed. FastOMA halted!")
+            sys.exit(1)
+        else:
+            logger.info("OMAmer db or hogmap exist. It looks ok.")
 
     # todo  check splice file format . if the name matches with the proteome files.
     splice_files = conf.splice is not None and os.path.exists(conf.splice)

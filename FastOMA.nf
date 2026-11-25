@@ -110,6 +110,7 @@ process check_input{
                         --splice ${splice_folder} \
                         --hogmap ${hogmap_folder} \
                         --omamer_db ${omamerdb} \
+                        ${ params.denovo.toString().toBoolean() ? "--denovo" : "" } \
                         -vv
     """
 }
@@ -147,6 +148,8 @@ process infer_roothogs{
     path hogmaps, stageAs: "hogmaps/*"
     path proteome_folder
     path splice_folder
+    val  nr_species       // these two size the memory request (conf/base.config)
+    val  proteome_bytes
 
   output:
     path "omamer_rhogs"
@@ -155,12 +158,21 @@ process infer_roothogs{
     path "protein_events_*.events", optional: true, emit: protein_events
 
   script:
+    // mmseqs gets 60% of the task memory, at least 2 GB: below ~1.1 GB its prefilter stops with "Cannot fit
+    // databases" even for a few sequences (with less task memory, e.g. a custom config, mmseqs can exceed it)
     """
        fastoma-infer-roothogs  --proteomes ${proteome_folder} \
                                --hogmap hogmaps \
                                --splice ${splice_folder} \
                                --out-rhog-folder "omamer_rhogs" \
                                --min-sequence-length ${params.min_sequence_length} \
+                               ${ params.denovo.toString().toBoolean() ? "--denovo" : "" } \
+                               --mmseqs-threads ${task.cpus} \
+                               ${ task.memory ? "--mmseqs-split-memory-limit ${Math.max(2048L, (task.memory.toMega() * 0.6) as long)}M" : "" } \
+                               ${ params.mmseqs_coverage != null ? "--mmseqs-coverage ${params.mmseqs_coverage}" : "" } \
+                               ${ params.mmseqs_cov_mode != null ? "--mmseqs-cov-mode ${params.mmseqs_cov_mode}" : "" } \
+                               ${ params.mmseqs_sensitivity != null ? "--mmseqs-sensitivity ${params.mmseqs_sensitivity}" : "" } \
+                               ${ params.mmseqs_min_seq_id != null ? "--mmseqs-min-seq-id ${params.mmseqs_min_seq_id}" : "" } \
                                ${ params.protein_trace.toString().toBoolean() ? "--protein-trace" : "" } \
                                -vv
     """
@@ -514,19 +526,29 @@ workflow {
     }
 
     // Static channels
-    omamerdb = Channel.fromPath(params.omamer_db)
+    // de-novo clustering does not use OMAmer: a placeholder, so that the (default: remote, 7.7 GB) db is
+    // never staged
+    omamerdb = params.denovo.toString().toBoolean() ?
+                 Channel.fromPath("${projectDir}/assets/NO_OMAMER_DB", checkIfExists: true) : Channel.fromPath(params.omamer_db)
     notebook = Channel.fromPath("$workflow.projectDir/FastOMA/fastoma_notebook_stat.ipynb", type: "file", checkIfExists: true).first()
 
     // Run the pipeline
     (species_tree_checked, ready_input_check) = check_input(proteome_folder, hogmap_in, species_tree, omamerdb, splice_folder)
+    if (params.denovo.toString().toBoolean()) {
+        // no hogmaps; infer_roothogs clusters all proteins with mmseqs (after check_input succeeded)
+        hogmaps = ready_input_check.map { [] }
+    } else {
         omamer_input_channel = proteomes
-        .combine(omamerdb)
-        .combine(hogmap_in)
-        .combine(ready_input_check)
-    hogmap = omamer_run(omamer_input_channel)
-    nr_species = hogmap.count()
+            .combine(omamerdb)
+            .combine(hogmap_in)
+            .combine(ready_input_check)
+        hogmaps = omamer_run(omamer_input_channel).collect()
+    }
+    nr_species = proteomes.count()
+    proteome_bytes = proteomes.map { f -> f.size() }.sum()
 
-    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(hogmap.collect(), proteome_folder, splice_folder)
+    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(hogmaps, proteome_folder, splice_folder,
+                                                                           nr_species, proteome_bytes)
 
     (rhogs_rest_batches, rhogs_big_batches) = batch_roothogs(omamer_rhogs)
 
@@ -543,7 +565,7 @@ workflow {
             .set { all_protein_events }
         protein_trace(proteome_folder, all_protein_events, rootHOGs_tsv, params.fasta_header_id_transformer)
     }
-    c = hogmap.count().branch{ n->
+    c = nr_species.branch{ n->
         TRUE: (n<=25 || params.force_pairwise_ortholog_generation.toString().toBoolean())
         FALSE: n>25
     }
