@@ -7,7 +7,7 @@ dependencies:
   - omamer
   - mafft
   - fasttree
-  - nextflow
+  - nextflow>=25.10
   - papermill
   - seaborn
   - matplotlib

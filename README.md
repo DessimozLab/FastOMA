@@ -92,6 +92,9 @@ nextflow run FastOMA.nf -profile docker \
 
 # How to install FastOMA
 
+FastOMA needs [Nextflow](https://www.nextflow.io/) 25.10 or newer (see the [changelog](CHANGELOG.md) for what
+changed between versions).
+
 There are four ways to run/install FastOMA detailed below:
 
 ### 1. Running workflow directly
@@ -477,43 +480,4 @@ Citation:  Majidian, Sina, Yannis Nevers, Ali Yazdizadeh Kharrazi, Alex Warwick 
 
 
 ## Change log
-- Update  v0.5.1+dev (not yet released):
-  
-- Update  v0.5.1:
-  - Bug with input handling fixed.
-  - upgraded github actions for CI/CD.
-- Update  v0.5.0:
-  - renamed input_folder parameter to input. input accepts now also (remote) archive tarball files.
-  - better configuration setup (close to nf-core)
-  - improved resource allocation for nextflow
-  - improved handling of alternative splicing variants in reporting
-  - adding test profile and nf-test based CI checks
-- Update  v0.4.1:
-  - bump omamer to 2.1.2 (fixes a bug in the version 2.1.1, see [#74](https://github.com/DessimozLab/omamer/issues/74)
-- Update  v0.4.0:
-  - Improvements for nextflow: alternative version selection, README updates
-  - Split HOG and sampling improvements
-  - ensure orthologGroup at the MRCA of all genes in the group
-  - Docker improvements, additional labels and tools
-  - New gene families with mmseqs easy-cluster if mmseqs is installed
-  - Improved input checking
-  - Merge rootHOGs, improved handling of singleton using omamer multi-hits
-  - Various documentation and usability updates
-- Update  v0.3.5:
-  - Fixes an issue with reaching the maximum recursion limit. (#31)
-  - Fixes a problem with parallel execution for big families. (#44)
-- Update  v0.3.4:
-  - Fixing a bug in marker gene groups extraction. Before, more than one gene per species were possible
-- Update  v0.3.3: improvements for nextflow (selection of alternative versions) and updates on readme
-- Update  v0.3.1: spliting HOG and sampling
-- Update  v0.1.6: adding dynamic resources, additional and improved output
-- Update  v0.1.5: docker, add help, clean nextflow 
-- Update  v0.1.4: new gene families with linclust if mmseqs is installed, using quoted protein name to handle species chars, check input first 
-- Update  v0.1.3: merge rootHOGs and handle singleton using omamer multi-hits
-- Update  v0.1.2: improve rootHOG inference, splice, OMAmerv2 with multi-hits
-- Release v0.1.0: improve nextflow pipeline and outputs. 
-- prelease v.0.0.6: use `--fragment-detection` for `infer-subhogs` and `--low-so-detection --fragment-detection`
-- prelease v.0.0.6: using input hogmpa
-- prelease v.0.0.5: adding pip setup.py 
-- prelease v.0.0.4: simple nextflow
-- prelease v.0.0.3: with dask
+See [CHANGELOG.md](CHANGELOG.md).

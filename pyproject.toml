@@ -27,7 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 nextflow = [
-    "nextflow"
+    "nextflow>=25.10"
 ]
 report = [
     "papermill",

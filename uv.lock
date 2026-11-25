@@ -1198,7 +1198,7 @@ requires-dist = [
     { name = "lxml", specifier = ">=4.6,<6" },
     { name = "matplotlib", marker = "extra == 'report'" },
     { name = "networkx" },
-    { name = "nextflow", marker = "extra == 'nextflow'" },
+    { name = "nextflow", marker = "extra == 'nextflow'", specifier = ">=25.10" },
     { name = "numpy" },
     { name = "omamer", specifier = ">=2.1,!=2.1.1,<3" },
     { name = "papermill", marker = "extra == 'report'" },
