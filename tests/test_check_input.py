@@ -146,3 +146,35 @@ class TestCheckSplice:
 
     def test_single_gene_with_isoforms(self):
         assert C.check_splice({"A": [["a1", "a2"]]}) is None
+
+
+class TestDenovo:
+    """--denovo: neither an OMAmer db nor hogmaps are needed, but mmseqs is."""
+
+    @staticmethod
+    def run(tmp_path, *extra, path=None):
+        import os
+        import subprocess
+        import sys
+        env = dict(os.environ) if path is None else dict(os.environ, PATH=path)
+        # check_input.py has no __main__ block, call the entry point
+        cmd = [sys.executable, "-c", "from FastOMA.check_input import fastoma_check_input as m; m()", "--proteomes", str(TESTDATA_DIR / "in_folder" / "proteome"),
+               "--species-tree", str(TESTDATA_DIR / "in_folder" / "species_tree.nwk"),
+               "--out-tree", str(tmp_path / "checked.nwk"), "--omamer_db", str(tmp_path / "missing.h5"), *extra]
+        return subprocess.run(cmd, capture_output=True, text=True, env=env)
+
+    def test_missing_omamer_db_fails_without_denovo(self, tmp_path):
+        res = self.run(tmp_path)
+        assert res.returncode == 1 and "OMAmer db does not exist" in res.stderr + res.stdout
+
+    @pytest.mark.tools("mmseqs")
+    def test_missing_omamer_db_ok_with_denovo(self, tmp_path):
+        res = self.run(tmp_path, "--denovo")
+        assert res.returncode == 0, res.stderr
+
+    def test_denovo_needs_mmseqs(self, tmp_path):
+        import os
+        import sys
+        # keep the python interpreter's folder (for the subprocess) but nothing that provides mmseqs
+        res = self.run(tmp_path, "--denovo", path=os.path.dirname(sys.executable))
+        assert res.returncode == 1 and "needs mmseqs" in res.stderr + res.stdout

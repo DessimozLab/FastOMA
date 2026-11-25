@@ -58,6 +58,13 @@ class TestParseProteomes:
             U.parse_proteomes(str(tmp_path))
 
 
+def test_denovo_unmapped():
+    recs = U.add_species_name_prot_id({"A": [rec("a1"), rec("a2")], "B": [rec("b1")]})
+    hogmaps, unmapped = U.denovo_unmapped({sp: list(d.values()) for sp, d in recs.items()})
+    assert hogmaps == {"A": {}, "B": {}}
+    assert dict(unmapped) == {"A": ["a1", "a2"], "B": ["b1"]}
+
+
 class TestParseHogmapOmamer:
     @staticmethod
     def parse(tmp_path, proteome_ids, rows):

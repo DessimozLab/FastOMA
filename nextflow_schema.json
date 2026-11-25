@@ -59,6 +59,13 @@
           "help": "If not provided, the default OMAmer database (LUCA) will be used.",
           "default": "https://omabrowser.org/All/LUCA.h5"
         },
+        "denovo": {
+          "type": "boolean",
+          "default": false,
+          "description": "Infer the rootHOGs by de-novo clustering of all proteins with mmseqs instead of OMAmer",
+          "fa_icon": "fas fa-object-group",
+          "help": "OMAmer places proteins into the families of the OMA database, which makes little sense for e.g. simulated proteomes. With --denovo, OMAmer is not run and --omamer_db and hogmap_in are ignored."
+        },
         "test_data_cache": {
           "type": "string",
           "format": "directory-path",

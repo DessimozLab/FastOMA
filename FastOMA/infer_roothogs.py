@@ -1,5 +1,6 @@
 import os.path
 import subprocess
+import sys
 from shutil import which
 
 from . import _utils_roothog, logger
@@ -12,6 +13,10 @@ from .logging_setup import setup_logging
 """
 
 fastoma-infer-roothogs --proteomes proteome --hogmap hogmap --out-rhog-folder omamer_rhogs -vv
+
+without OMAmer, e.g. for simulated proteomes, all proteins are clustered de novo with mmseqs:
+
+fastoma-infer-roothogs --proteomes proteome --denovo --out-rhog-folder omamer_rhogs -vv
 
 """
 
@@ -35,6 +40,9 @@ def fastoma_infer_roothogs():
     parser.add_argument("--big-rhog-size", required=False, type=int, default=50*1000, help= "For big rootHOGs, we have different heuristics") # big_rhog_size
     parser.add_argument("--big-fscore-thresh", required=False, type=int, default=95, help="For huge rootHOGs, we have different heuristics, like filtering low family score protiens") # big_fscore_thresh
 
+    parser.add_argument("--denovo", action="store_true",
+                        help="infer the rootHOGs by de-novo clustering of all proteins with mmseqs instead of "
+                             "OMAmer placements (e.g. for simulated data); --hogmap is ignored")
     parser.add_argument("--protein-trace", action="store_true",
                         help="write protein_events_*.events files, used by fastoma-protein-trace to trace every input protein")
 
@@ -52,10 +60,18 @@ def fastoma_infer_roothogs():
     logger.info("Processing protein records...")
     prot_recs_all = _utils_roothog.add_species_name_prot_id(prot_recs_lists)
 
-    logger.info("Parsing HOGMAP files...")
-    hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(
-        prot_recs_lists, fasta_format_keep, folder=conf.hogmap
-    )
+    linclust_available = which("mmseqs")
+    if conf.denovo:
+        if not linclust_available:
+            logger.error("De-novo clustering (--denovo) needs mmseqs, which is not on the PATH.")
+            sys.exit(1)
+        logger.info("De-novo clustering: all proteins are clustered with mmseqs, no OMAmer placements")
+        hogmaps, unmapped = _utils_roothog.denovo_unmapped(prot_recs_lists)
+    else:
+        logger.info("Parsing HOGMAP files...")
+        hogmaps, unmapped = _utils_roothog.parse_hogmap_omamer(
+            prot_recs_lists, fasta_format_keep, folder=conf.hogmap
+        )
 
     # Step 2: Handle splice isoforms
     isoform_data = None
@@ -88,13 +104,14 @@ def fastoma_infer_roothogs():
 
     min_rhog_size = 2
     rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, conf.out_rhog_folder, min_rhog_size)
-    linclust_available = which("mmseqs")  # True #
     # if memseqs is not installed the output will be empty / None
     if linclust_available:
         try:
             res = subprocess.run([linclust_available, "-h"], check=True, text=True, capture_output=True)
         except subprocess.CalledProcessError as e:
             logger.error("mmseqs linclust is not working: %s", e)
+            if conf.denovo:
+                sys.exit(1)
             logger.error("Skipping clustering of unmapped singletons")
             linclust_available = False
     cnt_unmapped_singleton = 0

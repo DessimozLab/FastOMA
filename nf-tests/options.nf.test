@@ -133,4 +133,37 @@ nextflow_pipeline {
             )
         }
     }
+
+    test("de-novo clustering without OMAmer") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                output_folder = "$outputDir"
+                hogmap_folder = "$outputDir/hogmap"
+                denovo = true
+                // must not be used: neither staged nor checked
+                omamer_db = "${projectDir}/does_not_exist.h5"
+            }
+        }
+
+        then {
+            def out = file(params.output_folder).toPath()
+            def orthoxml = out.resolve('FastOMA_HOGs.orthoxml')
+            def families = (orthoxml.text =~ /name="OMAmerRootHOG" value="([^"]+)"/).collect { it[1] }
+            def roothogs = FastomaOutput.groupPartition(out.resolve('RootHOGs.tsv'))
+
+            assertAll(
+                { assert workflow.success },
+                // omamer did not run
+                { assert !file("${params.hogmap_folder}").exists() },
+                { assert !workflow.trace.tasks().any { it.name.startsWith('omamer_run') } },
+                // all rootHOGs come from the mmseqs clustering
+                { assert families && families.every { it.startsWith('HOG:clust') } },
+                // the conserved single-copy families are found
+                { assert roothogs.contains(['sp|O67118|DNAK_AQUAE', 'sp|P17821|DNAK_CHLTR', 'sp|P47547|DNAK_MYCGE']) },
+                { assert roothogs.contains(['sp|O67032|RF1_AQUAE', 'sp|O84026|RF1_CHLTR', 'sp|P47500|RF1_MYCGE']) },
+            )
+        }
+    }
 }

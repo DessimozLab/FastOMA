@@ -261,6 +261,18 @@ def parse_hogmap_omamer(proteomes, fasta_format_keep, folder=None):
     logger.info("There are %d species in the hogmap folder.", len(hogmaps))
     return hogmaps, unmapped
 
+def denovo_unmapped(proteomes):
+    """hogmaps and unmapped as parse_hogmap_omamer returns them, for de-novo clustering: no protein
+    has OMAmer hits, all are unmapped (and so go to the mmseqs clustering)."""
+    hogmaps = {species_name: {} for species_name in proteomes}
+    unmapped = collections.defaultdict(list)
+    for species_name, prot_recs in proteomes.items():
+        unmapped[species_name] = [rec.id.split('||', 1)[0] for rec in prot_recs]
+        for prot_id in unmapped[species_name]:
+            ptrace.event(species_name, prot_id, "infer_roothogs", "no_omamer_hit", "", "denovo")
+    return hogmaps, unmapped
+
+
 def group_prots_by_roothogs(hogmaps):
     """Group proteins by their root HOG assignments"""
     

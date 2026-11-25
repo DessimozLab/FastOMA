@@ -151,3 +151,18 @@ def test_synthetic_every_protein_accounted_for(synthetic_run):
 def test_synthetic_minor_isoforms_not_clustered(synthetic_run):
     root, _, _ = synthetic_run
     assert len({"S2_n1", "S2_n2"} & set(fasta_ids(root / "singleton_unmapped.fa"))) == 1
+
+
+@pytest.mark.slow
+@pytest.mark.tools("mmseqs")
+def test_denovo_clusters_all_proteins(tmp_path):
+    # no hogmap at all: every protein goes to the mmseqs clustering
+    cmd = [sys.executable, "-m", "FastOMA.infer_roothogs", "--proteomes", str(TESTDATA_DIR / "in_folder" / "proteome"),
+           "--denovo", "--out-rhog-folder", "omamer_rhogs"]
+    subprocess.run(cmd, cwd=tmp_path, check=True, capture_output=True, env=dict(os.environ, PYTHONHASHSEED="0"))
+    out = tmp_path / "omamer_rhogs"
+    assert len(fasta_ids(tmp_path / "singleton_unmapped.fa")) == 28
+    assert all(f.name.startswith("HOG_clust") for f in out.glob("*.fa"))
+    partition = read_rhog_partition(out)
+    assert frozenset({"sp|O67118|DNAK_AQUAE", "sp|P17821|DNAK_CHLTR", "sp|P47547|DNAK_MYCGE"}) in partition
+    assert sum(len(g) for g in partition) == 28   # the test proteomes have no orphans
