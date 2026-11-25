@@ -523,13 +523,8 @@ workflow {
     // Static channels
     // de-novo clustering does not use OMAmer: a placeholder, so that the (default: remote, 7.7 GB) db is
     // never staged
-<<<<<<< HEAD
-    omamerdb = params.denovo.toString().toBoolean() ? 
+    omamerdb = params.denovo.toString().toBoolean() ?
                  Channel.fromPath("${projectDir}/assets/NO_OMAMER_DB", checkIfExists: true) : Channel.fromPath(params.omamer_db)
-=======
-    omamerdb = params.denovo.toString().toBoolean() ? Channel.fromPath("${projectDir}/assets/NO_OMAMER_DB", checkIfExists: true)
-                             : Channel.fromPath(params.omamer_db)
->>>>>>> fae7154 (fix: parse params.denovo as boolean also when Nextflow passes it as a string)
     notebook = Channel.fromPath("$workflow.projectDir/FastOMA/fastoma_notebook_stat.ipynb", type: "file", checkIfExists: true).first()
 
     // Run the pipeline
