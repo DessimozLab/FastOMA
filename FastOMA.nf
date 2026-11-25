@@ -158,6 +158,8 @@ process infer_roothogs{
     path "protein_events_*.events", optional: true, emit: protein_events
 
   script:
+    // mmseqs gets 60% of the task memory, at least 2 GB: below ~1.1 GB its prefilter stops with "Cannot fit
+    // databases" even for a few sequences (with less task memory, e.g. a custom config, mmseqs can exceed it)
     """
        fastoma-infer-roothogs  --proteomes ${proteome_folder} \
                                --hogmap hogmaps \
@@ -166,7 +168,7 @@ process infer_roothogs{
                                --min-sequence-length ${params.min_sequence_length} \
                                ${ params.denovo.toString().toBoolean() ? "--denovo" : "" } \
                                --mmseqs-threads ${task.cpus} \
-                               ${ task.memory ? "--mmseqs-split-memory-limit ${(task.memory.toMega() * 0.6) as long}M" : "" } \
+                               ${ task.memory ? "--mmseqs-split-memory-limit ${Math.max(2048L, (task.memory.toMega() * 0.6) as long)}M" : "" } \
                                ${ params.mmseqs_coverage != null ? "--mmseqs-coverage ${params.mmseqs_coverage}" : "" } \
                                ${ params.mmseqs_cov_mode != null ? "--mmseqs-cov-mode ${params.mmseqs_cov_mode}" : "" } \
                                ${ params.mmseqs_sensitivity != null ? "--mmseqs-sensitivity ${params.mmseqs_sensitivity}" : "" } \

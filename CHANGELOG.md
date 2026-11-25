@@ -16,8 +16,8 @@ All notable changes to FastOMA. Changes that alter the inferred orthology are li
 - `--mmseqs_coverage`, `--mmseqs_cov_mode`, `--mmseqs_sensitivity` and `--mmseqs_min_seq_id` set
   the mmseqs clustering of the proteins without OMAmer placement (with `--denovo`: of all
   proteins). Unset, the mmseqs defaults are used as before. The memory of the mmseqs clustering
-  is capped at 60% of the memory of the infer_roothogs task (mmseqs `--split-memory-limit`), which
-  with `--denovo` grows with the size of the proteomes.
+  is capped at 60% of the memory of the infer_roothogs task, but at least 2 GB (mmseqs
+  `--split-memory-limit`); with `--denovo`, the task memory grows with the size of the proteomes.
 - `--protein_trace`: records what happens to every input protein and writes `protein_fates.tsv`,
   `protein_events.tsv.gz` and `protein_trace_summary.txt` (#106).
 - `TCSScore` and `ImpliedLosses` scores for every (sub)HOG in `FastOMA_HOGs.orthoxml`, next to
