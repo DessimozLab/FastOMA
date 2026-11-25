@@ -15,7 +15,9 @@ All notable changes to FastOMA. Changes that alter the inferred orthology are li
   with OMAmer, e.g. for simulated proteomes. OMAmer is not run, and its database is not needed.
 - `--mmseqs_coverage`, `--mmseqs_cov_mode`, `--mmseqs_sensitivity` and `--mmseqs_min_seq_id` set
   the mmseqs clustering of the proteins without OMAmer placement (with `--denovo`: of all
-  proteins). Unset, the mmseqs defaults are used as before.
+  proteins). Unset, the mmseqs defaults are used as before. The memory of the mmseqs clustering
+  is capped at 60% of the memory of the infer_roothogs task (mmseqs `--split-memory-limit`), which
+  with `--denovo` grows with the size of the proteomes.
 - `--protein_trace`: records what happens to every input protein and writes `protein_fates.tsv`,
   `protein_events.tsv.gz` and `protein_trace_summary.txt` (#106).
 - `TCSScore` and `ImpliedLosses` scores for every (sub)HOG in `FastOMA_HOGs.orthoxml`, next to
@@ -24,6 +26,9 @@ All notable changes to FastOMA. Changes that alter the inferred orthology are li
 - `utils/generate_splice_file_Ensembl.py`, which writes splice files from Ensembl proteomes.
 
 ### Changed output
+- **Splice genes without any OMAmer hit keep their longest isoform**, no longer the first one listed
+  in the splice file; a fragment listed first did not cluster with its orthologs. With `--denovo`
+  this applies to every splice gene.
 - **No proteins are dropped any more.** fastoma-infer-subhogs lost proteins in several places
   (about 3% of all proteins on a 30-species fungi dataset), fastoma-infer-roothogs in some
   others (proteins missing from the hogmap, ids longer than 230 characters, oversized merges of

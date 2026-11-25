@@ -36,12 +36,14 @@ def find_mmseqs(executable=DEFAULT_EXECUTABLE):
 
 
 def cluster_sequences(records, executable=DEFAULT_EXECUTABLE, threads=None, coverage=None, sensitivity=None,
-                      min_seq_id=None, cov_mode=None, tmp_dir=None):
+                      min_seq_id=None, cov_mode=None, split_memory_limit=None, tmp_dir=None):
     """cluster the sequences of `records` (Bio.SeqRecord) with ``mmseqs easy-cluster``.
 
     Returns the clusters as lists of records, in the order mmseqs reports them, each starting with
     its representative; singletons included. Options left at None are not passed, so mmseqs uses its
-    defaults (threads: all cores). The temporary files go to a new folder in `tmp_dir` (default: the
+    defaults (threads: all cores). split_memory_limit (e.g. "6000M") caps the memory of the
+    prefilter: mmseqs otherwise sizes it from the total RAM of the machine, not from the memory a
+    cluster job was given. The temporary files go to a new folder in `tmp_dir` (default: the
     current directory, as /tmp is often small on clusters) and are removed afterwards.
 
     Raises WrapperError if mmseqs fails; its exit_code is that of mmseqs, or 128 + signal number if
@@ -54,7 +56,7 @@ def cluster_sequences(records, executable=DEFAULT_EXECUTABLE, threads=None, cove
     if path is None:
         raise WrapperError(f"{executable} not found on the PATH")
     options = {"--threads": threads, "-c": coverage, "-s": sensitivity, "--min-seq-id": min_seq_id,
-               "--cov-mode": cov_mode}
+               "--cov-mode": cov_mode, "--split-memory-limit": split_memory_limit}
     with tempfile.TemporaryDirectory(prefix="mmseqs_", dir=tmp_dir or os.getcwd()) as work:
         fasta = os.path.join(work, "input.fa")
         with open(fasta, "wt") as fh:

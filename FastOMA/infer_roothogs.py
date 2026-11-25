@@ -51,6 +51,9 @@ def fastoma_infer_roothogs():
     mmseqs.add_argument("--mmseqs-cov-mode", type=int, help="how the coverage is defined (mmseqs --cov-mode)")
     mmseqs.add_argument("--mmseqs-sensitivity", type=float, help="sensitivity (mmseqs -s)")
     mmseqs.add_argument("--mmseqs-min-seq-id", type=float, help="minimum sequence identity (mmseqs --min-seq-id)")
+    mmseqs.add_argument("--mmseqs-split-memory-limit",
+                        help="maximum memory of the mmseqs prefilter, e.g. 6000M (mmseqs --split-memory-limit; "
+                             "default: mmseqs sizes it from the total RAM of the machine)")
     parser.add_argument("--protein-trace", action="store_true",
                         help="write protein_events_*.events files, used by fastoma-protein-trace to trace every input protein")
 
@@ -86,7 +89,8 @@ def fastoma_infer_roothogs():
     if conf.splice is not None and os.path.exists(conf.splice): 
         logger.info("Processing splice variants...")
         isoform_data = _utils_roothog.handle_splice_variants(species_names, hogmaps, conf.splice,
-                                                             {sp: set(prots) for sp, prots in prot_recs_all.items()})
+                                                             {sp: {prot_id: len(rec.seq) for prot_id, rec in prots.items()}
+                                                              for sp, prots in prot_recs_all.items()})
         _utils_roothog.write_selected_isoforms(isoform_data, prot_recs_lists)
         hogmaps = isoform_data['filtered_hogmaps']
         unmapped = _utils_roothog.filter_unmapped_by_isoforms(unmapped, isoform_data['non_selected'])
@@ -120,7 +124,8 @@ def fastoma_infer_roothogs():
         try:
             clusters = cluster_sequences(to_cluster, executable=linclust_available, threads=conf.mmseqs_threads,
                                          coverage=conf.mmseqs_coverage, cov_mode=conf.mmseqs_cov_mode,
-                                         sensitivity=conf.mmseqs_sensitivity, min_seq_id=conf.mmseqs_min_seq_id)
+                                         sensitivity=conf.mmseqs_sensitivity, min_seq_id=conf.mmseqs_min_seq_id,
+                                         split_memory_limit=conf.mmseqs_split_memory_limit)
         except WrapperError as e:
             # e.g. killed because it ran out of memory: pass the exit code on, so Nextflow can retry the task
             logger.error("%s", e)

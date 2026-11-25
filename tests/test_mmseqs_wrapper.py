@@ -40,10 +40,10 @@ def test_no_records_does_not_run_mmseqs(tmp_path):
 def test_options_are_passed_only_when_set(tmp_path):
     exe = fake_mmseqs(tmp_path, 'printf "0\\t0\\n0\\t1\\n" > "$3_cluster.tsv"')
     clusters = cluster_sequences([rec("a", SEQ_A), rec("b", SEQ_A)], executable=exe, threads=3, coverage=0.5,
-                                 tmp_dir=str(tmp_path))
+                                 split_memory_limit="1200M", tmp_dir=str(tmp_path))
     assert [[r.id for r in c] for c in clusters] == [["a", "b"]]
     args = (tmp_path / "args.txt").read_text().split()
-    assert args[0] == "easy-cluster" and args[4:] == ["--threads", "3", "-c", "0.5"]
+    assert args[0] == "easy-cluster" and args[4:] == ["--threads", "3", "-c", "0.5", "--split-memory-limit", "1200M"]
 
 
 @pytest.mark.parametrize("script, exit_code, message", [

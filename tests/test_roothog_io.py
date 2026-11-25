@@ -195,6 +195,22 @@ class TestIsoforms:
         res = U.select_best_isoforms(["A"], {"A": [["i1", "i2", "i3"]]}, {"A": {}}, {"A": {"i2", "i3"}})
         assert res == ({"A": ["i2"]}, {"A": ["i1", "i3"]})
 
+    def test_select_best_isoform_none_mapped_takes_longest(self):
+        # --denovo (no hits at all): a fragment listed first would not cluster with its orthologs
+        res = U.select_best_isoforms(["A"], {"A": [["frag", "full", "mid", "short"]]}, {"A": {}},
+                                     {"A": {"frag": 60, "full": 600, "mid": 300}})
+        assert res == ({"A": ["full"]}, {"A": ["frag", "mid", "short"]})
+
+    def test_select_best_isoform_none_mapped_equally_long_takes_first(self):
+        res = U.select_best_isoforms(["A"], {"A": [["i1", "i2", "i3"]]}, {"A": {}},
+                                     {"A": {"i1": 100, "i2": 300, "i3": 300}})
+        assert res == ({"A": ["i2"]}, {"A": ["i1", "i3"]})
+
+    def test_select_best_isoform_hit_beats_length(self):
+        hm = {"A": {"short": [hit("HOG:X1", 5)]}}
+        res = U.select_best_isoforms(["A"], {"A": [["short", "long"]]}, hm, {"A": {"short": 60, "long": 600}})
+        assert res == ({"A": ["short"]}, {"A": ["long"]})
+
     def test_filter_hogmaps_by_isoforms(self):
         hm = {"A": {"i1": 1, "i2": 2, "x": 3}, "B": {"b": 4}}
         assert U.filter_hogmaps_by_isoforms(hm, {"A": ["i2"], "B": []}) == {"A": {"i1": 1, "x": 3}, "B": {"b": 4}}

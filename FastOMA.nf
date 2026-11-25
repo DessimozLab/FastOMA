@@ -148,6 +148,8 @@ process infer_roothogs{
     path hogmaps, stageAs: "hogmaps/*"
     path proteome_folder
     path splice_folder
+    val  nr_species       // these two size the memory request (conf/base.config)
+    val  proteome_bytes
 
   output:
     path "omamer_rhogs"
@@ -164,6 +166,7 @@ process infer_roothogs{
                                --min-sequence-length ${params.min_sequence_length} \
                                ${ params.denovo.toString().toBoolean() ? "--denovo" : "" } \
                                --mmseqs-threads ${task.cpus} \
+                               ${ task.memory ? "--mmseqs-split-memory-limit ${(task.memory.toMega() * 0.6) as long}M" : "" } \
                                ${ params.mmseqs_coverage != null ? "--mmseqs-coverage ${params.mmseqs_coverage}" : "" } \
                                ${ params.mmseqs_cov_mode != null ? "--mmseqs-cov-mode ${params.mmseqs_cov_mode}" : "" } \
                                ${ params.mmseqs_sensitivity != null ? "--mmseqs-sensitivity ${params.mmseqs_sensitivity}" : "" } \
@@ -540,8 +543,10 @@ workflow {
         hogmaps = omamer_run(omamer_input_channel).collect()
     }
     nr_species = proteomes.count()
+    proteome_bytes = proteomes.map { f -> f.size() }.sum()
 
-    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(hogmaps, proteome_folder, splice_folder)
+    (omamer_rhogs, gene_id_dic_xml, ready_infer_roothogs) = infer_roothogs(hogmaps, proteome_folder, splice_folder,
+                                                                           nr_species, proteome_bytes)
 
     (rhogs_rest_batches, rhogs_big_batches) = batch_roothogs(omamer_rhogs)
 

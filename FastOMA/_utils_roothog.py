@@ -155,7 +155,8 @@ def _check_rhog_step(members_before, rhogs_prots, step, may_remove=False):
 def handle_splice_variants(species_names, hogmaps, splice_folder, proteome_ids=None):
     """Handle splice variants and return filtered data
 
-    proteome_ids: species -> ids of the proteins that passed the length filter (see select_best_isoforms)"""
+    proteome_ids: species -> the proteins that passed the length filter, as a set of ids or a dict
+    id -> sequence length (see select_best_isoforms)"""
     
     # Parse isoform files
     isoform_by_gene = parse_isoform_files(species_names, splice_folder)
@@ -839,9 +840,12 @@ def parse_isoform_files(species_names, folder=None):
 def select_best_isoforms(species_names, isoform_by_gene_all, hogmaps, proteome_ids=None):
     """the isoform with the best OMAmer family score of each gene, and the other isoforms.
 
-    If no isoform of a gene has a hit, the first one that is in proteome_ids (species -> ids of the
-    proteins that passed the length filter) is selected: an isoform that is too short or missing from
-    the proteome would take the whole gene with it (issue #114). Without proteome_ids, the first one."""
+    proteome_ids: species -> the proteins that passed the length filter, either as a set of ids or as
+    a dict id -> sequence length. If no isoform of a gene has a hit (always the case with --denovo),
+    an isoform in proteome_ids is selected: one that is too short or missing from the proteome would
+    take the whole gene with it (issue #114). With lengths, it is the longest one (the first of
+    equally long ones), otherwise the first one; a fragment listed first would not cluster with its
+    orthologs. Without proteome_ids, the first one."""
     isoform_selected = {}
     isoform_not_selected = {}
 
@@ -854,8 +858,14 @@ def select_best_isoforms(species_names, isoform_by_gene_all, hogmaps, proteome_i
         for isoform_list in isoform_list_sp:
             score_isof_best = 0
             # to keep the order if all of the isoforms' omamer score are 'na'
-            protname_best = isoform_list[0] if in_proteome is None else \
-                next((i for i in isoform_list if i in in_proteome), isoform_list[0])
+            if in_proteome is None:
+                protname_best = isoform_list[0]
+            elif isinstance(in_proteome, dict):
+                # max() returns the first of equally long ones
+                protname_best = max((i for i in isoform_list if i in in_proteome),
+                                    key=lambda i: in_proteome[i], default=isoform_list[0])
+            else:
+                protname_best = next((i for i in isoform_list if i in in_proteome), isoform_list[0])
             for isoform_name in isoform_list:
                 if isoform_name in hogmaps_sp:
 
