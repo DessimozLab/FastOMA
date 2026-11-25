@@ -519,10 +519,18 @@ workflow {
     proteomes = proteome_folder.flatMap { dir ->
         // Use file() to list files, don't create new channels
         def proteomeDir = file(dir.toString())
+        // not listFiles(): for a symlinked folder it returns the link itself instead of the
+        // folder's content (#83). Files.list() follows the link.
+        def entries = java.nio.file.Files.list(proteomeDir).withCloseable { it.toList() }
         // skip hidden files, e.g. the ._<name> AppleDouble files of archives made on macOS
-        return proteomeDir.listFiles().findAll { 
+        def fastas = entries.findAll {
             !it.name.startsWith('.') && (it.name.endsWith('.fa') || it.name.endsWith('.fasta'))
-        } 
+        }
+        if (!fastas) {
+            // otherwise all later steps get no input and the run ends "successfully" after check_input
+            error "No proteome files (*.fa or *.fasta) found in ${proteomeDir}"
+        }
+        return fastas
     }
 
     // Static channels

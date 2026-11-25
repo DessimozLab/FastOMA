@@ -46,6 +46,10 @@ All notable changes to FastOMA. Changes that alter the inferred orthology are li
   runs (#131).
 
 ### Fixed
+- If the proteome folder (`proteome/` in `--input`, or `--proteome_folder`) was a symbolic link,
+  the run stopped after `check_input` and still reported success: no proteome was found in it.
+  Symlinked folders work now, and a proteome folder without `.fa`/`.fasta` files stops the run
+  with an error (#83).
 - With Nextflow 26, `--write_msas false`, `--write_genetrees false`, `--report false`,
   `--force_pairwise_ortholog_generation false` and `--debug_enabled false` on the command line
   turned the option on, and `--memory_multiplier` / `--time_multiplier` made the tasks fail

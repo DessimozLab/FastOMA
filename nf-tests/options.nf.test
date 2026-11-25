@@ -104,6 +104,48 @@ nextflow_pipeline {
         }
     }
 
+    test("input whose proteome folder is a symlink") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                output_folder = "$outputDir"
+                hogmap_folder = "$outputDir/hogmap"
+                // proteome/ and species_tree.nwk are symlinks to testdata/in_folder (#83)
+                input = "${projectDir}/nf-tests/helpers/symlinked_input"
+            }
+        }
+
+        then {
+            def out = file(params.output_folder).toPath()
+            def hogmaps = file("${params.hogmap_folder}").listFiles().findAll { it.name.endsWith('.hogmap') }
+
+            assertAll(
+                { assert workflow.success },
+                // before #83, the proteome channel was empty: only check_input ran
+                { assert hogmaps.size() == 3 },
+                { assert FastomaOutput.speciesNames(out.resolve('FastOMA_HOGs.orthoxml')) == ['AQUAE', 'CHLTR', 'MYCGE'] },
+            )
+        }
+    }
+
+    test("proteome folder without fasta files fails") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                output_folder = "$outputDir"
+                // contains only a hidden .gitkeep
+                proteome_folder = "${projectDir}/nf-tests/helpers/empty_splice_in"
+            }
+        }
+
+        then {
+            assert !workflow.success
+            assert (workflow.stdout + workflow.stderr).any { it.contains("No proteome files (*.fa or *.fasta) found") }
+        }
+    }
+
     test("splice files select one isoform per gene") {
 
         when {
