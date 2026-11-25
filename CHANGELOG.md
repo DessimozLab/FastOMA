@@ -11,6 +11,11 @@ All notable changes to FastOMA. Changes that alter the inferred orthology are li
   should be [boolean]"); the newer nf-schema plugin (2.7.3) that fixes this needs Nextflow 25.10.
 
 ### Added
+- `--denovo`: infers the rootHOGs by clustering all proteins with mmseqs instead of placing them
+  with OMAmer, e.g. for simulated proteomes. OMAmer is not run, and its database is not needed.
+- `--mmseqs_coverage`, `--mmseqs_cov_mode`, `--mmseqs_sensitivity` and `--mmseqs_min_seq_id` set
+  the mmseqs clustering of the proteins without OMAmer placement (with `--denovo`: of all
+  proteins). Unset, the mmseqs defaults are used as before.
 - `--protein_trace`: records what happens to every input protein and writes `protein_fates.tsv`,
   `protein_events.tsv.gz` and `protein_trace_summary.txt` (#106).
 - `TCSScore` and `ImpliedLosses` scores for every (sub)HOG in `FastOMA_HOGs.orthoxml`, next to
@@ -40,6 +45,9 @@ All notable changes to FastOMA. Changes that alter the inferred orthology are li
   `--force_pairwise_ortholog_generation false` and `--debug_enabled false` on the command line
   turned the option on, and `--memory_multiplier` / `--time_multiplier` made the tasks fail
   (Nextflow 26 passes command-line values as strings).
+- mmseqs is limited to the CPUs Nextflow assigns to the task; before, it used all cores of the
+  machine. When mmseqs is killed (e.g. out of memory), infer-roothogs exits with the same code, so
+  Nextflow retries the task with more resources.
 - `--help` printed the help message and then failed with "Specified param ... does not exist in
   JSON schema"; `--help <parameter>` and `--helpFull` work too.
 - Input checks: hidden files in the input folders (e.g. the `._<name>` files of archives made on

@@ -1,9 +1,9 @@
 import os.path
-import subprocess
 import sys
-from shutil import which
 
 from . import _utils_roothog, logger
+from .zoo.wrappers import WrapperError
+from .zoo.wrappers.clusterers import cluster_sequences, find_mmseqs
 from . import _protein_trace
 from . import __version__ as fastoma_version
 from .logging_setup import setup_logging
@@ -43,6 +43,14 @@ def fastoma_infer_roothogs():
     parser.add_argument("--denovo", action="store_true",
                         help="infer the rootHOGs by de-novo clustering of all proteins with mmseqs instead of "
                              "OMAmer placements (e.g. for simulated data); --hogmap is ignored")
+    mmseqs = parser.add_argument_group(
+        "clustering", "the unmapped proteins and the singletons (with --denovo: all proteins) are clustered with "
+                      "mmseqs easy-cluster; options that are not given keep the mmseqs defaults")
+    mmseqs.add_argument("--mmseqs-threads", type=int, help="number of threads of mmseqs (default: all cores)")
+    mmseqs.add_argument("--mmseqs-coverage", type=float, help="minimum alignment coverage (mmseqs -c)")
+    mmseqs.add_argument("--mmseqs-cov-mode", type=int, help="how the coverage is defined (mmseqs --cov-mode)")
+    mmseqs.add_argument("--mmseqs-sensitivity", type=float, help="sensitivity (mmseqs -s)")
+    mmseqs.add_argument("--mmseqs-min-seq-id", type=float, help="minimum sequence identity (mmseqs --min-seq-id)")
     parser.add_argument("--protein-trace", action="store_true",
                         help="write protein_events_*.events files, used by fastoma-protein-trace to trace every input protein")
 
@@ -60,7 +68,7 @@ def fastoma_infer_roothogs():
     logger.info("Processing protein records...")
     prot_recs_all = _utils_roothog.add_species_name_prot_id(prot_recs_lists)
 
-    linclust_available = which("mmseqs")
+    linclust_available = find_mmseqs()
     if conf.denovo:
         if not linclust_available:
             logger.error("De-novo clustering (--denovo) needs mmseqs, which is not on the PATH.")
@@ -104,24 +112,21 @@ def fastoma_infer_roothogs():
 
     min_rhog_size = 2
     rhogid_written_list = _utils_roothog.write_rhog(rhogs_prots, prot_recs_all, conf.out_rhog_folder, min_rhog_size)
-    # if memseqs is not installed the output will be empty / None
-    if linclust_available:
-        try:
-            res = subprocess.run([linclust_available, "-h"], check=True, text=True, capture_output=True)
-        except subprocess.CalledProcessError as e:
-            logger.error("mmseqs linclust is not working: %s", e)
-            if conf.denovo:
-                sys.exit(1)
-            logger.error("Skipping clustering of unmapped singletons")
-            linclust_available = False
     cnt_unmapped_singleton = 0
     if linclust_available:
-        singleton_unmapped_path = "singleton_unmapped.fa"
-        cnt_unmapped_singleton = _utils_roothog.collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all, unmapped_singleton_fasta=singleton_unmapped_path)
-        if cnt_unmapped_singleton:
-            cluster_file = _utils_roothog.run_linclust(fasta_to_cluster="singleton_unmapped.fa")
-            num_clusters = _utils_roothog.write_clusters(cluster_file, conf.out_rhog_folder, min_rhog_size)
-            logger.debug("we wrote %d new clusters with linclust", num_clusters)
+        to_cluster = _utils_roothog.collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all,
+                                                               unmapped_singleton_fasta="singleton_unmapped.fa")
+        cnt_unmapped_singleton = len(to_cluster)
+        try:
+            clusters = cluster_sequences(to_cluster, executable=linclust_available, threads=conf.mmseqs_threads,
+                                         coverage=conf.mmseqs_coverage, cov_mode=conf.mmseqs_cov_mode,
+                                         sensitivity=conf.mmseqs_sensitivity, min_seq_id=conf.mmseqs_min_seq_id)
+        except WrapperError as e:
+            # e.g. killed because it ran out of memory: pass the exit code on, so Nextflow can retry the task
+            logger.error("%s", e)
+            sys.exit(e.exit_code)
+        num_clusters = _utils_roothog.write_clusters(clusters, conf.out_rhog_folder, min_rhog_size)
+        logger.info("%d of %d mmseqs clusters written as rootHOGs", num_clusters, len(clusters))
     else:
         logger.warning("mmseqs linclust / easy-cluster not available, skipping clustering of unmapped and singletons")
 

@@ -166,3 +166,18 @@ def test_denovo_clusters_all_proteins(tmp_path):
     partition = read_rhog_partition(out)
     assert frozenset({"sp|O67118|DNAK_AQUAE", "sp|P17821|DNAK_CHLTR", "sp|P47547|DNAK_MYCGE"}) in partition
     assert sum(len(g) for g in partition) == 28   # the test proteomes have no orphans
+
+
+def test_killed_mmseqs_exit_code_is_passed_on(tmp_path):
+    # mmseqs killed (e.g. out of memory): infer-roothogs exits with 128+9, so Nextflow retries the task
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake = bin_dir / "mmseqs"
+    fake.write_text('#!/bin/sh\n[ "$1" = version ] && exit 0\nkill -9 $$\n')
+    fake.chmod(0o755)
+    cmd = [sys.executable, "-m", "FastOMA.infer_roothogs", "--proteomes", str(TESTDATA_DIR / "in_folder" / "proteome"),
+           "--denovo", "--out-rhog-folder", "omamer_rhogs"]
+    env = dict(os.environ, PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    res = subprocess.run(cmd, cwd=tmp_path, capture_output=True, text=True, env=env)
+    assert res.returncode == 137, res.stderr[-2000:]
+    assert "terminated by signal 9" in res.stderr

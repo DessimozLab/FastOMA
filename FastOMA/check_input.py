@@ -1,5 +1,4 @@
 import itertools
-import shutil
 import sys
 import os
 import collections
@@ -9,6 +8,7 @@ from ete3 import Tree
 from Bio.Data.IUPACData import extended_protein_letters, unambiguous_dna_letters, unambiguous_rna_letters
 
 from . import _utils_roothog, logger
+from .zoo.wrappers.clusterers import find_mmseqs
 from . import __version__ as fastoma_version
 from .logging_setup import setup_logging
 
@@ -277,7 +277,7 @@ def fastoma_check_input():
         sys.exit(1)
 
     if conf.denovo:
-        if shutil.which("mmseqs") is None:
+        if find_mmseqs() is None:
             logger.error("De-novo clustering (--denovo) needs mmseqs, which is not on the PATH.")
             logger.error("Check input failed. FastOMA halted!")
             sys.exit(1)

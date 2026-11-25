@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 seed_random = 1234  # Also in _hog_class.py
 tree_tool = "fasttree"   #  "fasttree"  "iqtree"   # todo iqtree is very slow and not tested properly
 rooting_mad_executable_path = "mad"  # it could be also a full address ends with mad like  /user/myfolder/mad
-# mmseqs_executable_path ="mmseqs" # todo move run_linclust to _wrapper.py
 
 
 def merge_msa(list_msas):
@@ -86,21 +85,6 @@ def infer_gene_tree(msa):
     result_tree2 = wrapper_tree.result
     tree_nwk = result_tree2["tree"].as_string(schema='newick') #str(result_tree2["tree"])
     return tree_nwk
-
-# to avoid confusion: right now we are using _utils_roothog.run_linclust in infer_roothogs.py
-# def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):
-
-#     num_threads = 5
-#     command_clust= "mmseqs easy-linclust --threads" +str(num_threads) + " " +fasta_to_cluster+"singleton_unmapped tmp_linclust"
-
-#     logger.debug("linclust rooting started" + command_clust)
-#     process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE)
-#     output, error = process.communicate()
-#     #if "Error analyzing file" in str(output) or error:
-#     #    try:
-
-#     return "done"
-
 
 def trim_msa(msa):
     try:

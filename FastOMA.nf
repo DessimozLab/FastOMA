@@ -163,6 +163,11 @@ process infer_roothogs{
                                --out-rhog-folder "omamer_rhogs" \
                                --min-sequence-length ${params.min_sequence_length} \
                                ${ params.denovo.toString().toBoolean() ? "--denovo" : "" } \
+                               --mmseqs-threads ${task.cpus} \
+                               ${ params.mmseqs_coverage != null ? "--mmseqs-coverage ${params.mmseqs_coverage}" : "" } \
+                               ${ params.mmseqs_cov_mode != null ? "--mmseqs-cov-mode ${params.mmseqs_cov_mode}" : "" } \
+                               ${ params.mmseqs_sensitivity != null ? "--mmseqs-sensitivity ${params.mmseqs_sensitivity}" : "" } \
+                               ${ params.mmseqs_min_seq_id != null ? "--mmseqs-min-seq-id ${params.mmseqs_min_seq_id}" : "" } \
                                ${ params.protein_trace.toString().toBoolean() ? "--protein-trace" : "" } \
                                -vv
     """

@@ -435,6 +435,11 @@ nextflow run dessimozlab/FastOMA -profile docker --input in_folder --output_fold
 FastOMA does not merge rootHOGs later on, so a gene family that the clustering splits stays split. The rootHOGs are
 named `HOG:clust<number>` in the `OMAmerRootHOG` property of the orthoXML.
 
+The clustering uses the mmseqs defaults unless set with `--mmseqs_coverage` (`-c`, default 0.8),
+`--mmseqs_cov_mode` (`--cov-mode`, default 0), `--mmseqs_sensitivity` (`-s`, default 4; up to 7.5 finds more distant
+homologs) and `--mmseqs_min_seq_id` (`--min-seq-id`, default 0). These options also apply without `--denovo`,
+to the clustering of the proteins that OMAmer could not place.
+
 
 ### Run on a cluster 
 For running on a SLURM cluster, you can add the slurm profile argument:  `-profile slurm`  to the command line. 

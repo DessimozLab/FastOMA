@@ -124,39 +124,40 @@ def test_collect_unmapped_singleton(tmp_path):
     rhogs = {"X1": [("A", "a1"), ("B", "b1")], "Y1": [("A", "a2")]}
     unmapped = {"A": ["a3", "short_and_removed"]}
     out = tmp_path / "singletons.fa"
-    assert U.collect_unmapped_singleton(rhogs, unmapped, prot_recs_all, str(out)) == 2
-    assert fasta_ids(out) == ["a3", "a2"]
+    recs = U.collect_unmapped_singleton(rhogs, unmapped, prot_recs_all, str(out))
+    assert [r.id.split("||")[0] for r in recs] == fasta_ids(out) == ["a3", "a2"]
 
 
 class TestWriteClusters:
-    MMSEQS_OUT = (">r1\n>a||S1||1 desc\nMKV\n>b||S2||2\nMKA\n"   # 2 species -> written
-                  ">r2\n>c||S1||3\nMKK\n"                        # singleton -> skipped
-                  ">r3\n>d||S1||4\nMAA\n>e||S1||5\nMCC\n"        # single species -> discarded
-                  ">r4\n>f||S1||6\nMAA\n>g||S2||7\nMCC\n")       # last cluster -> written
+    @staticmethod
+    def clusters(*groups):
+        return [[rec(f"{name}||{sp}||{i}") for i, (name, sp) in enumerate(group)] for group in groups]
 
     def test_write_clusters(self, tmp_path):
-        clustered = tmp_path / "all_seqs.fasta"
-        clustered.write_text(self.MMSEQS_OUT)
-        out = tmp_path / "rhogs"
-        out.mkdir()
-        assert U.write_clusters(str(clustered), str(out), 2) == 2
-        assert {p.name: fasta_ids(p) for p in out.iterdir()} == {
+        clusters = self.clusters([("a", "S1"), ("b", "S2")],   # 2 species -> written
+                                 [("c", "S1")],                # singleton -> skipped
+                                 [("d", "S1"), ("e", "S1")],   # single species -> discarded
+                                 [("f", "S1"), ("g", "S2")])   # -> written
+        assert U.write_clusters(clusters, str(tmp_path), 2) == 2
+        assert {p.name: fasta_ids(p) for p in tmp_path.iterdir()} == {
             "HOG_clust10000.fa": ["a", "b"], "HOG_clust10001.fa": ["f", "g"]}
 
-    def test_empty_file(self, tmp_path):
-        clustered = tmp_path / "all_seqs.fasta"
-        clustered.write_text("")
-        assert U.write_clusters(str(clustered), str(tmp_path), 2) == 0
+    def test_min_rhog_size(self, tmp_path):
+        assert U.write_clusters(self.clusters([("a", "S1"), ("b", "S2")]), str(tmp_path), 3) == 0
+
+    def test_no_clusters(self, tmp_path):
+        assert U.write_clusters([], str(tmp_path), 2) == 0
 
 
 @pytest.mark.tools("mmseqs")
-def test_run_linclust_and_write_clusters(in_tmp_dir, proteome_recs):
+def test_cluster_and_write_clusters(in_tmp_dir, proteome_recs):
+    from FastOMA.zoo.wrappers.clusterers import cluster_sequences
     prot_recs_all = U.add_species_name_prot_id(proteome_recs)
     unmapped = {sp: list(d) for sp, d in prot_recs_all.items()}
-    assert U.collect_unmapped_singleton({}, unmapped, prot_recs_all) == 28
-    clustered = U.run_linclust()
+    recs = U.collect_unmapped_singleton({}, unmapped, prot_recs_all)
+    assert len(recs) == 28
     (in_tmp_dir / "rhogs").mkdir()
-    n = U.write_clusters(clustered, "rhogs", 2)
+    n = U.write_clusters(cluster_sequences(recs, threads=1), "rhogs", 2)
     files = list((in_tmp_dir / "rhogs").glob("HOG_clust*.fa"))
     assert n == len(files) > 0
     for f in files:  # every written cluster spans at least two species

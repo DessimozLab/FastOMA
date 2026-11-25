@@ -19,7 +19,6 @@ from ._invariants import invariant_violated
 import collections
 
 filter_nonchild_rootHOG= False
-mmseqs_executable_path ="mmseqs"
 
 HOGMapData = collections.namedtuple("HOGMapData", ("hogid", "score", "seqlen", "subfamily_medianseqlen"))
 Gene = collections.namedtuple("Gene", ("numeric_id", "prot_id", "main_isoform"), defaults=(None,) )
@@ -788,84 +787,22 @@ def collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all, unmapped_si
         ptrace.member_event(rec.id, "infer_roothogs", "sent_to_clustering")
     SeqIO.write(singleton_unmapped_recs, unmapped_singleton_fasta , "fasta")
     logger.debug(f"Wrote {len(singleton_unmapped_recs)} sequences of unmapped and singleton proteins to {unmapped_singleton_fasta}.")
-    return len(singleton_unmapped_recs)
+    return singleton_unmapped_recs
 
 
-def run_linclust(fasta_to_cluster="singleton_unmapped.fa"):   # todo move run_linclust to _wrapper.py .  see easy-cluster below.
-    # todo: change FastOMA.nf to assgin more cpus to infer_roothog step.  mmseqs uses all cpus by default  # num_threads = 10  , --threads " + str(num_threads) + "
-    command_clust = mmseqs_executable_path +" easy-cluster  " + fasta_to_cluster + " singleton_unmapped tmp_linclust"
-    # easy-cluster is much better than easy-linclust but a bit slower. todo: make it as an arugment for user
+def write_clusters(clusters, address_rhogs_folder, min_rhog_size):
+    """write the clusters (lists of SeqRecords, e.g. from mmseqs) with at least min_rhog_size proteins
+    of at least two species as rootHOG files HOG_clust<n>.fa, n starting at 10000.
 
-    logger.debug("clustering rooting started " + command_clust)
-    process = subprocess.Popen(command_clust.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output, error = process.communicate()
-    logger.debug(f"clustering rooting finished with returncode {process.returncode}.")
-    if process.returncode != 0:
-        logger.error(f"mmseqs easy-cluster failed with returncode {process.returncode}.")
-        logger.error(f"stdout:\n{output.decode('utf-8')}\n******************")
-        logger.error(f"stderr:\n{error.decode('utf-8')}\n******************")
-        raise RuntimeError("mmseqs easy-cluster failed.")
-    return "singleton_unmapped_all_seqs.fasta"  # the fasta-like file of clusters
-
-
-def write_clusters(fasta_clustered, address_rhogs_folder, min_rhog_size):
-    """parse the fasta-like output of mmseqs linclust and write each cluster
-
-    The format is described here: https://github.com/soedinglab/MMseqs2/wiki#cluster-fasta-like-format
-    Example:
-        >O67032                                 <- cluster 1
-        >sp|O67032|RF1_AQUAE                    <- member1 of cluster 1
-        MLKEAYISRLDKLQEKYRKLQEELSKPEVIQD...
-        >sp|O84026|RF1_CHLTR                    <- member2 of cluster 1
-        MEIKVLECLKRLEEVEKQISDPNIFSNPKEYS...
-        >sp|P47500|RF1_MYCGE                    <- member3 of cluster 1
-        MDFDKQLFFNVEKIVELTEQLEKDLNKPNLSF...
-        >O66429                                 <- cluster 2
-        >sp|O66429|EFTU_AQUAE                   <- member1 of cluster 2
-        MAKEKFERTKEHVNVGTIGHVDHGKS
-        >sp|P0CD71|EFTU_CHLTR                   <- member1 of cluster 1
-        MSKETFQRNKPHINIGTIGHVDHGKTTLTAAITRAL
-    """
-
-    with open(fasta_clustered, 'rt') as cluster_file:
-        previous_line_start = " "
-        clusters = []
-        cluster = []
-        for line in cluster_file:
-            line_strip = line.strip()
-            if previous_line_start == " ":
-                clusters = []
-                cluster = []
-            elif line_strip[0] == ">" and previous_line_start == ">":  # new cluster started at previous line
-                if len(cluster) >= 5:
-                    # more than one records [ID1, seq1,ID2, seq2, newcluster_id], i.e. non-trivial cluster
-                    clusters.append(cluster[:-1])  # last item is the id of new cluster
-                cluster = [line_strip]
-            elif line_strip[0] == ">" and previous_line_start != ">":
-                cluster.append(line_strip)
-            elif line_strip[0] != ">":
-                cluster.append(line_strip)
-            previous_line_start = line_strip[0]
-
-    # for last cluster
-    if len(cluster) >= 4:  # more than one records  [ID1, seq1,ID2, seq2]
-        clusters.append(cluster)
-    logger.debug(f"Number of non-trivial linclust clusters raw is {len(clusters)}.")
-
+    Clusters of a single species are discarded: genes from the same species tend to cluster together.
+    Returns the number of rootHOGs written."""
     cluster_iter = 10000
     for cluster in clusters:
-        # cluster is like ['>sp|O67032|RF1_AQUAE', 'MLKEAYISRLDKLQEKYRKLQEELSKPEVIQD...', ...], i.e. an id and its sequence.
-        # thus, check for double the min_rhog_size to have at least min_rhog_size proteins
-        member_ids = [cluster[pr_idi*2][1:].split(" ")[0] for pr_idi in range(int(len(cluster)/2))]
-        if len(cluster) >= 2 * min_rhog_size:
-            species_names = set([])     # it seems that genes from same species tend to cluster together, discard such clusters
-            for pr_idi in range(int(len(cluster)/2)):
-                species_name = cluster[pr_idi*2].split(" ")[0].split("||")[1]
-                species_names.add(species_name)
+        member_ids = [rec.id for rec in cluster]
+        if len(cluster) >= min_rhog_size:
+            species_names = {rec.id.split("||")[1] for rec in cluster}
             if len(species_names) > 1:
-                with open(address_rhogs_folder + "/HOG_clust" + str(cluster_iter) + ".fa", "w") as file_idx:
-                    for line in cluster:
-                        file_idx.write(line + "\n")
+                SeqIO.write(cluster, os.path.join(address_rhogs_folder, f"HOG_clust{cluster_iter}.fa"), "fasta")
                 for member in member_ids:
                     ptrace.member_event(member, "infer_roothogs", "roothog_written", f"clust{cluster_iter}", f"size={len(member_ids)} source=linclust")
                 cluster_iter += 1
