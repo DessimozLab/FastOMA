@@ -1,5 +1,5 @@
 // Import nf-schema functions
-include { validateParameters; paramsHelp; paramsSummaryLog } from 'plugin/nf-schema'
+include { validateParameters; paramsSummaryLog } from 'plugin/nf-schema'
 
 
 //Set dynamic defaults for input/output paths before validation
@@ -462,9 +462,9 @@ def handleDeprecatedParameters() {
 workflow {
     handleDeprecatedParameters()
 
-    // Print help message if requested
-    if (params.help) {
-        log.info paramsHelp("nextflow run FastOMA.nf")
+    // nf-schema prints the help message for --help, --help <parameter> and --helpFull
+    // (validation.help.enabled), but does not stop the run
+    if (params.help || params.containsKey('helpFull')) {
         exit 0
     }
 
