@@ -15,6 +15,7 @@ import sys
 from .zoo.unionfind import UnionFind
 from . import logger
 from . import _protein_trace as ptrace
+from ._invariants import invariant_violated
 import collections
 
 filter_nonchild_rootHOG= False
@@ -92,6 +93,7 @@ def create_root_hogs(hogmaps, conf):
     # Initial grouping
     rhogs_prots = group_prots_by_roothogs(hogmaps)
     logger.info(f"Initial grouping: {len(rhogs_prots)} root HOGs")
+    members = _rhog_members(rhogs_prots)
     assignment = ptrace.rhog_assignment(rhogs_prots)
     for (species_name, prot_id), rhogid in assignment.items():
         n_hits = len(hogmaps[species_name][prot_id])
@@ -99,15 +101,18 @@ def create_root_hogs(hogmaps, conf):
     
     # Handle singletons
     rhogs_prots = resolve_singletons(rhogs_prots, hogmaps, conf)
+    members = _check_rhog_step(members, rhogs_prots, "resolve_singletons")
     new_assignment = ptrace.rhog_assignment(rhogs_prots)
     ptrace.record_rhog_changes(assignment, new_assignment, "infer_roothogs", "resolve_singletons")
     assignment = new_assignment
 
     rhogs_prots = merge_rhogs2(hogmaps, rhogs_prots, conf)
+    members = _check_rhog_step(members, rhogs_prots, "merge_rhogs")
     new_assignment = ptrace.rhog_assignment(rhogs_prots)
     ptrace.record_rhog_changes(assignment, new_assignment, "infer_roothogs", "merge_rhogs")
     assignment = new_assignment
     rhogs_prots = filter_big_roothogs(hogmaps, rhogs_prots, conf)
+    _check_rhog_step(members, rhogs_prots, "filter_big_roothogs", may_remove=True)
     ptrace.record_rhog_changes(assignment, ptrace.rhog_assignment(rhogs_prots), "infer_roothogs", "filter_big_roothogs")
     
     # # Merge similar HOGs
@@ -120,15 +125,45 @@ def create_root_hogs(hogmaps, conf):
     return rhogs_prots
 
 
-def handle_splice_variants(species_names, hogmaps, splice_folder):
-    """Handle splice variants and return filtered data"""
+def _rhog_members(rhogs_prots):
+    """(species, protein) -> number of rootHOGs it is in."""
+    return collections.Counter(sp_prot for sp_prots in rhogs_prots.values() for sp_prot in sp_prots)
+
+
+def _check_rhog_step(members_before, rhogs_prots, step, may_remove=False):
+    """check that a grouping step put every protein in exactly one rootHOG (issue #114).
+
+    Only filter_big_roothogs may remove proteins (may_remove). A protein that another step lost is kept
+    as a singleton rootHOG, so it still reaches the clustering of singletons. Returns the members after
+    the step."""
+    members = _rhog_members(rhogs_prots)
+    duplicated = sorted(sp_prot for sp_prot, n in members.items() if n > 1)
+    if duplicated:
+        invariant_violated(logger.error, f"{step}: {len(duplicated)} proteins are in several rootHOGs, "
+                                         f"e.g. {duplicated[:5]}")
+    if not may_remove:
+        lost = sorted(sp_prot for sp_prot in members_before if sp_prot not in members)
+        if lost:
+            invariant_violated(logger.warning, f"{step}: {len(lost)} proteins would have been lost, kept as "
+                                               f"singleton rootHOGs: {lost[:5]}")
+            for i, sp_prot in enumerate(lost):
+                rhogs_prots[f"{step}_kept{i}"] = [sp_prot]
+                members[sp_prot] = 1
+                ptrace.event(*sp_prot, "infer_roothogs", "kept_as_singleton_roothog", "", f"step={step}")
+    return members
+
+
+def handle_splice_variants(species_names, hogmaps, splice_folder, proteome_ids=None):
+    """Handle splice variants and return filtered data
+
+    proteome_ids: species -> ids of the proteins that passed the length filter (see select_best_isoforms)"""
     
     # Parse isoform files
     isoform_by_gene = parse_isoform_files(species_names, splice_folder)
     
     # Select best isoforms
     selected_isoforms, non_selected = select_best_isoforms(
-        species_names, isoform_by_gene, hogmaps
+        species_names, isoform_by_gene, hogmaps, proteome_ids
     )
     
     # Filter hogmaps to keep only selected isoforms
@@ -159,12 +194,9 @@ def add_species_name_prot_id(prot_recs_lists):
         prot_recs_all[species_name]={}
         for prot_rec in prot_recs_list:
             prot_idx+=1
-            prot_name= prot_rec.id
-
-            if len(prot_name) > 230:
-                logger.info("We are truncating the prot name as it may be problematic for mafft, " + str(prot_name))
-                prot_name = prot_name[:230]
-
+            # ids are not truncated here: a truncated id no longer matches the hogmap and splice files
+            # (issue #114). fastoma-check-input rejects ids that are too long for FastTree.
+            prot_name = prot_rec.id
             prot_name_new = prot_name+ "||"+species_name+"||"+str(prot_idx) # orthoxml file needs an integer as
             prot_rec.id = prot_name_new
             prot_recs_all[species_name][prot_name] = prot_rec
@@ -194,14 +226,33 @@ def parse_hogmap_omamer(proteomes, fasta_format_keep, folder=None):
             reader = csv.DictReader((line for line in hogmap_file if not line.startswith('!')),
                                     dialect="excel-tab")
             for row in reader:
-                if row['hogid'] == "N/A":
+                if row['qseqid'] not in proteome:
+                    # e.g. proteins shorter than --min-sequence-length
+                    logger.debug(f"Ignoring {row} [{species_name}] from hogmap as not in proteome")
+                elif row['hogid'] == "N/A":
                     unmapped[species_name].append(row['qseqid'])
                     ptrace.event(species_name, row['qseqid'], "infer_roothogs", "no_omamer_hit")
-                elif row['qseqid'] not in proteome:
-                    logger.debug(f"Ignoring {row} [{species_name}] from hogmap as not in proteome")
                 else:
                     cur_species_hogmap[row['qseqid']].append(
                         HOGMapData(row['hogid'], row['family_p'], row['qseqlen'], row['subfamily_medianseqlen']))
+        # a protein with N/A rows next to hits (e.g. concatenated hogmaps) is mapped, and a repeated N/A
+        # row must not send the protein to the clustering twice (issue #114)
+        n_na_rows = len(unmapped[species_name])
+        unmapped[species_name] = [prot_id for prot_id in dict.fromkeys(unmapped[species_name])
+                                  if prot_id not in cur_species_hogmap]
+        if len(unmapped[species_name]) < n_na_rows:
+            logger.warning("hogmap %s: %d N/A rows are repeated or belong to proteins that have hits, ignored",
+                           species_name, n_na_rows - len(unmapped[species_name]))
+        # proteins without any row (e.g. a hogmap computed for an older version of the proteome) are
+        # treated as unmapped, so they still reach the clustering of unmapped proteins (issue #114)
+        in_hogmap = set(cur_species_hogmap).union(unmapped[species_name])
+        missing = [prot_id for prot_id in (rec.id.split('||', 1)[0] for rec in prot_reqs) if prot_id not in in_hogmap]
+        if missing:
+            logger.warning("hogmap %s: %d proteins of the proteome are missing from the hogmap, e.g. %s; "
+                           "they are treated as unmapped", species_name, len(missing), missing[:3])
+            unmapped[species_name].extend(missing)
+            for prot_id in missing:
+                ptrace.event(species_name, prot_id, "infer_roothogs", "no_omamer_hit", "", "missing from hogmap")
         hogmaps[species_name] = cur_species_hogmap
         logger.info("hogmap %s: %d proteins mapped to %d hogs, %d not mapped",
                         species_name, len(cur_species_hogmap), sum(len(x) for x in cur_species_hogmap.values()),
@@ -578,54 +629,27 @@ def merge_rhogs2(hogmaps, rhogs_prots, conf_infer_roothogs):
         file_out_merge.write("\n")
     file_out_merge.close()
 
-    counter_merged_prots=0
-    newhost= ""
-    rhogs_host_size = 0
+    counter_merged_prots = 0
     for cluster in cluster_rhogs_list:
-        if len(cluster)>30:
-            print(len(cluster))
-        #prots = [rhogs_prots[hog] for hog in cluster]
-         #  cluster[0] #
-        found = False
-
-        while not found and len(cluster)>0:
-            host_hog = min(cluster)
-            if host_hog in rhogs_prots:
-                found = True
-                rhogs_host_size = len(rhogs_prots[host_hog])
-            else:
-                # logger print rhog
-                cluster.remove(host_hog)
-
-        all_prots = []
-        all_prots2 =[]
-        for hog in cluster:
-            # todo check, create smallers clusters
-            if len(all_prots) < conf_infer_roothogs.big_rhog_size:
-                if hog in rhogs_prots:
-                    all_prots += rhogs_prots[hog]
-                    del rhogs_prots[hog]
-            else:
-                if newhost:
-                    if len(all_prots2) < conf_infer_roothogs.big_rhog_size:
-                        if hog in rhogs_prots:
-                            all_prots2 += rhogs_prots[hog]
-                            del rhogs_prots[hog]
-                    else:
-                        print("cluster is very big "+str(len(cluster)))
-                else:
-                    newhost = hog
-
-        if newhost:
-            all_prots_uniq2 = list(set(all_prots2))  # there might be repeated prots
-            rhogs_prots[newhost] = all_prots_uniq2
-
-        all_prots_uniq = list(set(all_prots))  # there might be repeated prots
-        rhogs_prots[host_hog] = all_prots_uniq
-        # merging D0562038 and D0559070
-        # tr | C3ZG56 | C3ZG56_BRAFL HOG: D0562038, tr | H2Y1V7 | H2Y1V7_CIOIN HOG: D0562038, tr | C3ZG56 | C3ZG56_BRAFL HOG: D0559070, tr | H2Y1V7 | H2Y1V7_CIOIN HOG: D0559070
-        if len(all_prots_uniq) > rhogs_host_size:
-            counter_merged_prots += len(all_prots_uniq)
+        present = sorted(hog for hog in cluster if hog in rhogs_prots)
+        if not present:
+            continue
+        host_size = len(rhogs_prots[present[0]])
+        # the rootHOGs of a cluster are merged in order into one rootHOG named after the first (smallest)
+        # one; a rootHOG that would make it bigger than big_rhog_size starts a new one, otherwise the
+        # merge would make filter_big_roothogs remove proteins from small families (issue #114)
+        chunks = []
+        for hog in present:
+            if not chunks or len(chunks[-1][1]) + len(rhogs_prots[hog]) > conf_infer_roothogs.big_rhog_size:
+                chunks.append((hog, []))
+            chunks[-1][1].extend(rhogs_prots.pop(hog))
+        if len(chunks) > 1:
+            logger.info("cluster of %d rootHOGs with %d proteins exceeds --big-rhog-size, merged into %d rootHOGs",
+                        len(present), sum(len(prots) for _, prots in chunks), len(chunks))
+        for host, prots in chunks:
+            rhogs_prots[host] = list(dict.fromkeys(prots))  # there might be repeated prots
+        if len(rhogs_prots[present[0]]) > host_size:
+            counter_merged_prots += len(rhogs_prots[present[0]])
         # otherwise, merging didn't help
 
     print(len(rhogs_prots),counter_merged_prots)
@@ -863,7 +887,12 @@ def parse_isoform_files(species_names, folder=None):
     return isoform_by_gene_all
 
 
-def select_best_isoforms(species_names, isoform_by_gene_all, hogmaps):
+def select_best_isoforms(species_names, isoform_by_gene_all, hogmaps, proteome_ids=None):
+    """the isoform with the best OMAmer family score of each gene, and the other isoforms.
+
+    If no isoform of a gene has a hit, the first one that is in proteome_ids (species -> ids of the
+    proteins that passed the length filter) is selected: an isoform that is too short or missing from
+    the proteome would take the whole gene with it (issue #114). Without proteome_ids, the first one."""
     isoform_selected = {}
     isoform_not_selected = {}
 
@@ -872,9 +901,12 @@ def select_best_isoforms(species_names, isoform_by_gene_all, hogmaps):
         isoform_selected[species_name] = []
         isoform_list_sp = isoform_by_gene_all[species_name]
         hogmaps_sp = hogmaps[species_name]
+        in_proteome = proteome_ids[species_name] if proteome_ids is not None else None
         for isoform_list in isoform_list_sp:
             score_isof_best = 0
-            protname_best = isoform_list[0]  # to keep the order if all of the isoforms' omamer score are 'na'
+            # to keep the order if all of the isoforms' omamer score are 'na'
+            protname_best = isoform_list[0] if in_proteome is None else \
+                next((i for i in isoform_list if i in in_proteome), isoform_list[0])
             for isoform_name in isoform_list:
                 if isoform_name in hogmaps_sp:
 
@@ -952,6 +984,59 @@ def filter_hogmaps_by_isoforms(hogmaps, non_selected_isoforms):
                 hogmaps_selected_isof[species][prot]=hogmap[prot]
 
     return hogmaps_selected_isof
+
+
+def filter_unmapped_by_isoforms(unmapped, non_selected_isoforms):
+    """unmapped proteins without the isoforms that were not selected (issue #114)."""
+    filtered = collections.defaultdict(list)
+    for species, prots in unmapped.items():
+        non_selected = set(non_selected_isoforms.get(species, ()))
+        filtered[species] = [prot for prot in prots if prot not in non_selected]
+    return filtered
+
+
+def dropped_isoforms(prot_recs_all, hogmaps, unmapped, isoform_data):
+    """species -> the proteins that are left out because another isoform of their gene was selected.
+
+    Only isoforms whose selected isoform is kept (has hits or is unmapped) count, otherwise the gene
+    would be lost."""
+    dropped = {}
+    if not isoform_data:
+        return dropped
+    for species, prots in prot_recs_all.items():
+        kept = set(hogmaps.get(species, ())).union(unmapped.get(species, ()))
+        dropped[species] = {iso for main, gene in zip(isoform_data['selected_isoforms'].get(species, ()),
+                                                      isoform_data['isoform_by_gene'].get(species, ()))
+                            if main in kept for iso in gene if iso != main and iso in prots}
+    return dropped
+
+
+def check_all_proteins_accounted(prot_recs_all, hogmaps, unmapped, isoform_data=None):
+    """check that every protein that passed the length filter has OMAmer hits, is unmapped, or is an
+    isoform of a gene for which another isoform was selected, and that it is only one of these, once
+    (issue #114).
+
+    A protein that is unmapped although it has hits, or unmapped twice, is logged as an error and kept
+    only once, mapped. Proteins that are none of these are added to unmapped, so they still reach the
+    clustering of unmapped proteins. Returns the latter."""
+    for species, prots in list(unmapped.items()):
+        mapped = hogmaps.get(species, {})
+        clean = [prot for prot in dict.fromkeys(prots) if prot not in mapped]
+        if len(clean) != len(prots):
+            invariant_violated(logger.error, f"{species}: {len(prots) - len(clean)} unmapped proteins are repeated "
+                                             f"or have hits, e.g. {sorted(set(prots) - set(clean))[:5]}")
+            unmapped[species] = clean
+    isoforms = dropped_isoforms(prot_recs_all, hogmaps, unmapped, isoform_data)
+    lost = []
+    for species, prots in prot_recs_all.items():
+        known = set(hogmaps.get(species, ())).union(unmapped.get(species, ()), isoforms.get(species, ()))
+        lost.extend((species, prot) for prot in prots if prot not in known)
+    if lost:
+        invariant_violated(logger.warning, f"{len(lost)} proteins would have been lost before grouping them "
+                                           f"into rootHOGs, treated as unmapped: {lost[:5]}")
+        for species, prot in lost:
+            unmapped[species].append(prot)
+    return lost
 
 
 def cluster_rhogs_nx(cluster_rhogs_list, candidates_pair):

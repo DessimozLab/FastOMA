@@ -27,6 +27,7 @@ from . import _wrappers, logger
 from . import _utils_subhog
 from . import _utils_frag_SO_detection
 from . import _protein_trace as ptrace
+from ._invariants import invariant_violated as _invariant_violated
 from ._hog_class import HOG, Representative, split_hog, root_orthoxml, ScoreFlags
 from ._utils_subhog import MSAFilter, MSAFilterElbow, MSAFilterTrimAL
 
@@ -740,12 +741,6 @@ class LevelHOGProcessor:
         new_hogs = self.merge_subhogs(rooted_gene_tree, msa=filtered_msa)
         new_hogs.extend(self._frozen_hogs_before)
         return new_hogs
-
-
-def _invariant_violated(log, msg):
-    if os.environ.get("FASTOMA_STRICT_INVARIANTS"):
-        raise AssertionError(msg)
-    log(msg)
 
 
 def _leaf_hog_of(hog: HOG, member: str) -> HOG:

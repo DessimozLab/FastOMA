@@ -61,9 +61,12 @@ def fastoma_infer_roothogs():
     isoform_data = None
     if conf.splice is not None and os.path.exists(conf.splice): 
         logger.info("Processing splice variants...")
-        isoform_data = _utils_roothog.handle_splice_variants(species_names, hogmaps, conf.splice)
+        isoform_data = _utils_roothog.handle_splice_variants(species_names, hogmaps, conf.splice,
+                                                             {sp: set(prots) for sp, prots in prot_recs_all.items()})
         _utils_roothog.write_selected_isoforms(isoform_data, prot_recs_lists)
         hogmaps = isoform_data['filtered_hogmaps']
+        unmapped = _utils_roothog.filter_unmapped_by_isoforms(unmapped, isoform_data['non_selected'])
+    _utils_roothog.check_all_proteins_accounted(prot_recs_all, hogmaps, unmapped, isoform_data)
 
     # Step 3: Group proteins into root HOGs
     logger.info("Grouping proteins into root HOGs...")
@@ -94,6 +97,7 @@ def fastoma_infer_roothogs():
             logger.error("mmseqs linclust is not working: %s", e)
             logger.error("Skipping clustering of unmapped singletons")
             linclust_available = False
+    cnt_unmapped_singleton = 0
     if linclust_available:
         singleton_unmapped_path = "singleton_unmapped.fa"
         cnt_unmapped_singleton = _utils_roothog.collect_unmapped_singleton(rhogs_prots, unmapped, prot_recs_all, unmapped_singleton_fasta=singleton_unmapped_path)
@@ -102,7 +106,19 @@ def fastoma_infer_roothogs():
             num_clusters = _utils_roothog.write_clusters(cluster_file, conf.out_rhog_folder, min_rhog_size)
             logger.debug("we wrote %d new clusters with linclust", num_clusters)
     else:
-        logger.info("mmseqs linclust / easy-cluster not available, skipping clustering of unmapped and singletons")
+        logger.warning("mmseqs linclust / easy-cluster not available, skipping clustering of unmapped and singletons")
+
+    # every protein is in exactly one of these (checked above), so the big-rootHOG filter is the rest
+    n_input = sum(len(prots) for prots in prot_recs_all.values())
+    n_in_rhogs = sum(len(rhogs_prots[rhogid]) for rhogid in rhogid_written_list)
+    n_singletons = sum(len(prots) for prots in unmapped.values()) + sum(len(p) == 1 for p in rhogs_prots.values())
+    n_isoforms = sum(len(v) for v in _utils_roothog.dropped_isoforms(prot_recs_all, hogmaps, unmapped,
+                                                                     isoform_data).values())
+    logger.info("%d proteins (after the length filter): %d in %d rootHOGs, %d unmapped or singletons %s, "
+                "%d isoforms not selected, %d removed from big rootHOGs", n_input, n_in_rhogs,
+                len(rhogid_written_list), n_singletons,
+                "sent to clustering" if linclust_available else "not clustered (no mmseqs)",
+                n_isoforms, n_input - n_in_rhogs - n_singletons - n_isoforms)
 
 
 if __name__ == "__main__":

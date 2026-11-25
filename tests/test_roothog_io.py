@@ -21,9 +21,10 @@ def test_add_species_name_prot_id_numbering():
     assert recs["CHLTR"][0].id == "c1||CHLTR||1001000001"
 
 
-def test_add_species_name_prot_id_truncates_long_ids():
+def test_add_species_name_prot_id_keeps_long_ids():
+    # issue #114: they used to be truncated to 230 characters and then no longer matched the hogmap
     res = U.add_species_name_prot_id({"A": [rec("L" * 240)]})
-    assert list(res["A"]) == ["L" * 230]
+    assert list(res["A"]) == ["L" * 240]
 
 
 class TestParseProteomes:
@@ -72,20 +73,28 @@ class TestParseHogmapOmamer:
             ("other", "HOG:C1", 100),
         ])
         assert dict(hogmaps["A"]) == {"p1": [hit("HOG:A1.1a", 500.5), hit("HOG:B1", 30)]}
-        assert dict(unmapped) == {"A": ["p2"]}
+        assert dict(unmapped) == {"A": ["p2", "p3"]}  # p3 has no hogmap row
 
     def test_hogmap_values_are_strings(self, tmp_path):
         hogmaps, _ = self.parse(tmp_path, ["p1"], [("p1", "HOG:A1", 12.5)])
         assert hogmaps["A"]["p1"][0].score == "12.5"
 
-    def test_protein_missing_from_hogmap(self, tmp_path):
-        # characterises current behaviour: a protein without any hogmap row is neither mapped nor
-        # unmapped, so it is silently dropped from the pipeline (see test_roothog_stage.py)
+    def test_protein_missing_from_hogmap_is_unmapped(self, tmp_path):
+        # issue #114: a protein without any hogmap row used to be dropped silently
         hogmaps, unmapped = self.parse(tmp_path, ["p1", "p2"], [("p1", "HOG:A1", 100)])
-        assert "p2" not in hogmaps["A"] and "p2" not in unmapped["A"]
+        assert "p2" not in hogmaps["A"] and unmapped["A"] == ["p2"]
 
-    @pytest.mark.xfail(strict=True, reason="BUG: ids >230 chars are truncated (_utils_roothog.py:256) and then "
-                                           "no longer match the hogmap qseqid (:289), the protein vanishes")
+    def test_repeated_na_rows_and_na_rows_next_to_hits(self, tmp_path):
+        # review of #131: such proteins were sent to the clustering twice, or both grouped and clustered
+        hogmaps, unmapped = self.parse(tmp_path, ["p1", "p2"], [
+            ("p1", "N/A", None), ("p1", "HOG:A1", 100), ("p2", "N/A", None), ("p2", "N/A", None)])
+        assert list(hogmaps["A"]) == ["p1"] and unmapped["A"] == ["p2"]
+
+    def test_unmapped_protein_not_in_proteome_is_ignored(self, tmp_path):
+        # e.g. a protein shorter than --min-sequence-length; it would otherwise count as unmapped
+        _, unmapped = self.parse(tmp_path, ["p1"], [("p1", "HOG:A1", 100), ("short", "N/A", None)])
+        assert dict(unmapped) == {"A": []}
+
     def test_long_ids_are_kept(self, tmp_path):
         long_id = "L" * 240
         hogmaps, unmapped = self.parse(tmp_path, [long_id], [(long_id, "HOG:A1", 100)])
@@ -172,6 +181,11 @@ class TestIsoforms:
 
     def test_select_best_isoform_none_mapped_takes_first(self):
         assert U.select_best_isoforms(["A"], {"A": [["i1", "i2"]]}, {"A": {}}) == ({"A": ["i1"]}, {"A": ["i2"]})
+
+    def test_select_best_isoform_none_mapped_takes_first_in_proteome(self):
+        # review of #131: if i1 is too short or missing, selecting it loses the whole gene
+        res = U.select_best_isoforms(["A"], {"A": [["i1", "i2", "i3"]]}, {"A": {}}, {"A": {"i2", "i3"}})
+        assert res == ({"A": ["i2"]}, {"A": ["i1", "i3"]})
 
     def test_filter_hogmaps_by_isoforms(self):
         hm = {"A": {"i1": 1, "i2": 2, "x": 3}, "B": {"b": 4}}
