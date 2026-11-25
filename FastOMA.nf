@@ -471,8 +471,14 @@ workflow {
     // Validate input parameters
     validateParameters()
 
-    // Print parameter summary
-    log.info paramsSummaryLog(workflow)
+    // Print parameter summary. nf-schema 2.x fails here if a single container is set for all processes
+    // (the docker/singularity profiles), https://github.com/nextflow-io/nf-schema/issues/239; the
+    // summary is only informational, so continue without it. Fixed in nf-schema 3.x (Nextflow >= 26.04).
+    try {
+        log.info paramsSummaryLog(workflow)
+    } catch (Exception e) {
+        log.warn "Could not print the parameter summary (nf-schema issue #239): ${e.message}"
+    }
 
     // Detect input type 
     def inputType = detectInputType(params.input)
