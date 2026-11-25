@@ -36,6 +36,10 @@ All notable changes to FastOMA. Changes that alter the inferred orthology are li
   runs (#131).
 
 ### Fixed
+- With Nextflow 26, `--write_msas false`, `--write_genetrees false`, `--report false`,
+  `--force_pairwise_ortholog_generation false` and `--debug_enabled false` on the command line
+  turned the option on, and `--memory_multiplier` / `--time_multiplier` made the tasks fail
+  (Nextflow 26 passes command-line values as strings).
 - `--help` printed the help message and then failed with "Specified param ... does not exist in
   JSON schema"; `--help <parameter>` and `--helpFull` work too.
 - Input checks: hidden files in the input folders (e.g. the `._<name>` files of archives made on

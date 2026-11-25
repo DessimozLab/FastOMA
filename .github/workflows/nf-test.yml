@@ -149,6 +149,19 @@ jobs:
               --profile "+${{ matrix.profile }}" \
               --filter ${{ matrix.filter }}
 
+      # nf-test sets params already typed, while `nextflow run` passes command-line values as
+      # strings (Nextflow 26). Check that `false` and numbers given on the command line work,
+      # and that --help exits cleanly.
+      - name: "Smoke test: params on the command line"
+        if: matrix.filter == 'pipeline' && matrix.profile == 'docker'
+        run: |
+          nextflow run FastOMA.nf -profile test,docker --help
+          nextflow run FastOMA.nf -profile test,docker --output_folder cli_smoke \
+              --write_msas false --report false --memory_multiplier 2 --time_multiplier 2
+          test -s cli_smoke/FastOMA_HOGs.orthoxml
+          if [ -e cli_smoke/msa ]; then echo "--write_msas false still wrote MSAs"; exit 1; fi
+          if [ -e cli_smoke/stats ]; then echo "--report false still wrote the Nextflow reports"; exit 1; fi
+
       - name: Print success in summary
         if: success()
         run: |

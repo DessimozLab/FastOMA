@@ -1,6 +1,12 @@
 // Import nf-schema functions
 include { validateParameters; paramsSummaryLog } from 'plugin/nf-schema'
 
+// With Nextflow 26, values given on the command line reach the pipeline as strings (`--report false`
+// is the string "false", which is truthy; `--memory_multiplier 2` is "2"), even after
+// validateParameters(). Boolean and numeric params are therefore read with
+// `.toString().toBoolean()` and `.toString() as BigDecimal` wherever they are used, also in the
+// config files.
+
 
 //Set dynamic defaults for input/output paths before validation
 params.input           = params.input ?: "${projectDir}/testdata/in_folder"
@@ -135,7 +141,7 @@ process omamer_run{
 process infer_roothogs{
   label "process_medium"
   
-  publishDir params.temp_output, enabled: params.debug_enabled
+  publishDir params.temp_output, enabled: params.debug_enabled.toString().toBoolean()
 
   input:
     path hogmaps, stageAs: "hogmaps/*"
@@ -186,19 +192,19 @@ process hog_big{
   memory { 
     def max_filesize = Utils.getMaxFileSize(rhogsbig)
     def mem_base = Utils.mem_cat( max_filesize, nr_species as int )
-    return [6.GB, mem_base].max() * params.memory_multiplier * task.attempt
+    return [6.GB, mem_base].max() * (params.memory_multiplier.toString() as BigDecimal) * task.attempt
   }
   time {
     def max_filesize = Utils.getMaxFileSize(rhogsbig)
     def time_base = Utils.time_cat(max_filesize, nr_species as int)
-    return [2.h, time_base].max() * params.time_multiplier * task.attempt 
+    return [2.h, time_base].max() * (params.time_multiplier.toString() as BigDecimal) * task.attempt 
   }
 
-  publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
-  publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
-  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
-  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv"
-  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv.gz"
+  publishDir path: params.temp_output, enabled: params.debug_enabled.toString().toBoolean(), pattern: "pickle_hogs"
+  publishDir path: params.msa_folder, enabled: params.write_msas.toString().toBoolean(), pattern: "*fa"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees.toString().toBoolean(), pattern: "*nwk"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees.toString().toBoolean(), pattern: "*tsv"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees.toString().toBoolean(), pattern: "*tsv.gz"
 
   input:
     each path(rhogsbig)
@@ -224,8 +230,8 @@ process hog_big{
                                --gap-ratio-row ${params.filter_gap_ratio_row} \
                                --gap-ratio-col ${params.filter_gap_ratio_col} \
                                --number-of-samples-per-hog ${params.nr_repr_per_hog} \
-                               ${ params.write_msas ? "--msa-write" : ""} \
-                               ${ params.write_genetrees ? "--gene-trees-write" : ""} \
+                               ${ params.write_msas.toString().toBoolean() ? "--msa-write" : ""} \
+                               ${ params.write_genetrees.toString().toBoolean() ? "--gene-trees-write" : ""} \
                                ${ params.disable_completeness_score.toString().toBoolean()   ? "--no-store-completeness-score" : "" } \
                                ${ params.disable_implied_losses_score.toString().toBoolean() ? "--no-store-implied-losses-score" : "" } \
                                ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" } \
@@ -236,11 +242,11 @@ process hog_big{
 process hog_rest{
   label "process_single"
 
-  publishDir path: params.temp_output, enabled: params.debug_enabled, pattern: "pickle_hogs"
-  publishDir path: params.msa_folder, enabled: params.write_msas, pattern: "*fa"
-  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*nwk"
-  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv"
-  publishDir path: params.genetrees_folder, enabled: params.write_genetrees, pattern: "*tsv.gz"
+  publishDir path: params.temp_output, enabled: params.debug_enabled.toString().toBoolean(), pattern: "pickle_hogs"
+  publishDir path: params.msa_folder, enabled: params.write_msas.toString().toBoolean(), pattern: "*fa"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees.toString().toBoolean(), pattern: "*nwk"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees.toString().toBoolean(), pattern: "*tsv"
+  publishDir path: params.genetrees_folder, enabled: params.write_genetrees.toString().toBoolean(), pattern: "*tsv.gz"
 
   input:
     each path(rhogsrest)
@@ -262,8 +268,8 @@ process hog_rest{
                               --gap-ratio-row ${params.filter_gap_ratio_row} \
                               --gap-ratio-col ${params.filter_gap_ratio_col} \
                               --number-of-samples-per-hog ${params.nr_repr_per_hog} \
-                              ${ params.write_msas ? "--msa-write" : ""} \
-                              ${ params.write_genetrees ? "--gene-trees-write" : ""} \
+                              ${ params.write_msas.toString().toBoolean() ? "--msa-write" : ""} \
+                              ${ params.write_genetrees.toString().toBoolean() ? "--gene-trees-write" : ""} \
                               ${ params.disable_completeness_score.toString().toBoolean()   ? "--no-store-completeness-score" : "" } \
                               ${ params.disable_implied_losses_score.toString().toBoolean() ? "--no-store-implied-losses-score" : "" } \
                               ${ params.disable_tcs_score.toString().toBoolean()            ? "--no-store-tcs-score" : "" } \
@@ -477,7 +483,7 @@ workflow {
     try {
         log.info paramsSummaryLog(workflow)
     } catch (Exception e) {
-        log.warn "Could not print the parameter summary (nf-schema issue #239): ${e.message}"
+        log.warn "Could not print the parameter summary (possibly nf-schema issue #239): ${e}"
     }
 
     // Detect input type 
@@ -538,7 +544,7 @@ workflow {
         protein_trace(proteome_folder, all_protein_events, rootHOGs_tsv, params.fasta_header_id_transformer)
     }
     c = hogmap.count().branch{ n->
-        TRUE: (n<=25 || params.force_pairwise_ortholog_generation)
+        TRUE: (n<=25 || params.force_pairwise_ortholog_generation.toString().toBoolean())
         FALSE: n>25
     }
     extract_pairwise_ortholog_relations(orthoxml_file, c.TRUE)
@@ -546,7 +552,7 @@ workflow {
 
 
   workflow.onComplete = {
-    def String report = ( params.report ? "\nNextflow report : ${params.statsdir}" : "");
+    def String report = ( params.report.toString().toBoolean() ? "\nNextflow report : ${params.statsdir}" : "");
     println ""
     println "Completed at    : $workflow.complete"
     println "Duration        : $workflow.duration"
