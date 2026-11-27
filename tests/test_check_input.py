@@ -34,25 +34,68 @@ class TestCheckProteomeFiles:
         assert sorted(C.check_proteome_files(folder)) == ["A", "B", "C"]
 
 
+def write_fasta(path, recs):
+    path.write_text("".join(f">{r.id}\n{r.seq}\n" for r in recs))
+
+
 class TestCheckProteome:
     @staticmethod
-    def check(recs):
-        return C.check_proteome(["A"], {"A": recs}, "folder")
+    def check(tmp_path, recs, ext="fa"):
+        write_fasta(tmp_path / f"A.{ext}", recs)
+        return C.check_proteome(["A"], str(tmp_path))
 
-    def test_ok(self):
-        assert self.check([rec(f"p{i}", PROT) for i in range(3)]) is True
+    def test_ok(self, tmp_path):
+        assert self.check(tmp_path, [rec(f"p{i}", PROT) for i in range(3)]) is True
+
+    def test_fasta_extension(self, tmp_path):
+        assert self.check(tmp_path, [rec(f"p{i}", PROT) for i in range(3)], ext="fasta") is True
 
     @pytest.mark.parametrize("recs", [
         pytest.param([rec("p", PROT)] * 3, id="duplicate-ids"),
         pytest.param([rec("x" * 61, PROT), rec("b", PROT), rec("c", PROT)], id="id-longer-than-60"),
         pytest.param([rec(f"p{i}", "ACGTACGTAC") for i in range(3)], id="dna"),
+        pytest.param([rec(f"p{i}", "acgtacgtac") for i in range(3)], id="lowercase-dna"),
         pytest.param([rec("a", PROT), rec("b", PROT)], id="two-proteins"),
     ])
-    def test_rejected(self, recs):
-        assert self.check(recs) is False
+    def test_rejected(self, tmp_path, recs):
+        assert self.check(tmp_path, recs) is False
 
-    def test_empty_proteome_rejected(self):
-        assert self.check([]) is False
+    def test_empty_proteome_rejected(self, tmp_path):
+        assert self.check(tmp_path, []) is False
+
+
+class TestScanProteome:
+    @staticmethod
+    def scan(tmp_path, content):
+        path = tmp_path / "A.fa"
+        path.write_bytes(content)
+        return C.scan_proteome(str(path))
+
+    def test_wrapped_and_lowercase(self, tmp_path):
+        # 8 residues each; M, K, V, L, E are amino-acid letters, A, C, G, T, N are not
+        ids, n_res, n_aa = self.scan(tmp_path, b">p1 desc\nMKVL\nacgt\n>p2\nmkve\nNNNN\n")
+        assert (ids, n_res, n_aa) == (["p1", "p2"], 16, 8)
+
+    def test_crlf_blank_lines_and_spaces(self, tmp_path):
+        ids, n_res, n_aa = self.scan(tmp_path, b">p1\r\nMK VL\r\n\r\n>p2\tdesc\r\nMKVL\r\n")
+        assert (ids, n_res, n_aa) == (["p1", "p2"], 8, 8)
+
+    def test_empty_header_and_text_before_first_header(self, tmp_path):
+        ids, n_res, n_aa = self.scan(tmp_path, b"comment\n>\nMKVL\n")
+        assert (ids, n_res, n_aa) == ([""], 4, 4)
+
+    def test_empty_file(self, tmp_path):
+        assert self.scan(tmp_path, b"") == ([], 0, 0)
+
+    def test_same_as_seqio(self):
+        from Bio import SeqIO
+        from Bio.Data.IUPACData import extended_protein_letters
+        folder = TESTDATA_DIR / "in_folder" / "proteome"
+        for path in sorted(folder.glob("*.fa")):
+            recs = list(SeqIO.parse(str(path), "fasta"))
+            seq = "".join(str(r.seq).upper() for r in recs)
+            aa = set(extended_protein_letters) - set("ACGTUN")
+            assert C.scan_proteome(str(path)) == ([r.id for r in recs], len(seq), sum(c in aa for c in seq))
 
 
 class TestCheckHogmapFiles:
