@@ -4,6 +4,7 @@ import pytest
 from ete3 import Tree
 
 from FastOMA import _infer_subhog
+from FastOMA._hog_class import HOG, Representative, ScoreFlags
 from FastOMA._infer_subhog import LevelHOGProcessor
 from subhog_helpers import pid, rec, msa, species_tree, leaf_hog, merged_hog, members_of
 
@@ -74,13 +75,54 @@ def test_reconciliation_threshold_is_exclusive(make_lp, threshold, expected):
     assert t.evoltype == expected
 
 
-@pytest.mark.xfail(strict=True, reason="BUG: species overlap of a multifurcation intersects all children, "
-                                       "so a polytomy with two copies of a species is labelled S (_infer_subhog.py:546)")
-def test_reconciliation_polytomy_with_duplicated_species(make_lp):
-    lp = make_lp([A1, A2, B1])
-    t = genetree("(%s,%s,%s);" % q(A1, A2, B1))
-    lp.infer_reconciliation(t, sos_threshold=0.1)
-    assert t.evoltype == "D"
+def _polytomy_orthoxml(lp, ids, sptree):
+    """reconcile and merge the star gene tree of ids at the level of lp; the orthoxml of the single new HOG"""
+    t = genetree("(%s);" % ",".join(f"{n}:0" for n in q(*ids)))
+    lp.infer_reconciliation(t, sos_threshold=lp.conf.threshold_dubious_sd)
+    assert t.evoltype == "S"
+    new = lp.merge_subhogs(t, msa(*[rec(i) for i in ids]))
+    assert len(new) == 1
+    return new[0].to_orthoxml(sptree, ScoreFlags(False, False, False))
+
+
+def _gene_ids(elem):
+    return sorted(g.get("id") for g in elem.iter("geneRef"))
+
+
+def test_reconciliation_polytomy_with_duplicated_species(make_lp, sp):
+    """FastTree returns identical sequences as a polytomy. (A1, A2, B1) is labelled S: one HOG at AB, in
+    which A1 and A2 (both from A) form a paralogGroup, i.e. the parsimonious ((A1, A2)D, B1)S (issue #117)."""
+    e = _polytomy_orthoxml(make_lp([A1, A2, B1]), [A1, A2, B1], sp)
+    assert e.tag == "orthologGroup"
+    assert [c.tag for c in e if c.tag != "property"] == ["paralogGroup", "geneRef"]
+    assert _gene_ids(e.find("paralogGroup")) == ["1", "2"]
+    assert e.find("geneRef").get("id") == "11"
+
+
+def test_reconciliation_polytomy_with_overlapping_representatives(subhog_conf):
+    """representatives of sub-HOGs of the same child clade can share species: X stands for {H, G}, Y for
+    {H, P}. Their overlap is not seen by the intersection over all children of the polytomy (X, Y, M1), but
+    both sub-HOGs have the child clade as taxname, so the orthoxml puts them into a paralogGroup (issue #117)."""
+    sptree = species_tree("(((H,P)HP,G)Hom,M)Cat;")
+    H1, H2, G1, P1, M1 = pid("h1", "H", 1), pid("h2", "H", 2), pid("g1", "G", 3), pid("p1", "P", 4), pid("m1", "M", 5)
+
+    def one_rep(subhogs, level, rep_id):
+        """HOG at level with a single representative rep_id standing for all its members"""
+        reps = [r for h in subhogs for r in h.get_representatives()]
+        own = next(r for r in reps if r.get_id() == rep_id)
+        rep = Representative(own, elements=[r for r in reps if r is not own])
+        return HOG(list(subhogs), level, "r", msa=msa(*[r for h in subhogs for r in h.get_msa()]),
+                   representatives=[rep])
+
+    x = one_rep([leaf_hog(H1, sptree), leaf_hog(G1, sptree)], "Hom", H1)
+    y = one_rep([one_rep([leaf_hog(H2, sptree), leaf_hog(P1, sptree)], "HP", H2)], "Hom", H2)
+    lp = LevelHOGProcessor(sptree & "Cat", [x, y, leaf_hog(M1, sptree)], "r", subhog_conf())
+    assert {i: lp._rep_lookup[i].representative.get_species() for i in (H1, H2)} == {H1: {"H", "G"}, H2: {"H", "P"}}
+
+    e = _polytomy_orthoxml(lp, [H1, H2, M1], sptree)
+    assert [c.tag for c in e if c.tag != "property"] == ["paralogGroup", "geneRef"]
+    assert sorted(_gene_ids(og) for og in e.find("paralogGroup")) == [["1", "3"], ["2", "4"]]
+    assert e.find("geneRef").get("id") == "5"
 
 
 # merge_subhogs / process
