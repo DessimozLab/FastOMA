@@ -1,4 +1,3 @@
-import itertools
 import sys
 import os
 import collections
@@ -45,13 +44,42 @@ def check_proteome_files(proteome_folder):
     return species_names
 
 
-def check_proteome(species_names, prot_recs_lists, proteome_folder):
-    # ids_set=set()
+# letters that only occur in protein sequences (not ACGTU, not N), in both cases so that the sequences need
+# not be upper-cased before counting
+_AA_ONLY = "".join(sorted(set(extended_protein_letters) - set(unambiguous_dna_letters)
+                          - set(unambiguous_rna_letters) - set("N")))
+_AA_ONLY_BYTES = (_AA_ONLY + _AA_ONLY.lower()).encode()
+_WHITESPACE_BYTES = b" \t\r\n\v\f"
+
+
+def scan_proteome(path):
+    """the protein ids, the number of residues and the number of amino-acid residues of a FASTA file.
+
+    A protein id is the part of the header before the first whitespace, as in Bio.SeqIO (SeqRecord.id).
+    Lines before the first header are ignored, as in Bio.SeqIO. The file is processed as bytes with whole-
+    file operations: Bio.SeqIO, and counting residues in python, are too slow for hundreds of proteomes."""
+    with open(path, "rb") as fh:
+        data = fh.read()
+    ids = []
+    seq_lines = []
+    for line in data.split(b"\n"):
+        if line.startswith(b">"):
+            fields = line[1:].split(None, 1)
+            ids.append(fields[0].decode("utf-8", errors="replace") if fields else "")
+        elif ids:
+            seq_lines.append(line)
+    seq = b"".join(seq_lines).translate(None, _WHITESPACE_BYTES)
+    num_aa = len(seq) - len(seq.translate(None, _AA_ONLY_BYTES))
+    return ids, len(seq), num_aa
+
+
+def check_proteome(species_names, proteome_folder):
     isOk = True
     num_prots_all = 0
+    extensions = dict(_utils_roothog.list_proteome_files(proteome_folder))
     for species_name in species_names:
-        prot_recs_list = prot_recs_lists[species_name]
-        prot_recs_ids = [prot_rec.id for prot_rec in prot_recs_list]
+        prot_recs_ids, num_residues, total_aa = scan_proteome(
+            os.path.join(proteome_folder, species_name + "." + extensions[species_name]))
         if len(prot_recs_ids)!= len(set(prot_recs_ids)):
             logger.error("It seems that at least of the protein id in fasta file %s is repeated. Note that only part of a fasta record before space is considered.",species_name)
             logger.error("Check input failed. FastOMA halted!")
@@ -61,21 +89,17 @@ def check_proteome(species_names, prot_recs_lists, proteome_folder):
                 logger.error("The protein ID %s is too long in species %s.fa, which should be changed. Please make sure it will be still unique.", prot_rec_id, species_name)  # (root cause issue due to truncation by fastTree)
                 logger.error("Check input failed. FastOMA halted!")
                 return False
-                
-        # checking only first record in each species  # for ii in range(len(prot_recs_list)):
+
         # check that at least 20% of all residue are not DNA/RNA characters (as a check for protein sequences)
-        residue_cnts = collections.Counter(itertools.chain.from_iterable(rec.seq.upper() for rec in prot_recs_list))
-        if sum(residue_cnts.values()) == 0:
+        if num_residues == 0:
             logger.error("The proteome %s/%s.fa contains no sequences.", proteome_folder, species_name)
             logger.error("Check input failed. FastOMA halted!")
             return False
-        aa_chars = set(extended_protein_letters) - set(unambiguous_dna_letters) - set(unambiguous_rna_letters) - set('N')
-        total_aa = sum([residue_cnts[aa] for aa in aa_chars])
-        if total_aa / sum(residue_cnts.values()) < 0.2:
-            logger.error("Looks like genomics sequences used in '%s'. Proteome contains only %.1f%% amino acids letters.", species_name,  100 * total_aa / sum(residue_cnts.values()))
+        if total_aa / num_residues < 0.2:
+            logger.error("Looks like genomics sequences used in '%s'. Proteome contains only %.1f%% amino acids letters.", species_name,  100 * total_aa / num_residues)
             return False
 
-        num_prots = len(prot_recs_list)  # >EP00159_Fonticula_alba_P004948_XP_009497064.1_small_nuclear_ribonucleoprotein_B_and_B'_Fonticula_alba||691883||1155004948
+        num_prots = len(prot_recs_ids)  # >EP00159_Fonticula_alba_P004948_XP_009497064.1_small_nuclear_ribonucleoprotein_B_and_B'_Fonticula_alba||691883||1155004948
         num_prots_all += num_prots
         # todo , check duplicated Ids should it be done on all species ?
 
@@ -271,8 +295,8 @@ def fastoma_check_input():
         sys.exit(1)
     add_internal_node_prune(species_tree, species_names, conf.out_tree)
 
-    species_names, prot_recs_lists, fasta_format_keep = _utils_roothog.parse_proteomes(conf.proteomes)
-    if not check_proteome(species_names, prot_recs_lists, conf.proteomes):
+    species_names = sorted(species_names)
+    if not check_proteome(species_names, conf.proteomes):
         logger.error("Halting FastOMA because of invalid proteome input data. FastOMA check input failed! Exiting...")
         sys.exit(1)
 
